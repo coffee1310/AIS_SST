@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-enum-genders
+      author: your_name
+      changes:
+        - createSequence:
+            sequenceName: hibernate_sequence
+            startValue: 1
+            incrementBy: 1
+
+        - sql:
+            sql: |
+              DO $$ BEGIN
+                CREATE TYPE genders AS ENUM('Мужчина', 'Женщина');
+              EXCEPTION
+                WHEN duplicate_object THEN null;
+              END $$;
+
+        - sql:
+            sql: |
+              DO $$ BEGIN
+                CREATE TYPE sector_participant_statuses AS ENUM ('Ожидание', 'Активный', 'Вышедший');
+              EXCEPTION
+                WHEN duplicate_object THEN null;
+              END $$;
+
+        - sql:
+            sql: |
+              DO $$ BEGIN
+                CREATE TYPE role_application_statuses AS ENUM ('На рассмотрении', 'Принято', 'Отклонено');
+              EXCEPTION
+                WHEN duplicate_object THEN null;
+              END $$;
+
+        - sql:
+            sql: |
+              DO $$ BEGIN
+                CREATE TYPE task_application_statuses AS ENUM ('На рассмотрении', 'Принято', 'Отклонено');
+              EXCEPTION
+                WHEN duplicate_object THEN null;
+              END $$;
+
+        - sql:
+            sql: |
+              DO $$ BEGIN
+                CREATE TYPE application_statuses_for_membership AS ENUM('На рассмотрении', 'Отклонено', 'Принято');
+              EXCEPTION
+                WHEN duplicate_object THEN null;
+              END $$;
+
+        - sql:
+            sql: |
+              DO $$ BEGIN
+                CREATE TYPE formats_for_conducting_classes AS ENUM ('Очно', 'Дистанционно');
+              EXCEPTION
+                WHEN duplicate_object THEN null;
+              END $$;
