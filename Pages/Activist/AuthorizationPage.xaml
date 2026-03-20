@@ -1,0 +1,126 @@
+﻿<Page x:Class="Diplom_Stud.Activist.AuthorizationPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Diplom_Stud.Activist"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="800"
+      Title="LoginPage"
+      Background="#F5F5F5">
+
+    <Grid>
+        <!-- Основной контейнер для центрирования -->
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="350">
+
+            <!-- Заголовок -->
+            <TextBlock Text="Студенческий совет КИПФИН" 
+                       FontSize="28" 
+                       FontWeight="Bold" 
+                       Foreground="#2C3E50"
+                       TextAlignment="Center"
+                       Margin="0,0,0,10"/>
+
+            <TextBlock Text="Управляй своей студенческой жизнью" 
+                       FontSize="16" 
+                       Foreground="#7F8C8D"
+                       TextAlignment="Center"
+                       Margin="0,0,0,30"/>
+
+            <TextBlock Text="Мероприятия · Сектора · Рейтинг · Проекты" 
+                       FontSize="14" 
+                       Foreground="#3498DB"
+                       TextAlignment="Center"
+                       Margin="0,0,0,40"/>
+
+            <!-- Панель авторизации -->
+            <Border Background="White" 
+                    CornerRadius="10" 
+                    Padding="25"
+                    BorderBrush="#BDC3C7" 
+                    BorderThickness="1">
+
+                <StackPanel>
+
+                    <!-- Поле Логин -->
+                    <TextBlock Text="Логин" 
+                               FontSize="14" 
+                               Foreground="#34495E"
+                               Margin="0,0,0,5"/>
+
+                    <TextBox x:Name="LoginTextBox" 
+                             Height="40" 
+                             FontSize="14"
+                             Padding="10,0"
+                             BorderBrush="#BDC3C7" 
+                             BorderThickness="1"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Поле Пароль -->
+                    <TextBlock Text="Пароль" 
+                               FontSize="14" 
+                               Foreground="#34495E"
+                               Margin="0,0,0,5"/>
+
+                    <PasswordBox x:Name="PasswordBox" 
+                                 Height="40" 
+                                 FontSize="14"
+                                 Padding="10,0"
+                                 BorderBrush="#BDC3C7" 
+                                 BorderThickness="1"
+                                 Margin="0,0,0,10"/>
+
+                    <!-- Забыли пароль? -->
+                    <TextBlock Text="Забыли пароль?" 
+                               Foreground="#3498DB"
+                               FontSize="12"
+                               TextAlignment="Right"
+                               Cursor="Hand"
+                               Margin="0,0,0,20">
+                        <TextBlock.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" 
+                                         Command="{Binding ForgotPasswordCommand}"/>
+                        </TextBlock.InputBindings>
+                    </TextBlock>
+
+                    <!-- Кнопка Войти -->
+                    <Button x:Name="LoginButton" 
+                            Content="Войти" 
+                            Height="45"
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Foreground="White"
+                            Background="#3498DB"
+                            BorderThickness="0"
+                            Margin="0,0,0,15"
+                            Cursor="Hand"
+                            Click="LoginButton_Click"/>
+
+                    <!-- Регистрация -->
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center">
+
+                        <TextBlock Text="Нет аккаунта? " 
+                                   Foreground="#7F8C8D"
+                                   FontSize="14"/>
+
+                        <TextBlock Text="Зарегистрироваться" 
+                                   Foreground="#3498DB"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Cursor="Hand">
+                            <TextBlock.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" 
+                                             Command="{Binding RegisterCommand}"/>
+                            </TextBlock.InputBindings>
+                        </TextBlock>
+
+                    </StackPanel>
+
+                </StackPanel>
+
+            </Border>
+
+        </StackPanel>
+    </Grid>
+</Page>
