@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/002-create-tables.yaml
   - include:
       file: db/changelog/changes/003-create-constraints.yaml
+  - include:
+      file: db/changelog/changes/004-add-roles-and-admin.yaml

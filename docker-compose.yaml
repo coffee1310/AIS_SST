@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: 'postgres:13'
+    container_name: 'java-postgres'
+    ports:
+      - "5431:5431"  # Хост:Контейнер
+    environment:
+      - 'POSTGRES_USER=coffee13102006'
+      - 'POSTGRES_PASSWORD=nata155630'
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+      - 'POSTGRES_DB=AIS_SST'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ais_sst_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coffee13102006 -d AIS_SST"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: 'java-ais-sst'
+    ports:
+      - "8080:8080"
+    environment:
+      - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/AIS_SST'
+      - 'SPRING_DATASOURCE_USERNAME=coffee13102006'
+      - 'SPRING_DATASOURCE_PASSWORD=nata155630'
+      - 'SPRING_JPA_HIBERNATE_DDL_AUTO=update'           # автоматическое создание таблиц
+      - 'SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect'
+      - 'SPRING_JPA_SHOW_SQL=true'                        # показывать SQL в логах
+      - 'SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver'
+      - 'SPRING_LIQUIBASE_ENABLED=true'
+      - 'SPRING_LIQUIBASE_CHANGE_LOG=classpath:db/changelog/db.changelog-master.yaml'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ais_sst_network
+
+volumes:
+  postgres_data:
+
+networks:
+  ais_sst_network:
+    name: ais_sst_default  # Используем существующую сеть
