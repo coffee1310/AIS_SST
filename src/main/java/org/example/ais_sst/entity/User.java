@@ -43,6 +43,7 @@ public class User {
     private LocalDate dateOfBirth;
 
     @Column(name = "course_number")
+    @NotNull
     private Short courseNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)

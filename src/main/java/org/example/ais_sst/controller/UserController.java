@@ -2,6 +2,7 @@ package org.example.ais_sst.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,17 +29,23 @@ public class UserController {
     private final UserService userService;
 
     // Сделать подсчет кол-ва баллов!
+    @Transactional
     @GetMapping()
-    public ResponseEntity<?> getCurrentUserInfo() throws JsonProcessingException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return new ResponseEntity<>("", HttpStatusCode.valueOf(403));
+    public ResponseEntity<?> getCurrentUserInfo() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return new ResponseEntity<>("", HttpStatusCode.valueOf(403));
+            }
+
+            CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+            Long id = user.getId();
+            UserProfileInfoDTO userProfileInfoDTO = userService.getUserBasicInfo(id);
+
+            return ResponseEntity.ok(userProfileInfoDTO);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
         }
-
-        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
-        Long id = user.getId();
-        UserProfileInfoDTO userProfileInfoDTO = userService.getUserBasicInfo(id);
-
-        return ResponseEntity.ok(userProfileInfoDTO);
     }
 }
