@@ -131,7 +131,6 @@ namespace Diplom_Stud.Pages.Activist
                 var additionalEmailTextBlock = FindNameInVisualTree<TextBlock>(this, "AdditionalEmailTextBlock");
                 var vkLinkTextBlock = FindNameInVisualTree<TextBlock>(this, "VkLinkTextBlock");
 
-                // Update name (Full name: surname + name + patronymic)
                 string fullName = $"{_userProfileData.surname} {_userProfileData.name} {_userProfileData.patronymic}";
                 if (nameTextBlock != null) nameTextBlock.Text = fullName;
 
