@@ -49,7 +49,6 @@
             </Setter>
         </Style>
 
-        <!-- Стиль для индикаторов слайдов -->
         <Style x:Key="SlideIndicatorStyle" TargetType="Ellipse">
             <Setter Property="Width" Value="8"/>
             <Setter Property="Height" Value="8"/>
@@ -60,10 +59,7 @@
 
     <Grid>
         <Grid.Background>
-            <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                <GradientStop Color="#0D0914" Offset="0"/>
-                <GradientStop Color="#1A1525" Offset="1"/>
-            </LinearGradientBrush>
+            <SolidColorBrush Color="#030106"/>
         </Grid.Background>
 
         <Grid.ColumnDefinitions>
@@ -71,7 +67,32 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Левая часть (без изменений) -->
+        <Ellipse Grid.ColumnSpan="2" 
+                 Width="1200" Height="1200" 
+                 HorizontalAlignment="Left" VerticalAlignment="Top" 
+                 Margin="-400,-400,0,0" 
+                 IsHitTestVisible="False">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#88453281" Offset="0"/>
+                    <GradientStop Color="#00453281" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <Ellipse Grid.ColumnSpan="2" 
+                 Width="1000" Height="1000" 
+                 HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                 Margin="0,0,-300,-250" 
+                 IsHitTestVisible="False">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#66453281" Offset="0"/>
+                    <GradientStop Color="#00453281" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
         <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="50,0">
             <Image Source="/Resources/logo.png" Width="139" Height="87" Margin="0,0,0,20" Stretch="Uniform"/>
 
@@ -100,7 +121,6 @@
             </StackPanel>
         </StackPanel>
 
-        <!-- Правая часть с перелистывающимися изображениями -->
         <Border Grid.Column="1" Background="#12101C" Width="613" Height="722" CornerRadius="23" VerticalAlignment="Center" HorizontalAlignment="Center">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="60" Opacity="0.5" ShadowDepth="10" Color="Black"/>
@@ -112,7 +132,6 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Контейнер для перелистывания изображений -->
                 <Border Grid.Row="0" CornerRadius="23" ClipToBounds="True">
                     <Grid x:Name="SlidesContainer">
                         <Image x:Name="SlideImage1" Source="/Resources/auth.png" Stretch="UniformToFill" Opacity="1"/>
@@ -121,7 +140,6 @@
                     </Grid>
                 </Border>
 
-                <!-- Индикаторы слайдов -->
                 <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,15">
                     <Ellipse x:Name="Indicator1" Style="{StaticResource SlideIndicatorStyle}" Fill="#615292"/>
                     <Ellipse x:Name="Indicator2" Style="{StaticResource SlideIndicatorStyle}" Fill="#7A7886"/>
@@ -172,7 +190,7 @@
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <TextBlock Text="Нет аккаунта? " Foreground="#7A7886" FontSize="14" FontFamily="Montserrat Thin"/>
-                        <TextBlock Text="Зарегистрироваться" Foreground="#02B3BA" Cursor="Hand" FontSize="14" FontFamily="Montserrat Thin"/>
+                        <TextBlock Text="Зарегистрироваться" Foreground="#02B3BA" Cursor="Hand" FontSize="14" FontFamily="Montserrat Thin" MouseLeftButtonDown="RegisterText_MouseLeftButtonDown"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>

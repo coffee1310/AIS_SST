@@ -24,8 +24,22 @@ namespace Diplom_Stud
         public MainWindow()
         {
             InitializeComponent();
-            WindowState = WindowState.Maximized;
-            MainFrame.Navigate(new Auth());
+
+            this.WindowState = WindowState.Maximized;
+
+            MainFrame.Navigate(new Pages.General.Auth());
+        }
+
+        private void MainFrame_Navigated(object sender, NavigationEventArgs e)
+        {
+            if (e.Content is Pages.General.Auth || e.Content is Pages.General.Reg)
+            {
+                LeftMenu.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                LeftMenu.Visibility = Visibility.Visible;
+            }
         }
     }
 }

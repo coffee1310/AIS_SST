@@ -42,7 +42,6 @@
                                                 <ColumnDefinition Width="30"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Отображение выбранного элемента или плейсхолдера -->
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="15,0,0,0" VerticalAlignment="Center">
                                                 <TextBlock x:Name="Star" Text="*" Foreground="#02B3BA" Margin="0,0,5,0" Visibility="Collapsed"/>
                                                 <TextBlock x:Name="DisplayText" 
@@ -63,12 +62,10 @@
                                         </Grid>
 
                                         <ControlTemplate.Triggers>
-                                            <!-- Показываем звездочку для обязательных полей -->
                                             <DataTrigger Binding="{Binding SelectedItem.Tag, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="Required">
                                                 <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
 
-                                            <!-- Показываем плейсхолдер если ничего не выбрано -->
                                             <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="{x:Null}">
                                                 <Setter TargetName="DisplayText" Property="Visibility" Value="Collapsed"/>
                                                 <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible"/>
@@ -159,7 +156,6 @@
                         </Grid>
 
                         <ControlTemplate.Triggers>
-                            <!-- Показываем звездочку для обязательных полей -->
                             <Trigger Property="Tag" Value="Фамилия">
                                 <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
                             </Trigger>
@@ -188,7 +184,6 @@
                                 <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
                             </Trigger>
 
-                            <!-- Показываем водяной знак когда текст пустой и нет фокуса -->
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>
                                     <Condition Property="Text" Value=""/>
@@ -197,12 +192,10 @@
                                 <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
                             </MultiTrigger>
 
-                            <!-- Скрываем водяной знак при фокусе -->
                             <Trigger Property="IsFocused" Value="True">
                                 <Setter TargetName="Watermark" Property="Visibility" Value="Collapsed"/>
                             </Trigger>
 
-                            <!-- Скрываем водяной знак при наличии текста -->
                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Text.Length}" Value="0">
                                 <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
                             </DataTrigger>
@@ -266,17 +259,38 @@
 
     <Grid>
         <Grid.Background>
-            <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                <GradientStop Color="#0D0914" Offset="0"/>
-                <GradientStop Color="#1A1525" Offset="1"/>
-            </LinearGradientBrush>
+            <SolidColorBrush Color="#030106"/>
         </Grid.Background>
+
+        <Ellipse Width="1200" Height="1200" 
+                 HorizontalAlignment="Left" VerticalAlignment="Top" 
+                 Margin="-400,-400,0,0" 
+                 IsHitTestVisible="False">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#88453281" Offset="0"/>
+                    <GradientStop Color="#00453281" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <Ellipse Width="1000" Height="1000" 
+                 HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                 Margin="0,0,-300,-250" 
+                 IsHitTestVisible="False">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#66453281" Offset="0"/>
+                    <GradientStop Color="#00453281" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" Margin="0,40">
                 <Image Source="/Resources/logo.png" Width="139" Height="87" Margin="0,0,0,20"/>
 
-                <Border Background="#12101C" Width="822" Height="1120" Padding="40" CornerRadius="20">
+                <Border Background="#12101C" Width="822" Height="1080" Padding="40" CornerRadius="20">
                     <StackPanel>
                         <TextBlock Text="Присоединяйся!" Foreground="White" FontSize="20" HorizontalAlignment="Center" FontFamily="Digital Pixel"/>
                         <TextBlock Text="Студенческий совет КИПФИН" Foreground="White" FontSize="20" HorizontalAlignment="Center" FontFamily="Digital Pixel" Margin="0,5,0,30"/>
@@ -299,27 +313,22 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Фамилия -->
                             <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Фамилия"/>
                             </Border>
 
-                            <!-- Имя -->
                             <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Имя"/>
                             </Border>
 
-                            <!-- Отчество -->
                             <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Отчество"/>
                             </Border>
 
-                            <!-- Дата рождения -->
                             <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Дата рождения"/>
                             </Border>
 
-                            <!-- Социальный статус -->
                             <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource RegInputBorderStyle}">
                                 <ComboBox x:Name="StatusBox" Style="{StaticResource ModernComboBoxStyle}" Height="58">
                                     <ComboBoxItem Content="Социальный статус" Tag="Required" IsEnabled="False" Foreground="#7A7886"/>
@@ -329,7 +338,6 @@
                                 </ComboBox>
                             </Border>
 
-                            <!-- Пол -->
                             <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource RegInputBorderStyle}">
                                 <ComboBox x:Name="GenderBox" Style="{StaticResource ModernComboBoxStyle}" Height="58">
                                     <ComboBoxItem Content="Пол" Tag="Required" IsEnabled="False" Foreground="#7A7886"/>
@@ -338,37 +346,30 @@
                                 </ComboBox>
                             </Border>
 
-                            <!-- Учебная группа -->
                             <Border Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Учебная группа"/>
                             </Border>
 
-                            <!-- Номер студенческого билета -->
                             <Border Grid.Row="4" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Номер студенческого билета"/>
                             </Border>
 
-                            <!-- Корпоративная почта -->
                             <Border Grid.Row="5" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Корпоративная почта (@edu.fa.ru)"/>
                             </Border>
 
-                            <!-- Дополнительная почта -->
                             <Border Grid.Row="6" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Дополнительная почта"/>
                             </Border>
 
-                            <!-- Номер телефона -->
                             <Border Grid.Row="7" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Номер телефона"/>
                             </Border>
 
-                            <!-- Ссылка на ВК -->
                             <Border Grid.Row="8" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Ссылка на социальную сеть ВКонтакте"/>
                             </Border>
 
-                            <!-- Фотография -->
                             <Border Grid.Row="9" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
                                 <TextBox Style="{StaticResource InnerInputStyle}" Tag="Официальная фотография"/>
                             </Border>
@@ -386,7 +387,7 @@
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                             <TextBlock Text="Уже есть аккаунт? " Foreground="#7A7886"/>
-                            <TextBlock Text="Войти" Foreground="#02B3BA" Cursor="Hand" FontWeight="Bold"/>
+                            <TextBlock Text="Войти" Foreground="#02B3BA" Cursor="Hand" FontWeight="Bold" MouseLeftButtonDown="LoginText_MouseLeftButtonDown"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
