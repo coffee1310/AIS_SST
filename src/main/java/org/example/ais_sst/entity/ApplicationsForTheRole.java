@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @Table(name = "applications_for_the_role")
 public class ApplicationsForTheRole {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -26,13 +27,11 @@ public class ApplicationsForTheRole {
     @JoinColumn(name = "role", nullable = false)
     private RolesAsTheEvent role;
 
+    @Column(name = "status", columnDefinition = "role_application_statuses not null")
+    private Object status;
+
     @Column(name = "date_of_application")
     private LocalDate dateOfApplication;
 
-/*
- TODO [Reverse Engineering] create field to map the 'status' column
- Available actions: Define target Java type | Uncomment as is | Remove column mapping
-    @Column(name = "status", columnDefinition = "role_application_statuses not null")
-    private Object status;
-*/
+
 }

@@ -1,0 +1,91 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-insert-roles
+      author: coffee13102006
+      comment: "Заполнение ролей (только если их нет)"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO roles (title)
+              SELECT 'Administrator'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE title = 'Administrator');
+        - sql:
+            sql: |
+              INSERT INTO roles (title)
+              SELECT 'Secretary'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE title = 'Secretary');
+        - sql:
+            sql: |
+              INSERT INTO roles (title)
+              SELECT 'Chairman'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE title = 'Chairman');
+        - sql:
+            sql: |
+              INSERT INTO roles (title)
+              SELECT 'Sector_coordinator'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE title = 'Sector_coordinator');
+        - sql:
+            sql: |
+              INSERT INTO roles (title)
+              SELECT 'Deputy_chairman'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE title = 'Deputy_chairman');
+        - sql:
+            sql: |
+              INSERT INTO roles (title)
+              SELECT 'Curator'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE title = 'Curator');
+        - sql:
+            sql: |
+              INSERT INTO roles (title)
+              SELECT 'Activist'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE title = 'Activist');
+
+  - changeSet:
+      id: 011-insert-specialities
+      author: coffee13102006
+      comment: "Заполнение специальностей (только если их нет)"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO specialities (title)
+              SELECT 'Информационные системы и программирование'
+              WHERE NOT EXISTS (SELECT 1 FROM specialities WHERE title = 'Информационные системы и программирование');
+        - sql:
+            sql: |
+              INSERT INTO specialities (title)
+              SELECT 'Информационные системы и безопасность'
+              WHERE NOT EXISTS (SELECT 1 FROM specialities WHERE title = 'Информационные системы и безопасность');
+        - sql:
+            sql: |
+              INSERT INTO specialities (title)
+              SELECT 'Интегрирование интеллектуальных систем'
+              WHERE NOT EXISTS (SELECT 1 FROM specialities WHERE title = 'Интегрирование интеллектуальных систем');
+
+  - changeSet:
+      id: 012-insert-social-statuses
+      author: coffee13102006
+      comment: "Заполнение социальных статусов (только если их нет)"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO social_statuses (title)
+              SELECT 'Инвалид'
+              WHERE NOT EXISTS (SELECT 1 FROM social_statuses WHERE title = 'Инвалид');
+        - sql:
+            sql: |
+              INSERT INTO social_statuses (title)
+              SELECT 'Сирота'
+              WHERE NOT EXISTS (SELECT 1 FROM social_statuses WHERE title = 'Сирота');
+
+  - changeSet:
+      id: 013-insert-groups
+      author: coffee13102006
+      comment: "Заполнение групп (15 групп, номера 1-5, года 22-24)"
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO groups (title) VALUES 
+              ('122'), ('222'), ('322'), ('422'), ('522'),
+              ('123'), ('223'), ('323'), ('423'), ('523'),
+              ('124'), ('224'), ('324'), ('424'), ('524')
+              ON CONFLICT (title) DO NOTHING;

@@ -10,7 +10,6 @@ import org.example.ais_sst.entity.Group;
 import org.example.ais_sst.entity.Role;
 import org.example.ais_sst.entity.SocialStatus;
 import org.example.ais_sst.entity.Speciality;
-import org.hibernate.validator.internal.metadata.facets.Validatable;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -49,11 +48,9 @@ public class UserProfileInfoDTO {
     private Short courseNumber;
 
 
-    private Speciality speciality;
+    private String specialityTitle;
 
-    private Group group;
-
-    private SocialStatus socialStatus;
+    private String groupTitle;
 
     @NotBlank
     private String studentEmail;
@@ -67,7 +64,7 @@ public class UserProfileInfoDTO {
 
     private String photo;
 
-    private Role role;
+    private String roleTitle;
 
     public void validate(Validator validator) {
         Set<ConstraintViolation<UserProfileInfoDTO>> violations = validator.validate(this);

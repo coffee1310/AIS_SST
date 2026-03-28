@@ -16,6 +16,7 @@ import java.time.LocalTime;
 @Table(name = "roles_as_the_event")
 public class RolesAsTheEvent {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -59,6 +60,7 @@ public class RolesAsTheEvent {
 
     @NotNull
     @Column(name = "is_accepting_applications_open", nullable = false)
-    private Boolean isAcceptingApplicationsOpen = false;
+    private Boolean isAcceptingApplicationsOpen;
+
 
 }

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 @Getter
 @Setter
@@ -12,6 +13,7 @@ import lombok.Setter;
 @Table(name = "applications_for_membership")
 public class ApplicationsForMembership {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -29,11 +31,9 @@ public class ApplicationsForMembership {
     @Column(name = "file_name", nullable = false, length = 128)
     private String fileName;
 
-/*
- TODO [Reverse Engineering] create field to map the 'status' column
- Available actions: Define target Java type | Uncomment as is | Remove column mapping
     @ColumnDefault("'На рассмотрении'")
     @Column(name = "status", columnDefinition = "application_statuses_for_membership not null")
     private Object status;
-*/
+
+
 }

@@ -13,6 +13,7 @@ import org.hibernate.annotations.ColumnDefault;
 @Table(name = "sectors")
 public class Sector {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -35,5 +36,6 @@ public class Sector {
 
     @Column(name = "photo")
     private byte[] photo;
+
 
 }

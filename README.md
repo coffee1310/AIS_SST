@@ -19,3 +19,6 @@ docker build -t coffee1310/ais-sst-app:latest .
 
 # 4. Посмотреть логи
 docker compose logs -f app
+
+# Что сделать
+- Удалить поле social_status_id в liquibase 

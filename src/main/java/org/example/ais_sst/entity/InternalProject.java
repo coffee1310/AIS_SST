@@ -15,6 +15,7 @@ import java.time.LocalTime;
 @Table(name = "internal_projects")
 public class InternalProject {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -45,11 +46,12 @@ public class InternalProject {
     @NotNull
     @ColumnDefault("true")
     @Column(name = "is_draft", nullable = false)
-    private Boolean isDraft = false;
+    private Boolean isDraft;
 
     @NotNull
     @ColumnDefault("true")
     @Column(name = "is_active", nullable = false)
-    private Boolean isActive = false;
+    private Boolean isActive;
+
 
 }

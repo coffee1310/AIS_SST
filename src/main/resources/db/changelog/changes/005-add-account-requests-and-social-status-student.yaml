@@ -1,6 +1,5 @@
 # ==================== ДОБАВЛЕНИЕ НОВЫХ ТАБЛИЦ И ПОЛЕЙ ====================
 databaseChangeLog:
-  # ==================== ДОБАВЛЕНИЕ НОВЫХ ТАБЛИЦ И ПОЛЕЙ ====================
   - changeSet:
       id: 006-add-account-requests-and-social-status-student
       author: coffee13102006
@@ -37,6 +36,11 @@ databaseChangeLog:
               - column:
                   name: patronymic
                   type: VARCHAR(64)
+              - column:
+                  name: gender
+                  type: genders
+                  constraints:
+                    nullable: false
               - column:
                   name: date_of_birth
                   type: DATE
@@ -83,6 +87,12 @@ databaseChangeLog:
                   type: VARCHAR(256)
                   constraints:
                     nullable: false
+              - column:
+                  name: status
+                  type: account_creating_requests_statuses
+                  defaultValue: "На рассмотрении"
+                  constraints:
+                    nullable: false
 
         # Создание таблицы связи социальных статусов со студентами
         - createTable:
@@ -116,25 +126,8 @@ databaseChangeLog:
                     nullable: true
                     unique: true
 
-        # Добавление поля reason_for_refusal в таблицу users
-        - addColumn:
-            tableName: users
-            columns:
-              - column:
-                  name: reason_for_refusal
-                  type: TEXT
-                  constraints:
-                    nullable: true
-
-        # Удаление поля social_status_id из таблицы users
-        - dropColumn:
-            tableName: users
-            columns:
-              - column:
-                  name: social_status_id
-
   - changeSet:
-      id: 007-add-foreign-keys-for-new-tables
+      id: 008-add-foreign-keys-for-new-tables
       author: coffee13102006
       changes:
         # Foreign key для account_creating_requests.speciality_id
@@ -183,7 +176,7 @@ databaseChangeLog:
             onDelete: CASCADE
 
   - changeSet:
-      id: 008-add-check-constraints-for-new-tables
+      id: 009-add-check-constraints-for-new-tables
       author: coffee13102006
       changes:
         - sql:

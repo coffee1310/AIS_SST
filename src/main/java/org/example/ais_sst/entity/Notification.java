@@ -1,9 +1,6 @@
 package org.example.ais_sst.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -15,6 +12,7 @@ import lombok.Setter;
 @Table(name = "notifications")
 public class Notification {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -25,5 +23,6 @@ public class Notification {
 
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
+
 
 }

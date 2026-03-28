@@ -15,6 +15,7 @@ import java.time.LocalTime;
 @Table(name = "lessons")
 public class Lesson {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -35,5 +36,6 @@ public class Lesson {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "internal_project_id", nullable = false)
     private InternalProject internalProject;
+
 
 }

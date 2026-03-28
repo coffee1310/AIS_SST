@@ -1,6 +1,5 @@
 package org.example.ais_sst.entity;
 
-import converter.GenderConverter;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -8,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.ais_sst.entity.enums.Gender;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -38,12 +36,14 @@ public class User {
     @Column(name = "patronymic", length = 64)
     private String patronymic;
 
+    @Column(name = "gender", columnDefinition = "genders not null")
+    private Gender gender;
+
     @NotNull
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
     @Column(name = "course_number")
-    @NotNull
     private Short courseNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -58,11 +58,6 @@ public class User {
 
     @Column(name = "student_id_number")
     private Integer studentIdNumber;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "social_status_id")
-    private SocialStatus socialStatus;
 
     @Size(max = 32)
     @NotNull
@@ -98,14 +93,13 @@ public class User {
     @ColumnDefault("true")
     @Column(name = "is_active")
     private Boolean isActive;
+
     @ColumnDefault("false")
     @Column(name = "is_banned")
     private Boolean isBanned;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "gender", nullable = false)
-    @ColumnTransformer(
-            write = "CAST(? AS genders)"
-    )
-    private Gender gender;
+    @OneToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @JoinColumn(name = "account_creating_request_id")
+    private AccountCreatingRequest accountCreatingRequest;
 }

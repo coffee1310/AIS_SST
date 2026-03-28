@@ -21,14 +21,6 @@ databaseChangeLog:
 
         - addForeignKeyConstraint:
             baseTableName: users
-            baseColumnNames: social_status_id
-            referencedTableName: social_statuses
-            referencedColumnNames: id
-            constraintName: fk_users_social_status
-            onDelete: CASCADE
-
-        - addForeignKeyConstraint:
-            baseTableName: users
             baseColumnNames: role_id
             referencedTableName: roles
             referencedColumnNames: id

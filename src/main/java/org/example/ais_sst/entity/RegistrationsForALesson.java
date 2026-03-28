@@ -12,6 +12,7 @@ import org.hibernate.annotations.ColumnDefault;
 @Table(name = "registrations_for_a_lesson")
 public class RegistrationsForALesson {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -23,5 +24,6 @@ public class RegistrationsForALesson {
     @ColumnDefault("0")
     @Column(name = "count_of_points")
     private Integer countOfPoints;
+
 
 }

@@ -112,9 +112,6 @@ databaseChangeLog:
                   name: student_id_number
                   type: INTEGER
               - column:
-                  name: social_status_id
-                  type: INTEGER
-              - column:
                   name: student_email
                   type: VARCHAR(32)
                   constraints:

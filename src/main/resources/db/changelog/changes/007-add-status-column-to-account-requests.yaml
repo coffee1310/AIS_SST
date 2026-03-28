@@ -1,0 +1,14 @@
+databaseChangeLog:
+- changeSet:
+    id: 010-add-status-column-to-account-requests
+    author: coffee13102006
+    changes:
+      - addColumn:
+          tableName: account_creating_requests
+          columns:
+            - column:
+                name: status
+                type: account_creating_requests_statuses
+                defaultValue: "На рассмотрении"
+                constraints:
+                  nullable: false
