@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -79,7 +80,8 @@ public class SecurityConfig {
                     authz
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/api/test/**").permitAll()
-                            .requestMatchers("/api/account_requests").permitAll()
+                            .requestMatchers(HttpMethod.POST,"/api/account_requests").permitAll()
+                            .requestMatchers("/api/specialities").permitAll()
                             .requestMatchers("/", "/error", "/favicon.ico").permitAll()
                             .anyRequest().authenticated();
                     log.info("Authorization rules configured");

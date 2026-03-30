@@ -1,0 +1,55 @@
+package org.example.ais_sst.dto.account_request;
+
+
+import jakarta.persistence.criteria.CriteriaBuilder;
+import lombok.Builder;
+import lombok.Data;
+import org.example.ais_sst.entity.AccountCreatingRequest;
+import org.example.ais_sst.entity.enums.AccountCreatingRequestStatus;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+public class AccountCreatingRequestResponseDTO {
+    private Integer id;
+    private String name;
+    private String surname;
+    private String patronymic;
+    private String gender;
+    private LocalDate dateOfBirth;
+    private String studentEmail;
+    private String phoneNumber;
+    private Integer studentIdNumber;
+    private Short courseNumber;
+    private AccountCreatingRequestStatus status;
+    private String reasonForRefusal;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private Integer groupId;
+    private String groupName;
+    private Integer specialityId;
+    private String specialityName;
+
+    public static AccountCreatingRequestResponseDTO from(AccountCreatingRequest request) {
+        return AccountCreatingRequestResponseDTO.builder()
+                .id(request.getId())
+                .name(request.getName())
+                .surname(request.getSurname())
+                .patronymic(request.getPatronymic())
+                .gender(request.getGender() != null ? request.getGender().name() : null)
+                .dateOfBirth(request.getDateOfBirth())
+                .studentEmail(request.getStudentEmail())
+                .phoneNumber(request.getPhoneNumber())
+                .studentIdNumber(request.getStudentIdNumber())
+                .courseNumber(request.getCourseNumber())
+                .status(request.getStatus())
+                .reasonForRefusal(request.getReasonForRefusal())
+                .groupId(request.getGroup().getId())
+                .groupName(request.getGroup() != null ? request.getGroup().getTitle() : null)
+                .specialityId(request.getSpeciality() != null ? request.getSpeciality().getId() : null)
+                .specialityName(request.getSpeciality() != null ? request.getSpeciality().getTitle() : null)
+                .build();
+    }
+}

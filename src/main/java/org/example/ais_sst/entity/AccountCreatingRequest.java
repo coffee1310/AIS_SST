@@ -11,6 +11,28 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.dto.account_request.AccountCreatingRequestRejectDTO;
+import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO;
+import org.example.ais_sst.entity.AccountCreatingRequest;
+import org.example.ais_sst.entity.Group;
+import org.example.ais_sst.entity.Speciality;
+import org.example.ais_sst.entity.enums.AccountCreatingRequestStatus;
+import org.example.ais_sst.entity.enums.Gender;
+import org.example.ais_sst.exception.*;
+import org.example.ais_sst.repository.AccountCreatingRequestsRepository;
+import org.example.ais_sst.repository.GroupRepository;
+import org.example.ais_sst.repository.SpecialityRepository;
+import org.example.ais_sst.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
 @Getter
 @Setter
 @Entity
