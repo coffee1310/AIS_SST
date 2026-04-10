@@ -17,10 +17,13 @@ fun CustomTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    errorMessage: String? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    suffix: @Composable (() -> Unit)? = null
 ) {
     val glassBackgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.02f)
 
@@ -31,13 +34,18 @@ fun CustomTextField(
             Text(
                 text = placeholder,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
             )
+        },
+        isError = isError,
+        supportingText = errorMessage?.let {
+            { Text(text = it, style = MaterialTheme.typography.labelMedium) }
         },
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         trailingIcon = trailingIcon,
+        suffix = suffix,
         textStyle = MaterialTheme.typography.bodyLarge,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = glassBackgroundColor,
@@ -46,10 +54,13 @@ fun CustomTextField(
             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
             focusedTextColor = MaterialTheme.colorScheme.onSurface,
             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-            cursorColor = MaterialTheme.colorScheme.primary
-        ),
+            cursorColor = MaterialTheme.colorScheme.primary,
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            errorCursorColor = MaterialTheme.colorScheme.error,
+            errorSupportingTextColor = MaterialTheme.colorScheme.error
+            ),
         shape = MaterialTheme.shapes.medium,
-        modifier = modifier.fillMaxWidth().height(62.dp),
+        modifier = modifier.fillMaxWidth(),
         singleLine = true
     )
 }

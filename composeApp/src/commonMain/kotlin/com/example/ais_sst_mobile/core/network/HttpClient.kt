@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 
 // Базовый URL. 10.0.2.2 используется для доступа к localhost компа из эмулятора Android.
 // Для iOS симулятора нужно будет использовать http://127.0.0.1:8080/api/ или IP твоего ПК в локальной сети.
-internal const val BASE_URL = "http://10.0.2.2:8080/api/"
+internal const val BASE_URL = "http://192.168.1.9:8080/api/"
 
 fun createHttpClient(): HttpClient {
     return HttpClient {
@@ -21,7 +21,7 @@ fun createHttpClient(): HttpClient {
             json(Json {
                 prettyPrint = true
                 isLenient = true
-                ignoreUnknownKeys = true // Игнорируем поля из JSON, которых нет в наших DTO
+                ignoreUnknownKeys = true
             })
         }
         install(Logging) {

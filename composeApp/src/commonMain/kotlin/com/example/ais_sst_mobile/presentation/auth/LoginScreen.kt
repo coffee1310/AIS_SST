@@ -31,6 +31,7 @@ import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import org.jetbrains.compose.resources.painterResource
 import ais_sst_mobile.composeapp.generated.resources.Res
 import ais_sst_mobile.composeapp.generated.resources.logo_auth
+import cafe.adriel.voyager.navigator.currentOrThrow
 
 class LoginScreen : Screen {
     @Composable
@@ -43,10 +44,32 @@ class LoginScreen : Screen {
         var password by rememberSaveable { mutableStateOf("") }
         var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
 
+        val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,}\$") }
+
+        val isLoginError = login.isNotEmpty() && login.length != 6
+
+        val isPasswordError = password.isNotEmpty() && !passwordRegex.matches(password)
+
+        val navigator = cafe.adriel.voyager.navigator.LocalNavigator.currentOrThrow
+
+        LaunchedEffect(state) {
+            when (state) {
+                is LoginScreenModel.State.Success -> {
+                    // TODO: Здесь будет переход на главный экран приложения!
+                    // navigator.replaceAll(MainScreen())
+
+                    val user = (state as LoginScreenModel.State.Success).user
+                    println("АВТОРИЗАЦИЯ УСПЕШНА! Привет, ${user.name} ${user.surname}. Токен: ${user.token}")
+                }
+                else -> {}
+            }
+        }
+
         AppBackground {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -63,22 +86,38 @@ class LoginScreen : Screen {
 
                 CustomTextField(
                     value = login,
-                    onValueChange = { login = it },
-                    placeholder = "Логин",
+                    onValueChange = { newValue ->
+                        if (newValue.all { it.isDigit() }) {
+                            login = newValue
+                            screenModel.resetState()
+                        }
+                    },
+                    placeholder = "Номер студбилета",
+                    isError = isLoginError,
+                    errorMessage = if (isLoginError) "Студбилет должен состоять из 6 цифр" else null,
                     keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                    )
+                    ),
+                    suffix = {
+                        Text("@edu.fa.ru", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
                 CustomTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = {
+                        password = it
+                        screenModel.resetState()
+                    },
                     placeholder = "Пароль",
+                    isError = isPasswordError,
+                    errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z и цифры" else null,
                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
@@ -127,6 +166,15 @@ class LoginScreen : Screen {
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
+                }
+
+                if (state is LoginScreenModel.State.Error) {
+                    Text(
+                        text = (state as LoginScreenModel.State.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

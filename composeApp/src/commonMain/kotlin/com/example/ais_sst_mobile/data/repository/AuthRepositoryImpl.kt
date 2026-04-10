@@ -20,10 +20,8 @@ class AuthRepositoryImpl(
             setBody(request)
         }.body<AuthResponse>()
 
-        // Сохраняем токен и роль локально с помощью Multiplatform Settings
         settings.putString("jwt_token", response.token)
-        settings.putString("user_role", response.role)
-
+        settings.putString("user_role", response.roles.joinToString(","))
         response
     }
 

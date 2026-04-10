@@ -9,19 +9,24 @@ data class LoginRequest(
 )
 
 @Serializable
+data class AuthResponse(
+    val token: String,
+    val type: String = "Bearer",
+    val id: Int,
+    val email: String,
+    val name: String,
+    val surname: String,
+    val roles: List<String>
+)
+
+@Serializable
 data class RegisterRequest(
     val name: String,
     val surname: String,
     val patronymic: String? = null,
-    val gender: String, // "Мужчина", "Женщина"
-    val dateOfBirth: String, // Формат "YYYY-MM-DD"
+    val gender: String,
+    val dateOfBirth: String,
     val studentEmail: String,
     val phoneNumber: String,
     val password: String
-)
-
-@Serializable
-data class AuthResponse(
-    val token: String,
-    val role: String // Бэкенд должен возвращать роль (например, "Активист", "Председатель") для маршрутизации
 )
