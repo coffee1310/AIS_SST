@@ -69,6 +69,39 @@ pipeline {
                 }
             }
         }
+
+        stage('Check Container Status') {
+            steps {
+                echo 'Checking container status...'
+                script {
+                    sh """
+                        echo "=== Running containers ==="
+                        docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+
+                        echo "=== Container logs (last 10 lines) ==="
+                        docker logs --tail 10 ais-sst-app 2>&1 || echo "Container not found"
+                    """
+                }
+            }
+        }
+
+        stage('Check Docker Containers') {
+            steps {
+                script {
+                    // Получить список контейнеров
+                    def containers = docker ps()
+                    echo "Running containers: ${containers}"
+
+                    // Проверить конкретный контейнер
+                    def appContainer = docker.container('ais-sst-app')
+                    if (appContainer.isRunning()) {
+                        echo "✅ ais-sst-app is running"
+                    } else {
+                        error("❌ ais-sst-app is not running!")
+                    }
+                }
+            }
+        }
     }
 
     post {
