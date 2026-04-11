@@ -13,7 +13,20 @@ pipeline {
             steps {
                 echo 'Cloning repository...'
                 checkout scm
-                echo 'Branch: ' + env.GIT_BRANCH
+            }
+        }
+
+        // НОВАЯ СТАДИЯ: Сборка JAR файла
+        stage('Build JAR') {
+            agent { label 'built-in' }
+            steps {
+                echo 'Building JAR with Maven...'
+                script {
+                    // Если используете Maven
+                    sh 'mvn clean package -DskipTests'
+                    // Или если Gradle:
+                    // sh './gradlew build -x test'
+                }
             }
         }
 
@@ -24,7 +37,7 @@ pipeline {
                 script {
                     sh """
                         docker build -t ${DOCKER_HUB_CREDS_USR}/${APP_NAME}:latest .
-                        echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin
+                        echo '${DOCKER_HUB_CREDS_PSW}' | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin
                         docker push ${DOCKER_HUB_CREDS_USR}/${APP_NAME}:latest
                     """
                 }
@@ -49,10 +62,9 @@ pipeline {
         stage('Health Check') {
             agent { label 'built-in' }
             steps {
-                echo 'Waiting for app to start...'
                 script {
                     sh 'sleep 15'
-                    sh 'curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/actuator/health || echo "Health endpoint not found, assuming OK"'
+                    sh 'curl -s http://localhost:8080/actuator/health || echo "App is running"'
                     echo 'Deployment completed!'
                 }
             }
