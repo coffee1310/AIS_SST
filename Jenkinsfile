@@ -79,8 +79,13 @@ pipeline {
                         echo "=== Running containers ==="
                         docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 
+                        echo ""
                         echo "=== Container logs (last 10 lines) ==="
                         docker logs --tail 10 ais-sst-app 2>&1 || echo "Container not found"
+
+                        echo ""
+                        echo "=== Container stats ==="
+                        docker stats --no-stream ais-sst-app ais-sst-postgres 2>&1 || echo "Stats not available"
                     """
                 }
             }
