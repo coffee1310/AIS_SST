@@ -28,7 +28,7 @@ services:
       - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/AIS_SST?stringtype=unspecified'
       - 'SPRING_DATASOURCE_USERNAME=coffee13102006'
       - 'SPRING_DATASOURCE_PASSWORD=nata155630'
-      - 'SERVER_PORT=8081'  # ← ДОБАВИТЬ: порт внутри контейнера
+      - 'SERVER_PORT=8080'  # ← ДОБАВИТЬ: порт внутри контейнера
     depends_on:
       postgres:
         condition: service_healthy
