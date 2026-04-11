@@ -3,7 +3,7 @@ services:
     image: 'postgres:18.0-alpine'
     container_name: 'ais-sst-postgres'
     ports:
-      - "5432:5432"  # ← ИСПРАВИТЬ: использовать стандартный порт
+      - "5433:5433"  # ← ИСПРАВИТЬ: использовать стандартный порт
     environment:
       - 'POSTGRES_USER=coffee13102006'
       - 'POSTGRES_PASSWORD=nata155630'
@@ -22,7 +22,7 @@ services:
     build: .
     container_name: 'ais-sst-app'
     ports:
-      - "8090:8081"  # Хост:8080 → Контейнер:8081
+      - "8080:8080"  # Хост:8080 → Контейнер:8081
     environment:
       - 'SPRING_PROFILES_ACTIVE=docker'  # ← ДОБАВИТЬ: использовать docker профиль
       - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/AIS_SST?stringtype=unspecified'
