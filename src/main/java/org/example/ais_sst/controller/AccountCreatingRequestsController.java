@@ -24,11 +24,11 @@ public class AccountCreatingRequestsController {
 
     private final AccountCreatingRequestsService accountCreatingRequestsService;
 
-    @PostMapping
-    public ResponseEntity<?> createAccountRequest(@RequestBody @Valid AccountCreatingRequestsSummaryDTO AccountRequestDTO) throws Exception {
-        AccountCreatingRequest accountCreatingRequest = accountCreatingRequestsService.createAccountRequest(AccountRequestDTO);
-        return new ResponseEntity<>(accountCreatingRequest, HttpStatus.CREATED);
-    }
+//    @PostMapping
+//    public ResponseEntity<?> createAccountRequest(@RequestBody @Valid AccountCreatingRequestsSummaryDTO AccountRequestDTO) throws Exception {
+//        AccountCreatingRequest accountCreatingRequest = accountCreatingRequestsService.createAccountRequest(AccountRequestDTO);
+//        return new ResponseEntity<>(accountCreatingRequest, HttpStatus.CREATED);
+//    }
 
     @PutMapping("/reject/{id}")
     public ResponseEntity<?> rejectAccountRequest(@PathVariable Long id, @Valid @RequestBody AccountCreatingRequestRejectDTO accountCreatingRequestReject) {
