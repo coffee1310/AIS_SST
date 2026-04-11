@@ -71,6 +71,7 @@ pipeline {
         }
 
         stage('Check Container Status') {
+            agent { label 'built-in' }
             steps {
                 echo 'Checking container status...'
                 script {
