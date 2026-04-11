@@ -84,24 +84,6 @@ pipeline {
                 '''
             }
         }
-
-        stage('Check Docker Containers') {
-            steps {
-                script {
-                    // Получить список контейнеров
-                    def containers = docker ps()
-                    echo "Running containers: ${containers}"
-
-                    // Проверить конкретный контейнер
-                    def appContainer = docker.container('ais-sst-app')
-                    if (appContainer.isRunning()) {
-                        echo "✅ ais-sst-app is running"
-                    } else {
-                        error("❌ ais-sst-app is not running!")
-                    }
-                }
-            }
-        }
     }
 
     post {
