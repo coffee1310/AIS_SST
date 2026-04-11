@@ -50,9 +50,9 @@ pipeline {
                 echo 'Deploying application...'
                 script {
                     sh """
-                        cd ${COMPOSE_PATH}
-                        docker pull ${DOCKER_HUB_CREDS_USR}/${APP_NAME}:latest
-                        docker compose up -d --force-recreate app
+                        cd /home/coffee13102006/docker/app
+                        docker pull ${DOCKER_HUB_CREDS_USR}/ais-sst-app:latest
+                        docker-compose up -d --force-recreate app
                         docker system prune -f
                     """
                 }
