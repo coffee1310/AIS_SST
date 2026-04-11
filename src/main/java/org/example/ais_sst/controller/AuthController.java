@@ -67,56 +67,56 @@ public class AuthController {
                 roles));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody UserSummaryDTO userSummaryDTO) {
-        log.info("Registration attempt for email: {}", userSummaryDTO.getStudentEmail());
-
-        if (userRepository.existsByStudentEmail(userSummaryDTO.getStudentEmail())) {
-            log.warn("Registration failed - email already exists: {}", userSummaryDTO.getStudentEmail());
-            return ResponseEntity.badRequest().body("Ошибка: Email уже используется!");
-        }
-
-        if (userRepository.existsByPhoneNumber(userSummaryDTO.getPhoneNumber())) {
-            log.warn("Registration failed - phone already exists: {}", userSummaryDTO.getPhoneNumber());
-            return ResponseEntity.badRequest().body("Ошибка: Телефон уже используется!");
-        }
-
-        try {
-            Role userRole = roleRepository.findByTitle("Activist")
-                    .orElseThrow(() -> new RuntimeException("Ошибка: Роль Activist не найдена в БД!"));
-
-            Group userGroup = groupRepository.findGroupById(userSummaryDTO.getGroup_id())
-                    .orElseThrow(() -> new GroupDoesNotExistException(String.format("Ошибка: Группа с id: %s не существует", userSummaryDTO.getGroup_id())));
-
-            Speciality userSpeciality = specialityRepository.findSpecialityById(userSummaryDTO.getSpeciality_id())
-                    .orElseThrow(() -> new SpecialityDoesNotExistException(String.format("Ошибка: Специальность с id: %s не существует", userSummaryDTO.getSpeciality_id())));
-
-            // Создание нового пользователя
-            User user = new User();
-            user.setName(userSummaryDTO.getName());
-            user.setSurname(userSummaryDTO.getSurname());
-            user.setPatronymic(userSummaryDTO.getPatronymic());
-            user.setGender(userSummaryDTO.getGender());
-            user.setDateOfBirth(userSummaryDTO.getDateOfBirth());
-            user.setStudentEmail(userSummaryDTO.getStudentEmail());
-            user.setPhoneNumber(userSummaryDTO.getPhoneNumber());
-            user.setPassword(passwordEncoder.encode(userSummaryDTO.getPassword()));
-            user.setStudentIdNumber(userSummaryDTO.getStudentIdNumber());
-            user.setCourseNumber(userSummaryDTO.getCourseNumber());
-            user.setGroup(userGroup);
-            user.setSpeciality(userSpeciality);
-            user.setRole(userRole);
-            user.setIsActive(true);
-            user.setIsBanned(false);
-
-            User savedUser = userRepository.save(user);
-            log.info("User registered successfully with ID: {}", savedUser.getId());
-
-            return ResponseEntity.ok("Пользователь успешно зарегистрирован!");
-
-        } catch (Exception e) {
-            log.error("Registration failed: ", e);
-            return ResponseEntity.badRequest().body("Ошибка при регистрации: " + e.getMessage());
-        }
-    }
+//    @PostMapping("/register")
+//    public ResponseEntity<?> registerUser(@Valid @RequestBody UserSummaryDTO userSummaryDTO) {
+//        log.info("Registration attempt for email: {}", userSummaryDTO.getStudentEmail());
+//
+//        if (userRepository.existsByStudentEmail(userSummaryDTO.getStudentEmail())) {
+//            log.warn("Registration failed - email already exists: {}", userSummaryDTO.getStudentEmail());
+//            return ResponseEntity.badRequest().body("Ошибка: Email уже используется!");
+//        }
+//
+//        if (userRepository.existsByPhoneNumber(userSummaryDTO.getPhoneNumber())) {
+//            log.warn("Registration failed - phone already exists: {}", userSummaryDTO.getPhoneNumber());
+//            return ResponseEntity.badRequest().body("Ошибка: Телефон уже используется!");
+//        }
+//
+//        try {
+//            Role userRole = roleRepository.findByTitle("Activist")
+//                    .orElseThrow(() -> new RuntimeException("Ошибка: Роль Activist не найдена в БД!"));
+//
+//            Group userGroup = groupRepository.findGroupById(userSummaryDTO.getGroup_id())
+//                    .orElseThrow(() -> new GroupDoesNotExistException(String.format("Ошибка: Группа с id: %s не существует", userSummaryDTO.getGroup_id())));
+//
+//            Speciality userSpeciality = specialityRepository.findSpecialityById(userSummaryDTO.getSpeciality_id())
+//                    .orElseThrow(() -> new SpecialityDoesNotExistException(String.format("Ошибка: Специальность с id: %s не существует", userSummaryDTO.getSpeciality_id())));
+//
+//            // Создание нового пользователя
+//            User user = new User();
+//            user.setName(userSummaryDTO.getName());
+//            user.setSurname(userSummaryDTO.getSurname());
+//            user.setPatronymic(userSummaryDTO.getPatronymic());
+//            user.setGender(userSummaryDTO.getGender());
+//            user.setDateOfBirth(userSummaryDTO.getDateOfBirth());
+//            user.setStudentEmail(userSummaryDTO.getStudentEmail());
+//            user.setPhoneNumber(userSummaryDTO.getPhoneNumber());
+//            user.setPassword(passwordEncoder.encode(userSummaryDTO.getPassword()));
+//            user.setStudentIdNumber(userSummaryDTO.getStudentIdNumber());
+//            user.setCourseNumber(userSummaryDTO.getCourseNumber());
+//            user.setGroup(userGroup);
+//            user.setSpeciality(userSpeciality);
+//            user.setRole(userRole);
+//            user.setIsActive(true);
+//            user.setIsBanned(false);
+//
+//            User savedUser = userRepository.save(user);
+//            log.info("User registered successfully with ID: {}", savedUser.getId());
+//
+//            return ResponseEntity.ok("Пользователь успешно зарегистрирован!");
+//
+//        } catch (Exception e) {
+//            log.error("Registration failed: ", e);
+//            return ResponseEntity.badRequest().body("Ошибка при регистрации: " + e.getMessage());
+//        }
+//    }
 }
