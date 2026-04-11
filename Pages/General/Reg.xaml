@@ -17,7 +17,6 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Height" Value="58"/>
-            <Setter Property="Margin" Value="5"/>
         </Style>
 
         <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
@@ -143,7 +142,8 @@
                                         Orientation="Horizontal" 
                                         VerticalAlignment="Center" 
                                         Margin="{TemplateBinding Padding}" 
-                                        IsHitTestVisible="False">
+                                        IsHitTestVisible="False"
+                                        Visibility="Collapsed">
                                 <TextBlock x:Name="Star" 
                                            Text="*" 
                                            Foreground="#02B3BA" 
@@ -191,17 +191,6 @@
                                 </MultiTrigger.Conditions>
                                 <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
                             </MultiTrigger>
-
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="Watermark" Property="Visibility" Value="Collapsed"/>
-                            </Trigger>
-
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Text.Length}" Value="0">
-                                <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Text.Length}" Value="1">
-                                <Setter TargetName="Watermark" Property="Visibility" Value="Collapsed"/>
-                            </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -290,7 +279,7 @@
             <StackPanel HorizontalAlignment="Center" Margin="0,40">
                 <Image Source="/Resources/logo.png" Width="139" Height="87" Margin="0,0,0,20"/>
 
-                <Border Background="#12101C" Width="822" Height="1080" Padding="40" CornerRadius="20">
+                <Border Background="#12101C" Width="822" Padding="40" CornerRadius="20">
                     <StackPanel>
                         <TextBlock Text="Присоединяйся!" Foreground="White" FontSize="20" HorizontalAlignment="Center" FontFamily="Digital Pixel"/>
                         <TextBlock Text="Студенческий совет КИПФИН" Foreground="White" FontSize="20" HorizontalAlignment="Center" FontFamily="Digital Pixel" Margin="0,5,0,30"/>
@@ -313,77 +302,117 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Фамилия"/>
-                            </Border>
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbLastName" Style="{StaticResource InnerInputStyle}" Tag="Фамилия"/>
+                                </Border>
+                                <TextBlock x:Name="errLastName" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Имя"/>
-                            </Border>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbFirstName" Style="{StaticResource InnerInputStyle}" Tag="Имя"/>
+                                </Border>
+                                <TextBlock x:Name="errFirstName" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Отчество"/>
-                            </Border>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbPatronymic" Style="{StaticResource InnerInputStyle}" Tag="Отчество"/>
+                                </Border>
+                                <TextBlock x:Name="errPatronymic" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Дата рождения"/>
-                            </Border>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbBirthDate" Style="{StaticResource InnerInputStyle}" Tag="Дата рождения"/>
+                                </Border>
+                                <TextBlock x:Name="errBirthDate" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource RegInputBorderStyle}">
-                                <ComboBox x:Name="StatusBox" Style="{StaticResource ModernComboBoxStyle}" Height="58">
-                                    <ComboBoxItem Content="Социальный статус" Tag="Required" IsEnabled="False" Foreground="#7A7886"/>
-                                    <ComboBoxItem Content="Студент" Foreground="White"/>
-                                    <ComboBoxItem Content="Аспирант" Foreground="White"/>
-                                    <ComboBoxItem Content="Преподаватель" Foreground="White"/>
-                                </ComboBox>
-                            </Border>
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <ComboBox x:Name="cbStatus" Cursor="Hand" Style="{StaticResource ModernComboBoxStyle}" Height="58">
+                                        <ComboBoxItem Content="Социальный статус" Tag="Required" IsEnabled="False" Foreground="#7A7886"/>
+                                        <ComboBoxItem Content="Студент" Foreground="White"/>
+                                        <ComboBoxItem Content="Аспирант" Foreground="White"/>
+                                        <ComboBoxItem Content="Преподаватель" Foreground="White"/>
+                                    </ComboBox>
+                                </Border>
+                                <TextBlock x:Name="errStatus" Text="Выберите статус" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource RegInputBorderStyle}">
-                                <ComboBox x:Name="GenderBox" Style="{StaticResource ModernComboBoxStyle}" Height="58">
-                                    <ComboBoxItem Content="Пол" Tag="Required" IsEnabled="False" Foreground="#7A7886"/>
-                                    <ComboBoxItem Content="Мужской" Foreground="White"/>
-                                    <ComboBoxItem Content="Женский" Foreground="White"/>
-                                </ComboBox>
-                            </Border>
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <ComboBox x:Name="cbGender" Cursor="Hand" Style="{StaticResource ModernComboBoxStyle}" Height="58">
+                                        <ComboBoxItem Content="Пол" Tag="Required" IsEnabled="False" Foreground="#7A7886"/>
+                                        <ComboBoxItem Content="Мужской" Foreground="White"/>
+                                        <ComboBoxItem Content="Женский" Foreground="White"/>
+                                    </ComboBox>
+                                </Border>
+                                <TextBlock x:Name="errGender" Text="Выберите пол" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Учебная группа"/>
-                            </Border>
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbGroup" Style="{StaticResource InnerInputStyle}" Tag="Учебная группа"/>
+                                </Border>
+                                <TextBlock x:Name="errGroup" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="4" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Номер студенческого билета"/>
-                            </Border>
+                            <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbStudentId" Style="{StaticResource InnerInputStyle}" Tag="Номер студенческого билета"/>
+                                </Border>
+                                <TextBlock x:Name="errStudentId" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="5" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Корпоративная почта (@edu.fa.ru)"/>
-                            </Border>
+                            <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbEmail" Style="{StaticResource InnerInputStyle}" Tag="Корпоративная почта (@edu.fa.ru)"/>
+                                </Border>
+                                <TextBlock x:Name="errEmail" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="6" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Дополнительная почта"/>
-                            </Border>
+                            <StackPanel Grid.Row="6" Grid.ColumnSpan="2" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbAdditionalEmail" Style="{StaticResource InnerInputStyle}" Tag="Дополнительная почта"/>
+                                </Border>
+                            </StackPanel>
 
-                            <Border Grid.Row="7" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Номер телефона"/>
-                            </Border>
+                            <StackPanel Grid.Row="7" Grid.ColumnSpan="2" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbPhone" Style="{StaticResource InnerInputStyle}" Tag="Номер телефона"/>
+                                </Border>
+                                <TextBlock x:Name="errPhone" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
 
-                            <Border Grid.Row="8" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Ссылка на социальную сеть ВКонтакте"/>
-                            </Border>
+                            <StackPanel Grid.Row="8" Grid.ColumnSpan="2" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbVkLink" Style="{StaticResource InnerInputStyle}" Tag="Ссылка на социальную сеть ВКонтакте"/>
+                                </Border>
+                            </StackPanel>
 
-                            <Border Grid.Row="9" Grid.ColumnSpan="2" Style="{StaticResource RegInputBorderStyle}">
-                                <TextBox Style="{StaticResource InnerInputStyle}" Tag="Официальная фотография"/>
-                            </Border>
+                            <StackPanel Grid.Row="9" Grid.ColumnSpan="2" Margin="5">
+                                <Border Style="{StaticResource RegInputBorderStyle}">
+                                    <TextBox x:Name="tbPhoto" Style="{StaticResource InnerInputStyle}" Tag="Официальная фотография"/>
+                                </Border>
+                                <TextBlock x:Name="errPhoto" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                            </StackPanel>
                         </Grid>
 
                         <TextBlock Text="Загрузка своей фотографии является обязательным условием! Просьба загружать фото в формате .png" 
                                    Foreground="#7A7886" FontSize="11" TextAlignment="Center" Margin="0,15,0,15" TextWrapping="Wrap"/>
 
-                        <CheckBox Style="{StaticResource ModernCheckBoxStyle}" HorizontalAlignment="Center" Margin="0,0,0,25">
-                            <TextBlock Text="Я согласен на обработку персональных данных" VerticalAlignment="Center"/>
-                        </CheckBox>
+                        <StackPanel HorizontalAlignment="Center" Margin="0,0,0,25">
+                            <CheckBox x:Name="cbAgreement" Style="{StaticResource ModernCheckBoxStyle}" HorizontalAlignment="Center">
+                                <TextBlock Text="Я согласен на обработку персональных данных" VerticalAlignment="Center"/>
+                            </CheckBox>
+                            <TextBlock x:Name="errAgreement" Text="Необходимо ваше согласие" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="0,5,0,0" HorizontalAlignment="Center" FontFamily="Montserrat Thin"/>
+                        </StackPanel>
 
                         <Button Content="Зарегистрироваться" Style="{StaticResource ModernButtonStyle}" 
-                                FontFamily="Digital Pixel" FontSize="10"/>
+                                FontFamily="Digital Pixel" FontSize="10" Cursor="Hand" Click="Button_Register_Click"/>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                             <TextBlock Text="Уже есть аккаунт? " Foreground="#7A7886"/>

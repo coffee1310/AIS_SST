@@ -40,3 +40,7 @@ C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\bin\Debug\System.Text.J
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\bin\Debug\System.Threading.Tasks.Extensions.xml
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Diplom_S.697D1DE2.Up2Date
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\App.baml
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\PointsHistory.g.cs
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\PointsHistory.baml
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\Home.g.cs
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\Home.baml

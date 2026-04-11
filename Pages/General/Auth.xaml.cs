@@ -28,16 +28,24 @@ namespace Diplom_Stud.Pages.General
         private int _currentSlideIndex = 0;
         private readonly int _totalSlides = 3;
 
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private static readonly HttpClient _httpClient = new HttpClient(); 
+
+        // Флаг для предотвращения зацикливания при синхронизации пароля
+        private bool _isUpdatingPassword = false;
 
         public Auth()
         {
             InitializeComponent();
 
-            _httpClient.BaseAddress = new Uri(App.ApiBaseUrl);
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
+            // Проверяем, задан ли уже базовый адрес.
+            // Так как _httpClient статический, его нужно настроить только один раз за весь сеанс работы.
+            if (_httpClient.BaseAddress == null)
+            {
+                _httpClient.BaseAddress = new Uri(App.ApiBaseUrl);
+                _httpClient.DefaultRequestHeaders.Accept.Clear();
+                _httpClient.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
+            }
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
@@ -128,17 +136,89 @@ namespace Diplom_Stud.Pages.General
             }
         }
 
+        // ==============================================
+        // ЛОГИКА ГЛАЗИКА И ПОЛЯ ПАРОЛЯ
+        // ==============================================
+
+        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingPassword)
+            {
+                _isUpdatingPassword = true;
+                tbVisiblePassword.Text = pbPassword.Password;
+                _isUpdatingPassword = false;
+            }
+            UpdatePasswordPlaceholder();
+        }
+
+        private void VisiblePassword_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_isUpdatingPassword)
+            {
+                _isUpdatingPassword = true;
+                pbPassword.Password = tbVisiblePassword.Text;
+                _isUpdatingPassword = false;
+            }
+            UpdatePasswordPlaceholder();
+        }
+
+        private void btnTogglePassword_Checked(object sender, RoutedEventArgs e)
+        {
+            pbPassword.Visibility = Visibility.Collapsed;
+            tbVisiblePassword.Visibility = Visibility.Visible;
+            tbVisiblePassword.Focus(); // Оставляем фокус на текстовом поле
+        }
+
+        private void btnTogglePassword_Unchecked(object sender, RoutedEventArgs e)
+        {
+            tbVisiblePassword.Visibility = Visibility.Collapsed;
+            pbPassword.Visibility = Visibility.Visible;
+            pbPassword.Focus();
+        }
+
+        private void PasswordBox_GotFocus(object sender, RoutedEventArgs e) => UpdatePasswordPlaceholder();
+        private void PasswordBox_LostFocus(object sender, RoutedEventArgs e) => UpdatePasswordPlaceholder();
+
+        private void UpdatePasswordPlaceholder()
+        {
+            bool hasText = !string.IsNullOrEmpty(pbPassword.Password);
+            // Если текст есть ИЛИ хоть один из элементов (текстовое поле, пароль или кнопка глазика) в фокусе - прячем плейсхолдер
+            bool isFocused = pbPassword.IsFocused || tbVisiblePassword.IsFocused || btnTogglePassword.IsFocused;
+
+            tbPasswordPlaceholder.Visibility = (hasText || isFocused) ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        // ==============================================
+        // АВТОРИЗАЦИЯ
+        // ==============================================
+
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            string login = tbLogin.Text.Trim();
-            string password = pbPassword.Password;
+            // Сбрасываем старые ошибки при новом клике
+            tbLoginError.Visibility = Visibility.Collapsed;
+            tbPasswordError.Visibility = Visibility.Collapsed;
 
-            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
+            string login = tbLogin.Text.Trim();
+            string password = pbPassword.Password; // Всегда читаем отсюда, т.к. поля синхронизированы
+
+            bool hasError = false;
+
+            // Проверка логина
+            if (string.IsNullOrEmpty(login))
             {
-                MessageBox.Show("Пожалуйста, заполните все поля!", "Ошибка",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                tbLoginError.Visibility = Visibility.Visible;
+                hasError = true;
             }
+
+            // Проверка пароля
+            if (string.IsNullOrEmpty(password))
+            {
+                tbPasswordError.Visibility = Visibility.Visible;
+                hasError = true;
+            }
+
+            // Если есть хоть одна ошибка - прерываем выполнение
+            if (hasError) return;
 
             var button = sender as Button;
             button.IsEnabled = false;
@@ -150,10 +230,6 @@ namespace Diplom_Stud.Pages.General
 
                 if (success)
                 {
-                    MessageBox.Show($"Добро пожаловать, {App.CurrentUser.Name} {App.CurrentUser.Surname}!",
-                        "Успешный вход", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    // Navigate to profile page based on user role
                     NavigateToUserProfile();
                 }
                 else
@@ -176,7 +252,6 @@ namespace Diplom_Stud.Pages.General
 
         private void NavigateToUserProfile()
         {
-            // Check user roles and navigate to appropriate profile page
             if (App.CurrentUser?.Roles != null)
             {
                 foreach (var role in App.CurrentUser.Roles)
@@ -196,7 +271,6 @@ namespace Diplom_Stud.Pages.General
                 }
             }
 
-            // Default navigation to activist profile if role not recognized
             NavigationService?.Navigate(new Profile());
         }
 

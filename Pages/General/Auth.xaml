@@ -106,17 +106,11 @@
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Text="Мероприятия" Foreground="#02B3BA" FontSize="18"/>
-
                 <TextBlock Text="·" Foreground="#FFFFFF" FontSize="18" Margin="10,0"/>
-
                 <TextBlock Text="Сектора" Foreground="#02B3BA" FontSize="18"/>
-
                 <TextBlock Text="·" Foreground="#FFFFFF" FontSize="18" Margin="10,0"/>
-
                 <TextBlock Text="Рейтинг" Foreground="#A084FB" FontSize="18"/>
-
                 <TextBlock Text="·" Foreground="#FFFFFF" FontSize="18" Margin="10,0"/>
-
                 <TextBlock Text="Проекты" Foreground="#A084FB" FontSize="18"/>
             </StackPanel>
         </StackPanel>
@@ -147,44 +141,71 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Width="336" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Grid Margin="0,0,0,15">
-                        <Border Style="{StaticResource InputBorderStyle}"/>
-                        <TextBox x:Name="tbLogin" Style="{StaticResource InnerInputStyle}"/>
-                        <TextBlock Text="Логин" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Text, ElementName=tbLogin}" Value="">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Grid>
 
-                    <Grid Margin="0,0,0,10">
-                        <Border Style="{StaticResource InputBorderStyle}"/>
-                        <PasswordBox x:Name="pbPassword" Style="{StaticResource InnerInputStyle}"/>
-                        <TextBlock Text="Пароль" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Password, ElementName=pbPassword}" Value="">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Grid>
+                    <StackPanel Margin="0,0,0,15">
+                        <Grid>
+                            <Border Style="{StaticResource InputBorderStyle}"/>
+                            <TextBox x:Name="tbLogin" Style="{StaticResource InnerInputStyle}"/>
+                            <TextBlock Text="Логин" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Text, ElementName=tbLogin}" Value=""/>
+                                                    <Condition Binding="{Binding IsFocused, ElementName=tbLogin}" Value="False"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <TextBlock x:Name="tbLoginError" Text="Заполните поле логина" Foreground="#E81123" FontSize="12" Visibility="Collapsed" Margin="5,5,0,0" FontFamily="Montserrat Thin"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,10">
+                        <Grid>
+                            <Border Style="{StaticResource InputBorderStyle}"/>
+
+                            <PasswordBox x:Name="pbPassword" Style="{StaticResource InnerInputStyle}" Padding="15,0,45,0"
+                                         PasswordChanged="PasswordBox_PasswordChanged" 
+                                         GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"/>
+
+                            <TextBox x:Name="tbVisiblePassword" Style="{StaticResource InnerInputStyle}" Visibility="Collapsed" Padding="15,0,45,0"
+                                     TextChanged="VisiblePassword_TextChanged"
+                                     GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"/>
+
+                            <TextBlock x:Name="tbPasswordPlaceholder" Text="Пароль" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin"/>
+
+                            <ToggleButton x:Name="btnTogglePassword" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0" Cursor="Hand"
+                                          Checked="btnTogglePassword_Checked" Unchecked="btnTogglePassword_Unchecked" 
+                                          GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Grid Background="Transparent" Width="20" Height="20">
+                                            <Path Data="M10,4 C4,4 1,10 1,10 C1,10 4,16 10,16 C16,16 19,10 19,10 C19,10 16,4 10,4 Z M10,14 C7.8,14 6,12.2 6,10 C6,7.8 7.8,6 10,6 C12.2,6 14,7.8 14,10 C14,12.2 12.2,14 10,14 Z M10,8 C8.9,8 8,8.9 8,10 C8,11.1 8.9,12 10,12 C11.1,12 12,11.1 12,10 C12,8.9 11.1,8 10,8 Z" 
+                                                  Fill="#7A7886" Stretch="Uniform"/>
+                                            <Line x:Name="Strike" X1="2" Y1="18" X2="18" Y2="2" Stroke="#7A7886" StrokeThickness="2" Visibility="Visible"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="Strike" Property="Visibility" Value="Collapsed"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                        </Grid>
+                        <TextBlock x:Name="tbPasswordError" Text="Заполните поле пароля" Foreground="#E81123" FontSize="12" Visibility="Collapsed" Margin="5,5,0,0" FontFamily="Montserrat Thin"/>
+                    </StackPanel>
 
                     <TextBlock Text="Забыли пароль?" Foreground="#7A7886" FontSize="12" 
                                HorizontalAlignment="Left" Margin="15,0,0,30" Cursor="Hand" FontFamily="Montserrat Thin"/>
 
-                    <Button Content="Войти" Style="{StaticResource ModernButtonStyle}" 
+                    <Button Content="Войти" Cursor="Hand" Style="{StaticResource ModernButtonStyle}" 
                             Width="283" Height="50" Margin="0,0,0,25" 
                             FontFamily="Digital Pixel" FontSize="9" Click="Button_Click"/>
 

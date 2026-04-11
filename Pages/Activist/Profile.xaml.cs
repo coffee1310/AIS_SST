@@ -32,10 +32,14 @@ namespace Diplom_Stud.Pages.Activist
         {
             InitializeComponent();
 
-            _httpClient.BaseAddress = new Uri(App.ApiBaseUrl);
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
+            // Проверяем, задан ли уже базовый адрес, чтобы не пытаться менять его повторно
+            if (_httpClient.BaseAddress == null)
+            {
+                _httpClient.BaseAddress = new Uri(App.ApiBaseUrl);
+                _httpClient.DefaultRequestHeaders.Accept.Clear();
+                _httpClient.DefaultRequestHeaders.Accept.Add(
+                    new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            }
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
@@ -238,12 +242,9 @@ namespace Diplom_Stud.Pages.Activist
             return null;
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            // Navigate to history page
-            // NavigationService?.Navigate(new HistoryPage());
-            MessageBox.Show("Функция в разработке", "Информация",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            NavigationService?.Navigate(new PointsHistory());
         }
     }
 

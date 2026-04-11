@@ -10,11 +10,11 @@ none
 false
 DEBUG;TRACE
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\App.xaml
-42132701851
+62135208951
 
-9-1835183223
+11-1021153731
 23887559286
-MainWindow.xaml;Pages\Activist\Profile.xaml;Pages\General\Auth.xaml;Pages\General\Reg.xaml;
+MainWindow.xaml;Pages\Activist\Home.xaml;Pages\Activist\PointsHistory.xaml;Pages\Activist\Profile.xaml;Pages\General\Auth.xaml;Pages\General\Reg.xaml;
 
 True
 
