@@ -11,7 +11,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
 # Порт для Spring (из application.properties)
-EXPOSE 8081
+EXPOSE 8080
 
 # Запуск с профилем docker (может быть переопределен)
 ENTRYPOINT ["java", "-jar", "app.jar"]
