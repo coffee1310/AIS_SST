@@ -3,7 +3,7 @@ services:
     image: 'postgres:18.0-alpine'
     container_name: 'ais-sst-postgres'
     ports:
-      - "5433:5433"  # ← ИСПРАВИТЬ: использовать стандартный порт
+      - "5432:5432"  # ← ИСПРАВИТЬ: использовать стандартный порт
     environment:
       - 'POSTGRES_USER=coffee13102006'
       - 'POSTGRES_PASSWORD=nata155630'
