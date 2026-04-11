@@ -52,7 +52,7 @@ pipeline {
                     sh """
                         cd /home/coffee13102006/docker/app
                         docker pull ${DOCKER_HUB_CREDS_USR}/ais-sst-app:latest
-                        docker-compose up -d --force-recreate app
+                        docker-  compose up -d --force-recreate app
                         docker system prune -f
                     """
                 }

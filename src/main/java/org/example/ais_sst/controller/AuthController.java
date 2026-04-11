@@ -96,7 +96,7 @@ public class AuthController {
             user.setName(userSummaryDTO.getName());
             user.setSurname(userSummaryDTO.getSurname());
             user.setPatronymic(userSummaryDTO.getPatronymic());
-            user.setGender(Gender.valueOf(userSummaryDTO.getGender()));
+            user.setGender(userSummaryDTO.getGender());
             user.setDateOfBirth(userSummaryDTO.getDateOfBirth());
             user.setStudentEmail(userSummaryDTO.getStudentEmail());
             user.setPhoneNumber(userSummaryDTO.getPhoneNumber());
