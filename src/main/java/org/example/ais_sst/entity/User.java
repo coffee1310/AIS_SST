@@ -1,15 +1,18 @@
 package org.example.ais_sst.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.ais_sst.entity.enums.Gender;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.sql.Types;
 import java.time.LocalDate;
 
 @Getter
@@ -36,7 +39,9 @@ public class User {
     @Column(name = "patronymic", length = 64)
     private String patronymic;
 
-    @Column(name = "gender", columnDefinition = "genders not null")
+    // Только @JdbcTypeCode, без @Enumerated!
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender", columnDefinition = "genders", nullable = false)
     private Gender gender;
 
     @NotNull
@@ -77,7 +82,7 @@ public class User {
     @Column(name = "vk_link", length = 256)
     private String vkLink;
 
-    @Column(name = "photo")
+    @Column(name = "photo", columnDefinition = "bytea")
     private byte[] photo;
 
     @Size(max = 256)

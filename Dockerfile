@@ -3,10 +3,15 @@ LABEL authors="coffee13102006"
 
 WORKDIR /app
 
-# Копируем правильный JAR из target
+# Копируем JAR
 COPY target/AIS_SST-0.0.1-SNAPSHOT.jar app.jar
 
-# Копируем миграции
-COPY src/main/resources/db /app/BOOT-INF/classes/db/
+# Создаем пользователя не-root для безопасности
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
 
+# Порт для Spring (из application.properties)
+EXPOSE 8081
+
+# Запуск с профилем docker (может быть переопределен)
 ENTRYPOINT ["java", "-jar", "app.jar"]

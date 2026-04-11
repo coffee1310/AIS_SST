@@ -24,7 +24,7 @@ public class UserSummaryDTO {
     private String patronymic;
 
     @NotNull
-    private Gender gender;
+    private String gender;
 
     @NotNull
     private LocalDate dateOfBirth;
