@@ -10,6 +10,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Rect
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun CustomTextField(
@@ -23,18 +34,31 @@ fun CustomTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     trailingIcon: @Composable (() -> Unit)? = null,
-    suffix: @Composable (() -> Unit)? = null
+    suffix: @Composable (() -> Unit)? = null,
+    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyLarge,
+    readOnly: Boolean = false
 ) {
     val glassBackgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.02f)
-
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         placeholder = {
+            val annotatedPlaceholder = buildAnnotatedString {
+                if (placeholder.startsWith("*")) {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
+                        append(placeholder.take(2))
+                    }
+                    append(placeholder.drop(2))
+                } else {
+                    append(placeholder)
+                }
+            }
             Text(
-                text = placeholder,
+                text = annotatedPlaceholder,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         },
         isError = isError,
@@ -57,10 +81,22 @@ fun CustomTextField(
             cursorColor = MaterialTheme.colorScheme.primary,
             errorBorderColor = MaterialTheme.colorScheme.error,
             errorCursorColor = MaterialTheme.colorScheme.error,
-            errorSupportingTextColor = MaterialTheme.colorScheme.error
+            errorSupportingTextColor = MaterialTheme.colorScheme.error,
+
             ),
         shape = MaterialTheme.shapes.medium,
-        modifier = modifier.fillMaxWidth(),
-        singleLine = true
+        modifier = modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester)
+            .onFocusChanged { focusState ->
+                if (focusState.isFocused) {
+                    coroutineScope.launch {
+                        delay(300)
+                        bringIntoViewRequester.bringIntoView(Rect(0f, 0f, 1f, 500f))
+                    }
+                }
+            },
+        singleLine = true,
+        readOnly = readOnly
     )
 }

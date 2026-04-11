@@ -185,7 +185,7 @@ class LoginScreen : Screen {
                         text = "Зарегистрироваться",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.clickable { /* TODO: На регистрацию */ }
+                        modifier = Modifier.clickable { navigator.push(RegisterScreen()) }
                     )
                 }
 

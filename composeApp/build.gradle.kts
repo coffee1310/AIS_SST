@@ -67,6 +67,12 @@ kotlin {
             implementation(libs.multiplatform.settings.no.arg)
 
             implementation(compose.materialIconsExtended)
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+
+            // Библиотека для выбора фото (Android & iOS)
+            implementation("io.github.onseok:peekaboo-ui:0.5.2")
+            implementation("io.github.onseok:peekaboo-image-picker:0.5.2")
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
