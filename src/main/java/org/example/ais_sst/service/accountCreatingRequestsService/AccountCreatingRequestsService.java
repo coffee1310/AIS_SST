@@ -1,5 +1,6 @@
 package org.example.ais_sst.service.accountCreatingRequestsService;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.example.ais_sst.repository.AccountCreatingRequestsRepository;
 import org.example.ais_sst.repository.GroupRepository;
 import org.example.ais_sst.repository.SpecialityRepository;
 import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.service.socialStatusService.AccountCreatingRequestsSocialStatusService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,8 +34,12 @@ public class AccountCreatingRequestsService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final SpecialityRepository specialityRepository;
+
+    private final AccountCreatingRequestsSocialStatusService accountCreatingRequestsSocialStatusService;
+
     private final PasswordEncoder passwordEncoder;
     private final AccountCreatingRequestsRepository accountCreatingRequestsRepository;
+
 
     public AccountCreatingRequest createAccountRequest(AccountCreatingRequestsSummaryDTO AccountRequestDTO) throws Exception {
         log.info("Registration attempt for email: {}", AccountRequestDTO.getStudentEmail());
@@ -48,38 +54,37 @@ public class AccountCreatingRequestsService {
             throw new PhoneAlreadyExistException("Ошибка: Телефон уже используется!");
         }
 
-        try {
-            Group userGroup = groupRepository.findGroupById(AccountRequestDTO.getGroup_id())
-                    .orElseThrow(() -> new GroupDoesNotExistException(String.format("Ошибка: Группа с id: %s не существует", AccountRequestDTO.getGroup_id())));
+        Group userGroup = groupRepository.findGroupById(AccountRequestDTO.getGroup_id())
+                .orElseThrow(() -> new GroupDoesNotExistException(String.format("Ошибка: Группа с id: %s не существует", AccountRequestDTO.getGroup_id())));
 
-            Speciality userSpeciality = specialityRepository.findSpecialityById(AccountRequestDTO.getSpeciality_id())
-                    .orElseThrow(() -> new SpecialityDoesNotExistException(String.format("Ошибка: Специальность с id: %s не существует", AccountRequestDTO.getSpeciality_id())));
+        Speciality userSpeciality = specialityRepository.findSpecialityById(AccountRequestDTO.getSpeciality_id())
+                .orElseThrow(() -> new SpecialityDoesNotExistException(String.format("Ошибка: Специальность с id: %s не существует", AccountRequestDTO.getSpeciality_id())));
 
-           AccountCreatingRequest accountCreatingRequest = AccountCreatingRequest.builder()
-                    .name(AccountRequestDTO.getName())
-                    .surname(AccountRequestDTO.getSurname())
-                    .patronymic(AccountRequestDTO.getPatronymic())
-                    .gender(Gender.valueOf(AccountRequestDTO.getGender()))
-                    .dateOfBirth(AccountRequestDTO.getDateOfBirth())
-                    .studentEmail(AccountRequestDTO.getStudentEmail())
-                    .phoneNumber(AccountRequestDTO.getPhoneNumber())
-                    .password(passwordEncoder.encode(AccountRequestDTO.getPassword()))
-                    .reasonForRefusal(null)
-                    .studentIdNumber(AccountRequestDTO.getStudentIdNumber())
-                    .courseNumber(AccountRequestDTO.getCourseNumber())
-                    .status(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ)
-                    .group(userGroup)
-                    .speciality(userSpeciality)
-                    .build();
+       AccountCreatingRequest accountCreatingRequest = AccountCreatingRequest.builder()
+                .name(AccountRequestDTO.getName())
+                .surname(AccountRequestDTO.getSurname())
+                .patronymic(AccountRequestDTO.getPatronymic())
+                .gender(Gender.valueOf(AccountRequestDTO.getGender()))
+                .dateOfBirth(AccountRequestDTO.getDateOfBirth())
+                .studentEmail(AccountRequestDTO.getStudentEmail())
+                .phoneNumber(AccountRequestDTO.getPhoneNumber())
+                .password(passwordEncoder.encode(AccountRequestDTO.getPassword()))
+                .reasonForRefusal(null)
+                .studentIdNumber(AccountRequestDTO.getStudentIdNumber())
+                .courseNumber(AccountRequestDTO.getCourseNumber())
+                .status(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ)
+                .group(userGroup)
+                .speciality(userSpeciality)
+                .build();
 
-            AccountCreatingRequest savedAccountCreatingRequest = accountCreatingRequestsRepository.save(accountCreatingRequest);
-            log.info("User registered successfully with ID: {}", savedAccountCreatingRequest.getId());
+        AccountCreatingRequest savedAccountCreatingRequest = accountCreatingRequestsRepository.save(accountCreatingRequest);
+        log.info("Account request registered successfully with ID: {}", savedAccountCreatingRequest.getId());
 
-            return savedAccountCreatingRequest;
-        } catch (Exception e) {
-            log.error("Registration failed: ", e);
-            throw new Exception("Ошибка при создании заявки: " + e.getMessage(), e);
-        }
+        AccountRequestDTO.setId(savedAccountCreatingRequest.getId());
+        accountCreatingRequestsSocialStatusService.createAccountCreatingRequestSocialStatus(AccountRequestDTO);
+        log.info("Social statuses request registered successfully");
+
+        return savedAccountCreatingRequest;
     }
 
     public AccountCreatingRequest rejectAccountRequest(Long id, AccountCreatingRequestRejectDTO accountCreatingRequestReject) {

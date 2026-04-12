@@ -82,6 +82,7 @@ public class SecurityConfig {
                             .requestMatchers("/api/test/**").permitAll()
                             .requestMatchers(HttpMethod.POST,"/api/account_requests").permitAll()
                             .requestMatchers("/api/debug/**").permitAll()
+                            .requestMatchers("/api/social_status").permitAll()
                             .requestMatchers("/api/specialities").permitAll()
                             .requestMatchers("/", "/error", "/favicon.ico").permitAll()
                             .anyRequest().authenticated();

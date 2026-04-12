@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class AccountCreatingRequestResponseDTO {
-    private Integer id;
+    private Long id;
     private String name;
     private String surname;
     private String patronymic;

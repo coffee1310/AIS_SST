@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 11
+      author: coffee13102006
+      changes:
+        - createTable:
+            tableName: account_creating_requests_social_statuses
+            remarks: "Социальные статусы для заявок на регистрацию"
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  remarks: "Первичный ключ"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_creating_request_id
+                  type: INTEGER
+                  remarks: "Внешний ключ к таблице account_creating_requests"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_acc_creating_req_social_statuses_acc_req
+                    references: account_creating_requests(id)
+              - column:
+                  name: social_status_id
+                  type: INTEGER
+                  remarks: "Внешний ключ к таблице social_statuses"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_acc_creating_req_social_statuses_social_status
+                    references: social_statuses(id)
+        - createIndex:
+            tableName: account_creating_requests_social_statuses
+            indexName: idx_acc_req_social_statuses_acc_req_id
+            columns:
+              - column:
+                  name: account_creating_request_id
+        - createIndex:
+            tableName: account_creating_requests_social_statuses
+            indexName: idx_acc_req_social_statuses_social_status_id
+            columns:
+              - column:
+                  name: social_status_id
+
+  - changeSet:
+      id: 12
+      author: coffee13102006
+      changes:
+        - addColumn:
+            tableName: portfolios
+            columns:
+              - column:
+                  name: user_id
+                  type: INTEGER
+                  remarks: "Внешний ключ к таблице users"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_portfolios_user_id
+                    references: users(id)
+        - createIndex:
+            tableName: portfolios
+            indexName: idx_portfolios_user_id
+            columns:
+              - column:
+                  name: user_id

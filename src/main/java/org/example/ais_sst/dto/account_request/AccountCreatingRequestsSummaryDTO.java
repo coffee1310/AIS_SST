@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -55,6 +56,8 @@ public class AccountCreatingRequestsSummaryDTO {
     private String vkLink;
 
     private byte[] photo;
+
+    List<Long> social_statuses_id;
 
     @Size(max = 256)
     @NotNull

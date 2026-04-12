@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/005-add-account-requests-and-social-status-student.yaml
   - include:
       file: db/changelog/changes/006-add-roles-social-statuses-and-groups.yaml
+  - include:
+      file: db/changelog/changes/008-add-accout-creating-requests-social_status-and-user_id-in-portfolios.yaml
