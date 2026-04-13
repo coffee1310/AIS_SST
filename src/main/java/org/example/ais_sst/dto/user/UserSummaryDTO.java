@@ -3,6 +3,8 @@ package org.example.ais_sst.dto.user;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.example.ais_sst.annotation.ValidUserEmailExist;
+import org.example.ais_sst.annotation.ValidUserEmailFormat;
 import org.example.ais_sst.entity.enums.Gender;
 
 import java.time.LocalDate;
@@ -43,6 +45,8 @@ public class UserSummaryDTO {
 
     @Size(max = 32)
     @NotNull
+    @ValidUserEmailExist
+    @ValidUserEmailFormat
     private String studentEmail;
 
     @Size(max = 256)

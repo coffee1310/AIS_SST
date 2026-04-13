@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
+import org.example.ais_sst.annotation.ValidUserEmailExist;
+import org.example.ais_sst.annotation.ValidUserEmailFormat;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -44,6 +46,8 @@ public class AccountCreatingRequestsSummaryDTO {
 
     @Size(max = 32)
     @NotNull
+    @ValidUserEmailExist
+    @ValidUserEmailFormat
     private String studentEmail;
 
     @Size(max = 256)
