@@ -27,9 +27,9 @@ public class AccountCreatingRequestResponseDTO {
     private String reasonForRefusal;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Integer groupId;
+    private Long groupId;
     private String groupName;
-    private Integer specialityId;
+    private Long specialityId;
     private String specialityName;
 
     public static AccountCreatingRequestResponseDTO from(AccountCreatingRequest request) {
