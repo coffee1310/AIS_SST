@@ -3,9 +3,7 @@ package org.example.ais_sst.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 @Getter
@@ -13,6 +11,8 @@ import org.hibernate.annotations.ColumnDefault;
 @Entity
 @Builder
 @Table(name = "sectors")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Sector {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

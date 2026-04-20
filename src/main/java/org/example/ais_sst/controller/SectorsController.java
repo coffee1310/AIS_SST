@@ -2,16 +2,18 @@ package org.example.ais_sst.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.ais_sst.dto.request.SectorIntroductionRequestDTO;
 import org.example.ais_sst.dto.sector.SectorDTO;
+import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.Sector;
+import org.example.ais_sst.service.sectorService.SectorIntroductionRequestService;
 import org.example.ais_sst.service.sectorService.SectorService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,11 +21,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class SectorsController {
 
     private final SectorService sectorService;
+    private final SectorIntroductionRequestService sectorIntroductionRequestService;
 
     @PostMapping
     public ResponseEntity<?> createSector(@Valid @RequestBody SectorDTO sectorDTO) {
-        Sector sector = sectorService.createSector(sectorDTO);
-        sectorDTO.setId(sector.getId());
+        SectorDTO sector = sectorService.createSector(sectorDTO);
         return new ResponseEntity<>(sectorDTO, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{sector_id}")
+    public ResponseEntity<?> createSectorIntroductionRequest(@AuthenticationPrincipal CustomUserDetails customUserDetails,
+                                                             @PathVariable Long sector_id) {
+
+        SectorIntroductionRequestDTO requestDTO = sectorIntroductionRequestService.createRequest(customUserDetails.getId(), sector_id);
+        return new ResponseEntity<>(requestDTO, HttpStatus.CREATED);
     }
 }

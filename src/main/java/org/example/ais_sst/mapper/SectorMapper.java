@@ -1,6 +1,5 @@
 package org.example.ais_sst.mapper;
 
-import jdk.jfr.Name;
 import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.entity.User;

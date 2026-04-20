@@ -18,10 +18,12 @@ public class SectorService {
     private final SectorMapper sectorMapper;
 
     @Transactional
-    public Sector createSector(SectorDTO sectorDTO) {
+    public SectorDTO createSector(SectorDTO sectorDTO) {
       log.info("Creating sector with id: {}", sectorDTO.getId());
-      Sector sector = sectorMapper.toEntity(sectorDTO);
 
-      return sectorRepository.save(sector);
+      Sector sector = sectorRepository.save(sectorMapper.toEntity(sectorDTO));
+      sectorDTO = sectorMapper.toSectorDTO(sector);
+      log.info("Saved sector with id: {}", sectorDTO.getId());
+      return sectorDTO;
     }
 }

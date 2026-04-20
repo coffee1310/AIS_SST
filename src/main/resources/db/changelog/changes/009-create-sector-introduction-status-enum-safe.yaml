@@ -1,0 +1,97 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-sector-introduction-status-enum-safe
+      author: coffee13102006
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: "0"
+            sql: "SELECT COUNT(*) FROM pg_type WHERE typname = 'sector_introdution_statuses'"
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TYPE sector_introdution_statuses AS ENUM ('Ожидание', 'Активный', 'Вышедший');
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: |
+              DROP TYPE sector_introdution_statuses;
+
+  - changeSet:
+      id: create-sector-introduction-request-table-safe
+      author: coffee13102006
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: sector_introduction_request
+      changes:
+        - createTable:
+            tableName: sector_introduction_request
+            remarks: "Заявка на вступление в сектор"
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  remarks: "Первичный ключ"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: INTEGER
+                  remarks: "Внешний ключ к таблице users"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_sector_introduction_request_user
+                    references: users(id)
+              - column:
+                  name: sector_id
+                  type: INTEGER
+                  remarks: "Внешний ключ к таблице sectors"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_sector_introduction_request_sector
+                    references: sectors(id)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: "Дата и время создания заявки"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: sector_introdution_statuses
+                  defaultValue: "Ожидание"
+                  remarks: "Статус заявки"
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: sector_introduction_request
+            indexName: idx_sector_introduction_request_user
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: sector_introduction_request
+            indexName: idx_sector_introduction_request_sector
+            columns:
+              - column:
+                  name: sector_id
+        - createIndex:
+            tableName: sector_introduction_request
+            indexName: idx_sector_introduction_request_status
+            columns:
+              - column:
+                  name: status
+        - createIndex:
+            tableName: sector_introduction_request
+            indexName: idx_sector_introduction_request_created
+            columns:
+              - column:
+                  name: created_at
+      rollback:
+        - dropTable:
+            tableName: sector_introduction_request
