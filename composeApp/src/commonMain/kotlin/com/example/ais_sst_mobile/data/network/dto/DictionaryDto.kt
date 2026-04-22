@@ -1,0 +1,20 @@
+package com.example.ais_sst_mobile.data.network.dto
+
+import com.example.ais_sst_mobile.domain.model.SocialStatus
+import com.example.ais_sst_mobile.domain.model.Speciality
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class SpecialityDto(
+    val id: Int,
+    val title: String
+)
+
+@Serializable
+data class SocialStatusDto(
+    val id: Int,
+    val title: String
+)
+
+fun SpecialityDto.toDomain() = Speciality(id = id, title = title)
+fun SocialStatusDto.toDomain() = SocialStatus(id = id, title = title)

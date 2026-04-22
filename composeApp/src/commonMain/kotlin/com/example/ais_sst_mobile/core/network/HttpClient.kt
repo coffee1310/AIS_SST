@@ -11,9 +11,8 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-// Базовый URL. 10.0.2.2 используется для доступа к localhost компа из эмулятора Android.
-// Для iOS симулятора нужно будет использовать http://127.0.0.1:8080/api/ или IP твоего ПК в локальной сети.
-internal const val BASE_URL = "http://192.168.1.9:8080/api/"
+
+internal const val BASE_URL = "http://185.246.66.164:8080/api/"
 
 fun createHttpClient(): HttpClient {
     return HttpClient {

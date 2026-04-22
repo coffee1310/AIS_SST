@@ -35,7 +35,6 @@ fun CustomTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     trailingIcon: @Composable (() -> Unit)? = null,
     suffix: @Composable (() -> Unit)? = null,
-    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyLarge,
     readOnly: Boolean = false
 ) {
     val glassBackgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.02f)

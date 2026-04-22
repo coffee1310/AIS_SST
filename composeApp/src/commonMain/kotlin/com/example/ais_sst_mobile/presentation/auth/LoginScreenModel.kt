@@ -23,35 +23,87 @@ class LoginScreenModel(
     private val _state = MutableStateFlow<State>(State.Initial)
     val state = _state.asStateFlow()
 
-    fun login(studentId: String, pass: String) {
-        if (studentId.isBlank() || pass.isBlank()) {
+    private var failedAttempts = 0
+
+    private val _showCaptchaDialog = MutableStateFlow(false)
+    val showCaptchaDialog = _showCaptchaDialog.asStateFlow()
+
+    private val _currentCaptcha = MutableStateFlow<String?>(null)
+    val currentCaptcha = _currentCaptcha.asStateFlow()
+
+    private val _captchaError = MutableStateFlow<String?>(null)
+    val captchaError = _captchaError.asStateFlow()
+
+    fun refreshCaptcha(clearError: Boolean = true) {
+        val chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"
+        _currentCaptcha.value = (1..6).map { chars.random() }.joinToString("")
+        if (clearError) {
+            _captchaError.value = null
+        }
+    }
+
+    fun clearCaptchaError() {
+        _captchaError.value = null
+    }
+
+    fun verifyCaptcha(input: String) {
+        if (input.isBlank()) {
+            _captchaError.value = "Введите код"
+            return
+        }
+        if (input != _currentCaptcha.value) {
+            refreshCaptcha(clearError = true)
+            _captchaError.value = "Неверный код"
+            return
+        }
+
+        _showCaptchaDialog.value = false
+        failedAttempts = 0
+    }
+
+    fun login(loginId: String, domain: String, pass: String) {
+        if (loginId.isBlank() || pass.isBlank()) {
             _state.value = State.Error("Пожалуйста, заполните все поля")
             return
         }
 
-        if (studentId.length != 6 || !studentId.all { it.isDigit() }) {
+        if (domain == "@edu.fa.ru" && (loginId.length != 6 || !loginId.all { it.isDigit() })) {
             _state.value = State.Error("Номер студенческого должен состоять из 6 цифр")
             return
         }
 
-        val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,}\$")
+        // Ровно 8 символов и больше
+        val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}\$")
         if (!passwordRegex.matches(pass)) {
-            _state.value = State.Error("Пароль от 8 символов: латинский алфавит (заглавные и строчные) и цифры")
+            _state.value = State.Error("Пароль: от 8 символов (буквы, цифры, спецсимволы)")
             return
         }
 
+        if (failedAttempts >= 3) {
+            refreshCaptcha()
+            _showCaptchaDialog.value = true
+            return
+        }
+
+        performLoginRequest(loginId, domain, pass)
+    }
+
+    private fun performLoginRequest(loginId: String, domain: String, pass: String) {
         _state.value = State.Loading
 
         screenModelScope.launch {
             try {
-                val email = "$studentId@edu.fa.ru"
+                val email = "$loginId$domain"
                 val request = LoginRequest(email = email, password = pass)
 
                 val result = authRepository.login(request)
 
                 result.onSuccess { response ->
+                    failedAttempts = 0
                     _state.value = State.Success(response)
                 }.onFailure { exception ->
+                    failedAttempts++
+
                     val errorString = exception.toString()
                     val message = exception.message ?: ""
 
@@ -73,6 +125,11 @@ class LoginScreenModel(
                     }
 
                     _state.value = State.Error(humanMessage)
+
+                    if (failedAttempts >= 3) {
+                        refreshCaptcha()
+                        _showCaptchaDialog.value = true
+                    }
                 }
 
             } catch (e: Exception) {

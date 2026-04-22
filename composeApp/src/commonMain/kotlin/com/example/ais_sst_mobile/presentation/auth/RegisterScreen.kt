@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.example.ais_sst_mobile.presentation.components.*
@@ -55,14 +56,27 @@ class RegisterScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val focusManager = LocalFocusManager.current
 
+        val screenModel = getScreenModel<RegisterScreenModel>()
+        val state by screenModel.state.collectAsState()
+
         var surname by rememberSaveable { mutableStateOf("") }
         var name by rememberSaveable { mutableStateOf("") }
         var patronymic by rememberSaveable { mutableStateOf("") }
         var birthDate by rememberSaveable { mutableStateOf("") }
-        var socialStatus by rememberSaveable { mutableStateOf("") }
+        var selectedSocialStatusIds by rememberSaveable { mutableStateOf(setOf<Int>()) }
+        val selectedStatusesText = remember(selectedSocialStatusIds, state.socialStatuses) {
+            if (selectedSocialStatusIds.isEmpty()) {
+                ""
+            } else {
+                state.socialStatuses
+                    .filter { it.id in selectedSocialStatusIds }
+                    .joinToString(", ") { it.title }
+            }
+        }
         var gender by rememberSaveable { mutableStateOf("") }
         var course by rememberSaveable { mutableStateOf("") }
         var specialty by rememberSaveable { mutableStateOf("") }
+        var selectedSpecialtyId by rememberSaveable { mutableStateOf<Int?>(null) }
         var groupNum by rememberSaveable { mutableStateOf("") }
         var corpEmail by rememberSaveable { mutableStateOf("") }
         var corpDomain by rememberSaveable { mutableStateOf("@edu.fa.ru") }
@@ -85,20 +99,34 @@ class RegisterScreen : Screen {
         var expandedGender by remember { mutableStateOf(false) }
         var expandedSpecialty by remember { mutableStateOf(false) }
         var generalError by remember { mutableStateOf<String?>(null) }
+        var imageError by remember { mutableStateOf<String?>(null) }
 
         val scope = rememberCoroutineScope()
         var selectedImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+
+        val maxImageSizeBytes = 2 * 1024 * 1024
+
         val singleImagePicker = rememberImagePickerLauncher(
             selectionMode = SelectionMode.Single,
             scope = scope,
-            onResult = { byteArrays -> selectedImageBytes = byteArrays.firstOrNull() }
+            onResult = { byteArrays ->
+                val bytes = byteArrays.firstOrNull()
+                if (bytes != null) {
+                    if (bytes.size > maxImageSizeBytes) {
+                        imageError = "Размер фото не должен превышать 1024x1024"
+                        selectedImageBytes = null
+                    } else {
+                        imageError = null
+                        selectedImageBytes = bytes
+                    }
+                }
+            }
         )
 
         val nameRegex = remember { Regex("^[А-ЯЁ][а-яё]*$") }
         val emailRegex = remember { Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-z]+$") }
-        val vkRegex = remember { Regex("^[a-zA-Z0-9_.-]+$") }
-        val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,}$") }
-
+        val vkRegex = remember { Regex("""^[a-zA-Z0-9_.\-/?=&!@#$%]+$""") }
+        val passwordRegex = remember { Regex("""^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]{8,}$""") }
         val isSurnameError = surname.isNotEmpty() && !nameRegex.matches(surname.trim())
         val isNameError = name.isNotEmpty() && !nameRegex.matches(name.trim())
         val isPatronymicError = patronymic.isNotEmpty() && !nameRegex.matches(patronymic.trim())
@@ -163,14 +191,26 @@ class RegisterScreen : Screen {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
                     .imePadding()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 32.dp),
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(60.dp))
+                val contentModifier = Modifier.fillMaxWidth(0.9f)
+
+                Spacer(modifier = Modifier.height(40.dp))
+
+                Box(
+                    modifier = contentModifier,
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    CustomBackButton(onClick = { navigator.pop() })
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = surname,
                     onValueChange = { surname = it; generalError = null },
                     placeholder = "* Фамилия",
@@ -182,6 +222,7 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = name,
                     onValueChange = { name = it; generalError = null },
                     placeholder = "* Имя",
@@ -193,6 +234,7 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = patronymic,
                     onValueChange = { patronymic = it; generalError = null },
                     placeholder = "* Отчество",
@@ -204,6 +246,7 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = birthDate,
                     onValueChange = {
                         if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -225,21 +268,53 @@ class RegisterScreen : Screen {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val statuses = listOf("Студент", "Сирота", "Инвалид", "Многодетный", "Иное")
-                ExposedDropdownMenuBox(expanded = expandedStatus, onExpandedChange = { expandedStatus = !expandedStatus }) {
+                ExposedDropdownMenuBox(
+                    expanded = expandedStatus,
+                    onExpandedChange = { expandedStatus = !expandedStatus }
+                ) {
                     CustomTextField(
-                        value = socialStatus, onValueChange = {}, readOnly = true, placeholder = "* Социальный статус",
+                        modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                        value = selectedStatusesText,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = "  Социальный статус",
                         trailingIcon = {
                             val icon = if (expandedStatus) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
                             Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
                         },
-                        modifier = Modifier.menuAnchor()
                     )
-                    ExposedDropdownMenu(expanded = expandedStatus, onDismissRequest = { expandedStatus = false }) {
-                        statuses.forEach { selection ->
+
+                    ExposedDropdownMenu(
+                        expanded = expandedStatus,
+                        onDismissRequest = { expandedStatus = false }
+                    ) {
+                        state.socialStatuses.forEach { item ->
+                            val isSelected = selectedSocialStatusIds.contains(item.id)
+
                             DropdownMenuItem(
-                                text = { Text(selection, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
-                                onClick = { socialStatus = selection; expandedStatus = false; generalError = null }
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Checkbox(
+                                            checked = isSelected,
+                                            onCheckedChange = null,
+                                            colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = item.title,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selectedSocialStatusIds = if (isSelected) {
+                                        selectedSocialStatusIds - item.id
+                                    } else {
+                                        selectedSocialStatusIds + item.id
+                                    }
+                                    generalError = null
+                                }
                             )
                         }
                     }
@@ -249,12 +324,12 @@ class RegisterScreen : Screen {
                 val genders = listOf("Мужской", "Женский")
                 ExposedDropdownMenuBox(expanded = expandedGender, onExpandedChange = { expandedGender = !expandedGender }) {
                     CustomTextField(
+                        modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
                         value = gender, onValueChange = {}, readOnly = true, placeholder = "* Пол",
                         trailingIcon = {
                             val icon = if (expandedGender) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
                             Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
-                        },
-                        modifier = Modifier.menuAnchor()
+                        }
                     )
                     ExposedDropdownMenu(expanded = expandedGender, onDismissRequest = { expandedGender = false }) {
                         genders.forEach { selection ->
@@ -268,6 +343,7 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = course,
                     onValueChange = {
                         if (it.length <= 1 && it.all { c -> c in '1'..'4' }) { course = it; generalError = null }
@@ -280,21 +356,28 @@ class RegisterScreen : Screen {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val specialties = listOf("ПИ", "ИБ", "ИБАС", "ПМИ")
                 ExposedDropdownMenuBox(expanded = expandedSpecialty, onExpandedChange = { expandedSpecialty = !expandedSpecialty }) {
                     CustomTextField(
-                        value = specialty, onValueChange = {}, readOnly = true, placeholder = "* Специальность",
+                        modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                        value = specialty,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = "* Специальность",
                         trailingIcon = {
                             val icon = if (expandedSpecialty) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
                             Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
-                        },
-                        modifier = Modifier.menuAnchor()
+                        }
                     )
                     ExposedDropdownMenu(expanded = expandedSpecialty, onDismissRequest = { expandedSpecialty = false }) {
-                        specialties.forEach { selection ->
+                        state.specialities.forEach { item ->
                             DropdownMenuItem(
-                                text = { Text(selection, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
-                                onClick = { specialty = selection; expandedSpecialty = false; generalError = null }
+                                text = { Text(item.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
+                                onClick = {
+                                    specialty = item.title
+                                    selectedSpecialtyId = item.id
+                                    expandedSpecialty = false
+                                    generalError = null
+                                }
                             )
                         }
                     }
@@ -302,9 +385,10 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = groupNum,
                     onValueChange = {
-                        if (it.length <= 6 && it.all { c -> c.isDigit() }) { groupNum = it; generalError = null }
+                        if (it.length <= 4 && it.all { c -> c.isDigit() }) { groupNum = it; generalError = null }
                     },
                     placeholder = "* Номер группы",
                     isError = isGroupNumError,
@@ -315,6 +399,7 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = corpEmail,
                     onValueChange = {
                         if (it.length <= 6 && it.all { c -> c.isDigit() }) { corpEmail = it; generalError = null }
@@ -350,6 +435,7 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = addEmail,
                     onValueChange = { addEmail = it; generalError = null },
                     placeholder = "  Дополнительная почта",
@@ -361,6 +447,7 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier.onFocusChanged { isPhoneFocused = it.isFocused },
                     value = phone,
                     onValueChange = {
                         if (it.length <= 10 && it.all { c -> c.isDigit() }) { phone = it; generalError = null }
@@ -370,30 +457,30 @@ class RegisterScreen : Screen {
                     errorMessage = if (isPhoneError) "Введите 10 цифр (без +7)" else null,
                     visualTransformation = PhoneTransformation(isPhoneFocused),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                    modifier = Modifier.onFocusChanged { isPhoneFocused = it.isFocused }
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier.onFocusChanged { isVkFocused = it.isFocused },
                     value = vkLink,
                     onValueChange = { vkLink = it; generalError = null },
                     placeholder = "* Ссылка на ВКонтакте",
                     isError = isVkLinkError,
-                    errorMessage = if (isVkLinkError) "Только латиница и цифры, без пробелов и @" else null,
+                    errorMessage = if (isVkLinkError) "Ссылка не должна содержать пробелов и русских букв" else null,
                     visualTransformation = PrefixTransformation("https://vk.com/", isVkFocused),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                    modifier = Modifier.onFocusChanged { isVkFocused = it.isFocused }
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = password,
                     onValueChange = { password = it; generalError = null },
                     placeholder = "* Пароль",
                     isError = isPasswordError,
-                    errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z и цифры" else null,
+                    errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры и спецсимволы" else null,
                     visualTransformation = if (isPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
@@ -407,6 +494,7 @@ class RegisterScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 CustomTextField(
+                    modifier = contentModifier,
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it; generalError = null },
                     placeholder = "* Повторите пароль",
@@ -424,17 +512,27 @@ class RegisterScreen : Screen {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Box(modifier = Modifier.fillMaxWidth().clickable { singleImagePicker.launch() }) {
+                Box(modifier = contentModifier.clickable { singleImagePicker.launch() }) {
                     CustomTextField(
+                        modifier = Modifier.fillMaxWidth(),
                         value = if (selectedImageBytes != null) "Фотография загружена" else "",
                         onValueChange = {}, readOnly = true, placeholder = "* Официальная фотография",
-                        modifier = Modifier.fillMaxWidth(),
                         trailingIcon = {
                             val icon = if (selectedImageBytes != null) Icons.Default.CheckCircle else Icons.Default.AddAPhoto
                             Icon(icon, "Загрузить фото", tint = MaterialTheme.colorScheme.secondary)
                         }
                     )
                     Box(modifier = Modifier.matchParentSize().clickable { singleImagePicker.launch() })
+                }
+
+                if (imageError != null) {
+                    Text(
+                        text = imageError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = contentModifier.padding(top = 8.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
 
                 selectedImageBytes?.let { bytes ->
@@ -448,13 +546,20 @@ class RegisterScreen : Screen {
                 }
 
                 Text(
-                    text = "Загрузка своей фотографии является обязательным условием! Просьба загружать официальное фото в анфас, где видно ваше лицо",
+                    text = "Внимание: пожалуйста, отнеситесь к выбору снимка ответственно! Если фотография не будет соответствовать правилам ниже, ваша заявка на вступление может быть отклонена. Загрузите подходящее фото сразу, чтобы процесс регистрации прошел быстро и без лишних возвратов.\n" +
+                            "\n" +
+                            "Требования к снимку:\n" +
+                            "Формат: Цветная фотография 3х4 (без белого уголка).\n" +
+                            "Фон: Строго белый и однотонный. В кадре не должно быть теней, полос, узоров или посторонних предметов.\n" +
+                            "Поза и взгляд: Строго анфас. Взгляд направлен прямо в объектив, лицо полностью открыто, плечи расположены ровно.\n" +
+                            "Пропорции: Лицо должно занимать от 70% до 80% площади всей фотографии.\n" +
+                            "Одежда: Выбирайте однотонную одежду, предпочтительно тёмных оттенков, чтобы ваш силуэт не сливался с белым фоном.",
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Thin),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+                    modifier = contentModifier.padding(top = 8.dp, bottom = 24.dp)
                 )
 
-                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
+                Column(modifier = contentModifier, horizontalAlignment = Alignment.Start) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth().clickable { isAgreedPD = !isAgreedPD }
@@ -464,7 +569,7 @@ class RegisterScreen : Screen {
                             colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
                         )
                         Text(
-                            text = "Я даю согласие на обработку данных",
+                            text = "Я даю согласие на обработку персональных данных в соответствии с Политикой обработки персональных данных",
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                         )
@@ -486,16 +591,19 @@ class RegisterScreen : Screen {
                 }
                 Spacer(modifier = Modifier.height(25.dp))
 
-                Button(
+                CustomButton(
+                    modifier = contentModifier,
+                    text = "Зарегистрироваться",
+                    enabled = isRegisterEnabled,
                     onClick = {
                         val hasEmptyFields = surname.isBlank() || name.isBlank() || birthDate.length != 8 ||
-                                socialStatus.isBlank() || gender.isBlank() || course.isBlank() || specialty.isBlank() ||
+                                gender.isBlank() || course.isBlank() || selectedSpecialtyId == null ||
                                 groupNum.isBlank() || corpEmail.isBlank() || phone.length != 10 ||
                                 vkLink.isBlank() || password.isBlank() || confirmPassword.isBlank() || selectedImageBytes == null
 
                         val hasValidationErrors = isSurnameError || isNameError || isPatronymicError || isBirthDateError ||
                                 isCourseError || isGroupNumError || isCorpEmailError || isAddEmailError ||
-                                isPhoneError || isVkLinkError || isPasswordError || isConfirmPasswordError
+                                isPhoneError || isVkLinkError || isPasswordError || isConfirmPasswordError || imageError != null
 
                         if (hasEmptyFields || hasValidationErrors) {
                             generalError = "Корректно заполните все обязательные поля и загрузите фото"
@@ -503,18 +611,8 @@ class RegisterScreen : Screen {
                             generalError = null
                             // TODO: Отправка на сервер
                         }
-                    },
-                    enabled = isRegisterEnabled,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                    ),
-                    shape = MaterialTheme.shapes.large,
-                    border = BorderStroke(0.3.dp, if (isRegisterEnabled) MaterialTheme.colorScheme.outline else Color.Transparent),
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                ) {
-                    Text("Зарегистрироваться", style = MaterialTheme.typography.titleLarge, color = if (isRegisterEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f))
-                }
+                    }
+                )
 
                 generalError?.let { msg ->
                     Text(
@@ -522,13 +620,17 @@ class RegisterScreen : Screen {
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 16.dp).fillMaxWidth()
+                        modifier = contentModifier.padding(top = 16.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = contentModifier
+                ) {
                     Text("Уже есть аккаунт? ", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
                     Text(
                         text = "Войти",

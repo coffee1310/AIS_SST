@@ -31,6 +31,12 @@ fun AppTheme(
             fontSize = 18.sp,
             letterSpacing = 1.sp
         ),
+        titleMedium = TextStyle(
+            fontFamily = digitalFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp,
+            letterSpacing = 1.sp
+        ),
         // Для обычного текста и полей ввода (Montserrat)
         bodyLarge = TextStyle(
             fontFamily = montserratFont,
