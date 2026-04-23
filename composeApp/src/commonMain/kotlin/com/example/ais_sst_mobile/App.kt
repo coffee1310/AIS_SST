@@ -1,30 +1,36 @@
 package com.example.ais_sst_mobile
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.runtime.Composable
-import cafe.adriel.voyager.navigator.Navigator
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import com.arkivanov.decompose.extensions.compose.stack.Children
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.example.ais_sst_mobile.navigation.RootComponent
 import com.example.ais_sst_mobile.presentation.auth.LoginScreen
+import com.example.ais_sst_mobile.presentation.auth.RegisterScreen
 import com.example.ais_sst_mobile.theme.AppTheme
+import io.github.alexzhirkevich.cupertino.adaptive.ExperimentalAdaptiveApi
+import io.github.alexzhirkevich.cupertino.decompose.cupertinoPredictiveBackAnimation
 
-
+@OptIn(ExperimentalAdaptiveApi::class)
 @Composable
-@Preview
-fun App() {
+fun App(root: RootComponent) {
     AppTheme {
-        Navigator(LoginScreen())
+        val childStack by root.stack.subscribeAsState()
+
+        Children(
+            stack = childStack,
+            modifier = Modifier.fillMaxSize(),
+            animation = cupertinoPredictiveBackAnimation(
+                backHandler = (root as com.arkivanov.decompose.ComponentContext).backHandler,
+                onBack = { root.onBackClicked(0) }
+            )
+        ) { child ->
+            when (val instance = child.instance) {
+                is RootComponent.Child.Login -> LoginScreen(instance.component)
+                is RootComponent.Child.Register -> RegisterScreen(instance.component)
+            }
+        }
     }
 }

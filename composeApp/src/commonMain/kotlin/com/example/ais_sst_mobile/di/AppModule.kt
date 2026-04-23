@@ -22,8 +22,8 @@ val appModule = module {
     single<DictionaryRepository> { DictionaryRepositoryImpl(get()) }
 
     // ScreenModels
-    factory { LoginScreenModel(get()) }
-    factory { RegisterScreenModel(dictionaryRepository = get()) }
+    single { LoginScreenModel(get()) }
+    single { RegisterScreenModel(dictionaryRepository = get()) }
 }
 
 fun initKoin() {
