@@ -4,10 +4,5 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-	<key>NSPhotoLibraryUsageDescription</key>
-        <string>Приложению требуется доступ к вашей галерее, чтобы вы могли установить официальную фотографию для профиля студента.</string>
-
-        <key>NSCameraUsageDescription</key>
-        <string>Приложению требуется доступ к камере, чтобы вы могли сделать фотографию для профиля студента.</string>
 </dict>
 </plist>
