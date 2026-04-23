@@ -8,11 +8,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import io.github.alexzhirkevich.cupertino.theme.CupertinoTheme
-import io.github.alexzhirkevich.cupertino.adaptive.AdaptiveTheme
-import io.github.alexzhirkevich.cupertino.adaptive.ExperimentalAdaptiveApi
-import io.github.alexzhirkevich.cupertino.theme.darkColorScheme
-import io.github.alexzhirkevich.cupertino.theme.lightColorScheme
+import io.github.robinpcrd.cupertino.theme.CupertinoTheme
+import io.github.robinpcrd.cupertino.adaptive.AdaptiveTheme
+import io.github.robinpcrd.cupertino.adaptive.ExperimentalAdaptiveApi
+import io.github.robinpcrd.cupertino.theme.darkColorScheme
+import io.github.robinpcrd.cupertino.theme.lightColorScheme
 import org.jetbrains.compose.resources.Font
 import ais_sst_mobile.composeapp.generated.resources.Res
 import ais_sst_mobile.composeapp.generated.resources.digital_pixel_regular

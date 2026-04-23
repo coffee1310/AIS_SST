@@ -55,13 +55,13 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
 
-            // --- DECOMPOSE & CUPERTINO (навигация и UI) ---
-            implementation("com.arkivanov.decompose:decompose:3.0.0")
-            implementation("com.arkivanov.decompose:extensions-compose:3.0.0")
+            // DECOMPOSE & CUPERTINO (навигация и UI)
+            implementation("com.arkivanov.decompose:decompose:3.1.0")
+            implementation("com.arkivanov.decompose:extensions-compose:3.1.0")
 
-            implementation("io.github.alexzhirkevich:cupertino:0.1.0-alpha04")
-            implementation("io.github.alexzhirkevich:cupertino-adaptive:0.1.0-alpha04")
-            implementation("io.github.alexzhirkevich:cupertino-decompose:0.1.0-alpha04")
+            implementation("io.github.robinpcrd:cupertino:3.3.1")
+            implementation("io.github.robinpcrd:cupertino-adaptive:3.3.1")
+            implementation("io.github.robinpcrd:cupertino-decompose:3.3.1")
 
             // Settings
             implementation(libs.multiplatform.settings)

@@ -93,10 +93,10 @@ fun LoginScreen(component: LoginComponent) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.safeDrawing))
 
             val contentModifier = Modifier.fillMaxWidth(0.9f)
 
@@ -254,6 +254,8 @@ fun LoginScreen(component: LoginComponent) {
             }
 
             Spacer(modifier = Modifier.height(40.dp))
+
+            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
     }
 }

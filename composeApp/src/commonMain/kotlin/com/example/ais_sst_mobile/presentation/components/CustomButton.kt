@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,11 +18,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import io.github.alexzhirkevich.cupertino.adaptive.AdaptiveButton
-import io.github.alexzhirkevich.cupertino.adaptive.AdaptiveCircularProgressIndicator
-import io.github.alexzhirkevich.cupertino.adaptive.ExperimentalAdaptiveApi
 
-@OptIn(ExperimentalAdaptiveApi::class)
 @Composable
 fun CustomButton(
     text: String,
@@ -29,7 +27,7 @@ fun CustomButton(
     enabled: Boolean = true,
     isLoading: Boolean = false
 ) {
-    AdaptiveButton(
+    Button(
         onClick = onClick,
         enabled = enabled && !isLoading,
         modifier = modifier
@@ -40,10 +38,15 @@ fun CustomButton(
                     color = if (enabled) MaterialTheme.colorScheme.outline else Color.Transparent
                 ),
                 shape = MaterialTheme.shapes.large
-            )
+            ),
+        shape = MaterialTheme.shapes.large
     ) {
         if (isLoading) {
-            AdaptiveCircularProgressIndicator(modifier = Modifier.size(24.dp))
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = MaterialTheme.colorScheme.onPrimary,
+                strokeWidth = 2.dp
+            )
         } else {
             AutoSizeText(
                 text = text,

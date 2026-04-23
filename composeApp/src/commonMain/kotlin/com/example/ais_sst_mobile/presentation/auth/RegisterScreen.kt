@@ -193,10 +193,11 @@ fun RegisterScreen(component: RegisterComponent) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.safeDrawing))
+
             val contentModifier = Modifier.fillMaxWidth(0.9f)
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -408,7 +409,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 placeholder = "* Корпоративная почта",
                 isError = isCorpEmailError,
                 errorMessage = if (isCorpEmailError) "Только 6 цифр, выбор домена справа" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                 suffix = {
                     Box {
@@ -642,6 +643,8 @@ fun RegisterScreen(component: RegisterComponent) {
             }
 
             Spacer(modifier = Modifier.height(60.dp))
+
+            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
     }
 }
