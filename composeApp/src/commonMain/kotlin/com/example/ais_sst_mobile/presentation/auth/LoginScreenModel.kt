@@ -1,7 +1,7 @@
 package com.example.ais_sst_mobile.presentation.auth
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.ais_sst_mobile.data.network.dto.AuthResponse
 import com.example.ais_sst_mobile.data.network.dto.LoginRequest
 import com.example.ais_sst_mobile.domain.repository.AuthRepository
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class LoginScreenModel(
     private val authRepository: AuthRepository
-) : ScreenModel {
+) : ViewModel() {
 
     sealed class State {
         object Initial : State()
@@ -72,7 +72,6 @@ class LoginScreenModel(
             return
         }
 
-        // Ровно 8 символов и больше
         val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}\$")
         if (!passwordRegex.matches(pass)) {
             _state.value = State.Error("Пароль: от 8 символов (буквы, цифры, спецсимволы)")
@@ -91,7 +90,7 @@ class LoginScreenModel(
     private fun performLoginRequest(loginId: String, domain: String, pass: String) {
         _state.value = State.Loading
 
-        screenModelScope.launch {
+        viewModelScope.launch {
             try {
                 val email = "$loginId$domain"
                 val request = LoginRequest(email = email, password = pass)

@@ -41,6 +41,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+
             // Coroutines
             implementation(libs.kotlinx.coroutines.core)
 
@@ -54,12 +55,13 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
 
-            // Voyager
-            implementation(libs.voyager.navigator)
-            implementation(libs.voyager.screenmodel)
-            implementation(libs.voyager.tab.navigator)
-            implementation(libs.voyager.transitions)
-            implementation(libs.voyager.koin)
+            // --- DECOMPOSE & CUPERTINO (навигация и UI) ---
+            implementation("com.arkivanov.decompose:decompose:3.0.0")
+            implementation("com.arkivanov.decompose:extensions-compose:3.0.0")
+
+            implementation("io.github.alexzhirkevich:cupertino:0.1.0-alpha04")
+            implementation("io.github.alexzhirkevich:cupertino-adaptive:0.1.0-alpha04")
+            implementation("io.github.alexzhirkevich:cupertino-decompose:0.1.0-alpha04")
 
             // Settings
             implementation(libs.multiplatform.settings)
@@ -69,10 +71,9 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
-            // Библиотека для выбора фото (Android & iOS)
+            // Библиотека для выбора фото
             implementation("io.github.onseok:peekaboo-ui:0.5.2")
             implementation("io.github.onseok:peekaboo-image-picker:0.5.2")
-
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

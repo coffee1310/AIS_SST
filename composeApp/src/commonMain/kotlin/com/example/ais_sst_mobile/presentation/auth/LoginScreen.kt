@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -33,11 +32,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.getScreenModel
+import com.example.ais_sst_mobile.navigation.LoginComponent
 import com.example.ais_sst_mobile.presentation.components.AppBackground
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.CustomButton
@@ -45,223 +42,221 @@ import org.jetbrains.compose.resources.painterResource
 import ais_sst_mobile.composeapp.generated.resources.Res
 import ais_sst_mobile.composeapp.generated.resources.logo_auth
 import androidx.compose.ui.text.style.TextAlign
-import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.getKoin
 
-class LoginScreen : Screen {
-    @Composable
-    override fun Content() {
-        val screenModel = getScreenModel<LoginScreenModel>()
-        val state by screenModel.state.collectAsState()
+@Composable
+fun LoginScreen(component: LoginComponent) {
+    val koin = getKoin()
+    val screenModel = remember { koin.get<LoginScreenModel>() }
+    val state by screenModel.state.collectAsState()
 
-        val showCaptchaDialog by screenModel.showCaptchaDialog.collectAsState()
-        val currentCaptcha by screenModel.currentCaptcha.collectAsState()
-        val captchaError by screenModel.captchaError.collectAsState()
+    val showCaptchaDialog by screenModel.showCaptchaDialog.collectAsState()
+    val currentCaptcha by screenModel.currentCaptcha.collectAsState()
+    val captchaError by screenModel.captchaError.collectAsState()
 
-        val focusManager = LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
 
-        var login by rememberSaveable { mutableStateOf("") }
-        var selectedDomain by rememberSaveable { mutableStateOf("@edu.fa.ru") }
-        var isDomainMenuExpanded by remember { mutableStateOf(false) }
+    var login by rememberSaveable { mutableStateOf("") }
+    var selectedDomain by rememberSaveable { mutableStateOf("@edu.fa.ru") }
+    var isDomainMenuExpanded by remember { mutableStateOf(false) }
 
-        var password by rememberSaveable { mutableStateOf("") }
-        var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
+    var password by rememberSaveable { mutableStateOf("") }
+    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
 
-        val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}\$") }
+    val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}\$") }
 
-        val isLoginError = selectedDomain == "@edu.fa.ru" && login.isNotEmpty() && login.length != 6
-        val isPasswordError = password.isNotEmpty() && !passwordRegex.matches(password)
+    val isLoginError = selectedDomain == "@edu.fa.ru" && login.isNotEmpty() && login.length != 6
+    val isPasswordError = password.isNotEmpty() && !passwordRegex.matches(password)
 
-        val navigator = cafe.adriel.voyager.navigator.LocalNavigator.currentOrThrow
-
-        LaunchedEffect(state) {
-            when (state) {
-                is LoginScreenModel.State.Success -> {
-                    val user = (state as LoginScreenModel.State.Success).user
-                    println("АВТОРИЗАЦИЯ УСПЕШНА! Привет, ${user.name} ${user.surname}. Токен: ${user.token}")
-                }
-                else -> {}
+    LaunchedEffect(state) {
+        when (state) {
+            is LoginScreenModel.State.Success -> {
+                val user = (state as LoginScreenModel.State.Success).user
+                println("АВТОРИЗАЦИЯ УСПЕШНА! Привет, ${user.name} ${user.surname}. Токен: ${user.token}")
+                // TODO: Переход на главный экран через component
             }
+            else -> {}
         }
+    }
 
-        if (showCaptchaDialog && currentCaptcha != null) {
-            CaptchaDialog(
-                currentCaptcha = currentCaptcha!!,
-                captchaError = captchaError,
-                onRefresh = { screenModel.refreshCaptcha() },
-                onVerify = { input -> screenModel.verifyCaptcha(input) },
-                onClearError = { screenModel.clearCaptchaError() }
+    if (showCaptchaDialog && currentCaptcha != null) {
+        CaptchaDialog(
+            currentCaptcha = currentCaptcha!!,
+            captchaError = captchaError,
+            onRefresh = { screenModel.refreshCaptcha() },
+            onVerify = { input -> screenModel.verifyCaptcha(input) },
+            onClearError = { screenModel.clearCaptchaError() }
+        )
+    }
+
+    AppBackground {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            val contentModifier = Modifier.fillMaxWidth(0.9f)
+
+            Spacer(modifier = Modifier.height(80.dp))
+
+            Image(
+                painter = painterResource(Res.drawable.logo_auth),
+                contentDescription = "Логотип",
+                modifier = Modifier.height(110.dp)
             )
-        }
 
-        AppBackground {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .imePadding()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Spacer(modifier = Modifier.height(100.dp))
 
-                val contentModifier = Modifier.fillMaxWidth(0.9f)
-
-                Spacer(modifier = Modifier.height(80.dp))
-
-                Image(
-                    painter = painterResource(Res.drawable.logo_auth),
-                    contentDescription = "Логотип",
-                    modifier = Modifier.height(110.dp)
-                )
-
-                Spacer(modifier = Modifier.height(100.dp))
-
-                CustomTextField(
-                    modifier = contentModifier,
-                    value = login,
-                    onValueChange = { newValue ->
-                        if (selectedDomain == "@edu.fa.ru") {
-                            if (newValue.length <= 6 && newValue.all { it.isDigit() }) {
-                                login = newValue
-                                screenModel.resetState()
-                            }
-                        } else {
+            CustomTextField(
+                modifier = contentModifier,
+                value = login,
+                onValueChange = { newValue ->
+                    if (selectedDomain == "@edu.fa.ru") {
+                        if (newValue.length <= 6 && newValue.all { it.isDigit() }) {
                             login = newValue
                             screenModel.resetState()
                         }
-                    },
-                    placeholder = if (selectedDomain == "@edu.fa.ru") "Номер студбилета" else "Логин",
-                    isError = isLoginError,
-                    errorMessage = if (isLoginError) "Студбилет должен состоять из 6 цифр" else null,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                    trailingIcon = {
-                        Box {
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .clickable { isDomainMenuExpanded = true }
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = selectedDomain,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Icon(
-                                    imageVector = if (isDomainMenuExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = "Выбрать домен",
-                                    tint = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.padding(start = 2.dp).size(20.dp)
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = isDomainMenuExpanded,
-                                onDismissRequest = { isDomainMenuExpanded = false },
-                                containerColor = MaterialTheme.colorScheme.background
-                            ) {
-                                listOf("@edu.fa.ru", "@fa.ru").forEach { domain ->
-                                    DropdownMenuItem(
-                                        text = { Text(domain, style = MaterialTheme.typography.labelMedium) },
-                                        onClick = {
-                                            selectedDomain = domain
-                                            isDomainMenuExpanded = false
-                                            screenModel.resetState()
-
-                                            if (domain == "@edu.fa.ru" && !login.all { it.isDigit() }) {
-                                                login = login.filter { it.isDigit() }.take(6)
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                CustomTextField(
-                    modifier = contentModifier,
-                    value = password,
-                    onValueChange = {
-                        password = it
+                    } else {
+                        login = newValue
                         screenModel.resetState()
-                    },
-                    placeholder = "Пароль",
-                    isError = isPasswordError,
-                    errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры, спецсимволы" else null,
-                    visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                            screenModel.login(login, selectedDomain, password)
+                    }
+                },
+                placeholder = if (selectedDomain == "@edu.fa.ru") "Номер студбилета" else "Логин",
+                isError = isLoginError,
+                errorMessage = if (isLoginError) "Студбилет должен состоять из 6 цифр" else null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                trailingIcon = {
+                    Box {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { isDomainMenuExpanded = true }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = selectedDomain,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Icon(
+                                imageVector = if (isDomainMenuExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Выбрать домен",
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.padding(start = 2.dp).size(20.dp)
+                            )
                         }
-                    ),
-                    trailingIcon = {
-                        val image = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                            Icon(imageVector = image, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                        DropdownMenu(
+                            expanded = isDomainMenuExpanded,
+                            onDismissRequest = { isDomainMenuExpanded = false },
+                            containerColor = MaterialTheme.colorScheme.background
+                        ) {
+                            listOf("@edu.fa.ru", "@fa.ru").forEach { domain ->
+                                DropdownMenuItem(
+                                    text = { Text(domain, style = MaterialTheme.typography.labelMedium) },
+                                    onClick = {
+                                        selectedDomain = domain
+                                        isDomainMenuExpanded = false
+                                        screenModel.resetState()
+
+                                        if (domain == "@edu.fa.ru" && !login.all { it.isDigit() }) {
+                                            login = login.filter { it.isDigit() }.take(6)
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
-                )
-
-                Box(modifier = contentModifier, contentAlignment = Alignment.CenterStart) {
-                    Text(
-                        text = "Забыли пароль?",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        modifier = Modifier
-                            .padding(top = 12.dp, start = 15.dp)
-                            .clickable { /* TODO: Страница восстановления */ }
-                    )
                 }
+            )
 
-                Spacer(modifier = Modifier.height(90.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-                CustomButton(
-                    text = "Войти",
-                    isLoading = state is LoginScreenModel.State.Loading,
-                    onClick = {
+            CustomTextField(
+                modifier = contentModifier,
+                value = password,
+                onValueChange = {
+                    password = it
+                    screenModel.resetState()
+                },
+                placeholder = "Пароль",
+                isError = isPasswordError,
+                errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры, спецсимволы" else null,
+                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
                         focusManager.clearFocus()
                         screenModel.login(login, selectedDomain, password)
-                    },
-                    modifier = contentModifier
+                    }
+                ),
+                trailingIcon = {
+                    val image = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        Icon(imageVector = image, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    }
+                }
+            )
+
+            Box(modifier = contentModifier, contentAlignment = Alignment.CenterStart) {
+                Text(
+                    text = "Забыли пароль?",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    modifier = Modifier
+                        .padding(top = 12.dp, start = 15.dp)
+                        .clickable { /* TODO: Страница восстановления */ }
                 )
-
-                if (state is LoginScreenModel.State.Error) {
-                    Text(
-                        text = (state as LoginScreenModel.State.Error).message,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = contentModifier.padding(top = 16.dp, bottom = 16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = contentModifier
-                ) {
-                    Text("Нет аккаунта? ", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
-                    Text(
-                        text = "Зарегистрироваться",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.clickable { navigator.push(RegisterScreen()) }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(40.dp))
             }
+
+            Spacer(modifier = Modifier.height(90.dp))
+
+            CustomButton(
+                text = "Войти",
+                isLoading = state is LoginScreenModel.State.Loading,
+                onClick = {
+                    focusManager.clearFocus()
+                    screenModel.login(login, selectedDomain, password)
+                },
+                modifier = contentModifier
+            )
+
+            if (state is LoginScreenModel.State.Error) {
+                Text(
+                    text = (state as LoginScreenModel.State.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = contentModifier.padding(top = 16.dp, bottom = 16.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = contentModifier
+            ) {
+                Text("Нет аккаунта? ", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    text = "Зарегистрироваться",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.clickable {
+                        component.onNavigateToRegister()
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
-
 @Composable
 fun CaptchaDialog(
     currentCaptcha: String,

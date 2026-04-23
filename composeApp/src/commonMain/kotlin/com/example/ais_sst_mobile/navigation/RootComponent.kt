@@ -1,0 +1,61 @@
+package com.example.ais_sst_mobile.navigation
+
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.stack.ChildStack
+import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.pushNew
+import com.arkivanov.decompose.value.Value
+import kotlinx.serialization.Serializable
+
+interface RootComponent {
+    val stack: Value<ChildStack<*, Child>>
+    fun onBackClicked(toIndex: Int)
+
+    sealed class Child {
+        class Login(val component: LoginComponent) : Child()
+        class Register(val component: RegisterComponent) : Child()
+    }
+}
+
+class DefaultRootComponent(
+    componentContext: ComponentContext
+) : RootComponent, ComponentContext by componentContext {
+
+    private val navigation = StackNavigation<Config>()
+
+    override val stack: Value<ChildStack<*, RootComponent.Child>> = childStack(
+        source = navigation,
+        serializer = Config.serializer(),
+        initialConfiguration = Config.Login,
+        handleBackButton = true,
+        childFactory = ::createChild
+    )
+
+    override fun onBackClicked(toIndex: Int) {
+        navigation.pop()
+    }
+
+    private fun createChild(config: Config, context: ComponentContext): RootComponent.Child =
+        when (config) {
+            is Config.Login -> RootComponent.Child.Login(
+                LoginComponent(
+                    componentContext = context,
+                    onNavigateToRegister = { navigation.pushNew(Config.Register) }
+                )
+            )
+            is Config.Register -> RootComponent.Child.Register(
+                RegisterComponent(
+                    componentContext = context,
+                    onGoBack = { navigation.pop() }
+                )
+            )
+        }
+
+    @Serializable
+    private sealed interface Config {
+        @Serializable data object Login : Config
+        @Serializable data object Register : Config
+    }
+}
