@@ -25,7 +25,6 @@ namespace Diplom_Stud.Pages.Activist
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // Плавное появление страницы при переходе
             DoubleAnimation fadeInAnimation = new DoubleAnimation
             {
                 From = 0.0,

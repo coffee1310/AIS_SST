@@ -14,130 +14,13 @@
         <WindowChrome CaptionHeight="32" ResizeBorderThickness="5" GlassFrameThickness="0" CornerRadius="0"/>
     </WindowChrome.WindowChrome>
 
-    <Window.Resources>
-        <Style x:Key="OutlineButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#2A283C"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="20,10"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="MenuLinkStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="Margin" Value="20,10"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-
-        <Style x:Key="WindowButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#7A7886"/>
-            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Width" Value="45"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2A283C"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="WindowCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource WindowButtonStyle}">
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#E81123"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="MenuRadioButtonStyle" TargetType="RadioButton">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="10,2"/>
-            <Setter Property="Padding" Value="15,12"/>
-            <Setter Property="GroupName" Value="MainMenu"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#615292"/>
-                            </Trigger>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsMouseOver" Value="True"/>
-                                    <Condition Property="IsChecked" Value="False"/>
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="border" Property="Background" Value="#444444"/>
-                            </MultiTrigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="ProfileRadioButtonStyle" TargetType="RadioButton">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="GroupName" Value="MainMenu"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="10" Padding="15,25,15,20">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#615292"/>
-                            </Trigger>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsMouseOver" Value="True"/>
-                                    <Condition Property="IsChecked" Value="False"/>
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="border" Property="Background" Value="#333333"/>
-                            </MultiTrigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="32"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Background="#08060D">
+        <Grid Grid.Row="0" Background="#FF191425">
             <TextBlock Text="Студенческий совет КИПФИН" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="12"/>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -148,7 +31,6 @@
         </Grid>
 
         <Grid Grid.Row="1" ClipToBounds="True">
-
             <Grid.Background>
                 <SolidColorBrush Color="#030106"/>
             </Grid.Background>
@@ -213,11 +95,12 @@
 
                     <StackPanel Grid.Row="1" Margin="0,0,0,0">
                         <RadioButton x:Name="NavHome" Content="Главная" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10" Click="MenuHome_Click"/>
-                        <RadioButton x:Name="NavEvents" Content="Мероприятия" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10"/>
-                        <RadioButton x:Name="NavTasks" Content="Задачи" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10"/>
-                        <RadioButton x:Name="NavProjects" Content="Проекты" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10"/>
-                        <RadioButton x:Name="NavRating" Content="Рейтинг" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10"/>
-                        <RadioButton x:Name="NavNotifications" Content="Уведомления" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10"/>
+                        <RadioButton x:Name="NavEvents" Content="Мероприятия" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10" Click="MenuEvents_Click"/>
+                        <RadioButton x:Name="NavSectors" Content="Сектора" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10" Click="MenuSectors_Click"/>
+                        <RadioButton x:Name="NavTasks" Content="Задачи" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10" Click="MenuTasks_Click"/>
+                        <RadioButton x:Name="NavProjects" Content="Проекты" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10" Click="MenuProjects_Click"/>
+                        <RadioButton x:Name="NavRating" Content="Рейтинг" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10" Click="MenuRating_Click"/>
+                        <RadioButton x:Name="NavNotifications" Content="Уведомления" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" FontSize="10" Click="MenuNotifications_Click"/>
                     </StackPanel>
 
                     <Button Grid.Row="2" Style="{StaticResource OutlineButtonStyle}" Margin="20,20,20,30" Padding="10" Click="Logout_Click">

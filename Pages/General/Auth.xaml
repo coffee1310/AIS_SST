@@ -10,53 +10,6 @@
       Loaded="Page_Loaded"
       Unloaded="Page_Unloaded">
 
-    <Page.Resources>
-        <Style x:Key="InputBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1C1B29"/>
-            <Setter Property="BorderBrush" Value="#2A283C"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Height" Value="51"/>
-            <Setter Property="Width" Value="336"/>
-        </Style>
-
-        <Style x:Key="InnerInputStyle" TargetType="Control">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="15,0"/>
-            <Setter Property="FontSize" Value="14"/>
-        </Style>
-
-        <Style x:Key="ModernButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#615292"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="22">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#7363A8"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SlideIndicatorStyle" TargetType="Ellipse">
-            <Setter Property="Width" Value="8"/>
-            <Setter Property="Height" Value="8"/>
-            <Setter Property="Fill" Value="#7A7886"/>
-            <Setter Property="Margin" Value="5,0"/>
-        </Style>
-    </Page.Resources>
-
     <Grid>
         <Grid.Background>
             <SolidColorBrush Color="#030106"/>
@@ -126,13 +79,23 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" CornerRadius="23" ClipToBounds="True">
-                    <Grid x:Name="SlidesContainer">
-                        <Image x:Name="SlideImage1" Source="/Resources/auth.png" Stretch="UniformToFill" Opacity="1"/>
-                        <Image x:Name="SlideImage2" Source="/Resources/auth2.jpg" Stretch="UniformToFill" Opacity="0"/>
-                        <Image x:Name="SlideImage3" Source="/Resources/auth3.png" Stretch="UniformToFill" Opacity="0"/>
-                    </Grid>
-                </Border>
+                <Grid Grid.Row="0" x:Name="SlidesContainer">
+                    <Border x:Name="SlideImage1" CornerRadius="23,23,0,0" Opacity="1">
+                        <Border.Background>
+                            <ImageBrush ImageSource="/Resources/auth.png" Stretch="UniformToFill"/>
+                        </Border.Background>
+                    </Border>
+                    <Border x:Name="SlideImage2" CornerRadius="23,23,0,0" Opacity="0">
+                        <Border.Background>
+                            <ImageBrush ImageSource="/Resources/auth2.jpg" Stretch="UniformToFill"/>
+                        </Border.Background>
+                    </Border>
+                    <Border x:Name="SlideImage3" CornerRadius="23,23,0,0" Opacity="0">
+                        <Border.Background>
+                            <ImageBrush ImageSource="/Resources/auth3.png" Stretch="UniformToFill"/>
+                        </Border.Background>
+                    </Border>
+                </Grid>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,15">
                     <Ellipse x:Name="Indicator1" Style="{StaticResource SlideIndicatorStyle}" Fill="#615292"/>
@@ -144,8 +107,8 @@
 
                     <StackPanel Margin="0,0,0,15">
                         <Grid>
-                            <Border Style="{StaticResource InputBorderStyle}"/>
-                            <TextBox x:Name="tbLogin" Style="{StaticResource InnerInputStyle}"/>
+                            <Border Style="{StaticResource AuthInputBorderStyle}"/>
+                            <TextBox x:Name="tbLogin" Style="{StaticResource AuthInnerInputStyle}"/>
                             <TextBlock Text="Логин" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -168,13 +131,12 @@
 
                     <StackPanel Margin="0,0,0,10">
                         <Grid>
-                            <Border Style="{StaticResource InputBorderStyle}"/>
-
-                            <PasswordBox x:Name="pbPassword" Style="{StaticResource InnerInputStyle}" Padding="15,0,45,0"
+                            <Border Style="{StaticResource AuthInputBorderStyle}"/>
+                            <PasswordBox x:Name="pbPassword" Style="{StaticResource AuthInnerInputStyle}" Padding="15,0,45,0"
                                          PasswordChanged="PasswordBox_PasswordChanged" 
                                          GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"/>
 
-                            <TextBox x:Name="tbVisiblePassword" Style="{StaticResource InnerInputStyle}" Visibility="Collapsed" Padding="15,0,45,0"
+                            <TextBox x:Name="tbVisiblePassword" Style="{StaticResource AuthInnerInputStyle}" Visibility="Collapsed" Padding="15,0,45,0"
                                      TextChanged="VisiblePassword_TextChanged"
                                      GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"/>
 
@@ -205,7 +167,7 @@
                     <TextBlock Text="Забыли пароль?" Foreground="#7A7886" FontSize="12" 
                                HorizontalAlignment="Left" Margin="15,0,0,30" Cursor="Hand" FontFamily="Montserrat Thin"/>
 
-                    <Button Content="Войти" Cursor="Hand" Style="{StaticResource ModernButtonStyle}" 
+                    <Button Content="Войти" Cursor="Hand" Style="{StaticResource AuthModernButtonStyle}" 
                             Width="283" Height="50" Margin="0,0,0,25" 
                             FontFamily="Digital Pixel" FontSize="9" Click="Button_Click"/>
 

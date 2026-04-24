@@ -13,7 +13,7 @@ namespace Diplom_Stud
     /// </summary>
     public partial class App : Application
     {
-        public static string ApiBaseUrl = "http://localhost:8080";
+        public static string ApiBaseUrl = "http://185.246.66.164:8080/";
 
         public static string AuthToken { get; set; }
 

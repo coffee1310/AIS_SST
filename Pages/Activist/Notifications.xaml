@@ -1,0 +1,166 @@
+﻿<Page x:Class="Diplom_Stud.Pages.Activist.Notifications"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Diplom_Stud.Pages.Activist"
+      mc:Ignorable="d" 
+      d:DesignHeight="950" d:DesignWidth="1111"
+      Title="Notifications"
+      Loaded="Page_Loaded">
+
+    <Grid Background="Transparent">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel HorizontalAlignment="Center" Width="900" Margin="40,50,40,50">
+
+                <TextBlock Text="Уведомления" FontSize="48" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,50"/>
+
+                <Border Style="{StaticResource NotificationContainerStyle}" Padding="0">
+                    <StackPanel>
+
+                        <Border Style="{StaticResource UnreadNotificationStyle}" CornerRadius="15,15,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse Grid.Column="0" Width="44" Height="44" Margin="0,0,20,0">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="/Resources/sector6.png" Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Мультимедийный сектор" Foreground="White" FontSize="14" FontFamily="Montserrat Thin" Margin="0,0,0,5"/>
+                                    <TextBlock Text="Новая задача опубликована" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="5 мин. назад" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" Margin="0,0,0,8" HorizontalAlignment="Right"/>
+                                    <Border Style="{StaticResource UnreadBadgeStyle}" HorizontalAlignment="Right">
+                                        <TextBlock Text="1" Foreground="#02B3BA" FontSize="9" FontFamily="Montserrat Thin" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource UnreadNotificationStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse Grid.Column="0" Width="44" Height="44" Margin="0,0,20,0">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="/Resources/event3.png" Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock FontSize="14" FontFamily="Montserrat Thin" Margin="0,0,0,5">
+                                        <Run Text="День открытых дверей: " Foreground="White"/>
+                                        <Run Text="положительное решение" Foreground="#02B3BA"/>
+                                    </TextBlock>
+                                    <TextBlock Text="Вы участвуете, мероприятие пройдет 5 июня в 12:00" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="15 мин. назад" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" Margin="0,0,0,8" HorizontalAlignment="Right"/>
+                                    <Border Style="{StaticResource UnreadBadgeStyle}" HorizontalAlignment="Right">
+                                        <TextBlock Text="1" Foreground="#02B3BA" FontSize="9" FontFamily="Montserrat Thin" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ReadNotificationStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse Grid.Column="0" Width="44" Height="44" Margin="0,0,20,0">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="/Resources/sector4.png" Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Культмассовый сектор" Foreground="White" FontSize="14" FontFamily="Montserrat Thin" Margin="0,0,0,5"/>
+                                    <TextBlock Text="Новое мероприятие опубликовано" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="1 час назад" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" HorizontalAlignment="Right"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ReadNotificationStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse Grid.Column="0" Width="44" Height="44" Margin="0,0,20,0">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="/Resources/event5.png" Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock FontSize="14" FontFamily="Montserrat Thin" Margin="0,0,0,5">
+                                        <Run Text="День самоуправления: " Foreground="White"/>
+                                        <Run Text="отрицательное решение" Foreground="#02B3BA"/>
+                                    </TextBlock>
+                                    <TextBlock Text="К сожалению, вы не участвуете в мероприятии. Ждем вас на будущих событиях колледжа" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="1 день назад" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" HorizontalAlignment="Right"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource ReadNotificationStyle}" BorderThickness="0" CornerRadius="0,0,15,15">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse Grid.Column="0" Width="44" Height="44" Margin="0,0,20,0">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="/Resources/sector3.png" Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Волонтерский сектор" Foreground="White" FontSize="14" FontFamily="Montserrat Thin" Margin="0,0,0,5"/>
+                                    <TextBlock Text="Вы приняты в сектор" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="28.05" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" HorizontalAlignment="Right"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                    </StackPanel>
+                </Border>
+
+                <Button Content="Показать больше" Style="{StaticResource PillButtonStyle}" HorizontalAlignment="Center" Margin="0,30,0,0"/>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

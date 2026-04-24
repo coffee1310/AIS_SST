@@ -9,33 +9,6 @@
       d:DesignHeight="1211" d:DesignWidth="1111"
       Loaded="Page_Loaded">
 
-    <Page.Resources>
-        <Style x:Key="CardBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1C1A27"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="BorderBrush" Value="#2A283C"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="25"/>
-        </Style>
-
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#6B5EAE"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="20,10"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Page.Resources>
-
     <Grid Background="Transparent">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <Grid Margin="40,30,40,30" MaxWidth="900" HorizontalAlignment="Center">
@@ -140,7 +113,7 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" VerticalAlignment="Top">
+                    <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" VerticalAlignment="Center" Grid.ColumnSpan="2" Height="336" Margin="20,0,0,0">
                         <StackPanel>
                             <TextBlock Text="Контактная информация" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18"/>
 

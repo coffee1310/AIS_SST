@@ -3,248 +3,10 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:sys="clr-namespace:System;assembly=mscorlib"
+      xmlns:local="clr-namespace:Diplom_Stud.Pages.General"
       mc:Ignorable="d" 
       d:DesignWidth="1440" d:DesignHeight="1353"
       Title="Registration">
-
-    <Page.Resources>
-        <sys:String x:Key="EmptyString">System.String.Empty</sys:String>
-
-        <Style x:Key="RegInputBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1C1B29"/>
-            <Setter Property="BorderBrush" Value="#2A283C"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Height" Value="58"/>
-        </Style>
-
-        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton x:Name="ToggleButton" 
-                                          Background="Transparent" 
-                                          BorderThickness="0" 
-                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Grid Background="Transparent">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="30"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="15,0,0,0" VerticalAlignment="Center">
-                                                <TextBlock x:Name="Star" Text="*" Foreground="#02B3BA" Margin="0,0,5,0" Visibility="Collapsed"/>
-                                                <TextBlock x:Name="DisplayText" 
-                                                           Text="{Binding SelectedItem.Content, RelativeSource={RelativeSource AncestorType=ComboBox}}" 
-                                                           Foreground="{Binding SelectedItem.Foreground, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                           Visibility="Visible"/>
-                                                <TextBlock x:Name="PlaceholderText" 
-                                                           Text="Выберите..." 
-                                                           Foreground="#7A7886"
-                                                           Visibility="Collapsed"/>
-                                            </StackPanel>
-
-                                            <Path Grid.Column="1" 
-                                                  Fill="#02B3BA" 
-                                                  HorizontalAlignment="Center" 
-                                                  VerticalAlignment="Center" 
-                                                  Data="M 0 0 L 4 4 L 8 0 Z"/>
-                                        </Grid>
-
-                                        <ControlTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding SelectedItem.Tag, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="Required">
-                                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-
-                                            <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="{x:Null}">
-                                                <Setter TargetName="DisplayText" Property="Visibility" Value="Collapsed"/>
-                                                <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible"/>
-                                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                            </ToggleButton>
-
-                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" 
-                                   Placement="Bottom" 
-                                   AllowsTransparency="True"
-                                   PopupAnimation="Slide">
-                                <Border Background="#12101C" 
-                                        BorderBrush="#2A283C" 
-                                        BorderThickness="1" 
-                                        CornerRadius="8" 
-                                        MinWidth="{TemplateBinding ActualWidth}"
-                                        Margin="0,5,0,0">
-                                    <ScrollViewer>
-                                        <ItemsPresenter/>
-                                    </ScrollViewer>
-                                </Border>
-                            </Popup>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="ComboBoxItem">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="15,10"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="ItemBorder" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="ItemStar" Text="*" Foreground="#02B3BA" Margin="0,0,5,0" Visibility="Collapsed"/>
-                                <ContentPresenter/>
-                            </StackPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#2A283C"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Required">
-                                <Setter TargetName="ItemStar" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="InnerInputStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="15,0"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Grid>
-                            <ScrollViewer x:Name="PART_ContentHost" 
-                                          VerticalAlignment="Center" 
-                                          Background="Transparent" 
-                                          Margin="{TemplateBinding Padding}"/>
-
-                            <StackPanel x:Name="Watermark" 
-                                        Orientation="Horizontal" 
-                                        VerticalAlignment="Center" 
-                                        Margin="{TemplateBinding Padding}" 
-                                        IsHitTestVisible="False"
-                                        Visibility="Collapsed">
-                                <TextBlock x:Name="Star" 
-                                           Text="*" 
-                                           Foreground="#02B3BA" 
-                                           Margin="0,0,5,0" 
-                                           Visibility="Collapsed"/>
-                                <TextBlock x:Name="WatermarkText" 
-                                           Text="{TemplateBinding Tag}" 
-                                           Foreground="#7A7886"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="Tag" Value="Фамилия">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Имя">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Отчество">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Дата рождения">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Учебная группа">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Номер студенческого билета">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Корпоративная почта (@edu.fa.ru)">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Номер телефона">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="Tag" Value="Официальная фотография">
-                                <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="Text" Value=""/>
-                                    <Condition Property="IsFocused" Value="False"/>
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="Watermark" Property="Visibility" Value="Visible"/>
-                            </MultiTrigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="ModernCheckBoxStyle" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#7A7886"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <BulletDecorator Background="Transparent" Cursor="Hand">
-                            <BulletDecorator.Bullet>
-                                <Grid Width="24" Height="24">
-                                    <Border x:Name="Box" Background="#0D0914" BorderBrush="#02B3BA" BorderThickness="2" CornerRadius="6"/>
-                                    <Path x:Name="CheckMark" Data="M 5,12 L 10,17 L 19,8" Stroke="White" StrokeThickness="2" Visibility="Collapsed"/>
-                                </Grid>
-                            </BulletDecorator.Bullet>
-                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
-                        </BulletDecorator>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="Box" Property="Background" Value="#02B3BA"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="ModernButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#615292"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Width" Value="320"/>
-            <Setter Property="Height" Value="56"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="25">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#7363A8"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Page.Resources>
 
     <Grid>
         <Grid.Background>
@@ -304,28 +66,28 @@
 
                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbLastName" Style="{StaticResource InnerInputStyle}" Tag="Фамилия"/>
+                                    <TextBox x:Name="tbLastName" Style="{StaticResource RegInnerInputStyle}" Tag="Фамилия"/>
                                 </Border>
                                 <TextBlock x:Name="errLastName" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbFirstName" Style="{StaticResource InnerInputStyle}" Tag="Имя"/>
+                                    <TextBox x:Name="tbFirstName" Style="{StaticResource RegInnerInputStyle}" Tag="Имя"/>
                                 </Border>
                                 <TextBlock x:Name="errFirstName" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbPatronymic" Style="{StaticResource InnerInputStyle}" Tag="Отчество"/>
+                                    <TextBox x:Name="tbPatronymic" Style="{StaticResource RegInnerInputStyle}" Tag="Отчество"/>
                                 </Border>
                                 <TextBlock x:Name="errPatronymic" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbBirthDate" Style="{StaticResource InnerInputStyle}" Tag="Дата рождения"/>
+                                    <TextBox x:Name="tbBirthDate" Style="{StaticResource RegInnerInputStyle}" Tag="Дата рождения"/>
                                 </Border>
                                 <TextBlock x:Name="errBirthDate" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
@@ -355,47 +117,47 @@
 
                             <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbGroup" Style="{StaticResource InnerInputStyle}" Tag="Учебная группа"/>
+                                    <TextBox x:Name="tbGroup" Style="{StaticResource RegInnerInputStyle}" Tag="Учебная группа"/>
                                 </Border>
                                 <TextBlock x:Name="errGroup" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbStudentId" Style="{StaticResource InnerInputStyle}" Tag="Номер студенческого билета"/>
+                                    <TextBox x:Name="tbStudentId" Style="{StaticResource RegInnerInputStyle}" Tag="Номер студенческого билета"/>
                                 </Border>
                                 <TextBlock x:Name="errStudentId" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbEmail" Style="{StaticResource InnerInputStyle}" Tag="Корпоративная почта (@edu.fa.ru)"/>
+                                    <TextBox x:Name="tbEmail" Style="{StaticResource RegInnerInputStyle}" Tag="Корпоративная почта (@edu.fa.ru)"/>
                                 </Border>
                                 <TextBlock x:Name="errEmail" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="6" Grid.ColumnSpan="2" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbAdditionalEmail" Style="{StaticResource InnerInputStyle}" Tag="Дополнительная почта"/>
+                                    <TextBox x:Name="tbAdditionalEmail" Style="{StaticResource RegInnerInputStyle}" Tag="Дополнительная почта"/>
                                 </Border>
                             </StackPanel>
 
                             <StackPanel Grid.Row="7" Grid.ColumnSpan="2" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbPhone" Style="{StaticResource InnerInputStyle}" Tag="Номер телефона"/>
+                                    <TextBox x:Name="tbPhone" Style="{StaticResource RegInnerInputStyle}" Tag="Номер телефона"/>
                                 </Border>
                                 <TextBlock x:Name="errPhone" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="8" Grid.ColumnSpan="2" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbVkLink" Style="{StaticResource InnerInputStyle}" Tag="Ссылка на социальную сеть ВКонтакте"/>
+                                    <TextBox x:Name="tbVkLink" Style="{StaticResource RegInnerInputStyle}" Tag="Ссылка на социальную сеть ВКонтакте"/>
                                 </Border>
                             </StackPanel>
 
                             <StackPanel Grid.Row="9" Grid.ColumnSpan="2" Margin="5">
                                 <Border Style="{StaticResource RegInputBorderStyle}">
-                                    <TextBox x:Name="tbPhoto" Style="{StaticResource InnerInputStyle}" Tag="Официальная фотография"/>
+                                    <TextBox x:Name="tbPhoto" Style="{StaticResource RegInnerInputStyle}" Tag="Официальная фотография"/>
                                 </Border>
                                 <TextBlock x:Name="errPhoto" Text="Заполните поле" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
@@ -411,7 +173,7 @@
                             <TextBlock x:Name="errAgreement" Text="Необходимо ваше согласие" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="0,5,0,0" HorizontalAlignment="Center" FontFamily="Montserrat Thin"/>
                         </StackPanel>
 
-                        <Button Content="Зарегистрироваться" Style="{StaticResource ModernButtonStyle}" 
+                        <Button Content="Зарегистрироваться" Style="{StaticResource RegModernButtonStyle}" 
                                 FontFamily="Digital Pixel" FontSize="10" Cursor="Hand" Click="Button_Register_Click"/>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">

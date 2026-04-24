@@ -85,6 +85,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="MainStyles.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -97,7 +101,19 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Pages\Activist\EventDetails.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Activist\Events.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Pages\Activist\Home.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Activist\Notifications.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -106,6 +122,22 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\Activist\Profile.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Activist\Projects.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Activist\Rating.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Activist\Sectors.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Activist\Tasks.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -119,14 +151,35 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Pages\Activist\EventDetails.xaml.cs">
+      <DependentUpon>EventDetails.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Activist\Events.xaml.cs">
+      <DependentUpon>Events.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Pages\Activist\Home.xaml.cs">
       <DependentUpon>Home.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Activist\Notifications.xaml.cs">
+      <DependentUpon>Notifications.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Activist\PointsHistory.xaml.cs">
       <DependentUpon>PointsHistory.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Activist\Profile.xaml.cs">
       <DependentUpon>Profile.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Activist\Projects.xaml.cs">
+      <DependentUpon>Projects.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Activist\Rating.xaml.cs">
+      <DependentUpon>Rating.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Activist\Sectors.xaml.cs">
+      <DependentUpon>Sectors.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Activist\Tasks.xaml.cs">
+      <DependentUpon>Tasks.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\General\Auth.xaml.cs">
       <DependentUpon>Auth.xaml</DependentUpon>
@@ -181,6 +234,27 @@
     <Resource Include="Resources\event1.png" />
     <Resource Include="Resources\event2.png" />
     <Resource Include="Resources\event3.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\event4.png" />
+    <Resource Include="Resources\event5.png" />
+    <Resource Include="Resources\event6.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\sector1.png" />
+    <Resource Include="Resources\sector2.png" />
+    <Resource Include="Resources\sector3.png" />
+    <Resource Include="Resources\sector4.png" />
+    <Resource Include="Resources\sector5.png" />
+    <Resource Include="Resources\sector6.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\project1.png" />
+    <Resource Include="Resources\project2.png" />
+    <Resource Include="Resources\project3.png" />
+    <Resource Include="Resources\project4.png" />
+    <Resource Include="Resources\project5.png" />
+    <Resource Include="Resources\project6.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets" Condition="Exists('packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets')" />

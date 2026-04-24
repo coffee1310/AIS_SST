@@ -30,15 +30,12 @@ namespace Diplom_Stud.Pages.General
 
         private static readonly HttpClient _httpClient = new HttpClient(); 
 
-        // Флаг для предотвращения зацикливания при синхронизации пароля
         private bool _isUpdatingPassword = false;
 
         public Auth()
         {
             InitializeComponent();
 
-            // Проверяем, задан ли уже базовый адрес.
-            // Так как _httpClient статический, его нужно настроить только один раз за весь сеанс работы.
             if (_httpClient.BaseAddress == null)
             {
                 _httpClient.BaseAddress = new Uri(App.ApiBaseUrl);
@@ -78,10 +75,10 @@ namespace Diplom_Stud.Pages.General
 
         private void AnimateSlideTransition(int fromIndex, int toIndex)
         {
-            Image fromImage = GetImageByIndex(fromIndex);
-            Image toImage = GetImageByIndex(toIndex);
+            Border fromSlide = GetSlideByIndex(fromIndex);
+            Border toSlide = GetSlideByIndex(toIndex);
 
-            if (fromImage == null || toImage == null) return;
+            if (fromSlide == null || toSlide == null) return;
 
             DoubleAnimation fromAnimation = new DoubleAnimation
             {
@@ -99,13 +96,12 @@ namespace Diplom_Stud.Pages.General
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
             };
 
-            fromImage.BeginAnimation(Image.OpacityProperty, fromAnimation);
-            toImage.BeginAnimation(Image.OpacityProperty, toAnimation);
+            fromSlide.BeginAnimation(UIElement.OpacityProperty, fromAnimation);
+            toSlide.BeginAnimation(UIElement.OpacityProperty, toAnimation);
 
             UpdateIndicators(toIndex);
         }
-
-        private Image GetImageByIndex(int index)
+        private Border GetSlideByIndex(int index)
         {
             switch (index)
             {
