@@ -755,4 +755,46 @@
         <Setter Property="Padding" Value="25,20"/>
     </Style>
 
+    <Style x:Key="RoleCardRadioButtonStyle" TargetType="RadioButton">
+        <Setter Property="Background" Value="#12101C"/>
+        <Setter Property="BorderBrush" Value="#2A283C"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="GroupName" Value="EventRoles"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="border" Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}" 
+                            CornerRadius="15" Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <ContentPresenter Margin="0,0,0,25"/>
+                            <Border x:Name="checkBg" Width="22" Height="22" CornerRadius="4" 
+                                    BorderBrush="#02B3BA" BorderThickness="1.5" 
+                                    Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                <Path x:Name="checkMark" Data="M 4,11 L 9,16 L 18,5" 
+                                      Stroke="#12101C" StrokeThickness="2.5" 
+                                      Visibility="Collapsed" Stretch="Uniform" Margin="3"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="#615292"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#2D1F4F"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="#615292"/>
+                            <Setter TargetName="checkBg" Property="Background" Value="#02B3BA"/>
+                            <Setter TargetName="checkMark" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

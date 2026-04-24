@@ -37,5 +37,10 @@ namespace Diplom_Stud.Pages.Activist
             };
             this.BeginAnimation(Page.OpacityProperty, fadeInAnimation);
         }
+
+        private void SectorCard_Click(object sender, MouseButtonEventArgs e)
+        {
+            this.NavigationService.Navigate(new SectorDetails());
+        }
     }
 }

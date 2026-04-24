@@ -59,3 +59,9 @@ C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activis
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\Rating.baml
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\EventDetails.g.cs
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\EventDetails.baml
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\EventRegistration.g.cs
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\SectorDetails.g.cs
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\EventRegistration.baml
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\SectorDetails.baml
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\ProjectDetails.g.cs
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\ProjectDetails.baml

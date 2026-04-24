@@ -115,8 +115,8 @@
 
                 </UniformGrid>
 
-                <Button Style="{StaticResource PillButtonStyle}" HorizontalAlignment="Center" Padding="50,15" Cursor="Hand">
-                    <TextBlock Text="Зарегистрироваться&#x0a;на мероприятие" TextAlignment="Center" FontSize="14" FontFamily="Digital Pixel" Foreground="White" LineHeight="20"/>
+                <Button Style="{StaticResource PillButtonStyle}" HorizontalAlignment="Center" Padding="50,15" Cursor="Hand" Click="RegisterButton_Click">
+                    <TextBlock Text="Зарегистрироваться на мероприятие" TextAlignment="Center" FontSize="14" FontFamily="Digital Pixel" Foreground="White" LineHeight="20"/>
                 </Button>
 
             </StackPanel>
