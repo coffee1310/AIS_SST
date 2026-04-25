@@ -6,17 +6,17 @@ databaseChangeLog:
         - onFail: MARK_RAN
         - sqlCheck:
             expectedResult: "0"
-            sql: "SELECT COUNT(*) FROM pg_type WHERE typname = 'sector_introdution_statuses'"
+            sql: "SELECT COUNT(*) FROM pg_type WHERE typname = 'sector_introduction_statuses'"
       changes:
         - sql:
             dbms: postgresql
             sql: |
-              CREATE TYPE sector_introdution_statuses AS ENUM ('Ожидание', 'Активный', 'Вышедший');
+              CREATE TYPE sector_introduction_statuses AS ENUM ('Ожидание', 'На рассмотрении', 'Одобрена', 'Отклонена', 'Вышедший');
       rollback:
         - sql:
             dbms: postgresql
             sql: |
-              DROP TYPE sector_introdution_statuses;
+              DROP TYPE sector_introduction_statuses;
 
   - changeSet:
       id: create-sector-introduction-request-table-safe
@@ -40,7 +40,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: user_id
-                  type: INTEGER
+                  type: BIGINT
                   remarks: "Внешний ключ к таблице users"
                   constraints:
                     nullable: false
@@ -48,7 +48,7 @@ databaseChangeLog:
                     references: users(id)
               - column:
                   name: sector_id
-                  type: INTEGER
+                  type: BIGINT
                   remarks: "Внешний ключ к таблице sectors"
                   constraints:
                     nullable: false
@@ -63,7 +63,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: status
-                  type: sector_introdution_statuses
+                  type: sector_introduction_statuses
                   defaultValue: "Ожидание"
                   remarks: "Статус заявки"
                   constraints:

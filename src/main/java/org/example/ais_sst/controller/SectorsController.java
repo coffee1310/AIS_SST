@@ -3,6 +3,7 @@ package org.example.ais_sst.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTO;
+import org.example.ais_sst.dto.request.SectorIntroductionRequestDTOSummary;
 import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.Sector;
@@ -14,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,5 +39,41 @@ public class SectorsController {
 
         SectorIntroductionRequestDTO requestDTO = sectorIntroductionRequestService.createRequest(customUserDetails.getId(), sector_id);
         return new ResponseEntity<>(requestDTO, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/accept/{id}")
+    public ResponseEntity<?> acceptSectorIntroductionRequest(@PathVariable Long id) {
+
+        SectorIntroductionRequestDTOSummary requestDTOSummary = sectorIntroductionRequestService.acceptRequest(id);
+
+        return ResponseEntity.ok()
+                .body(Map.of(
+                        "message", "Заявка принята. Член сектора создан.",
+                        "request", requestDTOSummary
+                ));
+    }
+
+    @PutMapping ("/reject/{id}")
+    public ResponseEntity<?> rejectSectorIntroductionRequest(@PathVariable Long id) {
+        SectorIntroductionRequestDTOSummary requestDTOSummary = sectorIntroductionRequestService.rejectRequest(id);
+
+        return ResponseEntity.ok()
+                .body(Map.of(
+                        "message", "Заявка принята. Член сектора создан.",
+                        "request", requestDTOSummary
+                ));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getSectorIntroductionRequests(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        List<SectorIntroductionRequestDTO> requestDTOList = sectorIntroductionRequestService
+                .getRequestsListByCoordinator(customUserDetails.getId());
+
+        return new ResponseEntity<>(requestDTOList, HttpStatus.OK);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> appointACoordinator() {
+
     }
 }

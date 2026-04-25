@@ -10,5 +10,9 @@ import java.util.Optional;
 public interface SectorRepository extends JpaRepository<Sector, Long> {
     boolean existsByTitle(String title);
 
+    boolean existsByCurrentCoordinator_IdAndId(Long currentCoordinatorId, Long id);
+    
     Optional<Sector> findSectorById(Long id);
+
+    Optional<Sector> findSectorsByCurrentCoordinator_Id(Long currentCoordinatorId);
 }

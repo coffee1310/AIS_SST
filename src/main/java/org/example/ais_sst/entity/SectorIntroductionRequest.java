@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.ais_sst.entity.converter.SectorIntroductionStatusConverter;
 import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -34,8 +35,8 @@ public class SectorIntroductionRequest {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = SectorIntroductionStatusConverter.class)
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private SectorIntroductionStatus status = SectorIntroductionStatus.Ожидание;
+    private SectorIntroductionStatus status = SectorIntroductionStatus.НА_РАССМОТРЕНИИ;
 }

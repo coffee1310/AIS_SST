@@ -1,6 +1,7 @@
 package org.example.ais_sst.mapper;
 
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTO;
+import org.example.ais_sst.dto.request.SectorIntroductionRequestDTOSummary;
 import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.entity.SectorIntroductionRequest;
 import org.example.ais_sst.entity.User;
@@ -19,6 +20,10 @@ public interface SectorIntroductionRequestMapper {
     @Mapping(target = "user", source = "user_id", qualifiedByName = "MapUser")
     @Mapping(target = "sector", source = "sector_id", qualifiedByName = "MapSector")
     SectorIntroductionRequest toEntity(SectorIntroductionRequestDTO sectorIntroductionRequest);
+
+    @Mapping(target = "sector", source = "sector.title")
+    @Mapping(target = "status", source = "status")
+    SectorIntroductionRequestDTOSummary toSummary(SectorIntroductionRequest sectorIntroductionRequest);
 
 
     @Named("MapUser")
