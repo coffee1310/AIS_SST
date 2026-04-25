@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTO;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTOSummary;
+import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.dto.sector.SectorParticipantDTO;
 import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.entity.SectorIntroductionRequest;
@@ -13,6 +14,7 @@ import org.example.ais_sst.entity.User;
 import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
 import org.example.ais_sst.exception.*;
 import org.example.ais_sst.mapper.SectorIntroductionRequestMapper;
+import org.example.ais_sst.mapper.SectorMapper;
 import org.example.ais_sst.mapper.SectorParticipantMapper;
 import org.example.ais_sst.repository.SectorIntroductionRequestRepository;
 import org.example.ais_sst.repository.SectorParticipantRepository;
@@ -36,6 +38,8 @@ public class SectorIntroductionRequestService {
 
     private final SectorParticipantMapper sectorParticipantMapper;
     private final SectorParticipantService sectorParticipantService;
+
+    private final SectorMapper sectorMapper;
 
     @Transactional
     public SectorIntroductionRequestDTO createRequest(Long user_id, Long sector_id) {

@@ -6,13 +6,12 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
-@Getter
-@Setter
-@Entity
+@Data
 @Builder
-@Table(name = "sectors")
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "sectors")
 public class Sector {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,10 +33,9 @@ public class Sector {
 
     @ColumnDefault("true")
     @Column(name = "is_active")
-    private Boolean isActive;
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Column(name = "photo")
     private byte[] photo;
-
-
 }

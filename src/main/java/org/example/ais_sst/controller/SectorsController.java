@@ -72,8 +72,9 @@ public class SectorsController {
         return new ResponseEntity<>(requestDTOList, HttpStatus.OK);
     }
 
-    @PostMapping
-    public ResponseEntity<?> appointACoordinator() {
-
+    @PostMapping("/appoint_coordinator/{sector_id}")
+    public ResponseEntity<?> appointACoordinator(@PathVariable Long sector_id, @RequestParam Long user_id) {
+        SectorDTO sectorDTO = sectorService.appointACoordinator(sector_id, user_id);
+        return new ResponseEntity<>(sectorDTO, HttpStatus.ACCEPTED);
     }
 }
