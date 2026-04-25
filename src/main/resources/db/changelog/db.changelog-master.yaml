@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/changes/008-add-accout-creating-requests-social_status-and-user_id-in-portfolios.yaml
   - include:
       file: db/changelog/changes/009-create-sector-introduction-status-enum-safe.yaml
+  - include:
+      file: db/changelog/changes/010-update-groups-table-constraints.yaml

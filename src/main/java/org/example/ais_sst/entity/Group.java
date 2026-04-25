@@ -23,5 +23,7 @@ public class Group {
     @Column(name = "title", nullable = false, length = 16)
     private String title;
 
-
+    @NotNull
+    @Column(name = "course", nullable = false)
+    private Integer course;
 }

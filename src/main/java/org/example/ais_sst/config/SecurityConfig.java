@@ -84,6 +84,7 @@ public class SecurityConfig {
                             .requestMatchers("/api/debug/**").permitAll()
                             .requestMatchers("/api/social_status").permitAll()
                             .requestMatchers("/api/specialities").permitAll()
+                            .requestMatchers(HttpMethod.GET,"/api/group").permitAll()
                             .requestMatchers("/", "/error", "/favicon.ico").permitAll()
                             .anyRequest().authenticated();
                     log.info("Authorization rules configured");

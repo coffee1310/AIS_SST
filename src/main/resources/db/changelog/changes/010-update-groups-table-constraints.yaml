@@ -1,0 +1,109 @@
+databaseChangeLog:
+  # 1. Изменяем длину поля title
+  - changeSet:
+      id: modify-groups-title-length
+      author: coffee13102006
+      changes:
+        - modifyDataType:
+            tableName: groups
+            columnName: title
+            newDataType: VARCHAR(4)
+      rollback:
+        - modifyDataType:
+            tableName: groups
+            columnName: title
+            newDataType: VARCHAR(16)
+
+      # 2. Добавляем CHECK constraint для title
+  - changeSet:
+      id: add-groups-title-check-constraint
+      author: coffee13102006
+      changes:
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: |
+              DO $$ 
+              BEGIN
+                  IF NOT EXISTS (SELECT 1 FROM information_schema.constraint_column_usage 
+                                 WHERE table_name = 'groups' AND constraint_name = 'chk_groups_title_pattern') THEN
+                      ALTER TABLE groups ADD CONSTRAINT chk_groups_title_pattern 
+                      CHECK (title ~ '^[A-Za-z0-9]+$');
+                  END IF;
+              END $$;
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE groups DROP CONSTRAINT IF EXISTS chk_groups_title_pattern;
+
+  # 3. Добавляем поле course
+  - changeSet:
+      id: add-groups-course-column
+      author: coffee13102006
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: groups
+                columnName: course
+      changes:
+        - addColumn:
+            tableName: groups
+            columns:
+              - column:
+                  name: course
+                  type: INTEGER
+      rollback:
+        - dropColumn:
+            tableName: groups
+            columnName: course
+
+  # 4. Заполняем course для существующих записей
+  - changeSet:
+      id: set-default-course-for-existing-groups
+      author: coffee13102006
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: UPDATE groups SET course = 1 WHERE course IS NULL;
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: UPDATE groups SET course = NULL WHERE course = 1;
+
+  # 5. Делаем поле course NOT NULL
+  - changeSet:
+      id: make-groups-course-not-null
+      author: coffee13102006
+      changes:
+        - addNotNullConstraint:
+            tableName: groups
+            columnName: course
+            columnDataType: INTEGER
+      rollback:
+        - dropNotNullConstraint:
+            tableName: groups
+            columnName: course
+
+    # 6. Добавляем CHECK constraint для course
+  # 6. Добавляем CHECK constraint для course
+  - changeSet:
+      id: add-groups-course-check-constraint
+      author: coffee13102006
+      changes:
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: |
+              DO $$ 
+              BEGIN
+                  IF NOT EXISTS (SELECT 1 FROM information_schema.constraint_column_usage 
+                                 WHERE table_name = 'groups' AND constraint_name = 'chk_groups_course_range') THEN
+                      ALTER TABLE groups ADD CONSTRAINT chk_groups_course_range 
+                      CHECK (course BETWEEN 1 AND 9);
+                  END IF;
+              END $$;
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE groups DROP CONSTRAINT IF EXISTS chk_groups_course_range;
