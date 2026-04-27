@@ -43,7 +43,7 @@ fun HomeScreen() {
 
         CustomTabRow(selectedTab = selectedTab, onTabSelected = { screenModel.selectTab(it) })
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         if (selectedTab == 0) {
             LazyColumn(
@@ -68,7 +68,7 @@ fun HomeScreen() {
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary),
                             contentAlignment = Alignment.Center
@@ -77,7 +77,7 @@ fun HomeScreen() {
                                 imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
                                 contentDescription = "Все ближайшие",
                                 tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
@@ -107,7 +107,7 @@ fun HomeScreen() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Мероприятия, на которые можно зарегистрироваться",
+                            text = "Мероприятия доступные для регистрации",
                             style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f)
@@ -115,7 +115,7 @@ fun HomeScreen() {
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary)
                                 .clickable { /* TODO: Переход на страницу поиска */ },
@@ -125,7 +125,7 @@ fun HomeScreen() {
                                 imageVector = Icons.Outlined.Search,
                                 contentDescription = "Поиск",
                                 tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
@@ -172,7 +172,7 @@ fun CustomTabRow(selectedTab: Int, onTabSelected: (Int) -> Unit) {
         tabs.forEachIndexed { index, (title, icon) ->
             val isSelected = selectedTab == index
 
-            val weight by animateFloatAsState(targetValue = if (isSelected) 3f else 1f, label = "tabWidth")
+            val weight by animateFloatAsState(targetValue = if (isSelected) 4f else 1f, label = "tabWidth")
 
             Box(
                 modifier = Modifier

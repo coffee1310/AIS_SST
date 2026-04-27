@@ -70,7 +70,7 @@ fun SharedTopBar(title: String) {
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-            .height(60.dp)
+            .height(56.dp)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -105,9 +105,12 @@ fun SharedBottomNav(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
     )
 
     NavigationBar(
-        modifier = Modifier.height(60.dp),
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+            .height(50.dp),
         containerColor = Color.Transparent,
-        tonalElevation = 0.dp
+        tonalElevation = 0.dp,
+        windowInsets = WindowInsets(0, 0, 0, 0)
     ) {
         navItems.forEach { (navIndex, title, icon) ->
             val isSelected = selectedIndex == navIndex
