@@ -6,6 +6,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushNew
+import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Serializable
 
@@ -16,6 +17,7 @@ interface RootComponent {
     sealed class Child {
         class Login(val component: LoginComponent) : Child()
         class Register(val component: RegisterComponent) : Child()
+        class Main(val component: MainComponent) : Child()
     }
 }
 
@@ -42,7 +44,8 @@ class DefaultRootComponent(
             is Config.Login -> RootComponent.Child.Login(
                 LoginComponent(
                     componentContext = context,
-                    onNavigateToRegister = { navigation.pushNew(Config.Register) }
+                    onNavigateToRegister = { navigation.pushNew(Config.Register) },
+                    onLoginSuccess = { navigation.replaceAll(Config.Main) }
                 )
             )
             is Config.Register -> RootComponent.Child.Register(
@@ -51,11 +54,17 @@ class DefaultRootComponent(
                     onGoBack = { navigation.pop() }
                 )
             )
+            is Config.Main -> RootComponent.Child.Main(
+                MainComponent(
+                    componentContext = context
+                )
+            )
         }
 
     @Serializable
     private sealed interface Config {
         @Serializable data object Login : Config
         @Serializable data object Register : Config
+        @Serializable data object Main : Config
     }
 }

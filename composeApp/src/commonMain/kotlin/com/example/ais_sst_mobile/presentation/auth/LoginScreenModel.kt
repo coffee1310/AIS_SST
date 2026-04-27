@@ -67,6 +67,11 @@ class LoginScreenModel(
             return
         }
 
+        if (loginId.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
+            _state.value = State.Error("Логин не должен содержать русские буквы")
+            return
+        }
+
         if (domain == "@edu.fa.ru" && (loginId.length != 6 || !loginId.all { it.isDigit() })) {
             _state.value = State.Error("Номер студенческого должен состоять из 6 цифр")
             return

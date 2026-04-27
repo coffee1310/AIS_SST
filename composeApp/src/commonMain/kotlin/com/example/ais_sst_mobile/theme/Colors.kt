@@ -18,6 +18,10 @@ val GradientInnerDark = Color(0xFF433179)
 val GradientOuterDark = Color(0xFF2F2546)
 val BackgroundDark = Color(0xFF0E0A15)
 val WhiteColor = Color.White
+val BackgroundCustomTab = Color(0xFF463874)
+val BackgroundCard = Color(0xFF575757)
+val MenuInactiveDark = Color(0xFFCBCBCB)
+val MenuInactiveLight = Color(0xFF4E4E4E)
 
 val LightColors = lightColorScheme(
     primary = PrimaryPurple,
@@ -27,7 +31,10 @@ val LightColors = lightColorScheme(
     background = BackgroundLight,
     surface = Color.Transparent,
     onSurface = TextDark,
-    outline = PrimaryPurple
+    outline = PrimaryPurple,
+    onBackground = BackgroundCustomTab,
+    onPrimaryContainer = PrimaryPurple,
+    outlineVariant = MenuInactiveLight
 )
 
 val DarkColors = darkColorScheme(
@@ -36,6 +43,9 @@ val DarkColors = darkColorScheme(
     secondary = AccentTeal,
     background = BackgroundDark,
     surface = Color.Transparent,
-    onSurface = Color.White,
-    outline = WhiteColor
+    onSurface = WhiteColor,
+    outline = WhiteColor,
+    onBackground = BackgroundCustomTab,
+    onPrimaryContainer = BackgroundCard,
+    outlineVariant = MenuInactiveDark
 )

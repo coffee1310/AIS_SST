@@ -4,10 +4,17 @@ import com.arkivanov.decompose.ComponentContext
 
 class LoginComponent(
     componentContext: ComponentContext,
-    val onNavigateToRegister: () -> Unit
+    val onNavigateToRegister: () -> Unit,
+    val onLoginSuccess: () -> Unit
 ) : ComponentContext by componentContext
 
 class RegisterComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
+
+class HomeComponent(componentContext: ComponentContext) : ComponentContext by componentContext
+class TasksComponent(componentContext: ComponentContext) : ComponentContext by componentContext
+class CalendarComponent(componentContext: ComponentContext) : ComponentContext by componentContext
+class SectorsComponent(componentContext: ComponentContext) : ComponentContext by componentContext
+class ProfileComponent(componentContext: ComponentContext) : ComponentContext by componentContext

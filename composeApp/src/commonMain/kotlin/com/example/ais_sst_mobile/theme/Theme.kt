@@ -17,6 +17,7 @@ import org.jetbrains.compose.resources.Font
 import ais_sst_mobile.composeapp.generated.resources.Res
 import ais_sst_mobile.composeapp.generated.resources.digital_pixel_regular
 import ais_sst_mobile.composeapp.generated.resources.montserrat_light
+import ais_sst_mobile.composeapp.generated.resources.montserrat_regular
 
 @OptIn(ExperimentalAdaptiveApi::class)
 @Composable
@@ -29,6 +30,7 @@ fun AppTheme(
 
     val digitalFont = FontFamily(Font(Res.font.digital_pixel_regular))
     val montserratFont = FontFamily(Font(Res.font.montserrat_light))
+    val montserratFontRegular = FontFamily(Font(Res.font.montserrat_regular))
 
     val typography = Typography(
         titleLarge = TextStyle(
@@ -52,6 +54,10 @@ fun AppTheme(
             fontFamily = montserratFont,
             fontWeight = FontWeight.Normal,
             fontSize = 15.sp
+        ),
+        labelSmall = TextStyle(
+            fontFamily = montserratFontRegular,
+            fontSize = 13.sp
         )
     )
 

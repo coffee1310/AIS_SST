@@ -8,6 +8,7 @@ import com.example.ais_sst_mobile.domain.repository.AuthRepository
 import com.example.ais_sst_mobile.domain.repository.DictionaryRepository
 import com.example.ais_sst_mobile.presentation.auth.LoginScreenModel
 import com.example.ais_sst_mobile.presentation.auth.RegisterScreenModel
+import com.example.ais_sst_mobile.presentation.home.HomeScreenModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
@@ -24,6 +25,7 @@ val appModule = module {
     // ScreenModels
     single { LoginScreenModel(get()) }
     single { RegisterScreenModel(dictionaryRepository = get()) }
+    single { HomeScreenModel() }
 }
 
 fun initKoin() {

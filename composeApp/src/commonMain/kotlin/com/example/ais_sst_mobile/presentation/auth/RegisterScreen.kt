@@ -154,7 +154,7 @@ fun RegisterScreen(component: RegisterComponent) {
 
     val isCourseError = course.isNotEmpty() && !course.all { it.isDigit() }
     val isGroupNumError = groupNum.isNotEmpty() && !groupNum.all { it.isDigit() }
-    val isCorpEmailError = corpEmail.isNotEmpty() && (corpEmail.length != 6 || !corpEmail.all { it.isDigit() })
+    val isCorpEmailError = corpDomain == "@edu.fa.ru" && corpEmail.isNotEmpty() && (corpEmail.length != 6 || !corpEmail.all { it.isDigit() })
     val isAddEmailError = addEmail.isNotEmpty() && !emailRegex.matches(addEmail.trim())
     val isPhoneError = phone.isNotEmpty() && phone.length != 10
     val isVkLinkError = vkLink.isNotEmpty() && !vkRegex.matches(vkLink.trim())
@@ -193,6 +193,7 @@ fun RegisterScreen(component: RegisterComponent) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -403,13 +404,26 @@ fun RegisterScreen(component: RegisterComponent) {
             CustomTextField(
                 modifier = contentModifier,
                 value = corpEmail,
-                onValueChange = {
-                    if (it.length <= 6 && it.all { c -> c.isDigit() }) { corpEmail = it; generalError = null }
+                onValueChange = { newValue ->
+                    if (corpDomain == "@edu.fa.ru") {
+                        if (newValue.length <= 6 && newValue.all { c -> c.isDigit() }) {
+                            corpEmail = newValue
+                            generalError = null
+                        }
+                    } else {
+                        if (!newValue.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
+                            corpEmail = newValue
+                            generalError = null
+                        }
+                    }
                 },
                 placeholder = "* Корпоративная почта",
                 isError = isCorpEmailError,
-                errorMessage = if (isCorpEmailError) "Только 6 цифр, выбор домена справа" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                errorMessage = if (isCorpEmailError) "Студбилет должен состоять из 6 цифр" else null,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = if (corpDomain == "@edu.fa.ru") KeyboardType.Number else KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
                 keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                 suffix = {
                     Box {
@@ -427,7 +441,15 @@ fun RegisterScreen(component: RegisterComponent) {
                             listOf("@edu.fa.ru", "@fa.ru").forEach { domain ->
                                 DropdownMenuItem(
                                     text = { Text(domain, style = MaterialTheme.typography.labelMedium) },
-                                    onClick = { corpDomain = domain; expandedCorpDomain = false; generalError = null }
+                                    onClick = {
+                                        corpDomain = domain
+                                        expandedCorpDomain = false
+                                        generalError = null
+
+                                        if (domain == "@edu.fa.ru" && !corpEmail.all { it.isDigit() }) {
+                                            corpEmail = corpEmail.filter { it.isDigit() }.take(6)
+                                        }
+                                    }
                                 )
                             }
                         }

@@ -34,7 +34,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.ais_sst_mobile.navigation.LoginComponent
 import com.example.ais_sst_mobile.presentation.components.AppBackground
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.CustomButton
@@ -42,6 +41,7 @@ import org.jetbrains.compose.resources.painterResource
 import ais_sst_mobile.composeapp.generated.resources.Res
 import ais_sst_mobile.composeapp.generated.resources.logo_auth
 import androidx.compose.ui.text.style.TextAlign
+import com.example.ais_sst_mobile.navigation.LoginComponent
 import org.koin.compose.getKoin
 
 @Composable
@@ -71,9 +71,7 @@ fun LoginScreen(component: LoginComponent) {
     LaunchedEffect(state) {
         when (state) {
             is LoginScreenModel.State.Success -> {
-                val user = (state as LoginScreenModel.State.Success).user
-                println("АВТОРИЗАЦИЯ УСПЕШНА! Привет, ${user.name} ${user.surname}. Токен: ${user.token}")
-                // TODO: Переход на главный экран через component
+                component.onLoginSuccess()
             }
             else -> {}
         }
@@ -93,6 +91,7 @@ fun LoginScreen(component: LoginComponent) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -120,14 +119,19 @@ fun LoginScreen(component: LoginComponent) {
                             screenModel.resetState()
                         }
                     } else {
-                        login = newValue
-                        screenModel.resetState()
+                        if (!newValue.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
+                            login = newValue
+                            screenModel.resetState()
+                        }
                     }
                 },
                 placeholder = if (selectedDomain == "@edu.fa.ru") "Номер студбилета" else "Логин",
                 isError = isLoginError,
                 errorMessage = if (isLoginError) "Студбилет должен состоять из 6 цифр" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = if (selectedDomain == "@edu.fa.ru") KeyboardType.Number else KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
                 keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                 trailingIcon = {
                     Box {
@@ -259,6 +263,7 @@ fun LoginScreen(component: LoginComponent) {
         }
     }
 }
+
 @Composable
 fun CaptchaDialog(
     currentCaptcha: String,

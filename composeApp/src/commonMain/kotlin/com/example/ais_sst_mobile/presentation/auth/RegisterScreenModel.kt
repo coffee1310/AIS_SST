@@ -13,7 +13,11 @@ import kotlinx.coroutines.launch
 data class RegisterState(
     val specialities: List<Speciality> = emptyList(),
     val socialStatuses: List<SocialStatus> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+
+    val loginPart: String = "",
+    val selectedDomain: String = "@edu.fa.ru",
+    val loginError: String? = null
 )
 
 class RegisterScreenModel(
@@ -25,6 +29,38 @@ class RegisterScreenModel(
 
     init {
         loadDictionaries()
+    }
+
+    fun updateLoginData(login: String, domain: String) {
+        _state.update { it.copy(loginPart = login, selectedDomain = domain) }
+        validateLogin(login, domain)
+    }
+
+    private fun validateLogin(login: String, domain: String) {
+        if (login.isBlank()) {
+            _state.update { it.copy(loginError = null) }
+            return
+        }
+
+        val hasRussianLetters = login.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }
+        if (hasRussianLetters) {
+            _state.update { it.copy(loginError = "Логин не должен содержать русские буквы") }
+            return
+        }
+
+        val error = when (domain) {
+            "@edu.fa.ru" -> {
+                if (login.length != 6 || !login.all { it.isDigit() }) {
+                    "Студбилет должен состоять ровно из 6 цифр"
+                } else null
+            }
+            "@fa.ru" -> {
+                null
+            }
+            else -> null
+        }
+
+        _state.update { it.copy(loginError = error) }
     }
 
     private fun loadDictionaries() {
