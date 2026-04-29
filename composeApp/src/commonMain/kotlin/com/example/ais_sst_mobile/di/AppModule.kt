@@ -10,6 +10,7 @@ import com.example.ais_sst_mobile.domain.repository.DictionaryRepository
 import com.example.ais_sst_mobile.presentation.auth.LoginScreenModel
 import com.example.ais_sst_mobile.presentation.auth.RegisterScreenModel
 import com.example.ais_sst_mobile.presentation.home.HomeScreenModel
+import com.example.ais_sst_mobile.presentation.profile.ProfileScreenModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import com.russhwolf.settings.Settings
@@ -28,9 +29,11 @@ val appModule = module {
     single<DictionaryRepository> { DictionaryRepositoryImpl(get()) }
 
     // ScreenModels
-    factory { LoginScreenModel(get(), get()) }
-    factory { RegisterScreenModel(dictionaryRepository = get()) }
-    factory { HomeScreenModel() }
+    single { LoginScreenModel(get(), get()) }
+    single { RegisterScreenModel(dictionaryRepository = get()) }
+    single { SessionManager(get()) }
+    single { HomeScreenModel() }
+    factory { ProfileScreenModel() }
 }
 
 private var isKoinInitialized = false

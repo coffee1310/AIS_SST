@@ -4,12 +4,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-// Базовые цвета
 val PrimaryPurple = Color(0xFF604D9E)
 val AccentTeal = Color(0xFF008A8F)
 val TextDark = Color(0xFF111111)
 
-// Градиентные цвета (Вынесли из AppBackground)
 val GradientInnerLight = Color(0xFF453281)
 val GradientOuterLight = Color(0xFFD1C4E9)
 val BackgroundLight = Color(0xFFFFFFFF)
