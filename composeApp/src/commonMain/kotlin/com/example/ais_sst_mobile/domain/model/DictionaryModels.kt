@@ -9,3 +9,9 @@ data class SocialStatus(
     val id: Int,
     val title: String
 )
+
+data class Group(
+    val id: Int,
+    val title: String,
+    val course: Int
+)

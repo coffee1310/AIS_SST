@@ -72,9 +72,11 @@ fun RegisterScreen(component: RegisterComponent) {
     }
     var gender by rememberSaveable { mutableStateOf("") }
     var course by rememberSaveable { mutableStateOf("") }
+    var selectedGroupId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var groupTitle by rememberSaveable { mutableStateOf("") }
+    var expandedGroup by remember { mutableStateOf(false) }
     var specialty by rememberSaveable { mutableStateOf("") }
     var selectedSpecialtyId by rememberSaveable { mutableStateOf<Int?>(null) }
-    var groupNum by rememberSaveable { mutableStateOf("") }
     var corpEmail by rememberSaveable { mutableStateOf("") }
     var corpDomain by rememberSaveable { mutableStateOf("@edu.fa.ru") }
     var addEmail by rememberSaveable { mutableStateOf("") }
@@ -95,6 +97,7 @@ fun RegisterScreen(component: RegisterComponent) {
     var expandedStatus by remember { mutableStateOf(false) }
     var expandedGender by remember { mutableStateOf(false) }
     var expandedSpecialty by remember { mutableStateOf(false) }
+    var expandedCourse by remember { mutableStateOf(false) }
     var generalError by remember { mutableStateOf<String?>(null) }
     var imageError by remember { mutableStateOf<String?>(null) }
 
@@ -152,8 +155,6 @@ fun RegisterScreen(component: RegisterComponent) {
         }
     }
 
-    val isCourseError = course.isNotEmpty() && !course.all { it.isDigit() }
-    val isGroupNumError = groupNum.isNotEmpty() && !groupNum.all { it.isDigit() }
     val isCorpEmailError = corpDomain == "@edu.fa.ru" && corpEmail.isNotEmpty() && (corpEmail.length != 6 || !corpEmail.all { it.isDigit() })
     val isAddEmailError = addEmail.isNotEmpty() && !emailRegex.matches(addEmail.trim())
     val isPhoneError = phone.isNotEmpty() && phone.length != 10
@@ -345,18 +346,34 @@ fun RegisterScreen(component: RegisterComponent) {
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            CustomTextField(
-                modifier = contentModifier,
-                value = course,
-                onValueChange = {
-                    if (it.length <= 1 && it.all { c -> c in '1'..'4' }) { course = it; generalError = null }
-                },
-                placeholder = "* Номер курса",
-                isError = isCourseError,
-                errorMessage = if (isCourseError) "Только цифры от 1 до 4" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.clearFocus() })
-            )
+            val courses = listOf("1", "2", "3", "4")
+            ExposedDropdownMenuBox(expanded = expandedCourse, onExpandedChange = { expandedCourse = !expandedCourse }) {
+                CustomTextField(
+                    modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                    value = course,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = "* Номер курса",
+                    trailingIcon = {
+                        val icon = if (expandedCourse) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
+                        Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
+                    }
+                )
+                ExposedDropdownMenu(expanded = expandedCourse, onDismissRequest = { expandedCourse = false }) {
+                    courses.forEach { selection ->
+                        DropdownMenuItem(
+                            text = { Text(selection, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
+                            onClick = {
+                                course = selection
+                                expandedCourse = false
+                                generalError = null
+                                selectedGroupId = null
+                                groupTitle = ""
+                            }
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             ExposedDropdownMenuBox(expanded = expandedSpecialty, onExpandedChange = { expandedSpecialty = !expandedSpecialty }) {
@@ -387,18 +404,48 @@ fun RegisterScreen(component: RegisterComponent) {
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            CustomTextField(
-                modifier = contentModifier,
-                value = groupNum,
-                onValueChange = {
-                    if (it.length <= 4 && it.all { c -> c.isDigit() }) { groupNum = it; generalError = null }
-                },
-                placeholder = "* Номер группы",
-                isError = isGroupNumError,
-                errorMessage = if (isGroupNumError) "Только цифры" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
+            val availableGroups = remember(course, state.groups) {
+                val courseInt = course.toIntOrNull()
+                if (courseInt != null) {
+                    state.groups.filter { it.course == courseInt }
+                } else {
+                    emptyList()
+                }
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = expandedGroup,
+                onExpandedChange = { if (course.isNotEmpty()) expandedGroup = !expandedGroup }
+            ) {
+                CustomTextField(
+                    modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                    value = groupTitle,
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = if (course.isEmpty()) "Сначала выберите курс" else "* Номер группы",
+                    trailingIcon = {
+                        val icon = if (expandedGroup) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = if (course.isEmpty()) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                )
+                ExposedDropdownMenu(expanded = expandedGroup, onDismissRequest = { expandedGroup = false }) {
+                    availableGroups.forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
+                            onClick = {
+                                groupTitle = item.title
+                                selectedGroupId = item.id
+                                expandedGroup = false
+                                generalError = null
+                            }
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             CustomTextField(
@@ -620,12 +667,12 @@ fun RegisterScreen(component: RegisterComponent) {
                 onClick = {
                     val hasEmptyFields = surname.isBlank() || name.isBlank() || birthDate.length != 8 ||
                             gender.isBlank() || course.isBlank() || selectedSpecialtyId == null ||
-                            groupNum.isBlank() || corpEmail.isBlank() || phone.length != 10 ||
+                            selectedGroupId == null || corpEmail.isBlank() || phone.length != 10 ||
                             vkLink.isBlank() || password.isBlank() || confirmPassword.isBlank() || selectedImageBytes == null
 
-                    val hasValidationErrors = isSurnameError || isNameError || isPatronymicError || isBirthDateError ||
-                            isCourseError || isGroupNumError || isCorpEmailError || isAddEmailError ||
-                            isPhoneError || isVkLinkError || isPasswordError || isConfirmPasswordError || imageError != null
+                    val hasValidationErrors = isSurnameError || isNameError || isPatronymicError ||
+                            isBirthDateError || isCorpEmailError || isAddEmailError || isPhoneError ||
+                            isVkLinkError || isPasswordError || isConfirmPasswordError || imageError != null
 
                     if (hasEmptyFields || hasValidationErrors) {
                         generalError = "Корректно заполните все обязательные поля и загрузите фото"

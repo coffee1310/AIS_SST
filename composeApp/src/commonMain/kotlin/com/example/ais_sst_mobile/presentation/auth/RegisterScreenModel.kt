@@ -2,6 +2,7 @@ package com.example.ais_sst_mobile.presentation.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ais_sst_mobile.domain.model.Group // <-- ТВОЙ НОВЫЙ ИМПОРТ
 import com.example.ais_sst_mobile.domain.model.SocialStatus
 import com.example.ais_sst_mobile.domain.model.Speciality
 import com.example.ais_sst_mobile.domain.repository.DictionaryRepository
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 data class RegisterState(
     val specialities: List<Speciality> = emptyList(),
     val socialStatuses: List<SocialStatus> = emptyList(),
+    val groups: List<Group> = emptyList(),
     val isLoading: Boolean = false,
 
     val loginPart: String = "",
@@ -69,11 +71,13 @@ class RegisterScreenModel(
 
             val specResult = dictionaryRepository.getSpecialities()
             val statusResult = dictionaryRepository.getSocialStatuses()
+            val groupResult = dictionaryRepository.getGroups()
 
             _state.update { state ->
                 state.copy(
                     specialities = specResult.getOrNull() ?: emptyList(),
                     socialStatuses = statusResult.getOrNull() ?: emptyList(),
+                    groups = groupResult.getOrNull() ?: emptyList(),
                     isLoading = false
                 )
             }
