@@ -12,9 +12,11 @@ import com.example.ais_sst_mobile.navigation.DefaultRootComponent
 import platform.UIKit.UIViewController
 
 fun MainViewController(): UIViewController {
-    val lifecycle = LifecycleRegistry()
+    initKoin()
 
+    val lifecycle = LifecycleRegistry()
     val backDispatcher = BackDispatcher()
+
     val root = DefaultRootComponent(
         DefaultComponentContext(
             lifecycle = lifecycle,
@@ -24,7 +26,6 @@ fun MainViewController(): UIViewController {
 
     return ComposeUIViewController(
         configure = {
-            initKoin()
             onFocusBehavior = OnFocusBehavior.DoNothing
         }
     ) {

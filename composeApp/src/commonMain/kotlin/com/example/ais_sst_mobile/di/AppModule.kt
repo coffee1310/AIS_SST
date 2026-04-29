@@ -16,24 +16,30 @@ import com.russhwolf.settings.Settings
 
 val coreModule = module {
     single { createHttpClient() }
-    single { createSettings() }
+
+    single<Settings> { createSettings() }
+
+    single { SessionManager(get()) }
 }
 
 val appModule = module {
     // Repositories
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
-    single<Settings> { Settings() }
     single<DictionaryRepository> { DictionaryRepositoryImpl(get()) }
 
     // ScreenModels
-    single { LoginScreenModel(get(), get()) }
-    single { RegisterScreenModel(dictionaryRepository = get()) }
-    single { SessionManager(get()) }
-    single { HomeScreenModel() }
+    factory { LoginScreenModel(get(), get()) }
+    factory { RegisterScreenModel(dictionaryRepository = get()) }
+    factory { HomeScreenModel() }
 }
 
+private var isKoinInitialized = false
+
 fun initKoin() {
-    startKoin {
-        modules(coreModule, appModule)
+    if (!isKoinInitialized) {
+        startKoin {
+            modules(coreModule, appModule)
+        }
+        isKoinInitialized = true
     }
 }
