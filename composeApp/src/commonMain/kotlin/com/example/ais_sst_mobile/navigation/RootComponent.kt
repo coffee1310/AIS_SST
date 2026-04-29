@@ -8,7 +8,10 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.example.ais_sst_mobile.core.prefs.SessionManager
 import kotlinx.serialization.Serializable
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
@@ -23,14 +26,15 @@ interface RootComponent {
 
 class DefaultRootComponent(
     componentContext: ComponentContext
-) : RootComponent, ComponentContext by componentContext {
+) : RootComponent, ComponentContext by componentContext, KoinComponent {
+    private val sessionManager: SessionManager by inject()
 
     private val navigation = StackNavigation<Config>()
 
     override val stack: Value<ChildStack<*, RootComponent.Child>> = childStack(
         source = navigation,
         serializer = Config.serializer(),
-        initialConfiguration = Config.Login,
+        initialConfiguration = if (sessionManager.isLoggedIn()) Config.Main else Config.Login,
         handleBackButton = true,
         childFactory = ::createChild
     )

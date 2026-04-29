@@ -74,6 +74,9 @@ kotlin {
             // Библиотека для выбора фото
             implementation("io.github.onseok:peekaboo-ui:0.5.2")
             implementation("io.github.onseok:peekaboo-image-picker:0.5.2")
+
+            implementation("com.russhwolf:multiplatform-settings:1.1.1")
+            implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
