@@ -1,5 +1,6 @@
 package com.example.ais_sst_mobile.core.network
 
+import com.example.ais_sst_mobile.core.prefs.SessionManager
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -8,13 +9,14 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 
 internal const val BASE_URL = "http://185.246.66.164:8080/api/"
 
-fun createHttpClient(): HttpClient {
+fun createHttpClient(sessionManager: SessionManager): HttpClient {
     return HttpClient {
         install(ContentNegotiation) {
             json(Json {
@@ -34,6 +36,10 @@ fun createHttpClient(): HttpClient {
         defaultRequest {
             url(BASE_URL)
             contentType(ContentType.Application.Json)
+
+            sessionManager.fetchAuthToken()?.let { token ->
+                header("Authorization", "Bearer $token")
+            }
         }
     }
 }

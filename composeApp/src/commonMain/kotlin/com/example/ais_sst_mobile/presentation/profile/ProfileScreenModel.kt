@@ -2,8 +2,9 @@ package com.example.ais_sst_mobile.presentation.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ais_sst_mobile.data.network.dto.UserProfileDto
-import kotlinx.coroutines.delay
+import com.example.ais_sst_mobile.core.prefs.SessionManager
+import com.example.ais_sst_mobile.domain.model.User
+import com.example.ais_sst_mobile.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -23,7 +24,10 @@ data class UserUiModel(
     val photoUrl: String?
 )
 
-class ProfileScreenModel : ViewModel() {
+class ProfileScreenModel(
+    private val userRepository: UserRepository,
+    private val sessionManager: SessionManager
+) : ViewModel() {
 
     private val _state = MutableStateFlow<ProfileState>(ProfileState.Loading)
     val state = _state.asStateFlow()
@@ -35,56 +39,46 @@ class ProfileScreenModel : ViewModel() {
     private fun loadProfile() {
         viewModelScope.launch {
             _state.value = ProfileState.Loading
-            try {
-                // TODO: Здесь будет вызов твоего репозитория: userRepository.getProfile()
-                delay(500)
-                val mockResponse = UserProfileDto(
-                    id = 5,
-                    name = "Юлия",
-                    surname = "Иванова",
-                    patronymic = "Ивановна",
-                    events_count = null,
-                    points_count = null,
-                    rank = 0,
-                    dateOfBirth = "2000-01-01",
-                    courseNumber = 4,
-                    specialityTitle = "Информационные системы",
-                    groupTitle = "122",
-                    studentEmail = "112233@edu.fa.ru",
-                    phoneNumber = "+79999994563",
-                    roleTitle = "Activist"
-                )
 
-                _state.value = ProfileState.Success(mapDtoToUi(mockResponse))
-            } catch (e: Exception) {
-                _state.value = ProfileState.Error("Не удалось загрузить профиль")
-            }
+            userRepository.getUserProfile()
+                .onSuccess { user ->
+                    _state.value = ProfileState.Success(mapDomainToUi(user))
+                }
+                .onFailure { error ->
+                    println("Ошибка профиля: ${error.message}")
+                    _state.value = ProfileState.Error("Не удалось загрузить профиль")
+                }
         }
     }
 
-    private fun mapDtoToUi(dto: UserProfileDto): UserUiModel {
-        val fullName = listOfNotNull(dto.surname, dto.name, dto.patronymic)
+    private fun mapDomainToUi(user: User): UserUiModel {
+        val fullName = listOfNotNull(user.surname, user.name, user.patronymic)
             .joinToString(" ")
             .trim()
 
-        val roleHumanReadable = when (dto.roleTitle) {
+        val roleHumanReadable = when (user.roleTitle) {
+            "Administrator" -> "Администратор"
+            "Secretary" -> "Секретарь"
+            "Chairman" -> "Председатель"
+            "Sector_coordinator" -> "Координатор сектора"
+            "Deputy_chairman" -> "Заместитель председателя"
+            "Curator" -> "Куратор"
             "Activist" -> "Активист студсовета"
-            "Admin" -> "Администратор"
-            "Moderator" -> "Модератор"
-            else -> "Студент"
+            else -> user.roleTitle
         }
 
         return UserUiModel(
             fullName = fullName,
             role = roleHumanReadable,
-            eventsCount = dto.events_count?.toString() ?: "0",
-            pointsCount = dto.points_count?.toString() ?: "0",
-            rank = if (dto.rank != null && dto.rank > 0) dto.rank.toString() else "-",
-            photoUrl = dto.photo
+            eventsCount = user.eventsCount?.toString() ?: "0",
+            pointsCount = user.pointsCount?.toString() ?: "0",
+            rank = if (user.rank != null && user.rank > 0) user.rank.toString() else "-",
+            photoUrl = user.photo
         )
     }
 
     fun logout() {
-        // TODO: Очистить SessionManager и перебросить на экран Login
+        sessionManager.logout()
+        // TODO: вызвать метод навигации в RootComponent, чтобы переключить на Login
     }
 }

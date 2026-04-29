@@ -1,5 +1,6 @@
 package com.example.ais_sst_mobile.data.network.dto
 
+import com.example.ais_sst_mobile.domain.model.User
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -21,4 +22,26 @@ data class UserProfileDto(
     val vkLink: String? = null,
     val photo: String? = null,
     val roleTitle: String
-)
+) {
+    fun toDomain(): User {
+        return User(
+            id = id,
+            name = name,
+            surname = surname,
+            patronymic = patronymic,
+            eventsCount = events_count,
+            pointsCount = points_count,
+            rank = rank,
+            dateOfBirth = dateOfBirth,
+            courseNumber = courseNumber,
+            specialityTitle = specialityTitle,
+            groupTitle = groupTitle,
+            studentEmail = studentEmail,
+            additionalEmail = additionalEmail,
+            phoneNumber = phoneNumber,
+            vkLink = vkLink,
+            photo = photo,
+            roleTitle = roleTitle
+        )
+    }
+}
