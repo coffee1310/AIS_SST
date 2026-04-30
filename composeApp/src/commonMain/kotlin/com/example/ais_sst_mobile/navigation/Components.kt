@@ -17,4 +17,7 @@ class HomeComponent(componentContext: ComponentContext) : ComponentContext by co
 class TasksComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 class CalendarComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 class SectorsComponent(componentContext: ComponentContext) : ComponentContext by componentContext
-class ProfileComponent(componentContext: ComponentContext) : ComponentContext by componentContext
+class ProfileComponent(
+    componentContext: ComponentContext,
+    val onLogout: () -> Unit
+) : ComponentContext by componentContext

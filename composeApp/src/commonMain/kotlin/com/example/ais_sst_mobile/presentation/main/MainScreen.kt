@@ -58,7 +58,7 @@ fun MainScreen(component: MainComponent) {
                     is MainComponent.Child.Tasks -> Box(Modifier.fillMaxSize()) { Text("Задачи", color = Color.White) }
                     is MainComponent.Child.Calendar -> Box(Modifier.fillMaxSize()) { Text("Календарь", color = Color.White) }
                     is MainComponent.Child.Sectors -> Box(Modifier.fillMaxSize()) { Text("Сектора", color = Color.White) }
-                    is MainComponent.Child.Profile -> ProfileScreen()
+                    is MainComponent.Child.Profile -> ProfileScreen(instance.component)
                 }
             }
         }

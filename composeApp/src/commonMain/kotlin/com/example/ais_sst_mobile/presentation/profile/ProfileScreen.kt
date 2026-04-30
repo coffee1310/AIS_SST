@@ -24,10 +24,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ais_sst_mobile.navigation.ProfileComponent
 import org.koin.compose.getKoin
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(component: ProfileComponent) {
     val koin = getKoin()
     val screenModel = remember { koin.get<ProfileScreenModel>() }
     val state by screenModel.state.collectAsState()
@@ -127,7 +128,9 @@ fun ProfileScreen() {
                 Spacer(modifier = Modifier.height(40.dp))
 
                 Button(
-                    onClick = { screenModel.logout() },
+                    onClick = { screenModel.logout()
+                        component.onLogout()
+                              },
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
                         .height(50.dp)

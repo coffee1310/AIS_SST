@@ -60,7 +60,10 @@ class DefaultRootComponent(
             )
             is Config.Main -> RootComponent.Child.Main(
                 MainComponent(
-                    componentContext = context
+                    componentContext = context,
+                    onLogout = {
+                        navigation.replaceAll(Config.Login)
+                    }
                 )
             )
         }

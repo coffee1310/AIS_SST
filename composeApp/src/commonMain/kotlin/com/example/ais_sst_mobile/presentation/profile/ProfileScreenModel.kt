@@ -79,6 +79,5 @@ class ProfileScreenModel(
 
     fun logout() {
         sessionManager.logout()
-        // TODO: вызвать метод навигации в RootComponent, чтобы переключить на Login
     }
 }

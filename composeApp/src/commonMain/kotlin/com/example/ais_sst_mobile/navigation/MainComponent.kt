@@ -9,7 +9,8 @@ import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Serializable
 
 class MainComponent(
-    componentContext: ComponentContext
+    componentContext: ComponentContext,
+    val onLogout: () -> Unit
 ) : ComponentContext by componentContext {
 
     private val navigation = StackNavigation<Config>()
@@ -40,7 +41,7 @@ class MainComponent(
             is Config.Tasks -> Child.Tasks(TasksComponent(context))
             is Config.Calendar -> Child.Calendar(CalendarComponent(context))
             is Config.Sectors -> Child.Sectors(SectorsComponent(context))
-            is Config.Profile -> Child.Profile(ProfileComponent(context))
+            is Config.Profile -> Child.Profile(ProfileComponent(context, onLogout))
         }
 
     sealed class Child {
