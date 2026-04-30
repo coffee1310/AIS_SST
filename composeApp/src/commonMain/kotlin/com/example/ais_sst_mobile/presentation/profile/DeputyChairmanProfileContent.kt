@@ -42,10 +42,12 @@ fun DeputyChairmanProfileContent(component: ProfileComponent, screenModel: Profi
 
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.StarOutline, title = "История баллов", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.WorkOutline, title = "Портфолио", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.Settings, title = "Настройки", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.Info, title = "О студсовете", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Folder, title = "Архив мероприятий", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Документы", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Group, title = "Правление студсовета", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.NotificationAdd, title = "Создание уведомлений", onClick = { })
+
                     Spacer(modifier = Modifier.height(8.dp))
                     ProfileMenuRow(icon = Icons.Outlined.HelpOutline, title = "Поддержка", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Info, title = "О приложении", onClick = { })

@@ -37,15 +37,15 @@ fun CuratorProfileContent(component: ProfileComponent, screenModel: ProfileScree
                 ProfileHeader(user, activeRole, realRole) { screenModel.setRole(it) }
                 Spacer(modifier = Modifier.height(24.dp))
 
-                ProfileStatsCard(user)
-                Spacer(modifier = Modifier.height(32.dp))
-
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.StarOutline, title = "История баллов", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.WorkOutline, title = "Портфолио", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.Settings, title = "Настройки", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.Info, title = "О студсовете", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Folder, title = "Архив мероприятий", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.PersonAdd, title = "Регистрация активиста", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Заявки на вступление", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Документы", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Group, title = "Правление студсовета", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.NotificationAdd, title = "Создание уведомлений", onClick = { })
+
                     Spacer(modifier = Modifier.height(8.dp))
                     ProfileMenuRow(icon = Icons.Outlined.HelpOutline, title = "Поддержка", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Info, title = "О приложении", onClick = { })
