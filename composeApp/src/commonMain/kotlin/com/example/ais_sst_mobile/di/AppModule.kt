@@ -34,7 +34,7 @@ val appModule = module {
     // ScreenModels
     factory { LoginScreenModel(get(), get()) }
     factory { RegisterScreenModel(dictionaryRepository = get()) }
-    factory { HomeScreenModel() }
+    factory { HomeScreenModel(get()) }
     factory { ProfileScreenModel(get(), get()) }
 
 }

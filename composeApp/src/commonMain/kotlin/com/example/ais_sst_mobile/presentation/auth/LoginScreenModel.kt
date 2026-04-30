@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.data.network.dto.AuthResponse
 import com.example.ais_sst_mobile.data.network.dto.LoginRequest
+import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -106,8 +107,14 @@ class LoginScreenModel(
 
                 result.onSuccess { response ->
                     failedAttempts = 0
+
                     sessionManager.saveAuthToken(response.token)
                     sessionManager.saveUserId(response.id)
+
+                    val roleString = response.roles.firstOrNull()
+                    val actualRole = AppRole.fromServerName(roleString)
+                    sessionManager.saveRealRole(actualRole)
+
                     _state.value = State.Success(response)
                 }.onFailure { exception ->
                     failedAttempts++

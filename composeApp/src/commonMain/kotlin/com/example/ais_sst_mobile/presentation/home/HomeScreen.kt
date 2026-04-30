@@ -2,9 +2,7 @@ package com.example.ais_sst_mobile.presentation.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,21 +22,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.koin.compose.getKoin
+import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.presentation.components.EventCard
+import org.koin.compose.getKoin
 
 @Composable
 fun HomeScreen() {
     val koin = getKoin()
     val screenModel = remember { koin.get<HomeScreenModel>() }
 
+    val activeRole by screenModel.activeRole.collectAsState()
+
+    when (activeRole) {
+        AppRole.ACTIVIST, AppRole.STUDENT -> ActivistHomeContent(screenModel)
+        else -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Главная страница для роли: ${activeRole.uiName} в разработке", color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    }
+}
+
+@Composable
+fun ActivistHomeContent(screenModel: HomeScreenModel) {
     val selectedTab by screenModel.selectedTab.collectAsState()
     val upcomingEvents by screenModel.upcomingEvents.collectAsState()
     val availableEvents by screenModel.availableEvents.collectAsState()
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.height(5.dp))
 
         CustomTabRow(selectedTab = selectedTab, onTabSelected = { screenModel.selectTab(it) })
@@ -46,100 +57,45 @@ fun HomeScreen() {
         Spacer(modifier = Modifier.height(5.dp))
 
         if (selectedTab == 0) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-
+            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
                 item {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .clickable { /* TODO: Переход к списку ближайших */ },
+                            .clickable { /* TODO */ },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Ближайшие мероприятия",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Text("Ближайшие мероприятия", style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                                contentDescription = "Все ближайшие",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
+                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowForward, "Все", tint = Color.White, modifier = Modifier.size(18.dp))
                         }
                     }
 
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(upcomingEvents) { event ->
-                            EventCard(
-                                event = event,
-                                isHorizontal = true,
-                                modifier = Modifier.fillParentMaxWidth(0.93f),
-                                onClick = { /* TODO: Переход на детали */ }
-                            )
+                            EventCard(event = event, isHorizontal = true, modifier = Modifier.fillParentMaxWidth(0.93f), onClick = { })
                         }
                     }
-
                     Spacer(modifier = Modifier.height(20.dp))
                 }
 
                 item {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Мероприятия доступные для регистрации",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Text("Мероприятия доступные для регистрации", style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable { /* TODO: Переход на страницу поиска */ },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Search,
-                                contentDescription = "Поиск",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
+                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary).clickable { }, contentAlignment = Alignment.Center) {
+                            Icon(Icons.Outlined.Search, "Поиск", tint = Color.White, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
 
                 items(availableEvents) { event ->
-                    EventCard(
-                        event = event,
-                        isHorizontal = false,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        onClick = { /* TODO: Переход на детали */ }
-                    )
+                    EventCard(event = event, isHorizontal = false, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), onClick = { })
                 }
             }
         } else {

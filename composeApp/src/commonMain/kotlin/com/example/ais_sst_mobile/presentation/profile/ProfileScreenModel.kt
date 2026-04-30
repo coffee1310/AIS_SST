@@ -3,6 +3,7 @@ package com.example.ais_sst_mobile.presentation.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ais_sst_mobile.core.prefs.SessionManager
+import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.domain.model.User
 import com.example.ais_sst_mobile.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,13 +30,23 @@ class ProfileScreenModel(
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
+    val activeRole = sessionManager.activeRoleFlow
+    val realRole = sessionManager.getRealRole()
+
     private val _state = MutableStateFlow<ProfileState>(ProfileState.Loading)
     val state = _state.asStateFlow()
 
     init {
         loadProfile()
     }
-
+    fun toggleRole() {
+        if (activeRole.value == AppRole.ACTIVIST && realRole.isBoardMember()) {
+            sessionManager.setActiveRole(realRole)
+        }
+        else if (realRole.isBoardMember()) {
+            sessionManager.setActiveRole(AppRole.ACTIVIST)
+        }
+    }
     private fun loadProfile() {
         viewModelScope.launch {
             _state.value = ProfileState.Loading

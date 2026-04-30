@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.navigation.ProfileComponent
 import org.koin.compose.getKoin
 
@@ -31,80 +32,66 @@ import org.koin.compose.getKoin
 fun ProfileScreen(component: ProfileComponent) {
     val koin = getKoin()
     val screenModel = remember { koin.get<ProfileScreenModel>() }
+    val activeRole by screenModel.activeRole.collectAsState()
+
+    when (activeRole) {
+        AppRole.ACTIVIST, AppRole.STUDENT -> ActivistProfileContent(component, screenModel)
+        else -> {
+            // Временный контент для ролей Правления
+            BoardProfileContentStub(component, screenModel)
+        }
+    }
+}
+
+@Composable
+fun ActivistProfileContent(component: ProfileComponent, screenModel: ProfileScreenModel) {
     val state by screenModel.state.collectAsState()
+    val realRole = screenModel.realRole
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
         when (val currentState = state) {
-            is ProfileState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
-                }
-            }
-            is ProfileState.Error -> {
-                Text(currentState.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
-            }
+            is ProfileState.Loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary) }
+            is ProfileState.Error -> Text(currentState.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
             is ProfileState.Success -> {
                 val user = currentState.profile
 
-                // aватарка
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFFFEAD1)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // TODO: AsyncImage(model = user.photoUrl)
-                    Icon(
-                        imageVector = Icons.Outlined.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(60.dp),
-                        tint = Color(0xFFD6A87C)
-                    )
+                Box(modifier = Modifier.size(100.dp).clip(CircleShape).background(Color(0xFFFFEAD1)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Outlined.Person, null, modifier = Modifier.size(60.dp), tint = Color(0xFFD6A87C))
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = user.fullName,
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-
+                Text(user.fullName, style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp), color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(6.dp))
+                Text(user.role, style = MaterialTheme.typography.labelSmall.copy(fontSize = 16.sp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f))
 
-                Text(
-                    text = user.role,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 16.sp),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                )
+                // --- ТОТ САМЫЙ ПЕРЕКЛЮЧАТЕЛЬ ---
+                if (realRole.isBoardMember()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Вернуться в режим: ${realRole.uiName}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.secondary, // Твой фирменный Teal цвет
+                        modifier = Modifier
+                            .clip(MaterialTheme.shapes.small)
+                            .clickable { screenModel.toggleRole() }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Card(
                     shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)),
                     border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                         StatItem(value = user.eventsCount, label = "мероприятий")
                         StatItem(value = user.pointsCount, label = "баллов")
                         StatItem(value = user.rank, label = "место в рейтинге")
@@ -118,9 +105,7 @@ fun ProfileScreen(component: ProfileComponent) {
                     ProfileMenuRow(icon = Icons.Outlined.StarOutline, title = "История баллов", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.WorkOutline, title = "Портфолио", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Settings, title = "Настройки", onClick = { })
-
                     Spacer(modifier = Modifier.height(8.dp))
-
                     ProfileMenuRow(icon = Icons.Outlined.HelpOutline, title = "Поддержка", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Info, title = "О приложении", onClick = { })
                 }
@@ -128,37 +113,47 @@ fun ProfileScreen(component: ProfileComponent) {
                 Spacer(modifier = Modifier.height(40.dp))
 
                 Button(
-                    onClick = { screenModel.logout()
-                        component.onLogout()
-                              },
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .height(50.dp)
-                        .border(width = 0.3.dp, color = MaterialTheme.colorScheme.onPrimary, shape = MaterialTheme.shapes.large),
+                    onClick = { screenModel.logout(); component.onLogout() },
+                    modifier = Modifier.fillMaxWidth(0.9f).height(50.dp).border(width = 0.3.dp, color = MaterialTheme.colorScheme.onPrimary, shape = MaterialTheme.shapes.large),
                     shape = MaterialTheme.shapes.large,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ExitToApp,
-                        contentDescription = "Выход",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Icon(Icons.AutoMirrored.Outlined.ExitToApp, "Выход", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Выход",
-                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, letterSpacing = 2.sp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        textAlign = TextAlign.Center
-                    )
+                    Text("Выход", style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, letterSpacing = 2.sp), color = MaterialTheme.colorScheme.onPrimary, textAlign = TextAlign.Center)
                 }
-
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }
 }
+@Composable
+fun BoardProfileContentStub(component: ProfileComponent, screenModel: ProfileScreenModel) {
+    val activeRole by screenModel.activeRole.collectAsState()
 
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Профиль Правления (${activeRole.uiName})", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            onClick = { screenModel.toggleRole() },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+        ) {
+            Text("Перейти в режим Активиста", color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        Button(onClick = { screenModel.logout(); component.onLogout() }) {
+            Text("Выйти из аккаунта", color = Color.White)
+        }
+    }
+}
 @Composable
 fun StatItem(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

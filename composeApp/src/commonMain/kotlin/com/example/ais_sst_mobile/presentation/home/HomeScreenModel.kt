@@ -1,11 +1,16 @@
 package com.example.ais_sst_mobile.presentation.home
 
 import androidx.lifecycle.ViewModel
+import com.example.ais_sst_mobile.core.prefs.SessionManager
+import com.example.ais_sst_mobile.presentation.components.EventUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.example.ais_sst_mobile.presentation.components.EventUiModel
 
-class HomeScreenModel : ViewModel() {
+class HomeScreenModel(
+    private val sessionManager: SessionManager
+) : ViewModel() {
+
+    val activeRole = sessionManager.activeRoleFlow
 
     private val _selectedTab = MutableStateFlow(0)
     val selectedTab = _selectedTab.asStateFlow()
@@ -14,9 +19,8 @@ class HomeScreenModel : ViewModel() {
         listOf(
             EventUiModel(1, "Встреча с выпускниками", "1 июня, 12:00", "Кронштадтский бульвар, 37Б, Актовый зал"),
             EventUiModel(2, "Студенческая весна", "15 июня, 18:00", "Главный кампус, Концертный зал"),
-            EventUiModel(5, "Встреча с выпускниками", "1 июня, 12:00", "Кронштадтский бульвар, 37Б, Актовый зал"),
-
-            )
+            EventUiModel(5, "Встреча с выпускниками", "1 июня, 12:00", "Кронштадтский бульвар, 37Б, Актовый зал")
+        )
     )
     val upcomingEvents = _upcomingEvents.asStateFlow()
 
