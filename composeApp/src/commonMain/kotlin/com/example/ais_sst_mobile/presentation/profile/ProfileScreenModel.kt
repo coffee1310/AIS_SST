@@ -69,11 +69,11 @@ class ProfileScreenModel(
 
         val roleHumanReadable = when (user.roleTitle) {
             "Administrator" -> "Администратор"
-            "Secretary" -> "Секретарь"
-            "Chairman" -> "Председатель"
+            "Secretary" -> "Секретарь студсовета"
+            "Chairman" -> "Председатель студсовета"
             "Sector_coordinator" -> "Координатор сектора"
             "Deputy_chairman" -> "Заместитель председателя"
-            "Curator" -> "Куратор"
+            "Curator" -> "Куратор студсовета"
             "Activist" -> "Активист студсовета"
             else -> user.roleTitle
         }

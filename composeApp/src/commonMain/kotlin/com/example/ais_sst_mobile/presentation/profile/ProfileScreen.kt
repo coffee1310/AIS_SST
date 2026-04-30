@@ -24,12 +24,35 @@ fun ProfileScreen(component: ProfileComponent) {
         AppRole.ACTIVIST, AppRole.STUDENT -> {
             ActivistProfileContent(component, screenModel)
         }
+
         AppRole.SECTOR_COORDINATOR -> {
             CoordinatorProfileContent(component, screenModel)
         }
-        else -> {
+
+        AppRole.CHAIRMAN -> {
+            ChairmanProfileContent(component, screenModel)
+        }
+
+        AppRole.DEPUTY_CHAIRMAN -> {
+            DeputyChairmanProfileContent(component, screenModel)
+        }
+
+        AppRole.SECRETARY -> {
+            SecretaryProfileContent(component, screenModel)
+        }
+
+        AppRole.CURATOR -> {
+            CuratorProfileContent(component, screenModel)
+        }
+
+        AppRole.ADMINISTRATOR -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Профиль для роли: ${activeRole.uiName} в разработке", color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+        else -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Роль: ${activeRole.uiName} в разработке или произошла ошибка", color = MaterialTheme.colorScheme.onSurface)
             }
         }
     }
