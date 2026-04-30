@@ -31,6 +31,7 @@ class ProfileScreenModel(
 ) : ViewModel() {
 
     val activeRole = sessionManager.activeRoleFlow
+
     val realRole = sessionManager.getRealRole()
 
     private val _state = MutableStateFlow<ProfileState>(ProfileState.Loading)
@@ -39,14 +40,13 @@ class ProfileScreenModel(
     init {
         loadProfile()
     }
-    fun toggleRole() {
-        if (activeRole.value == AppRole.ACTIVIST && realRole.isBoardMember()) {
-            sessionManager.setActiveRole(realRole)
-        }
-        else if (realRole.isBoardMember()) {
-            sessionManager.setActiveRole(AppRole.ACTIVIST)
+
+    fun setRole(newRole: AppRole) {
+        if (newRole == realRole || newRole == AppRole.ACTIVIST) {
+            sessionManager.setActiveRole(newRole)
         }
     }
+
     private fun loadProfile() {
         viewModelScope.launch {
             _state.value = ProfileState.Loading
