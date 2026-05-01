@@ -25,3 +25,5 @@ databaseChangeLog:
       file: db/changelog/changes/014-add-photo-to-account-creating-requests.yaml
   - include:
       file: db/changelog/changes/015-create-refresh-tokens-table.yaml
+  - include:
+      file: db/changelog/changes/016-add-timestamps-to-roles-as-the-event.yaml

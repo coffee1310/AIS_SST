@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-add-timestamps-to-roles-as-the-event
+      author: coffee13102006
+      labels: add-timestamps
+      comment: "Добавление полей created_at и updated_at в таблицу roles_as_the_event"
+      changes:
+        - addColumn:
+            tableName: roles_as_the_event
+            columns:
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  remarks: "Дата создания"
+                  constraints:
+                    nullable: true
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  remarks: "Дата обновления"
+                  constraints:
+                    nullable: true
