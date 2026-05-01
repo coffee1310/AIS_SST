@@ -3,7 +3,6 @@ package org.example.ais_sst.service.userService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.user.UserFilterDTO;
-import org.example.ais_sst.dto.user.UserProjection;
 import org.example.ais_sst.dto.user.UserResponseDTO;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +10,7 @@ import org.example.ais_sst.dto.user.UserProfileInfoDTO;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 public class UserService implements UserServiceImpl {
 
     private final UserRepository userRepository;
-
     private final UserMapper userMapper;
 
     @Override
@@ -35,6 +34,12 @@ public class UserService implements UserServiceImpl {
         if (!user_optional.isPresent()) throw new UserDoesNotExistException("Пользователь не найден");
 
         User user = user_optional.get();
+
+        // Конвертируем фото в Base64
+        String photoBase64 = user.getPhoto() != null && user.getPhoto().length > 0
+                ? ImageUtil.encodeToBase64(user.getPhoto())
+                : null;
+
         userProfileInfoDTO = UserProfileInfoDTO.builder()
                 .id(userId)
                 .name(user.getName())
@@ -51,6 +56,7 @@ public class UserService implements UserServiceImpl {
                 .vkLink(user.getVkLink())
                 .courseNumber(user.getCourseNumber())
                 .phoneNumber(user.getPhoneNumber())
+                .photo(photoBase64)  // Конвертированное фото
                 .build();
 
         return userProfileInfoDTO;
@@ -65,8 +71,8 @@ public class UserService implements UserServiceImpl {
         // Получаем всех пользователей
         Page<User> usersPage = userRepository.findAll(pageable);
 
-        // Фильтруем в Java
-        List<User> filteredUsers = usersPage.getContent().stream()
+        // Фильтруем в Java и конвертируем фото
+        List<UserResponseDTO> filteredUsers = usersPage.getContent().stream()
                 .filter(user -> {
                     // Фильтр по роли
                     if (filter.getRole() != null && !filter.getRole().isEmpty()) {
@@ -107,41 +113,21 @@ public class UserService implements UserServiceImpl {
                     }
                     return true;
                 })
+                .map(user -> {
+                    UserResponseDTO dto = userMapper.toResponseDto(user);
+                    // Конвертируем фото в Base64
+                    if (user.getPhoto() != null && user.getPhoto().length > 0) {
+                        dto.setPhoto(ImageUtil.encodeToBase64(user.getPhoto()));
+                    }
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         // Создаем новую Page с отфильтрованными данными
-        Page<User> filteredPage = new PageImpl<>(filteredUsers, pageable, filteredUsers.size());
-
-        return filteredPage.map(userMapper::toResponseDto);
+        return new PageImpl<>(filteredUsers, pageable, filteredUsers.size());
     }
 
-    private UserResponseDTO mapToUserResponseDTO(Object[] row) {
-        return UserResponseDTO.builder()
-                .id(((Number) row[0]).longValue())
-                .name((String) row[1])
-                .surname((String) row[2])
-                .patronymic((String) row[3])
-                .gender((String) row[4])
-                .dateOfBirth((java.time.LocalDate) row[5])
-                .courseNumber(((Number) row[6]).shortValue())
-                .studentIdNumber(((Number) row[7]).intValue())
-                .studentEmail((String) row[8])
-                .additionalEmail((String) row[9])
-                .phoneNumber((String) row[10])
-                .vkLink((String) row[11])
-                .isActive((Boolean) row[12])
-                .isBanned((Boolean) row[13])
-                .role((String) row[14])
-                .groupId(row[15] != null ? ((Number) row[15]).longValue() : null)
-                .groupName((String) row[16])
-                .specialityId(row[17] != null ? ((Number) row[17]).longValue() : null)
-                .specialityName((String) row[18])
-                .photo(null)  // Фото не загружаем
-                .build();
-    }
-
-
-    @Transactional()
+    @Transactional
     public Page<UserResponseDTO> getAllUsersSimple(int page, int size, String sortBy, String sortDirection) {
         log.info("Getting all users with pagination: page={}, size={}, sortBy={}, sortDirection={}",
                 page, size, sortBy, sortDirection);
@@ -150,10 +136,18 @@ public class UserService implements UserServiceImpl {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<User> usersPage = userRepository.findAll(pageable);
-        return usersPage.map(userMapper::toResponseDto);
+
+        // Конвертируем фото в Base64
+        return usersPage.map(user -> {
+            UserResponseDTO dto = userMapper.toResponseDto(user);
+            if (user.getPhoto() != null && user.getPhoto().length > 0) {
+                dto.setPhoto(ImageUtil.encodeToBase64(user.getPhoto()));
+            }
+            return dto;
+        });
     }
 
-    @Transactional()
+    @Transactional
     public Page<UserResponseDTO> getUsersByRole(String role, int page, int size, String sortBy, String sortDirection) {
         log.info("Getting users by role: {}, page={}, size={}", role, page, size);
 
@@ -161,7 +155,14 @@ public class UserService implements UserServiceImpl {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<User> usersPage = userRepository.findByRole(role, pageable);
-        return usersPage.map(userMapper::toResponseDto);
-    }
 
+        // Конвертируем фото в Base64
+        return usersPage.map(user -> {
+            UserResponseDTO dto = userMapper.toResponseDto(user);
+            if (user.getPhoto() != null && user.getPhoto().length > 0) {
+                dto.setPhoto(ImageUtil.encodeToBase64(user.getPhoto()));
+            }
+            return dto;
+        });
+    }
 }
