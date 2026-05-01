@@ -23,13 +23,12 @@
 
                     <Border Grid.Column="0" Width="380" Height="220" CornerRadius="12" Margin="0,0,40,0" ClipToBounds="True" VerticalAlignment="Top">
                         <Border.Background>
-                            <ImageBrush ImageSource="/Resources/sector1.png" Stretch="UniformToFill"/>
+                            <ImageBrush x:Name="SectorImage" ImageSource="/Resources/sector1.png" Stretch="UniformToFill"/>
                         </Border.Background>
                     </Border>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Top">
-
-                        <TextBlock Text="Спортивный сектор" FontSize="24" FontFamily="Digital Pixel" Foreground="White" Margin="0,0,0,15"/>
+                        <TextBlock x:Name="SectorTitle" Text="Загрузка..." FontSize="24" FontFamily="Digital Pixel" Foreground="White" Margin="0,0,0,15"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                             <Path Data="M8,8 C10.21,8 12,6.21 12,4 C12,1.79 10.21,0 8,0 C5.79,0 4,1.79 4,4 C4,6.21 5.79,8 8,8 Z M8,10 C5.33,10 0,11.34 0,14 L0,16 L16,16 L16,14 C16,11.34 10.67,10 8,10 Z" 
@@ -40,22 +39,22 @@
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,25">
                             <Ellipse Width="40" Height="40" Margin="0,0,15,0">
                                 <Ellipse.Fill>
-                                    <ImageBrush ImageSource="/Resources/prof.png" Stretch="UniformToFill"/>
+                                    <ImageBrush x:Name="CoordinatorPhotoBrush" ImageSource="/Resources/prof.png" Stretch="UniformToFill"/>
                                 </Ellipse.Fill>
                             </Ellipse>
 
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Литов Никита" Foreground="White" FontSize="14" FontFamily="Montserrat" Margin="0,0,0,3"/>
-                                <TextBlock Text="студент группы 4ИСИП-322" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin"/>
+                                <TextBlock x:Name="CoordinatorName" Text="Не назначен" Foreground="White" FontSize="14" FontFamily="Montserrat" Margin="0,0,0,3"/>
+                                <TextBlock x:Name="CoordinatorGroup" Text="" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin"/>
                             </StackPanel>
                         </StackPanel>
 
-                        <TextBlock Text="Организация и проведение спортивных мероприятий, соревнований и тренировок. Мы стремимся к развитию физической культуры и здорового образа жизни среди студентов." 
+                        <TextBlock x:Name="SectorDescription" Text="Загрузка информации..." 
                                    Foreground="#7A7886" FontSize="13" FontFamily="Montserrat Thin" TextWrapping="Wrap" LineHeight="20"/>
                     </StackPanel>
                 </Grid>
 
-                <Button Content="Выйти из сектора" Style="{StaticResource PillButtonStyle}" HorizontalAlignment="Center" Padding="60,15" FontSize="14" Cursor="Hand"/>
+                <Button x:Name="ActionBtn" Content="Загрузка..." Style="{StaticResource PillButtonStyle}" HorizontalAlignment="Center" Padding="60,15" FontSize="14" Cursor="Hand" Click="ActionBtn_Click"/>
 
             </StackPanel>
         </ScrollViewer>

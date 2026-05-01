@@ -102,7 +102,7 @@
                             <Border Grid.Column="0" Style="{StaticResource AuthInputBorderStyle}" Width="Auto" CornerRadius="8,0,0,8" BorderThickness="1,1,0,1">
                                 <Grid>
                                     <TextBox x:Name="tbLogin" Style="{StaticResource AuthInnerInputStyle}" Width="Auto" MaxLength="6" PreviewTextInput="NumericOnly_PreviewTextInput"/>
-                                    <TextBlock Text="№ Билета" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin">
+                                    <TextBlock Text="Номер студ. билета" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Visibility" Value="Collapsed"/>

@@ -152,7 +152,7 @@ namespace Diplom_Stud.Pages.Activist
         {
             if (sender is Border border && border.Tag is int sectorId)
             {
-                this.NavigationService.Navigate(new SectorDetails());
+                this.NavigationService.Navigate(new SectorDetails(sectorId));
             }
         }
     }
@@ -168,6 +168,11 @@ namespace Diplom_Stud.Pages.Activist
         public string requestStatus { get; set; }
         public int participantCount { get; set; }
         public string photo { get; set; }
+        public string coordinatorName { get; set; }
+        public string coordinatorSurname { get; set; }
+        public string coordinatorPatronymic { get; set; }
+        public string coordinatorFullName { get; set; }
+        public string coordinatorPhoto { get; set; }
     }
 
     public class SectorViewModel

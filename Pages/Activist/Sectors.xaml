@@ -11,7 +11,8 @@
 
     <Grid Background="Transparent">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel HorizontalAlignment="Center" MaxWidth="1000" Margin="40,50,40,50">
+            <!-- Увеличил MaxWidth с 1000 до 1150, чтобы карточкам было куда расти вширь -->
+            <StackPanel HorizontalAlignment="Center" MaxWidth="1400" Margin="40,50,40,50">
 
                 <TextBlock Text="Сектора ССТ" FontSize="48" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,60"/>
 
@@ -25,31 +26,35 @@
 
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource EventCardStyle}" Cursor="Hand" MouseLeftButtonUp="SectorCard_Click" Tag="{Binding Id}">
+                            <!-- Добавил Margin="15", чтобы между большими карточками был воздух -->
+                            <Border Style="{StaticResource EventCardStyle}" Cursor="Hand" MouseLeftButtonUp="SectorCard_Click" Tag="{Binding Id}" Margin="15">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
+                                    <!-- Увеличил высоту картинки со 130 до 180, а также внутренние отступы до 20 -->
+                                    <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="180" Margin="20,20,20,0">
                                         <Border.Background>
                                             <ImageBrush ImageSource="{Binding Image}" Stretch="UniformToFill"/>
                                         </Border.Background>
                                     </Border>
 
-                                    <Grid Grid.Row="1" Margin="15,15,15,20">
+                                    <Grid Grid.Row="1" Margin="20,20,20,25">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
-                                        <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                                        <!-- Увеличил шрифт заголовка с 14 до 18 -->
+                                        <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="White" FontSize="18" FontFamily="Digital Pixel" Margin="0,0,0,12" TextWrapping="Wrap"/>
 
-                                        <TextBlock Grid.Row="1" Text="{Binding Description}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,25"/>
+                                        <!-- Увеличил шрифт описания с 10 до 12 и добавил LineHeight для лучшей читаемости -->
+                                        <TextBlock Grid.Row="1" Text="{Binding Description}" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,30" LineHeight="18"/>
 
-                                        <!-- Кнопка статуса, стиль и текст привязываются динамически -->
+                                        <!-- Кнопка статуса -->
                                         <Button Grid.Row="2" Content="{Binding ButtonText}" Style="{Binding ButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Bottom" IsHitTestVisible="False"/>
                                     </Grid>
                                 </Grid>
