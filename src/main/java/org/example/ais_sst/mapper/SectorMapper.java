@@ -12,10 +12,12 @@ import org.mapstruct.Named;
 public interface SectorMapper {
 
     @Mapping(source = "currentCoordinator.id", target = "currentCoordinator_id")
+    @Mapping(target = "photo", expression = "java(org.example.ais_sst.utils.ImageUtil.encodeToBase64(sector.getPhoto()))")
     SectorDTO toSectorDTO(Sector sector);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(source = "currentCoordinator_id", target = "currentCoordinator", qualifiedByName = "mapCurrentCoordinator")
+    @Mapping(target = "photo", expression = "java(org.example.ais_sst.utils.ImageUtil.decodeFromBase64(sectorDTO.getPhoto()))")
     Sector toEntity(SectorDTO sectorDTO);
 
     @Mapping(target = "id", source = "sector.id")

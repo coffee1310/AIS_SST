@@ -28,7 +28,8 @@ public class SectorDTO {
     @ValidUserId
     private Long currentCoordinator_id;
 
-    private Boolean isActive;
+    @Builder.Default
+    private Boolean isActive = true;
 
-    private byte[] photo;
+    private String photo;
 }

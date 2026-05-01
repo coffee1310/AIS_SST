@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
+import org.example.ais_sst.entity.Role;
 import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.example.ais_sst.entity.User;
@@ -12,12 +13,10 @@ import org.example.ais_sst.exception.SectorDoesNotExistException;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.SectorMapper;
 import org.example.ais_sst.mapper.converter.SectorWithUserStatusConverter;
-import org.example.ais_sst.repository.SectorIntroductionRequestRepository;
-import org.example.ais_sst.repository.SectorParticipantRepository;
-import org.example.ais_sst.repository.SectorRepository;
-import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.repository.*;
 import org.springframework.stereotype.Service;
 
+import javax.management.relation.RoleNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,17 +36,30 @@ public class SectorService {
     private final SectorParticipantRepository sectorParticipantRepository;
     private final SectorIntroductionRequestRepository sectorIntroductionRequestRepository;
 
+    private final RoleRepository roleRepository;
+
     @Transactional
-    public SectorDTO createSector(SectorDTO sectorDTO) {
+    public SectorDTO createSector(SectorDTO sectorDTO) throws RoleNotFoundException {
       log.info("Creating sector with id: {}", sectorDTO.getId());
 
       Sector sector = sectorRepository.save(sectorMapper.toEntity(sectorDTO));
 
       log.info("Creating sector participant");
+
       createSectorParticipant(sectorDTO.getCurrentCoordinator_id(),sector.getId());
 
       sectorDTO = sectorMapper.toSectorDTO(sector);
       log.info("Saved sector with id: {}", sectorDTO.getId());
+
+      User user = userRepository.findUserById(sector.getCurrentCoordinator().getId())
+              .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id %d не найден", sector.getCurrentCoordinator().getId())));
+
+      Role role = roleRepository.findByTitle("Coordinator")
+              .orElseThrow(() -> new RoleNotFoundException("Роль куратор не была найдена"));
+
+      user.setRole(role);
+      userRepository.save(user);
+
       return sectorDTO;
     }
 
@@ -92,12 +104,25 @@ public class SectorService {
     }
 
     @Transactional
-    public SectorDTO appointACoordinator(Long sector_id, Long user_id) {
+    public SectorDTO appointACoordinator(Long sector_id, Long user_id) throws RoleNotFoundException {
         Sector sector = sectorRepository.findSectorById(sector_id)
                 .orElseThrow(() -> new SectorDoesNotExistException(String.format("Сектор с id: %d не существует", sector_id)));
 
+        User old_coordinator = sector.getCurrentCoordinator();
+        Role old_user_role = roleRepository.findByTitle("Acitvist")
+                        .orElseThrow(() -> new RoleNotFoundException("Роль куратор не была найдена"));
+
+        old_coordinator.setRole(old_user_role);
+
         User user = userRepository.findUserById(user_id)
                 .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id: %d не существует", user_id)));
+
+        Role role = roleRepository.findByTitle("Curator")
+                .orElseThrow(() -> new RoleNotFoundException("Роль куратор не была найдена"));
+
+        user.setRole(role);
+        userRepository.save(old_coordinator);
+        userRepository.save(user);
 
         sector.setCurrentCoordinator(user);
         sector = sectorRepository.save(sector);

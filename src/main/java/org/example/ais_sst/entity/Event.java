@@ -57,11 +57,6 @@ public class Event {
     @Column(name = "is_draft")
     private Boolean isDraft;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "organizer_id", nullable = false)
-    private User organizer;
-
     @ColumnDefault("false")
     @Column(name = "is_completed")
     private Boolean isCompleted;

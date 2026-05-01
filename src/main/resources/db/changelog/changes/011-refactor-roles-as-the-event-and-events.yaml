@@ -1,0 +1,152 @@
+databaseChangeLog:
+  # Удаляем старую таблицу и зависимости
+  - changeSet:
+      id: 011-drop-old-roles-as-the-event
+      author: coffee13102006
+      labels: refactor, roles
+      comment: "Удаление старой таблицы roles_as_the_event"
+      changes:
+        - sql:
+            comment: "Удаление sector_participants_roles_events если существует"
+            sql: DROP TABLE IF EXISTS sector_participants_roles_events CASCADE
+
+        - sql:
+            comment: "Удаление roles_as_the_event если существует"
+            sql: DROP TABLE IF EXISTS roles_as_the_event CASCADE
+
+  # Создаем новую таблицу roles_as_the_event
+  - changeSet:
+      id: 012-create-new-roles-as-the-event
+      author: coffee13102006
+      labels: refactor, roles
+      comment: "Создание новой таблицы roles_as_the_event"
+      changes:
+        - createTable:
+            tableName: roles_as_the_event
+            remarks: "Роли на мероприятии"
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  remarks: "Первичный ключ"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(64)
+                  remarks: "Название роли"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_default_role
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  remarks: "Является ли роль ролью по умолчанию"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  remarks: "Описание роли"
+
+  # Создаем таблицу sector_participants_roles_events
+  - changeSet:
+      id: 013-create-sector-participants-roles-events
+      author: coffee13102006
+      labels: refactor, roles
+      comment: "Создание таблицы sector_participants_roles_events"
+      changes:
+        - createTable:
+            tableName: sector_participants_roles_events
+            remarks: "Связь участников сектора с ролями на мероприятиях"
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  remarks: "Первичный ключ"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: sector_participant_id
+                  type: INTEGER
+                  remarks: "ID участника сектора"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_spr_sector_participant
+                    references: sector_participants(id)
+              - column:
+                  name: roles_as_the_event_id
+                  type: INTEGER
+                  remarks: "ID роли на мероприятии"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_spr_roles_as_the_event
+                    references: roles_as_the_event(id)
+              - column:
+                  name: is_need_registration
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  remarks: "Требуется ли регистрация"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: max_applications
+                  type: INTEGER
+                  remarks: "Максимальное количество заявок"
+              - column:
+                  name: reserve_count
+                  type: INTEGER
+                  defaultValueNumeric: 0
+                  remarks: "Количество резервных мест"
+                  constraints:
+                    nullable: false
+
+        # Добавляем CHECK constraints (без IF NOT EXISTS)
+        - sql:
+            comment: "Добавление CHECK max_applications"
+            sql: ALTER TABLE sector_participants_roles_events ADD CONSTRAINT chk_spr_max_applications_positive CHECK (max_applications IS NULL OR max_applications > 0)
+
+        - sql:
+            comment: "Добавление CHECK reserve_count"
+            sql: ALTER TABLE sector_participants_roles_events ADD CONSTRAINT chk_spr_reserve_count_nonnegative CHECK (reserve_count >= 0)
+
+  # Изменяем таблицу events
+  - changeSet:
+      id: 014-modify-events-table
+      author: coffee13102006
+      labels: refactor, events
+      comment: "Удаление organizer_id и изменение типа photo в events"
+      changes:
+        - dropColumn:
+            tableName: events
+            columnName: organizer_id
+
+        - sql:
+            comment: "Изменение типа photo на VARCHAR"
+            sql: ALTER TABLE events ALTER COLUMN photo TYPE VARCHAR(500)
+
+        - sql:
+            comment: "Добавление комментария к photo"
+            sql: COMMENT ON COLUMN events.photo IS 'URL или путь к фото мероприятия'
+
+  # Добавляем комментарии
+  - changeSet:
+      id: 015-add-comments
+      author: coffee13102006
+      labels: refactor
+      comment: "Добавление комментариев к таблицам"
+      changes:
+        - sql: COMMENT ON TABLE roles_as_the_event IS 'Роли на мероприятии'
+        - sql: COMMENT ON COLUMN roles_as_the_event.id IS 'Первичный ключ'
+        - sql: COMMENT ON COLUMN roles_as_the_event.title IS 'Название роли'
+        - sql: COMMENT ON COLUMN roles_as_the_event.is_default_role IS 'Является ли роль ролью по умолчанию'
+        - sql: COMMENT ON COLUMN roles_as_the_event.description IS 'Описание роли'
+        - sql: COMMENT ON TABLE sector_participants_roles_events IS 'Связь участников сектора с ролями на мероприятиях'
+        - sql: COMMENT ON COLUMN sector_participants_roles_events.id IS 'Первичный ключ'
+        - sql: COMMENT ON COLUMN sector_participants_roles_events.sector_participant_id IS 'ID участника сектора'
+        - sql: COMMENT ON COLUMN sector_participants_roles_events.roles_as_the_event_id IS 'ID роли на мероприятии'
+        - sql: COMMENT ON COLUMN sector_participants_roles_events.is_need_registration IS 'Требуется ли регистрация'
+        - sql: COMMENT ON COLUMN sector_participants_roles_events.max_applications IS 'Максимальное количество заявок'
+        - sql: COMMENT ON COLUMN sector_participants_roles_events.reserve_count IS 'Количество резервных мест'

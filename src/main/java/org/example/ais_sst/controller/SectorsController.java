@@ -17,6 +17,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.management.relation.RoleNotFoundException;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public class SectorsController {
     private final SectorIntroductionRequestService sectorIntroductionRequestService;
 
     @PostMapping
-    public ResponseEntity<?> createSector(@Valid @RequestBody SectorDTO sectorDTO) {
+    public ResponseEntity<?> createSector(@Valid @RequestBody SectorDTO sectorDTO) throws RoleNotFoundException {
         SectorDTO sector = sectorService.createSector(sectorDTO);
         return new ResponseEntity<>(sectorDTO, HttpStatus.CREATED);
     }
@@ -80,7 +81,7 @@ public class SectorsController {
     }
 
     @PostMapping("/appoint_coordinator/{sector_id}")
-    public ResponseEntity<?> appointACoordinator(@PathVariable Long sector_id, @RequestParam Long user_id) {
+    public ResponseEntity<?> appointACoordinator(@PathVariable Long sector_id, @RequestParam Long user_id) throws RoleNotFoundException {
         SectorDTO sectorDTO = sectorService.appointACoordinator(sector_id, user_id);
         return new ResponseEntity<>(sectorDTO, HttpStatus.ACCEPTED);
     }
