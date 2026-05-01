@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTO;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTOSummary;
 import org.example.ais_sst.dto.sector.SectorDTO;
+import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.service.sectorService.SectorIntroductionRequestService;
@@ -31,6 +32,12 @@ public class SectorsController {
     public ResponseEntity<?> createSector(@Valid @RequestBody SectorDTO sectorDTO) {
         SectorDTO sector = sectorService.createSector(sectorDTO);
         return new ResponseEntity<>(sectorDTO, HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getSectors(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        List<SectorWithUserStatusDTO> sectors = sectorService.getSectorsWithUserStatus(customUserDetails.getId());
+        return new ResponseEntity<>(sectors, HttpStatus.OK);
     }
 
     @PostMapping("/{sector_id}")
@@ -64,7 +71,7 @@ public class SectorsController {
                 ));
     }
 
-    @GetMapping
+    @GetMapping("/introductions")
     public ResponseEntity<?> getSectorIntroductionRequests(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         List<SectorIntroductionRequestDTO> requestDTOList = sectorIntroductionRequestService
                 .getRequestsListByCoordinator(customUserDetails.getId());

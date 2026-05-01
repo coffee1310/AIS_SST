@@ -20,7 +20,7 @@ public class DebugController {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private Environment env;  // ← Теперь правильный Environment
+    private Environment env;
 
     @GetMapping("/config")
     public Map<String, String> getConfig() {
