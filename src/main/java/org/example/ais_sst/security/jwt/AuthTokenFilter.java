@@ -21,7 +21,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
 
-    private final org.example.ais_sst.jwt.JwtUtils jwtUtils;
+    private final org.example.ais_sst.security.jwt.JwtUtils jwtUtils;
     private final CustomUserDetailsService userDetailsService;
 
     @Override

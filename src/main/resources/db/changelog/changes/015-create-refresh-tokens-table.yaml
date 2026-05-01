@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-create-refresh-tokens-table
+      author: coffee13102006
+      labels: security, tokens
+      comment: "Создание таблицы refresh_tokens для хранения refresh токенов"
+      changes:
+        - createTable:
+            tableName: refresh_tokens
+            remarks: "Таблица для хранения refresh токенов"
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  remarks: "Первичный ключ"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: token
+                  type: VARCHAR(255)
+                  remarks: "Refresh токен"
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  remarks: "ID пользователя"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_refresh_token_user
+                    references: users(id)
+              - column:
+                  name: expiry_date
+                  type: TIMESTAMP
+                  remarks: "Дата истечения токена"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revoked
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  remarks: "Отозван ли токен"
+                  constraints:
+                    nullable: false
+
+        # Добавляем индексы для производительности
+        - createIndex:
+            indexName: idx_refresh_token_token
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: token
+            unique: true
+
+        - createIndex:
+            indexName: idx_refresh_token_user
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            indexName: idx_refresh_token_expiry
+            tableName: refresh_tokens
+            columns:
+              - column:
+                  name: expiry_date
+
+        # Добавляем комментарии
+        - sql:
+            comment: "Комментарии к таблице и колонкам"
+            sql: |
+              COMMENT ON TABLE refresh_tokens IS 'Таблица для хранения refresh токенов';
+              COMMENT ON COLUMN refresh_tokens.id IS 'Первичный ключ';
+              COMMENT ON COLUMN refresh_tokens.token IS 'Refresh токен';
+              COMMENT ON COLUMN refresh_tokens.user_id IS 'ID пользователя';
+              COMMENT ON COLUMN refresh_tokens.expiry_date IS 'Дата истечения токена';
+              COMMENT ON COLUMN refresh_tokens.revoked IS 'Отозван ли токен';
