@@ -25,6 +25,7 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
             CASE WHEN sir.id IS NOT NULL AND sir.status IN ('На рассмотрении', 'Ожидание') 
                  THEN true ELSE false END as has_active_request,
             COALESCE(sp.is_coordinator, false) as is_coordinator,
+            s.photo,
             sir.status as request_status,
             (SELECT COUNT(*) FROM sector_participants sp2 WHERE sp2.sector_id = s.id) as participant_count
         FROM sectors s

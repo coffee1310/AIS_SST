@@ -25,5 +25,6 @@ public interface SectorMapper {
     @Mapping(target = "isParticipant", source = "isParticipant")
     @Mapping(target = "hasActiveRequest", source = "hasActiveRequest")
     @Mapping(target = "participantCount", source = "participantCount")
+    @Mapping(target = "photo", expression = "java(org.example.ais_sst.utils.ImageUtil.encodeToBase64(sector.getPhoto()))")
     SectorWithUserStatusDTO toDtoWithStatus(Sector sector, Boolean isParticipant, Boolean hasActiveRequest, Integer participantCount);
 }

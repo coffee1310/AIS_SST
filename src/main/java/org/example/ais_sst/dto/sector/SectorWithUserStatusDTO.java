@@ -19,4 +19,5 @@ public class SectorWithUserStatusDTO {
     private Boolean hasActiveRequest;
     private String requestStatus;
     private Integer participantCount;
+    private String photo;  // Base64 строка
 }
