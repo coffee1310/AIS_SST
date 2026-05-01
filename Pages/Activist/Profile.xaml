@@ -95,12 +95,6 @@
 
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid Margin="0,0,0,15">
-                                <TextBlock Text="Социальный статус" Foreground="White"/>
-                                <TextBlock x:Name="SocialStatusTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
-                            </Grid>
-
-                            <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
-                            <Grid Margin="0,0,0,15">
                                 <TextBlock Text="Пол" Foreground="White"/>
                                 <TextBlock x:Name="GenderTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
                             </Grid>
@@ -141,10 +135,8 @@
                 <Border Grid.Row="4" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
                     <StackPanel>
                         <TextBlock Text="Портфолио" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18"/>
-
                         <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                         <TextBlock Text="Загрузить документы" Foreground="White" Margin="0,0,0,15" FontFamily="Digital Pixel" FontSize="14"/>
-
                         <Grid Margin="0,0,0,15" Cursor="Hand">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -155,7 +147,6 @@
                             <TextBlock Grid.Column="1" Text="Загрузить" Foreground="White" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
                         </Grid>
-
                         <Grid Margin="0,0,0,25" Cursor="Hand">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -166,9 +157,7 @@
                             <TextBlock Grid.Column="1" Text="Загрузить PDF" Foreground="White" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
                         </Grid>
-
                         <TextBlock Text="Просмотр и выгрузка" Foreground="White" Margin="0,0,0,15" FontFamily="Digital Pixel" FontSize="14"/>
-
                         <Grid Margin="0,0,0,15" Cursor="Hand">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -179,7 +168,6 @@
                             <TextBlock Grid.Column="1" Text="Просмотреть портфолио" Foreground="White" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
                         </Grid>
-
                         <Grid Margin="0,0,0,10" Cursor="Hand">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>

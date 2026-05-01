@@ -20,11 +20,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Ellipse Grid.ColumnSpan="2" 
-                 Width="1200" Height="1200" 
-                 HorizontalAlignment="Left" VerticalAlignment="Top" 
-                 Margin="-400,-400,0,0" 
-                 IsHitTestVisible="False">
+        <Ellipse Grid.ColumnSpan="2" Width="1200" Height="1200" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-400,-400,0,0" IsHitTestVisible="False">
             <Ellipse.Fill>
                 <RadialGradientBrush>
                     <GradientStop Color="#88453281" Offset="0"/>
@@ -33,11 +29,7 @@
             </Ellipse.Fill>
         </Ellipse>
 
-        <Ellipse Grid.ColumnSpan="2" 
-                 Width="1000" Height="1000" 
-                 HorizontalAlignment="Right" VerticalAlignment="Bottom" 
-                 Margin="0,0,-300,-250" 
-                 IsHitTestVisible="False">
+        <Ellipse Grid.ColumnSpan="2" Width="1000" Height="1000" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-300,-250" IsHitTestVisible="False">
             <Ellipse.Fill>
                 <RadialGradientBrush>
                     <GradientStop Color="#66453281" Offset="0"/>
@@ -48,12 +40,8 @@
 
         <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="50,0">
             <Image Source="/Resources/logo.png" Width="139" Height="87" Margin="0,0,0,20" Stretch="Uniform"/>
-
-            <TextBlock Text="Студенческий совет КИПФИН" Foreground="#FFFFFF" FontSize="20" FontWeight="Bold" 
-                       HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Digital Pixel" Margin="0,0,0,10"/>
-
-            <TextBlock Foreground="#FFFFFF" FontSize="27" 
-                       HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Montserrat Thin" Margin="0,0,0,40">
+            <TextBlock Text="Студенческий совет КИПФИН" Foreground="#FFFFFF" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Digital Pixel" Margin="0,0,0,10"/>
+            <TextBlock Foreground="#FFFFFF" FontSize="27" HorizontalAlignment="Center" TextAlignment="Center" FontFamily="Montserrat Thin" Margin="0,0,0,40">
                 <Run Text="Управляй своей"/><LineBreak/><Run Text="студенческой жизнью"/>
             </TextBlock>
 
@@ -104,52 +92,56 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Width="336" VerticalAlignment="Center" HorizontalAlignment="Center">
-
                     <StackPanel Margin="0,0,0,15">
                         <Grid>
-                            <Border Style="{StaticResource AuthInputBorderStyle}"/>
-                            <TextBox x:Name="tbLogin" Style="{StaticResource AuthInnerInputStyle}"/>
-                            <TextBlock Text="Логин" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding Text, ElementName=tbLogin}" Value=""/>
-                                                    <Condition Binding="{Binding IsFocused, ElementName=tbLogin}" Value="False"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </MultiDataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="120"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Style="{StaticResource AuthInputBorderStyle}" Width="Auto" CornerRadius="8,0,0,8" BorderThickness="1,1,0,1">
+                                <Grid>
+                                    <TextBox x:Name="tbLogin" Style="{StaticResource AuthInnerInputStyle}" Width="Auto" MaxLength="6" PreviewTextInput="NumericOnly_PreviewTextInput"/>
+                                    <TextBlock Text="№ Билета" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Text, ElementName=tbLogin}" Value=""/>
+                                                            <Condition Binding="{Binding IsFocused, ElementName=tbLogin}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource AuthInputBorderStyle}" Width="Auto" CornerRadius="0,8,8,0">
+                                <ComboBox x:Name="cbDomain" Style="{StaticResource ModernComboBoxStyle}" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="@edu.fa.ru" IsSelected="True" Foreground="White"/>
+                                    <ComboBoxItem Content="@fa.ru" Foreground="White"/>
+                                </ComboBox>
+                            </Border>
                         </Grid>
-                        <TextBlock x:Name="tbLoginError" Text="Заполните поле логина" Foreground="#E81123" FontSize="12" Visibility="Collapsed" Margin="5,5,0,0" FontFamily="Montserrat Thin"/>
+                        <TextBlock x:Name="tbLoginError" Text="Введите 6 цифр билета" Foreground="#E81123" FontSize="12" Visibility="Collapsed" Margin="5,5,0,0" FontFamily="Montserrat Thin"/>
                     </StackPanel>
 
                     <StackPanel Margin="0,0,0,10">
                         <Grid>
                             <Border Style="{StaticResource AuthInputBorderStyle}"/>
-                            <PasswordBox x:Name="pbPassword" Style="{StaticResource AuthInnerInputStyle}" Padding="15,0,45,0"
-                                         PasswordChanged="PasswordBox_PasswordChanged" 
-                                         GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"/>
-
-                            <TextBox x:Name="tbVisiblePassword" Style="{StaticResource AuthInnerInputStyle}" Visibility="Collapsed" Padding="15,0,45,0"
-                                     TextChanged="VisiblePassword_TextChanged"
-                                     GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"/>
-
+                            <PasswordBox x:Name="pbPassword" Style="{StaticResource AuthInnerInputStyle}" Padding="15,0,45,0" PasswordChanged="PasswordBox_PasswordChanged" GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"/>
+                            <TextBox x:Name="tbVisiblePassword" Style="{StaticResource AuthInnerInputStyle}" Visibility="Collapsed" Padding="15,0,45,0" TextChanged="VisiblePassword_TextChanged" GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"/>
                             <TextBlock x:Name="tbPasswordPlaceholder" Text="Пароль" IsHitTestVisible="False" Foreground="#7A7886" VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14" FontFamily="Montserrat Thin"/>
-
-                            <ToggleButton x:Name="btnTogglePassword" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0" Cursor="Hand"
-                                          Checked="btnTogglePassword_Checked" Unchecked="btnTogglePassword_Unchecked" 
-                                          GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus">
+                            <ToggleButton x:Name="btnTogglePassword" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0" Cursor="Hand" Checked="btnTogglePassword_Checked" Unchecked="btnTogglePassword_Unchecked">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
                                         <Grid Background="Transparent" Width="20" Height="20">
-                                            <Path Data="M10,4 C4,4 1,10 1,10 C1,10 4,16 10,16 C16,16 19,10 19,10 C19,10 16,4 10,4 Z M10,14 C7.8,14 6,12.2 6,10 C6,7.8 7.8,6 10,6 C12.2,6 14,7.8 14,10 C14,12.2 12.2,14 10,14 Z M10,8 C8.9,8 8,8.9 8,10 C8,11.1 8.9,12 10,12 C11.1,12 12,11.1 12,10 C12,8.9 11.1,8 10,8 Z" 
-                                                  Fill="#7A7886" Stretch="Uniform"/>
+                                            <Path Data="M10,4 C4,4 1,10 1,10 C1,10 4,16 10,16 C16,16 19,10 19,10 C19,10 16,4 10,4 Z M10,14 C7.8,14 6,12.2 6,10 C6,7.8 7.8,6 10,6 C12.2,6 14,7.8 14,10 C14,12.2 12.2,14 10,14 Z M10,8 C8.9,8 8,8.9 8,10 C8,11.1 8.9,12 10,12 C11.1,12 12,11.1 12,10 C12,8.9 11.1,8 10,8 Z" Fill="#7A7886" Stretch="Uniform"/>
                                             <Line x:Name="Strike" X1="2" Y1="18" X2="18" Y2="2" Stroke="#7A7886" StrokeThickness="2" Visibility="Visible"/>
                                         </Grid>
                                         <ControlTemplate.Triggers>
@@ -164,12 +156,8 @@
                         <TextBlock x:Name="tbPasswordError" Text="Заполните поле пароля" Foreground="#E81123" FontSize="12" Visibility="Collapsed" Margin="5,5,0,0" FontFamily="Montserrat Thin"/>
                     </StackPanel>
 
-                    <TextBlock Text="Забыли пароль?" Foreground="#7A7886" FontSize="12" 
-                               HorizontalAlignment="Left" Margin="15,0,0,30" Cursor="Hand" FontFamily="Montserrat Thin"/>
-
-                    <Button Content="Войти" Cursor="Hand" Style="{StaticResource AuthModernButtonStyle}" 
-                            Width="283" Height="50" Margin="0,0,0,25" 
-                            FontFamily="Digital Pixel" FontSize="9" Click="Button_Click"/>
+                    <TextBlock Text="Забыли пароль?" Foreground="#7A7886" FontSize="12" HorizontalAlignment="Left" Margin="15,0,0,30" Cursor="Hand" FontFamily="Montserrat Thin"/>
+                    <Button Content="Войти" Cursor="Hand" Style="{StaticResource AuthModernButtonStyle}" Width="283" Height="50" Margin="0,0,0,25" FontFamily="Digital Pixel" FontSize="9" Click="Button_Click"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <TextBlock Text="Нет аккаунта? " Foreground="#7A7886" FontSize="14" FontFamily="Montserrat Thin"/>

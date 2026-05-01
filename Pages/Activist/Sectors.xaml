@@ -15,150 +15,49 @@
 
                 <TextBlock Text="Сектора ССТ" FontSize="48" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,60"/>
 
-                <UniformGrid Columns="3" Margin="0,0,0,60">
+                <!-- Динамический список секторов -->
+                <ItemsControl x:Name="SectorsItemsControl" Margin="0,0,0,60">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
 
-                    <Border Style="{StaticResource EventCardStyle}" Cursor="Hand" MouseLeftButtonUp="SectorCard_Click">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/sector1.png" Stretch="UniformToFill"/>
-                                </Border.Background>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource EventCardStyle}" Cursor="Hand" MouseLeftButtonUp="SectorCard_Click" Tag="{Binding Id}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{Binding Image}" Stretch="UniformToFill"/>
+                                        </Border.Background>
+                                    </Border>
+
+                                    <Grid Grid.Row="1" Margin="15,15,15,20">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+                                        <TextBlock Grid.Row="1" Text="{Binding Description}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,25"/>
+
+                                        <!-- Кнопка статуса, стиль и текст привязываются динамически -->
+                                        <Button Grid.Row="2" Content="{Binding ButtonText}" Style="{Binding ButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Bottom" IsHitTestVisible="False"/>
+                                    </Grid>
+                                </Grid>
                             </Border>
-                            <Grid Grid.Row="1" Margin="15,15,15,20">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="Спортивный сектор" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <TextBlock Grid.Row="1" Text="Организация спортивных мероприятий и соревнований" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,25"/>
-                                <Button Grid.Row="2" Content="Участник" Style="{StaticResource SectorActiveButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                    <Border Style="{StaticResource EventCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/sector2.png" Stretch="UniformToFill"/>
-                                </Border.Background>
-                            </Border>
-                            <Grid Grid.Row="1" Margin="15,15,15,20">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="ИТ сектор" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <TextBlock Grid.Row="1" Text="Разработка и поддержка информационных систем колледжа" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,25"/>
-                                <Button Grid.Row="2" Content="Участник" Style="{StaticResource SectorActiveButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource EventCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/sector3.png" Stretch="UniformToFill"/>
-                                </Border.Background>
-                            </Border>
-                            <Grid Grid.Row="1" Margin="15,15,15,20">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="Волонтерский сектор" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <TextBlock Grid.Row="1" Text="Организация и проведение волонтерских акций и мероприятий" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,25"/>
-                                <Button Grid.Row="2" Content="Ожидание" Style="{StaticResource SectorInactiveButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource EventCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/sector4.png" Stretch="UniformToFill"/>
-                                </Border.Background>
-                            </Border>
-                            <Grid Grid.Row="1" Margin="15,15,15,20">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="Культмассовый сектор" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <TextBlock Grid.Row="1" Text="Организация культурных мероприятий и концертов" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,25"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource EventCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/sector5.png" Stretch="UniformToFill"/>
-                                </Border.Background>
-                            </Border>
-                            <Grid Grid.Row="1" Margin="15,15,15,20">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="Киберспортивный сектор" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <TextBlock Grid.Row="1" Text="Внутриколледжные и внешние турниры по разным дисциплинам" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,25"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource EventCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/sector6.png" Stretch="UniformToFill"/>
-                                </Border.Background>
-                            </Border>
-                            <Grid Grid.Row="1" Margin="15,15,15,20">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="Мультимедийный сектор" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <TextBlock Grid.Row="1" Text="Медиа освещение мероприятий: фото- видео съемка, разработка дизайна" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,25"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                </UniformGrid>
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -1,44 +1,33 @@
-﻿using Diplom_Stud.Pages.General;
+﻿using Diplom_Stud.Components;
+using Diplom_Stud.Pages.General;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Diplom_Stud.Pages.Activist
 {
-    /// <summary>
-    /// Логика взаимодействия для Profile.xaml
-    /// </summary>
     public partial class Profile : Page
     {
         private static readonly HttpClient _httpClient = new HttpClient();
-        private UserProfileData _userProfileData;
 
         public Profile()
         {
             InitializeComponent();
 
-            // Проверяем, задан ли уже базовый адрес, чтобы не пытаться менять его повторно
             if (_httpClient.BaseAddress == null)
             {
                 _httpClient.BaseAddress = new Uri(App.ApiBaseUrl);
                 _httpClient.DefaultRequestHeaders.Accept.Clear();
                 _httpClient.DefaultRequestHeaders.Accept.Add(
-                    new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                    new MediaTypeWithQualityHeaderValue("application/json"));
             }
         }
 
@@ -51,195 +40,121 @@ namespace Diplom_Stud.Pages.Activist
         {
             try
             {
-                // Check if we have a token
                 if (string.IsNullOrEmpty(App.AuthToken))
                 {
-                    MessageBox.Show("Ошибка авторизации. Пожалуйста, войдите снова.",
-                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomMessageBox.Show("Ошибка авторизации. Пожалуйста, войдите снова.", "Ошибка", CustomMessageBox.MessageType.Error);
                     NavigationService?.Navigate(new Auth());
                     return;
                 }
 
-                // Set the authorization header
                 _httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                // Make the GET request
-                HttpResponseMessage response = await _httpClient.GetAsync("/api/users");
+                HttpResponseMessage response = await _httpClient.GetAsync("/api/users/me");
 
                 if (response.IsSuccessStatusCode)
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    _userProfileData = JsonSerializer.Deserialize<UserProfileData>(responseBody);
 
-                    if (_userProfileData != null)
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var userData = JsonSerializer.Deserialize<UserProfileData>(responseBody, options);
+
+                    if (userData != null)
                     {
-                        // Update UI with received data
+                        App.CurrentUserProfile = userData;
                         UpdateUIWithUserData();
+
+                        if (Window.GetWindow(this) is MainWindow mainWindow)
+                        {
+                            mainWindow.UpdateUserMenu();
+                        }
                     }
                 }
                 else
                 {
-                    string errorBody = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"Ошибка загрузки профиля: {response.StatusCode} - {errorBody}");
-
                     if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                     {
-                        MessageBox.Show("Сессия истекла. Пожалуйста, войдите снова.",
-                            "Ошибка авторизации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        CustomMessageBox.Show("Сессия истекла. Пожалуйста, войдите снова.", "Ошибка авторизации", CustomMessageBox.MessageType.Error);
                         NavigationService?.Navigate(new Auth());
                     }
                     else
                     {
-                        MessageBox.Show($"Ошибка загрузки данных профиля: {response.StatusCode}",
-                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                        CustomMessageBox.Show($"Ошибка загрузки данных профиля: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
                     }
                 }
             }
-            catch (HttpRequestException ex)
-            {
-                Debug.WriteLine($"Ошибка HTTP запроса: {ex.Message}");
-                MessageBox.Show($"Не удалось подключиться к серверу {App.ApiBaseUrl}. Проверьте подключение.",
-                    "Ошибка подключения", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (JsonException ex)
-            {
-                Debug.WriteLine($"Ошибка обработки JSON: {ex.Message}");
-                MessageBox.Show("Ошибка обработки данных от сервера.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Неожиданная ошибка: {ex.Message}");
-                MessageBox.Show($"Произошла ошибка при загрузке профиля: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.Show($"Произошла ошибка при загрузке профиля: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
         }
 
         private void UpdateUIWithUserData()
         {
+            var data = App.CurrentUserProfile;
+            if (data == null) return;
+
             try
             {
-                // Find the TextBlock elements in the visual tree
-                var nameTextBlock = FindNameInVisualTree<TextBlock>(this, "NameTextBlock");
-                var groupTextBlock = FindNameInVisualTree<TextBlock>(this, "GroupTextBlock");
-                var eventsCountTextBlock = FindNameInVisualTree<TextBlock>(this, "EventsCountTextBlock");
-                var pointsCountTextBlock = FindNameInVisualTree<TextBlock>(this, "PointsCountTextBlock");
-                var rankTextBlock = FindNameInVisualTree<TextBlock>(this, "RankTextBlock");
-                var birthDateTextBlock = FindNameInVisualTree<TextBlock>(this, "BirthDateTextBlock");
-                var studentIdTextBlock = FindNameInVisualTree<TextBlock>(this, "StudentIdTextBlock");
-                var socialStatusTextBlock = FindNameInVisualTree<TextBlock>(this, "SocialStatusTextBlock");
-                var genderTextBlock = FindNameInVisualTree<TextBlock>(this, "GenderTextBlock");
-                var studentEmailTextBlock = FindNameInVisualTree<TextBlock>(this, "StudentEmailTextBlock");
-                var phoneTextBlock = FindNameInVisualTree<TextBlock>(this, "PhoneTextBlock");
-                var additionalEmailTextBlock = FindNameInVisualTree<TextBlock>(this, "AdditionalEmailTextBlock");
-                var vkLinkTextBlock = FindNameInVisualTree<TextBlock>(this, "VkLinkTextBlock");
+                NameTextBlock.Text = $"{data.surname} {data.name} {data.patronymic}".Trim();
+                GroupTextBlock.Text = !string.IsNullOrEmpty(data.groupTitle) ? $"Группа: {data.groupTitle}" : "Группа: не указана";
 
-                string fullName = $"{_userProfileData.surname} {_userProfileData.name} {_userProfileData.patronymic}";
-                if (nameTextBlock != null) nameTextBlock.Text = fullName;
+                EventsCountTextBlock.Text = data.events_count?.ToString() ?? "0";
+                PointsCountTextBlock.Text = data.points_count?.ToString() ?? "0";
+                RankTextBlock.Text = data.rank?.ToString() ?? "0";
 
-                // Update group info
-                string groupInfo = _userProfileData.group != null ? $"Группа: {_userProfileData.group}" : "Группа: не указана";
-                if (groupTextBlock != null) groupTextBlock.Text = groupInfo;
-
-                // Update statistics cards
-                if (eventsCountTextBlock != null)
-                    eventsCountTextBlock.Text = _userProfileData.events_count?.ToString() ?? "0";
-
-                if (pointsCountTextBlock != null)
-                    pointsCountTextBlock.Text = _userProfileData.points_count?.ToString() ?? "0";
-
-                if (rankTextBlock != null)
-                    rankTextBlock.Text = _userProfileData.rank?.ToString() ?? "0";
-
-                // Update personal information
-                if (birthDateTextBlock != null && _userProfileData.dateOfBirth != null)
+                if (!string.IsNullOrEmpty(data.dateOfBirth))
                 {
-                    // Format date to Russian format
-                    if (DateTime.TryParse(_userProfileData.dateOfBirth, out DateTime birthDate))
-                    {
-                        birthDateTextBlock.Text = birthDate.ToString("dd MMMM yyyy");
-                    }
+                    if (DateTime.TryParse(data.dateOfBirth, out DateTime birthDate))
+                        BirthDateTextBlock.Text = birthDate.ToString("dd MMMM yyyy");
                     else
-                    {
-                        birthDateTextBlock.Text = _userProfileData.dateOfBirth;
-                    }
+                        BirthDateTextBlock.Text = data.dateOfBirth;
                 }
-
-                if (studentIdTextBlock != null)
-                    studentIdTextBlock.Text = _userProfileData.id.ToString();
-
-                if (socialStatusTextBlock != null)
-                    socialStatusTextBlock.Text = _userProfileData.socialStatus ?? "Не указан";
-
-                if (genderTextBlock != null)
+                else
                 {
-                    // You might want to add gender field to your API response
-                    genderTextBlock.Text = "Не указан";
+                    BirthDateTextBlock.Text = "Не указана";
                 }
 
-                if (studentEmailTextBlock != null)
-                    studentEmailTextBlock.Text = _userProfileData.studentEmail ?? "Не указана";
+                StudentIdTextBlock.Text = data.id.ToString();
+                GenderTextBlock.Text = "Не указан";
+                StudentEmailTextBlock.Text = data.studentEmail ?? "Не указана";
+                PhoneTextBlock.Text = data.phoneNumber ?? "Не указан";
+                AdditionalEmailTextBlock.Text = data.additionalEmail ?? "Не указана";
+                VkLinkTextBlock.Text = data.vkLink ?? "Не указана";
 
-                if (phoneTextBlock != null)
-                    phoneTextBlock.Text = _userProfileData.phoneNumber ?? "Не указан";
-
-                if (additionalEmailTextBlock != null)
-                    additionalEmailTextBlock.Text = _userProfileData.additionalEmail ?? "Не указана";
-
-                if (vkLinkTextBlock != null)
-                    vkLinkTextBlock.Text = _userProfileData.vkLink ?? "Не указана";
-
-                // Update photo if available
-                if (_userProfileData.photo != null && !string.IsNullOrEmpty(_userProfileData.photo))
+                if (!string.IsNullOrEmpty(data.photo))
                 {
                     try
                     {
-                        var photoEllipse = FindNameInVisualTree<System.Windows.Shapes.Ellipse>(this, "ProfilePhoto");
-                        if (photoEllipse != null)
+                        string base64Data = data.photo;
+                        int commaIndex = base64Data.IndexOf(',');
+                        if (commaIndex >= 0)
                         {
-                            var imageBrush = new ImageBrush();
-                            // Assuming photo is base64 string or URL
-                            // You may need to convert base64 to BitmapImage if the API returns base64
-                            // imageBrush.ImageSource = ...;
-                            photoEllipse.Fill = imageBrush;
+                            base64Data = base64Data.Substring(commaIndex + 1);
+                        }
+
+                        byte[] imageBytes = Convert.FromBase64String(base64Data);
+                        using (var ms = new MemoryStream(imageBytes))
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.StreamSource = ms;
+                            bitmap.EndInit();
+
+                            ProfilePhoto.Fill = new ImageBrush(bitmap) { Stretch = Stretch.UniformToFill };
                         }
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"Error loading photo: {ex.Message}");
+                        Debug.WriteLine($"Ошибка фото: {ex.Message}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error updating UI: {ex.Message}");
+                Debug.WriteLine($"Error UI: {ex.Message}");
             }
-        }
-
-        // Helper method to find elements in the visual tree
-        private T FindNameInVisualTree<T>(DependencyObject parent, string name) where T : FrameworkElement
-        {
-            if (parent == null) return null;
-
-            // Check if the current element has the name we're looking for
-            if (parent is FrameworkElement element && element.Name == name)
-            {
-                return element as T;
-            }
-
-            // Recursively search children
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                var result = FindNameInVisualTree<T>(child, name);
-                if (result != null)
-                {
-                    return result;
-                }
-            }
-
-            return null;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -248,7 +163,6 @@ namespace Diplom_Stud.Pages.Activist
         }
     }
 
-    // Data model for user profile
     public class UserProfileData
     {
         public int id { get; set; }
@@ -260,14 +174,13 @@ namespace Diplom_Stud.Pages.Activist
         public int? rank { get; set; }
         public string dateOfBirth { get; set; }
         public int? courseNumber { get; set; }
-        public string speciality { get; set; }
-        public string group { get; set; }
-        public string socialStatus { get; set; }
+        public string specialityTitle { get; set; }
+        public string groupTitle { get; set; }
         public string studentEmail { get; set; }
         public string additionalEmail { get; set; }
         public string phoneNumber { get; set; }
         public string vkLink { get; set; }
         public string photo { get; set; }
-        public string role { get; set; }
+        public string roleTitle { get; set; }
     }
 }

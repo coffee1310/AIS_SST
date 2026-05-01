@@ -1,32 +1,39 @@
-﻿using System;
+﻿using Diplom_Stud.Components;
+using Diplom_Stud.Pages.General;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Diplom_Stud.Pages.Activist
 {
-    /// <summary>
-    /// Логика взаимодействия для Sectors.xaml
-    /// </summary>
     public partial class Sectors : Page
     {
+        private static readonly HttpClient _httpClient = new HttpClient();
+
         public Sectors()
         {
             InitializeComponent();
+
+            if (_httpClient.BaseAddress == null)
+            {
+                _httpClient.BaseAddress = new Uri(App.ApiBaseUrl);
+                _httpClient.DefaultRequestHeaders.Accept.Clear();
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
         }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             DoubleAnimation fadeInAnimation = new DoubleAnimation
             {
@@ -36,11 +43,140 @@ namespace Diplom_Stud.Pages.Activist
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
             this.BeginAnimation(Page.OpacityProperty, fadeInAnimation);
+
+            await LoadSectorsAsync();
+        }
+
+        private async Task LoadSectorsAsync()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(App.AuthToken))
+                {
+                    CustomMessageBox.Show("Ошибка авторизации. Пожалуйста, войдите снова.", "Ошибка", CustomMessageBox.MessageType.Error);
+                    NavigationService?.Navigate(new Auth());
+                    return;
+                }
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                HttpResponseMessage response = await _httpClient.GetAsync("/api/sector");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var sectors = JsonSerializer.Deserialize<List<SectorDto>>(responseBody, options);
+
+                    if (sectors != null)
+                    {
+                        var viewModels = new List<SectorViewModel>();
+
+                        foreach (var sector in sectors)
+                        {
+                            var vm = new SectorViewModel
+                            {
+                                Id = sector.id,
+                                Title = sector.title,
+                                Description = sector.description
+                            };
+
+                            if (sector.isCoordinator)
+                            {
+                                vm.ButtonText = "Координатор";
+                                vm.ButtonStyle = FindResource("SectorActiveButtonStyle") as Style;
+                            }
+                            else if (sector.isParticipant)
+                            {
+                                vm.ButtonText = "Участник";
+                                vm.ButtonStyle = FindResource("SectorActiveButtonStyle") as Style;
+                            }
+                            else if (sector.hasActiveRequest)
+                            {
+                                vm.ButtonText = "Ожидание";
+                                vm.ButtonStyle = FindResource("SectorInactiveButtonStyle") as Style;
+                            }
+                            else
+                            {
+                                vm.ButtonText = "Вступить";
+                                vm.ButtonStyle = FindResource("SectorActiveButtonStyle") as Style;
+                            }
+
+                            if (!string.IsNullOrEmpty(sector.photo))
+                            {
+                                try
+                                {
+                                    string base64Data = sector.photo;
+                                    int commaIndex = base64Data.IndexOf(',');
+                                    if (commaIndex >= 0) base64Data = base64Data.Substring(commaIndex + 1);
+
+                                    byte[] imageBytes = Convert.FromBase64String(base64Data);
+                                    using (var ms = new MemoryStream(imageBytes))
+                                    {
+                                        var bitmap = new BitmapImage();
+                                        bitmap.BeginInit();
+                                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                        bitmap.StreamSource = ms;
+                                        bitmap.EndInit();
+                                        vm.Image = bitmap;
+                                    }
+                                }
+                                catch
+                                {
+                                    vm.Image = new BitmapImage(new Uri("pack://application:,,,/Resources/sector1.png"));
+                                }
+                            }
+                            else
+                            {
+                                vm.Image = new BitmapImage(new Uri("pack://application:,,,/Resources/sector1.png"));
+                            }
+
+                            viewModels.Add(vm);
+                        }
+
+                        SectorsItemsControl.ItemsSource = viewModels;
+                    }
+                }
+                else
+                {
+                    CustomMessageBox.Show($"Ошибка загрузки секторов: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Произошла ошибка при загрузке данных: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+            }
         }
 
         private void SectorCard_Click(object sender, MouseButtonEventArgs e)
         {
-            this.NavigationService.Navigate(new SectorDetails());
+            if (sender is Border border && border.Tag is int sectorId)
+            {
+                this.NavigationService.Navigate(new SectorDetails());
+            }
         }
+    }
+
+    public class SectorDto
+    {
+        public int id { get; set; }
+        public string title { get; set; }
+        public string description { get; set; }
+        public bool isParticipant { get; set; }
+        public bool isCoordinator { get; set; }
+        public bool hasActiveRequest { get; set; }
+        public string requestStatus { get; set; }
+        public int participantCount { get; set; }
+        public string photo { get; set; }
+    }
+
+    public class SectorViewModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public ImageSource Image { get; set; }
+        public string ButtonText { get; set; }
+        public Style ButtonStyle { get; set; }
     }
 }
