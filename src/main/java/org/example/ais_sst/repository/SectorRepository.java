@@ -17,23 +17,30 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     Optional<Sector> findSectorById(Long id);
 
     @Query(value = """
-        SELECT 
-            s.id,
-            s.title,
-            s.description,
-            CASE WHEN sp.id IS NOT NULL THEN true ELSE false END as is_participant,
-            CASE WHEN sir.id IS NOT NULL AND sir.status IN ('На рассмотрении', 'Ожидание') 
-                 THEN true ELSE false END as has_active_request,
-            COALESCE(sp.is_coordinator, false) as is_coordinator,
-            s.photo,
-            sir.status as request_status,
-            (SELECT COUNT(*) FROM sector_participants sp2 WHERE sp2.sector_id = s.id) as participant_count
-        FROM sectors s
-        LEFT JOIN sector_participants sp ON sp.sector_id = s.id AND sp.student_id = :userId
-        LEFT JOIN sector_introduction_request sir ON sir.sector_id = s.id AND sir.user_id = :userId
-        WHERE s.is_active = true
-        ORDER BY is_participant DESC, has_active_request DESC, s.title ASC
-        """, nativeQuery = true)
+    SELECT 
+        s.id,
+        s.title,
+        s.description,
+        CASE WHEN sp.id IS NOT NULL THEN true ELSE false END as is_participant,
+        CASE WHEN sir.id IS NOT NULL AND sir.status IN ('На рассмотрении', 'Ожидание') 
+             THEN true ELSE false END as has_active_request,
+        COALESCE(sp.is_coordinator, false) as is_coordinator,
+        s.photo,
+        sir.status as request_status,
+        (SELECT COUNT(*) FROM sector_participants sp2 WHERE sp2.sector_id = s.id) as participant_count,
+        -- Информация о координаторе
+        coord.name as coordinator_name,
+        coord.surname as coordinator_surname,
+        coord.patronymic as coordinator_patronymic,
+        coord.photo as coordinator_photo
+    FROM sectors s
+    LEFT JOIN sector_participants sp ON sp.sector_id = s.id AND sp.student_id = :userId
+    LEFT JOIN sector_introduction_request sir ON sir.sector_id = s.id AND sir.user_id = :userId
+    LEFT JOIN sector_participants coord_participant ON coord_participant.sector_id = s.id AND coord_participant.is_coordinator = true
+    LEFT JOIN users coord ON coord.id = coord_participant.student_id
+    WHERE s.is_active = true
+    ORDER BY is_participant DESC, has_active_request DESC, s.title ASC
+    """, nativeQuery = true)
     List<Object[]> findSectorsWithUserStatus(@Param("userId") Long userId);
 }
 

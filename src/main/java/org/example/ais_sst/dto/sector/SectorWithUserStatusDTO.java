@@ -20,4 +20,10 @@ public class SectorWithUserStatusDTO {
     private String requestStatus;
     private Integer participantCount;
     private String photo;  // Base64 строка
+
+    private String coordinatorName;
+    private String coordinatorSurname;
+    private String coordinatorPatronymic;
+    private String coordinatorFullName;  // Полное ФИО
+    private String coordinatorPhoto;
 }
