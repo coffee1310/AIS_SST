@@ -41,4 +41,8 @@ public class SectorParticipant {
     @ColumnDefault("'Активный'")
     @Column(name = "status", columnDefinition = "sector_participant_statuses not null")
     private SectorParticipantStatuses status = SectorParticipantStatuses.Ожидание;
+
+    @Builder.Default
+    @Column(name = "is_coordinator", nullable = false)
+    private Boolean isCoordinator = false;  // Добавленное поле
 }

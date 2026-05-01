@@ -24,10 +24,6 @@ public class SectorDTO {
 
     private String description;
 
-    @NotNull
-    @ValidUserId
-    private Long currentCoordinator_id;
-
     @Builder.Default
     private Boolean isActive = true;
 

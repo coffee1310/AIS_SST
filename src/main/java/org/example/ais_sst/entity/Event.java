@@ -43,7 +43,7 @@ public class Event {
     private String venue;
 
     @Column(name = "photo")
-    private byte[] photo;
+    private String photo;
 
     @NotNull
     @Column(name = "reference_to_position", nullable = false, length = Integer.MAX_VALUE)

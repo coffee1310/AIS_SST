@@ -13,14 +13,8 @@ import java.util.Optional;
 public interface SectorRepository extends JpaRepository<Sector, Long> {
     boolean existsByTitle(String title);
 
-    boolean existsByCurrentCoordinator_IdAndId(Long currentCoordinatorId, Long id);
-    
+
     Optional<Sector> findSectorById(Long id);
-
-    Optional<Sector> findSectorsByCurrentCoordinator_Id(Long currentCoordinatorId);
-
-    @Query(value = "SELECT COUNT(*) FROM sectors WHERE is_active = true", nativeQuery = true)
-    Long countActiveSectors();
 
     @Query(value = """
         SELECT 
@@ -30,6 +24,7 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
             CASE WHEN sp.id IS NOT NULL THEN true ELSE false END as is_participant,
             CASE WHEN sir.id IS NOT NULL AND sir.status IN ('На рассмотрении', 'Ожидание') 
                  THEN true ELSE false END as has_active_request,
+            COALESCE(sp.is_coordinator, false) as is_coordinator,
             sir.status as request_status,
             (SELECT COUNT(*) FROM sector_participants sp2 WHERE sp2.sector_id = s.id) as participant_count
         FROM sectors s

@@ -108,4 +108,7 @@ public class AccountCreatingRequest {
     @NotNull
     @Column(name = "status", nullable = false)
     private AccountCreatingRequestStatus status;
+
+    @Column(name = "photo")
+    private byte[] photo;
 }

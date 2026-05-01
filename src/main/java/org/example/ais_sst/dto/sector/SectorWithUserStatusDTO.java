@@ -15,6 +15,7 @@ public class SectorWithUserStatusDTO {
     private String title;
     private String description;
     private Boolean isParticipant;
+    private Boolean isCoordinator;  // Добавленное поле
     private Boolean hasActiveRequest;
     private String requestStatus;
     private Integer participantCount;

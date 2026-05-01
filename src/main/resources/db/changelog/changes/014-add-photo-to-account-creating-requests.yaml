@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-add-photo-to-account-creating-requests
+      author: coffee13102006
+      labels: add-photo
+      comment: "Добавление колонки photo в таблицу account_creating_requests"
+      changes:
+        - addColumn:
+            tableName: account_creating_requests
+            columns:
+              - column:
+                  name: photo
+                  type: BYTEA
+                  remarks: "Фото пользователя"
+                  constraints:
+                    nullable: true

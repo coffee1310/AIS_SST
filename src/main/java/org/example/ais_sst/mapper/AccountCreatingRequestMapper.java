@@ -5,36 +5,38 @@ import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO
 import org.example.ais_sst.entity.AccountCreatingRequest;
 import org.example.ais_sst.entity.Group;
 import org.example.ais_sst.entity.Speciality;
+import org.example.ais_sst.utils.ImageUtil;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = {ImageUtil.class})
 public interface AccountCreatingRequestMapper {
 
-    @Mapping(source = "group.id", target = "group_id")
-    @Mapping(source = "speciality.id", target = "speciality_id")
-    @Mapping(target = "social_statuses_id", ignore = true)
-    AccountCreatingRequestsSummaryDTO toSummaryDto(AccountCreatingRequest request);
-
-    @Mapping(source = "group_id", target = "group", qualifiedByName = "mapGroup")
-    @Mapping(source = "speciality_id", target = "speciality", qualifiedByName = "mapSpeciality")
-    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "photo", expression = "java(ImageUtil.decodeFromBase64(dto.getPhoto()))")
+    @Mapping(target = "group", ignore = true)
+    @Mapping(target = "speciality", ignore = true)
+    @Mapping(target = "password", ignore = true)
     @Mapping(target = "status", ignore = true)
-    @Mapping(target = "reasonForRefusal", ignore = true)
+    @Mapping(target = "id", ignore = true)
     AccountCreatingRequest toEntity(AccountCreatingRequestsSummaryDTO dto);
 
-    AccountCreatingRequestResponseDTO toResponseDto(AccountCreatingRequest request);
+    @Mapping(target = "photo", expression = "java(ImageUtil.encodeToBase64(entity.getPhoto()))")
+    AccountCreatingRequestsSummaryDTO toDto(AccountCreatingRequest entity);
 
-    @Named("mapGroup")
-    default Group mapGroup(Long groupId) {
-        if (groupId == null) return null;
-        return Group.builder().id(groupId).build();
+    @Mapping(target = "specialityId", source = "speciality.id")
+    @Mapping(target = "groupId", source = "group.id")
+    @Mapping(target = "status", source = "status")
+    @Mapping(target = "reasonForRefusal", source = "reasonForRefusal")
+    AccountCreatingRequestResponseDTO toResponseDto(AccountCreatingRequest entity);
+
+    @Named("decodePhoto")
+    default byte[] decodePhoto(String base64Photo) {
+        return ImageUtil.decodeFromBase64(base64Photo);
     }
 
-    @Named("mapSpeciality")
-    default Speciality mapSpeciality(Long specialityId) {
-        if (specialityId == null) return null;
-        return Speciality.builder().id(specialityId).build();
+    @Named("encodePhoto")
+    default String encodePhoto(byte[] photo) {
+        return ImageUtil.encodeToBase64(photo);
     }
 }

@@ -2,9 +2,34 @@ package org.example.ais_sst.repository;
 
 import org.example.ais_sst.entity.SectorParticipant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SectorParticipantRepository extends JpaRepository<SectorParticipant, Long> {
-    boolean existsByStudent_IdAndSector_Id(Long studentId, Long sectorId);
+
+    List<SectorParticipant> findByStudentId(Long studentId);
+
+    List<SectorParticipant> findBySectorId(Long sectorId);
+
+    Optional<SectorParticipant> findBySectorIdAndStudentId(Long sectorId, Long studentId);
+
+    Optional<SectorParticipant> findBySectorIdAndIsCoordinatorTrue(Long sectorId);
+
+    List<SectorParticipant> findAllBySectorIdAndIsCoordinatorTrue(Long sectorId);
+
+    List<SectorParticipant> findAllByStudentIdAndIsCoordinatorTrue(Long userId);
+
+    @Query("SELECT sp FROM SectorParticipant sp WHERE sp.student.id = :userId AND sp.isCoordinator = true")
+    List<SectorParticipant> findSectorsWhereUserIsCoordinator(@Param("userId") Long userId);
+
+    boolean existsByStudentIdAndSectorId(Long studentId, Long sectorId);
+
+    boolean existsByStudentId(Long studentId);
+
+    boolean existsBySectorId(Long sectorId);
 }

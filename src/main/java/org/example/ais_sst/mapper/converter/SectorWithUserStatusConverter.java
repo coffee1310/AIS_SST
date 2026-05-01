@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 public class SectorWithUserStatusConverter {
 
     public SectorWithUserStatusDTO fromNativeQuery(Object[] row) {
-        if (row == null || row.length < 7) {  // Теперь 7 полей
+        if (row == null || row.length < 8) {  // Теперь 8 полей
             return null;
         }
 
@@ -17,8 +17,9 @@ public class SectorWithUserStatusConverter {
                 .description((String) row[2])
                 .isParticipant((Boolean) row[3])
                 .hasActiveRequest((Boolean) row[4])
-                .requestStatus((String) row[5])  // Статус заявки
-                .participantCount(((Number) row[6]).intValue())
+                .isCoordinator((Boolean) row[5])  // Добавленное поле
+                .requestStatus((String) row[6])
+                .participantCount(((Number) row[7]).intValue())
                 .build();
     }
 }

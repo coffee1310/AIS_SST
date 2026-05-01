@@ -5,10 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
-import org.example.ais_sst.entity.Role;
-import org.example.ais_sst.entity.Sector;
-import org.example.ais_sst.entity.SectorParticipant;
-import org.example.ais_sst.entity.User;
+import org.example.ais_sst.entity.*;
+import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
+import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
 import org.example.ais_sst.exception.SectorDoesNotExistException;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.SectorMapper;
@@ -29,62 +28,37 @@ public class SectorService {
 
     private final SectorRepository sectorRepository;
     private final SectorMapper sectorMapper;
-
     private final SectorWithUserStatusConverter sectorWithUserStatusConverter;
 
     private final UserRepository userRepository;
     private final SectorParticipantRepository sectorParticipantRepository;
     private final SectorIntroductionRequestRepository sectorIntroductionRequestRepository;
-
     private final RoleRepository roleRepository;
 
     @Transactional
     public SectorDTO createSector(SectorDTO sectorDTO) throws RoleNotFoundException {
-      log.info("Creating sector with id: {}", sectorDTO.getId());
+        log.info("Creating sector with title: {}", sectorDTO.getTitle());
 
-      Sector sector = sectorRepository.save(sectorMapper.toEntity(sectorDTO));
+        // Создаем сектор
+        Sector sector = sectorRepository.save(sectorMapper.toEntity(sectorDTO));
 
-      log.info("Creating sector participant");
+        log.info("Creating sector participant as coordinator for sector id: {}", sector.getId());
 
-      createSectorParticipant(sectorDTO.getCurrentCoordinator_id(),sector.getId());
+        // Создаем участника сектора с правами координатора
+        // Нужно передать ID пользователя-координатора из другого источника
+        // Например, из параметров или текущего авторизованного пользователя
+        // createSectorParticipant(coordinatorId, sector.getId(), true);
 
-      sectorDTO = sectorMapper.toSectorDTO(sector);
-      log.info("Saved sector with id: {}", sectorDTO.getId());
+        sectorDTO = sectorMapper.toSectorDTO(sector);
+        log.info("Saved sector with id: {}", sectorDTO.getId());
 
-      User user = userRepository.findUserById(sector.getCurrentCoordinator().getId())
-              .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id %d не найден", sector.getCurrentCoordinator().getId())));
-
-      Role role = roleRepository.findByTitle("Sector_coordinator")
-              .orElseThrow(() -> new RoleNotFoundException("Роль коррдинатор не была найдена"));
-
-      user.setRole(role);
-      userRepository.save(user);
-
-      return sectorDTO;
-    }
-
-    @Transactional
-    protected SectorParticipant createSectorParticipant(Long user_id, Long sector_id) {
-        Sector sector = sectorRepository.findSectorById(sector_id)
-                .orElseThrow(() -> new SectorDoesNotExistException(String.format("Сектор с id: %d не существует", sector_id)));
-
-        User user = userRepository.findUserById(user_id)
-                .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id: %d не существует", user_id)));
-
-        SectorParticipant sectorParticipant = SectorParticipant.builder()
-                .sector(sector)
-                .student(user)
-                .entryDate(LocalDate.now())
-                .build();
-
-        return sectorParticipantRepository.save(sectorParticipant);
+        return sectorDTO;
     }
 
     @Transactional
     public List<SectorWithUserStatusDTO> getSectorsWithUserStatus(Long userId) {
         log.debug("Getting sectors with status for userId: {}", userId);
 
-        // Проверка существования пользователя
         if (!userRepository.existsById(userId)) {
             log.warn("User with id {} does not exist", userId);
             return new ArrayList<>();
@@ -103,29 +77,144 @@ public class SectorService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Добавление координатора в сектор
+     */
     @Transactional
-    public SectorDTO appointACoordinator(Long sector_id, Long user_id) throws RoleNotFoundException {
-        Sector sector = sectorRepository.findSectorById(sector_id)
-                .orElseThrow(() -> new SectorDoesNotExistException(String.format("Сектор с id: %d не существует", sector_id)));
+    public void addCoordinator(Long sectorId, Long userId) throws RoleNotFoundException {
 
-        User old_coordinator = sector.getCurrentCoordinator();
-        Role old_user_role = roleRepository.findByTitle("Acitvist")
-                        .orElseThrow(() -> new RoleNotFoundException("Роль куратор не была найдена"));
-
-        old_coordinator.setRole(old_user_role);
-
-        User user = userRepository.findUserById(user_id)
-                .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id: %d не существует", user_id)));
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id: %d не найден", userId)));
 
         Role role = roleRepository.findByTitle("Sector_coordinator")
-                .orElseThrow(() -> new RoleNotFoundException("Роль координатор не была найдена"));
+                .orElseThrow(() -> new RoleNotFoundException("Роль координатор не найдена"));
 
         user.setRole(role);
-        userRepository.save(old_coordinator);
         userRepository.save(user);
 
-        sector.setCurrentCoordinator(user);
-        sector = sectorRepository.save(sector);
-        return sectorMapper.toSectorDTO(sector);
+        SectorParticipant participant = sectorParticipantRepository
+                .findBySectorIdAndStudentId(sectorId, userId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Пользователь с id: %d не является участником сектора %d", userId, sectorId)));
+
+        participant.setIsCoordinator(true);
+        sectorParticipantRepository.save(participant);
     }
+
+    @Transactional
+    public void removeCoordinatorFromSector(Long sectorId, Long userId) throws RoleNotFoundException {
+        log.info("Removing coordinator from sector: sectorId={}, userId={}", sectorId, userId);
+
+        // Находим запись участника в секторе
+        SectorParticipant participant = sectorParticipantRepository
+                .findBySectorIdAndStudentId(sectorId, userId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Пользователь с id: %d не является участником сектора %d", userId, sectorId)));
+
+        // Проверяем, является ли он координатором
+        if (!participant.getIsCoordinator()) {
+            throw new IllegalStateException(
+                    String.format("Пользователь с id: %d не является координатором сектора %d", userId, sectorId));
+        }
+
+        // Убираем галочку координатора
+        participant.setIsCoordinator(false);
+        sectorParticipantRepository.save(participant);
+
+        log.info("Coordinator flag removed for user {} in sector {}", userId, sectorId);
+
+        // Проверяем, не является ли пользователь координатором в других секторах
+        List<SectorParticipant> coordinatorEntries = sectorParticipantRepository
+                .findAllByStudentIdAndIsCoordinatorTrue(userId);
+
+        log.info("User {} is coordinator in {} other sectors", userId, coordinatorEntries.size());
+
+        // Если пользователь больше нигде не является координатором, меняем его роль на "Activist"
+        if (coordinatorEntries.isEmpty()) {
+            User user = userRepository.findUserById(userId)
+                    .orElseThrow(() -> new UserDoesNotExistException(
+                            String.format("Пользователь с id: %d не найден", userId)));
+
+            Role activistRole = roleRepository.findByTitle("Activist")
+                    .orElseThrow(() -> new RoleNotFoundException("Роль 'Activist' не найдена"));
+
+            user.setRole(activistRole);
+            userRepository.save(user);
+
+            log.info("User {} role changed to Activist (no longer coordinator in any sector)", userId);
+        }
+    }
+
+    @Transactional
+    public void kickParticipantFromSector(Long sectorId, Long coordinatorId, Long participantId) throws RoleNotFoundException {
+        log.info("Kicking participant {} from sector {} by coordinator {}", participantId, sectorId, coordinatorId);
+
+        // 1. Проверяем, что координатор существует
+        User coordinator = userRepository.findUserById(coordinatorId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Координатор с id: %d не найден", coordinatorId)));
+
+        // 2. Проверяем, что координатор является координатором этого сектора
+        SectorParticipant coordinatorParticipant = sectorParticipantRepository
+                .findBySectorIdAndStudentId(sectorId, coordinatorId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Пользователь с id: %d не является участником сектора %d", coordinatorId, sectorId)));
+
+        if (!coordinatorParticipant.getIsCoordinator()) {
+            throw new SecurityException(
+                    String.format("Пользователь с id: %d не является координатором сектора %d и не может выгонять участников",
+                            coordinatorId, sectorId));
+        }
+
+        // 3. Проверяем, что выгоняемый участник существует
+        User participant = userRepository.findUserById(participantId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Участник с id: %d не найден", participantId)));
+
+        // 4. Проверяем, что участник состоит в секторе
+        SectorParticipant participantEntry = sectorParticipantRepository
+                .findBySectorIdAndStudentId(sectorId, participantId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Пользователь с id: %d не является участником сектора %d", participantId, sectorId)));
+
+        // 5. Нельзя выгнать координатора
+        if (participantEntry.getIsCoordinator()) {
+            throw new SecurityException("Нельзя выгнать координатора из сектора");
+        }
+
+        // 6. Удаляем участника из сектора
+        sectorParticipantRepository.delete(participantEntry);
+        log.info("User {} removed from sector {}", participantId, sectorId);
+
+        // 7. Проверяем, не осталось ли у пользователя секторов (если нет, меняем роль на 'Activist')
+        List<SectorParticipant> userSectors = sectorParticipantRepository.findByStudentId(participantId);
+        if (userSectors.isEmpty()) {
+            Role activistRole = roleRepository.findByTitle("Activist")
+                    .orElseThrow(() -> new RoleNotFoundException("Роль 'Activist' не найдена"));
+            participant.setRole(activistRole);
+            userRepository.save(participant);
+            log.info("User {} role changed to Activist (no longer in any sector)", participantId);
+        }
+
+        // 8. Проверяем, были ли у пользователя одобренные заявки в этот сектор и меняем их статус
+        List<SectorIntroductionRequest> approvedRequests = sectorIntroductionRequestRepository
+                .getSectorIntroductionRequestsBySector_IdAndStatus(sectorId, SectorIntroductionStatus.ОДОБРЕНА)
+                .stream()
+                .filter(req -> req.getUser().getId().equals(participantId))
+                .toList();
+
+        for (SectorIntroductionRequest request : approvedRequests) {
+            request.setStatus(SectorIntroductionStatus.ВЫШЕДШИЙ);
+            sectorIntroductionRequestRepository.save(request);
+        }
+
+        log.info("User {} kicked from sector {} successfully", participantId, sectorId);
+    }
+
+    // ToDo: сделать удаление чувака из сектора
+    // ToDo: сделать множество координторо
+    // ToDo: сделать удаление и добавление координаторов
+    // ToDO: сделать кик чувака из сектора
+    // ToDO: сделать фильтры по ролям пользователей
+
 }

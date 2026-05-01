@@ -18,6 +18,7 @@ import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.socialStatusService.AccountCreatingRequestsSocialStatusService;
 import org.example.ais_sst.service.socialStatusService.SocialStatusService;
+import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,11 +66,16 @@ public class AccountCreatingRequestsService {
                 .orElseThrow(() -> new SpecialityDoesNotExistException(
                         String.format("Ошибка: Специальность с id: %s не существует", dto.getSpeciality_id())));
 
+        byte[] photoBytes = dto.getPhoto() != null && !dto.getPhoto().isEmpty()
+                ? ImageUtil.decodeFromBase64(dto.getPhoto())
+                : null;
+
         AccountCreatingRequest accountCreatingRequest = requestMapper.toEntity(dto);
         accountCreatingRequest.setGroup(userGroup);
         accountCreatingRequest.setSpeciality(userSpeciality);
         accountCreatingRequest.setPassword(passwordEncoder.encode(dto.getPassword()));
         accountCreatingRequest.setStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ);
+        accountCreatingRequest.setPhoto(photoBytes);
 
         AccountCreatingRequest savedRequest = accountCreatingRequestsRepository.save(accountCreatingRequest);
         log.info("Account request registered successfully with ID: {}", savedRequest.getId());

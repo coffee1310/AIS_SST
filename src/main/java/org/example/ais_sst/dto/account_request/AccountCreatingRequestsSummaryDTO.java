@@ -59,7 +59,7 @@ public class AccountCreatingRequestsSummaryDTO {
     @Size(max = 256)
     private String vkLink;
 
-    private byte[] photo;
+    private String photo;
 
     List<Long> social_statuses_id;
 

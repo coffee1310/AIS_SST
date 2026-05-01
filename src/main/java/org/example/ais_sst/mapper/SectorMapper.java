@@ -11,12 +11,11 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface SectorMapper {
 
-    @Mapping(source = "currentCoordinator.id", target = "currentCoordinator_id")
+    // Удален @Mapping для currentCoordinator_id
     @Mapping(target = "photo", expression = "java(org.example.ais_sst.utils.ImageUtil.encodeToBase64(sector.getPhoto()))")
     SectorDTO toSectorDTO(Sector sector);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(source = "currentCoordinator_id", target = "currentCoordinator", qualifiedByName = "mapCurrentCoordinator")
+    // Удален @Mapping для currentCoordinator_id
     @Mapping(target = "photo", expression = "java(org.example.ais_sst.utils.ImageUtil.decodeFromBase64(sectorDTO.getPhoto()))")
     Sector toEntity(SectorDTO sectorDTO);
 
@@ -26,24 +25,5 @@ public interface SectorMapper {
     @Mapping(target = "isParticipant", source = "isParticipant")
     @Mapping(target = "hasActiveRequest", source = "hasActiveRequest")
     @Mapping(target = "participantCount", source = "participantCount")
-    SectorWithUserStatusDTO toDtoWithStatus(
-            Sector sector,
-            Boolean isParticipant,
-            Boolean hasActiveRequest,
-            Integer participantCount
-    );
-
-    @Named("toDtoWithStatusDefault")
-    default SectorWithUserStatusDTO toDtoWithStatusDefault(
-            Sector sector,
-            Boolean isParticipant,
-            Boolean hasActiveRequest) {
-        return toDtoWithStatus(sector, isParticipant, hasActiveRequest, 0);
-    }
-
-    @Named("mapCurrentCoordinator")
-    default User mapCurrentCoordinator(Long currentCoordinator_id) {
-        if (currentCoordinator_id == null) return null;
-        return User.builder().id(currentCoordinator_id).build();
-    }
+    SectorWithUserStatusDTO toDtoWithStatus(Sector sector, Boolean isParticipant, Boolean hasActiveRequest, Integer participantCount);
 }

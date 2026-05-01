@@ -26,11 +26,6 @@ public class Sector {
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "current_coordinator_id", nullable = false)
-    private User currentCoordinator;
-
     @ColumnDefault("true")
     @Column(name = "is_active")
     @Builder.Default

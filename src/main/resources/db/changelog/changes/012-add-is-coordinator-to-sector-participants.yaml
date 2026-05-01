@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-add-is-coordinator-to-sector-participants
+      author: coffee13102006
+      labels: refactor, sector-participants
+      comment: "Добавление поля is_coordinator в таблицу sector_participants"
+      changes:
+        - addColumn:
+            tableName: sector_participants
+            columns:
+              - column:
+                  name: is_coordinator
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  remarks: "Является ли участник координатором сектора"
+                  constraints:
+                    nullable: false

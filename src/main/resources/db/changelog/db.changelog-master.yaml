@@ -17,3 +17,9 @@ databaseChangeLog:
       file: db/changelog/changes/010-update-groups-table-constraints.yaml
   - include:
       file: db/changelog/changes/011-refactor-roles-as-the-event-and-events.yaml
+  - include:
+      file: db/changelog/changes/012-add-is-coordinator-to-sector-participants.yaml
+  - include:
+      file: db/changelog/changes/013-remove-current-coordinator-from-sectors.yaml
+  - include:
+      file: db/changelog/changes/014-add-photo-to-account-creating-requests.yaml

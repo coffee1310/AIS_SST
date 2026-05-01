@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-remove-current-coordinator-from-sectors
+      author: coffee13102006
+      labels: refactor, sectors
+      comment: "Удаление поля current_coordinator_id из таблицы sectors"
+      changes:
+        # Удаляем внешний ключ (если существует)
+        - sql:
+            comment: "Удаление внешнего ключа fk_sectors_current_coordinator"
+            sql: ALTER TABLE sectors DROP CONSTRAINT IF EXISTS fk_sectors_current_coordinator
+
+        # Удаляем колонку current_coordinator_id
+        - dropColumn:
+            tableName: sectors
+            columnName: current_coordinator_id

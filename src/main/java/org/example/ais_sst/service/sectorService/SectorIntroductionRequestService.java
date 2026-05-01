@@ -22,6 +22,7 @@ import org.example.ais_sst.repository.SectorRepository;
 import org.example.ais_sst.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -42,18 +43,21 @@ public class SectorIntroductionRequestService {
     private final SectorMapper sectorMapper;
 
     @Transactional
-    public SectorIntroductionRequestDTO createRequest(Long user_id, Long sector_id) {
-        User user = userRepository.findUserById(user_id)
-                .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id: %d не найден", user_id)));
+    public SectorIntroductionRequestDTO createRequest(Long userId, Long sectorId) {
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Пользователь с id: %d не найден", userId)));
 
-        if (sectorParticipantRepository.existsByStudent_IdAndSector_Id(user_id, sector_id))
-            throw new UserIsAlreadyInThisSectorException(String.format("Пользователь с id: %d уже вступил в этот сектор", user_id));
+        if (sectorParticipantRepository.existsByStudentIdAndSectorId(userId, sectorId))
+            throw new UserIsAlreadyInThisSectorException(
+                    String.format("Пользователь с id: %d уже вступил в этот сектор", userId));
 
-        if (sectorRepository.existsByCurrentCoordinator_IdAndId(user_id, sector_id))
-            throw new UserIsAlreadyInThisSectorException(String.format("Пользователь с id: %d уже вступил в этот сектор", user_id));
+        // Удалена проверка existsByCurrentCoordinator_IdAndId
+        // Координаторы теперь определяются через sector_participants.is_coordinator
 
-        Sector sector = sectorRepository.findSectorById(sector_id)
-                .orElseThrow(() -> new SectorDoesNotExistException(String.format("Сектор с таким id: %d не найден", sector_id)));
+        Sector sector = sectorRepository.findSectorById(sectorId)
+                .orElseThrow(() -> new SectorDoesNotExistException(
+                        String.format("Сектор с таким id: %d не найден", sectorId)));
 
         SectorIntroductionRequest request = SectorIntroductionRequest.builder()
                 .user(user)
@@ -101,16 +105,32 @@ public class SectorIntroductionRequestService {
     }
 
     @Transactional
-    public List<SectorIntroductionRequestDTO> getRequestsListByCoordinator(Long coordinator_id) {
+    public List<SectorIntroductionRequestDTO> getRequestsListByCoordinator(Long coordinatorId) {
+        log.info("Getting requests for coordinator id: {}", coordinatorId);
 
-        Sector sector = sectorRepository.findSectorsByCurrentCoordinator_Id(coordinator_id)
-                .orElseThrow(() -> new NoSectorWithSuchCooridnatorFoundException("Пользователь не является координатором"));
+        // Используем правильный метод из репозитория
+        List<SectorParticipant> coordinatorParticipants = sectorParticipantRepository
+                .findSectorsWhereUserIsCoordinator(coordinatorId);
 
-        List<SectorIntroductionRequest> requests = sectorIntroductionRequestRepository.
-                getSectorIntroductionRequestsBySector_Id(sector.getId());
+        log.info("Found {} sectors where user is coordinator", coordinatorParticipants.size());
 
-        return requests.stream()
+        if (coordinatorParticipants.isEmpty()) {
+            log.warn("User {} is not a coordinator in any sector", coordinatorId);
+            return new ArrayList<>();
+        }
+
+        // Собираем все заявки из секторов, где пользователь координатор
+        List<SectorIntroductionRequest> allRequests = new ArrayList<>();
+        for (SectorParticipant participant : coordinatorParticipants) {
+            List<SectorIntroductionRequest> requests = sectorIntroductionRequestRepository
+                    .getSectorIntroductionRequestsBySector_Id(participant.getSector().getId());
+            log.info("Sector {} has {} requests", participant.getSector().getId(), requests.size());
+            allRequests.addAll(requests);
+        }
+
+        return allRequests.stream()
                 .map(sectorIntroductionRequestMapper::toSectorIntroductionRequestDTO)
                 .toList();
+
     }
 }

@@ -2,6 +2,7 @@ package org.example.ais_sst.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTO;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTOSummary;
 import org.example.ais_sst.dto.sector.SectorDTO;
@@ -21,6 +22,7 @@ import javax.management.relation.RoleNotFoundException;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/sector")
@@ -82,7 +84,48 @@ public class SectorsController {
 
     @PostMapping("/appoint_coordinator/{sector_id}")
     public ResponseEntity<?> appointACoordinator(@PathVariable Long sector_id, @RequestParam Long user_id) throws RoleNotFoundException {
-        SectorDTO sectorDTO = sectorService.appointACoordinator(sector_id, user_id);
-        return new ResponseEntity<>(sectorDTO, HttpStatus.ACCEPTED);
+        sectorService.addCoordinator(sector_id, user_id);
+        return new ResponseEntity<>("Координтор был добавлен", HttpStatus.ACCEPTED);
+    }
+
+    @DeleteMapping("/{sectorId}/coordinator/{userId}")
+    public ResponseEntity<Void> removeCoordinatorFromSector(
+            @PathVariable Long sectorId,
+            @PathVariable Long userId) throws RoleNotFoundException {
+
+        log.info("DELETE /api/sector/{}/coordinator/{} - Removing coordinator from sector", sectorId, userId);
+
+        sectorService.removeCoordinatorFromSector(sectorId, userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // Удаление координатора из текущего сектора (без передачи userId)
+    @DeleteMapping("/{sectorId}/coordinator")
+    public ResponseEntity<Void> removeCurrentCoordinatorFromSector(
+            @PathVariable Long sectorId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) throws RoleNotFoundException {
+
+        Long userId = userDetails.getId();
+        log.info("DELETE /api/sector/{}/coordinator - Removing current user as coordinator from sector", sectorId);
+
+        sectorService.removeCoordinatorFromSector(sectorId, userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{sectorId}/kick/{participantId}")
+    public ResponseEntity<Void> kickParticipantFromSector(
+            @PathVariable Long sectorId,
+            @PathVariable Long participantId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) throws RoleNotFoundException {
+
+        Long coordinatorId = userDetails.getId();
+        log.info("DELETE /api/sector/{}/kick/{} - Coordinator {} kicking participant {} from sector",
+                sectorId, participantId, coordinatorId, participantId);
+
+        sectorService.kickParticipantFromSector(sectorId, coordinatorId, participantId);
+
+        return ResponseEntity.noContent().build();
     }
 }
