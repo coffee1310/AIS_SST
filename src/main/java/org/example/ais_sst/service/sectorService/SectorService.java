@@ -54,8 +54,8 @@ public class SectorService {
       User user = userRepository.findUserById(sector.getCurrentCoordinator().getId())
               .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id %d не найден", sector.getCurrentCoordinator().getId())));
 
-      Role role = roleRepository.findByTitle("Coordinator")
-              .orElseThrow(() -> new RoleNotFoundException("Роль куратор не была найдена"));
+      Role role = roleRepository.findByTitle("Sector_coordinator")
+              .orElseThrow(() -> new RoleNotFoundException("Роль коррдинатор не была найдена"));
 
       user.setRole(role);
       userRepository.save(user);
@@ -117,8 +117,8 @@ public class SectorService {
         User user = userRepository.findUserById(user_id)
                 .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id: %d не существует", user_id)));
 
-        Role role = roleRepository.findByTitle("Curator")
-                .orElseThrow(() -> new RoleNotFoundException("Роль куратор не была найдена"));
+        Role role = roleRepository.findByTitle("Sector_coordinator")
+                .orElseThrow(() -> new RoleNotFoundException("Роль координатор не была найдена"));
 
         user.setRole(role);
         userRepository.save(old_coordinator);
