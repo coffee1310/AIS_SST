@@ -3,12 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\onedrive\\desktop\\\u0434\u0438\u043F\u043B\u043E\u043C\\diplom_stud\\mainstyles.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:mainstyles.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\onedrive\\desktop\\\u0434\u0438\u043F\u043B\u043E\u043C\\diplom_stud\\pages\\general\\auth.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\general\\auth.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\onedrive\\desktop\\\u0434\u0438\u043F\u043B\u043E\u043C\\diplom_stud\\pages\\activist\\profile.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\profile.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,7 +22,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 240,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -34,19 +38,31 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Auth.xaml",
-              "DocumentMoniker": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\General\\Auth.xaml",
-              "RelativeDocumentMoniker": "Pages\\General\\Auth.xaml",
-              "ToolTip": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\General\\Auth.xaml",
-              "RelativeToolTip": "Pages\\General\\Auth.xaml",
+              "DocumentIndex": 0,
+              "Title": "MainStyles.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\MainStyles.xaml",
+              "RelativeDocumentMoniker": "MainStyles.xaml",
+              "ToolTip": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\MainStyles.xaml",
+              "RelativeToolTip": "MainStyles.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-04-24T16:48:35.905Z",
+              "WhenOpened": "2026-05-01T20:45:03.169Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
+              "Title": "Profile.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\Profile.xaml",
+              "RelativeDocumentMoniker": "Pages\\Activist\\Profile.xaml",
+              "ToolTip": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\Profile.xaml",
+              "RelativeToolTip": "Pages\\Activist\\Profile.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-04-24T21:13:59.579Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "MainWindow.xaml",
               "DocumentMoniker": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\MainWindow.xaml",
               "RelativeDocumentMoniker": "MainWindow.xaml",

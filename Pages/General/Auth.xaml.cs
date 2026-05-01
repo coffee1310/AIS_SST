@@ -1,8 +1,13 @@
-﻿using System;
+﻿using Diplom_Stud.Components;
+using Diplom_Stud.Pages.Activist;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,10 +20,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Diagnostics;
-using Diplom_Stud.Pages.Activist;
 
 namespace Diplom_Stud.Pages.General
 {
@@ -132,10 +133,6 @@ namespace Diplom_Stud.Pages.General
             }
         }
 
-        // ==============================================
-        // ЛОГИКА ГЛАЗИКА И ПОЛЯ ПАРОЛЯ
-        // ==============================================
-
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
             if (!_isUpdatingPassword)
@@ -162,7 +159,7 @@ namespace Diplom_Stud.Pages.General
         {
             pbPassword.Visibility = Visibility.Collapsed;
             tbVisiblePassword.Visibility = Visibility.Visible;
-            tbVisiblePassword.Focus(); // Оставляем фокус на текстовом поле
+            tbVisiblePassword.Focus(); 
         }
 
         private void btnTogglePassword_Unchecked(object sender, RoutedEventArgs e)
@@ -178,42 +175,33 @@ namespace Diplom_Stud.Pages.General
         private void UpdatePasswordPlaceholder()
         {
             bool hasText = !string.IsNullOrEmpty(pbPassword.Password);
-            // Если текст есть ИЛИ хоть один из элементов (текстовое поле, пароль или кнопка глазика) в фокусе - прячем плейсхолдер
             bool isFocused = pbPassword.IsFocused || tbVisiblePassword.IsFocused || btnTogglePassword.IsFocused;
 
             tbPasswordPlaceholder.Visibility = (hasText || isFocused) ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        // ==============================================
-        // АВТОРИЗАЦИЯ
-        // ==============================================
-
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            // Сбрасываем старые ошибки при новом клике
             tbLoginError.Visibility = Visibility.Collapsed;
             tbPasswordError.Visibility = Visibility.Collapsed;
 
             string login = tbLogin.Text.Trim();
-            string password = pbPassword.Password; // Всегда читаем отсюда, т.к. поля синхронизированы
+            string password = pbPassword.Password;
 
             bool hasError = false;
 
-            // Проверка логина
             if (string.IsNullOrEmpty(login))
             {
                 tbLoginError.Visibility = Visibility.Visible;
                 hasError = true;
             }
 
-            // Проверка пароля
             if (string.IsNullOrEmpty(password))
             {
                 tbPasswordError.Visibility = Visibility.Visible;
                 hasError = true;
             }
 
-            // Если есть хоть одна ошибка - прерываем выполнение
             if (hasError) return;
 
             var button = sender as Button;
@@ -230,14 +218,12 @@ namespace Diplom_Stud.Pages.General
                 }
                 else
                 {
-                    MessageBox.Show("Неверный email или пароль!", "Ошибка авторизации",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomMessageBox.Show("Неверный email или пароль!", "Ошибка входа", CustomMessageBox.MessageType.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка подключения к серверу: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.Show($"Ошибка подключения: {ex.Message}", "Критическая ошибка", CustomMessageBox.MessageType.Error);
             }
             finally
             {
