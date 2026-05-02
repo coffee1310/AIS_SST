@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.ais_sst.entity.RolesAsTheEvent;
+import org.example.ais_sst.entity.GlobalEventRole;
 import org.example.ais_sst.entity.SectorParticipant;
 
 @Data
@@ -27,7 +27,7 @@ public class SectorParticipantsRolesEvents {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "roles_as_the_event_id", nullable = false)
-    private RolesAsTheEvent rolesAsTheEvent;
+    private GlobalEventRole rolesAsTheEvent;
 
     @Builder.Default
     @Column(name = "is_need_registration", nullable = false)

@@ -27,3 +27,9 @@ databaseChangeLog:
       file: db/changelog/changes/015-create-refresh-tokens-table.yaml
   - include:
       file: db/changelog/changes/016-add-timestamps-to-roles-as-the-event.yaml
+  - include:
+      file: db/changelog/changes/017-refactor-events-and-roles.yaml
+  - include:
+      file: db/changelog/changes/018-remove-name-description-from-event-roles.yaml
+  - include:
+      file: db/changelog/changes/019-add-sector-to-global-roles-and-event-organizers.yaml

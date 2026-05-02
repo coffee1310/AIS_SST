@@ -1,0 +1,89 @@
+databaseChangeLog:
+  - changeSet:
+      id: 024-add-sector-to-global-roles-and-event-organizers
+      author: coffee13102006
+      labels: refactor, events, roles
+      comment: "Добавление sector_id в global_event_roles и создание таблицы event_organizers"
+      changes:
+        # 1. Добавление поля sector_id в таблицу global_event_roles
+        - addColumn:
+            tableName: global_event_roles
+            columns:
+              - column:
+                  name: sector_id
+                  type: BIGINT
+                  remarks: "ID сектора"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_global_event_roles_sector
+                    references: sectors(id)
+
+        # 2. Создание таблицы event_organizers
+        - createTable:
+            tableName: event_organizers
+            remarks: "Организаторы мероприятий"
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  remarks: "Первичный ключ"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  remarks: "ID мероприятия"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_event_organizers_event
+                    references: events(id)
+                    deleteCascade: true
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  remarks: "ID пользователя (организатора)"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_event_organizers_user
+                    references: users(id)
+              - column:
+                  name: added_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: "Дата добавления"
+                  constraints:
+                    nullable: false
+
+        # 3. Добавление уникального ограничения (event_id, user_id)
+        - addUniqueConstraint:
+            tableName: event_organizers
+            constraintName: uk_event_organizers_event_user
+            columnNames: event_id, user_id
+
+        # 4. Создание индексов
+        - createIndex:
+            indexName: idx_event_organizers_event_id
+            tableName: event_organizers
+            columns:
+              - column:
+                  name: event_id
+
+        - createIndex:
+            indexName: idx_event_organizers_user_id
+            tableName: event_organizers
+            columns:
+              - column:
+                  name: user_id
+
+        # 5. Добавление комментариев
+        - sql:
+            comment: "Добавление комментариев к таблицам и колонкам"
+            sql: |
+              COMMENT ON COLUMN global_event_roles.sector_id IS 'ID сектора';
+              
+              COMMENT ON TABLE event_organizers IS 'Организаторы мероприятий';
+              COMMENT ON COLUMN event_organizers.id IS 'Первичный ключ';
+              COMMENT ON COLUMN event_organizers.event_id IS 'ID мероприятия';
+              COMMENT ON COLUMN event_organizers.user_id IS 'ID пользователя (организатора)';
+              COMMENT ON COLUMN event_organizers.added_at IS 'Дата добавления';

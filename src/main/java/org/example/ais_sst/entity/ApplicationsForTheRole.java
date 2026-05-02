@@ -25,7 +25,7 @@ public class ApplicationsForTheRole {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "role", nullable = false)
-    private RolesAsTheEvent role;
+    private GlobalEventRole role;
 
     @Column(name = "status", columnDefinition = "role_application_statuses not null")
     private Object status;

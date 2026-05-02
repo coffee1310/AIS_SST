@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 023-remove-name-description-from-event-roles
+      author: coffee13102006
+      labels: refactor, event-roles
+      comment: "Удаление полей name и description из таблицы event_roles"
+      changes:
+        # Удаляем уникальное ограничение, так как оно зависит от name
+        - dropUniqueConstraint:
+            tableName: event_roles
+            constraintName: uk_event_roles_event_name
+
+        # Удаляем поле name
+        - dropColumn:
+            tableName: event_roles
+            columnName: name
+
+        # Удаляем поле description
+        - dropColumn:
+            tableName: event_roles
+            columnName: description

@@ -1,0 +1,150 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-refactor-events-and-roles
+      author: coffee13102006
+      labels: refactor, events, roles
+      comment: "Добавление event_creator_id, переименование roles_as_the_event в global_event_roles, создание event_roles"
+      changes:
+        # 1. Добавление поля event_creator_id
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: event_creator_id
+                  type: BIGINT
+                  remarks: "ID создателя мероприятия"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_event_creator
+                    references: users(id)
+
+        # 2. Переименование таблицы
+        - renameTable:
+            oldTableName: roles_as_the_event
+            newTableName: global_event_roles
+
+        # 3. Удаление колонки is_default_role
+        - dropColumn:
+            tableName: global_event_roles
+            columnName: is_default_role
+
+        # 4. Создание таблицы event_roles
+        - createTable:
+            tableName: event_roles
+            remarks: "Роли для конкретных мероприятий"
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  remarks: "Первичный ключ"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  remarks: "ID мероприятия"
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_event_roles_event
+                    references: events(id)
+                    deleteCascade: true
+              - column:
+                  name: global_event_role_id
+                  type: BIGINT
+                  remarks: "ID глобальной роли (шаблон)"
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_event_roles_global_role
+                    references: global_event_roles(id)
+                    deleteSetNull: true
+              - column:
+                  name: name
+                  type: VARCHAR(64)
+                  remarks: "Название роли на мероприятии"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  remarks: "Описание роли"
+                  constraints:
+                    nullable: true
+              - column:
+                  name: capacity
+                  type: INTEGER
+                  remarks: "Максимальное количество участников"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reserve_capacity
+                  type: INTEGER
+                  defaultValueNumeric: 0
+                  remarks: "Резервный слот (запас)"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: "Дата создания"
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: "Дата обновления"
+
+        # 5. Добавление CHECK constraints
+        - sql:
+            comment: "Добавление CHECK constraints"
+            sql: |
+              ALTER TABLE event_roles ADD CONSTRAINT chk_event_roles_capacity CHECK (capacity > 0);
+              ALTER TABLE event_roles ADD CONSTRAINT chk_event_roles_reserve_capacity CHECK (reserve_capacity >= 0);
+
+        # 6. Добавление уникального ограничения
+        - addUniqueConstraint:
+            tableName: event_roles
+            constraintName: uk_event_roles_event_name
+            columnNames: event_id, name
+
+        # 7. Создание индексов
+        - createIndex:
+            indexName: idx_event_roles_event_id
+            tableName: event_roles
+            columns:
+              - column:
+                  name: event_id
+
+        - createIndex:
+            indexName: idx_event_roles_global_role_id
+            tableName: event_roles
+            columns:
+              - column:
+                  name: global_event_role_id
+
+        - createIndex:
+            indexName: idx_event_roles_name
+            tableName: event_roles
+            columns:
+              - column:
+                  name: name
+
+        # 8. Добавление комментариев
+        - sql:
+            comment: "Добавление комментариев к таблицам"
+            sql: |
+              COMMENT ON TABLE global_event_roles IS 'Глобальные роли для мероприятий (шаблоны ролей)';
+              COMMENT ON COLUMN global_event_roles.id IS 'Первичный ключ';
+              COMMENT ON COLUMN global_event_roles.title IS 'Название глобальной роли';
+              COMMENT ON COLUMN global_event_roles.description IS 'Описание глобальной роли';
+              
+              COMMENT ON TABLE event_roles IS 'Роли для конкретных мероприятий';
+              COMMENT ON COLUMN event_roles.id IS 'Первичный ключ';
+              COMMENT ON COLUMN event_roles.event_id IS 'ID мероприятия';
+              COMMENT ON COLUMN event_roles.global_event_role_id IS 'ID глобальной роли (шаблон)';
+              COMMENT ON COLUMN event_roles.name IS 'Название роли на мероприятии';
+              COMMENT ON COLUMN event_roles.description IS 'Описание роли';
+              COMMENT ON COLUMN event_roles.capacity IS 'Максимальное количество участников';
+              COMMENT ON COLUMN event_roles.reserve_capacity IS 'Резервный слот (запас)';
+              COMMENT ON COLUMN event_roles.created_at IS 'Дата создания';
+              COMMENT ON COLUMN event_roles.updated_at IS 'Дата обновления';
