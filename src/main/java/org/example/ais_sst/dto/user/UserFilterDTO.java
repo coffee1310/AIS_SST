@@ -16,4 +16,5 @@ public class UserFilterDTO {
     private Boolean isBanned;   // Фильтр по бану
     private Long groupId;       // Фильтр по группе
     private Long specialityId;  // Фильтр по специальности
+    private Long sectorId;  // Добавьте это поле
 }

@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-add-timestamps-to-events
+      author: coffee13102006
+      labels: add-timestamps
+      comment: "Добавление полей created_at и updated_at в таблицу events"
+      changes:
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: "Дата создания"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: "Дата обновления"
+                  constraints:
+                    nullable: false

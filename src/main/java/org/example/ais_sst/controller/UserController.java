@@ -76,7 +76,8 @@ public class UserController {
             @RequestParam(required = false) Long groupId,
 
             @Parameter(description = "Фильтр по специальности")
-            @RequestParam(required = false) Long specialityId) {
+            @RequestParam(required = false) Long specialityId,
+            @RequestParam(required = false) Long sectorId) {
 
         log.info("GET /api/users/all - Getting users with filters");
 
@@ -87,6 +88,7 @@ public class UserController {
                 .isBanned(isBanned)
                 .groupId(groupId)
                 .specialityId(specialityId)
+                .sectorId(sectorId)  // Добавьте эту строку
                 .build();
 
         Page<UserResponseDTO> users = userService.getAllUsers(page, size, sortBy, sortDirection, filter);

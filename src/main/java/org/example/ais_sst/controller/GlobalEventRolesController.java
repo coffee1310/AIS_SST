@@ -79,7 +79,6 @@ public class GlobalEventRolesController {
      * Обновление роли (только для ADMIN)
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<GlobalEventRoleDTO> updateRole(
             @PathVariable Long id,
             @Valid @RequestBody GlobalEventRoleUpdateDTO request) {

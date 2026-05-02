@@ -67,65 +67,93 @@ public class UserService implements UserServiceImpl {
     public Page<UserResponseDTO> getAllUsers(int page, int size, String sortBy, String sortDirection, UserFilterDTO filter) {
         log.info("Getting users with pagination: page={}, size={}", page, size);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        String role = (filter.getRole() != null && filter.getRole().isEmpty()) ? null : filter.getRole();
+        String search = (filter.getSearch() != null && filter.getSearch().isEmpty()) ? null : filter.getSearch();
 
-        // Получаем всех пользователей
-        Page<User> usersPage = userRepository.findAll(pageable);
+        int offset = page * size;
 
-        // Фильтруем в Java и конвертируем фото
-        List<UserResponseDTO> filteredUsers = usersPage.getContent().stream()
-                .filter(user -> {
-                    // Фильтр по роли
-                    if (filter.getRole() != null && !filter.getRole().isEmpty()) {
-                        if (user.getRole() == null || !filter.getRole().equals(user.getRole().getTitle())) {
-                            return false;
-                        }
-                    }
-                    // Фильтр по активности
-                    if (filter.getIsActive() != null) {
-                        if (!filter.getIsActive().equals(user.getIsActive())) {
-                            return false;
-                        }
-                    }
-                    // Фильтр по бану
-                    if (filter.getIsBanned() != null) {
-                        if (!filter.getIsBanned().equals(user.getIsBanned())) {
-                            return false;
-                        }
-                    }
-                    // Фильтр по группе
-                    if (filter.getGroupId() != null) {
-                        if (user.getGroup() == null || !filter.getGroupId().equals(user.getGroup().getId())) {
-                            return false;
-                        }
-                    }
-                    // Фильтр по специальности
-                    if (filter.getSpecialityId() != null) {
-                        if (user.getSpeciality() == null || !filter.getSpecialityId().equals(user.getSpeciality().getId())) {
-                            return false;
-                        }
-                    }
-                    // Поиск по имени, фамилии, email
-                    if (filter.getSearch() != null && !filter.getSearch().isEmpty()) {
-                        String searchLower = filter.getSearch().toLowerCase();
-                        return (user.getName() != null && user.getName().toLowerCase().contains(searchLower)) ||
-                                (user.getSurname() != null && user.getSurname().toLowerCase().contains(searchLower)) ||
-                                (user.getStudentEmail() != null && user.getStudentEmail().toLowerCase().contains(searchLower));
-                    }
-                    return true;
-                })
-                .map(user -> {
-                    UserResponseDTO dto = userMapper.toResponseDto(user);
-                    // Конвертируем фото в Base64
-                    if (user.getPhoto() != null && user.getPhoto().length > 0) {
-                        dto.setPhoto(ImageUtil.encodeToBase64(user.getPhoto()));
-                    }
-                    return dto;
-                })
+        // Получаем данные через native query
+        List<Object[]> results = userRepository.findAllWithFiltersNative(
+                role,
+                search,
+                filter.getIsActive(),
+                filter.getIsBanned(),
+                filter.getGroupId(),
+                filter.getSpecialityId(),
+                filter.getSectorId(),
+                offset,
+                size
+        );
+
+        // Получаем общее количество
+        long total = userRepository.countAllWithFiltersNative(
+                role,
+                search,
+                filter.getIsActive(),
+                filter.getIsBanned(),
+                filter.getGroupId(),
+                filter.getSpecialityId(),
+                filter.getSectorId()
+        );
+
+        // Конвертируем результаты в DTO
+        List<UserResponseDTO> users = results.stream()
+                .map(this::mapRowToUserResponseDTO)
                 .collect(Collectors.toList());
 
-        // Создаем новую Page с отфильтрованными данными
-        return new PageImpl<>(filteredUsers, pageable, filteredUsers.size());
+        // Создаем Page объект
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        return new PageImpl<>(users, pageable, total);
+    }
+
+    private UserResponseDTO mapRowToUserResponseDTO(Object[] row) {
+        return UserResponseDTO.builder()
+                .id(((Number) row[0]).longValue())
+                .name((String) row[1])
+                .surname((String) row[2])
+                .patronymic((String) row[3])
+                .gender((String) row[4])
+                .dateOfBirth(row[5] != null ? ((java.sql.Date) row[5]).toLocalDate() : null)
+                .courseNumber(row[6] != null ? ((Number) row[6]).shortValue() : null)
+                .studentIdNumber(row[7] != null ? ((Number) row[7]).intValue() : null)
+                .studentEmail((String) row[8])
+                .additionalEmail((String) row[9])
+                .phoneNumber((String) row[10])
+                .vkLink((String) row[11])
+                .isActive((Boolean) row[12])
+                .isBanned((Boolean) row[13])
+                .role((String) row[14])
+                .groupId(row[15] != null ? ((Number) row[15]).longValue() : null)
+                .groupName((String) row[16])
+                .specialityId(row[17] != null ? ((Number) row[17]).longValue() : null)
+                .specialityName((String) row[18])
+                .photo(null)
+                .build();
+    }
+
+    private UserResponseDTO mapToUserResponseDTO(Object[] row) {
+        return UserResponseDTO.builder()
+                .id(((Number) row[0]).longValue())
+                .name((String) row[1])
+                .surname((String) row[2])
+                .patronymic((String) row[3])
+                .gender((String) row[4])
+                .dateOfBirth((java.time.LocalDate) row[5])
+                .courseNumber(((Number) row[6]).shortValue())
+                .studentIdNumber(((Number) row[7]).intValue())
+                .studentEmail((String) row[8])
+                .additionalEmail((String) row[9])
+                .phoneNumber((String) row[10])
+                .vkLink((String) row[11])
+                .isActive((Boolean) row[12])
+                .isBanned((Boolean) row[13])
+                .role((String) row[14])
+                .groupId(row[15] != null ? ((Number) row[15]).longValue() : null)
+                .groupName((String) row[16])
+                .specialityId(row[17] != null ? ((Number) row[17]).longValue() : null)
+                .specialityName((String) row[18])
+                .photo(null)  // Фото не загружаем
+                .build();
     }
 
     @Transactional

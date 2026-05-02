@@ -1,69 +1,64 @@
 package org.example.ais_sst.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "events")
 public class Event {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
 
-    @Size(max = 128)
-    @NotNull
-    @Column(name = "title", nullable = false, length = 128)
+    @Column(name = "title", nullable = false)
     private String title;
 
-    @NotNull
-    @Column(name = "date_of_event", nullable = false)
-    private LocalDate dateOfEvent;
-
-    @NotNull
-    @Column(name = "start_time", nullable = false)
-    private LocalTime startTime;
-
-    @NotNull
-    @Column(name = "end_time", nullable = false)
-    private LocalTime endTime;
-
-    @Size(max = 256)
-    @NotNull
-    @Column(name = "venue", nullable = false, length = 256)
-    private String venue;
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "photo")
     private String photo;
 
-    @NotNull
-    @Column(name = "reference_to_position", nullable = false, length = Integer.MAX_VALUE)
-    private String referenceToPosition;
+    @Column(name = "start_time")
+    private LocalDateTime startTime;
 
-    @ColumnDefault("true")
-    @Column(name = "is_public")
-    private Boolean isPublic;
+    @Column(name = "end_time")
+    private LocalDateTime endTime;
 
-    @ColumnDefault("true")
-    @Column(name = "is_draft")
-    private Boolean isDraft;
+    @Column(name = "location")
+    private String location;
 
-    @ColumnDefault("false")
-    @Column(name = "is_completed")
-    private Boolean isCompleted;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_creator_id", nullable = false)
+    private User eventCreator;
 
-    @ColumnDefault("false")
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
 
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<EventOrganizer> organizers = new ArrayList<>();
 }
