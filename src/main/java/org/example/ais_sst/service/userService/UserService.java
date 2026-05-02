@@ -46,6 +46,7 @@ public class UserService implements UserServiceImpl {
                 .surname(user.getSurname())
                 .patronymic(user.getPatronymic())
                 .dateOfBirth(user.getDateOfBirth())
+                .gender(user.getGender())
                 .rank(0)
                 .specialityTitle(user.getSpeciality().getTitle())
                 .groupTitle(user.getGroup().getTitle())

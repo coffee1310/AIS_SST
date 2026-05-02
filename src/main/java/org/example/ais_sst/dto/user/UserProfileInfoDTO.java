@@ -10,6 +10,7 @@ import org.example.ais_sst.entity.Group;
 import org.example.ais_sst.entity.Role;
 import org.example.ais_sst.entity.SocialStatus;
 import org.example.ais_sst.entity.Speciality;
+import org.example.ais_sst.entity.enums.Gender;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -59,6 +60,8 @@ public class UserProfileInfoDTO {
 
     @NotBlank
     private String phoneNumber;
+
+    private Gender gender;
 
     private String vkLink;
 
