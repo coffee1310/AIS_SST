@@ -12,7 +12,7 @@ class UserRepositoryImpl(
 ) : UserRepository {
 
     override suspend fun getUserProfile(): Result<User> = runCatching {
-        val response: UserProfileDto = httpClient.get("users").body()
+        val response: UserProfileDto = httpClient.get("users/me").body()
         response.toDomain()
     }
 }

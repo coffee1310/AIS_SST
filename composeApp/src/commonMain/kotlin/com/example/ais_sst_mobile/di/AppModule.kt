@@ -33,7 +33,7 @@ val appModule = module {
 
     // ScreenModels
     factory { LoginScreenModel(get(), get()) }
-    factory { RegisterScreenModel(dictionaryRepository = get()) }
+    factory { RegisterScreenModel(get(), get()) }
     factory { HomeScreenModel(get()) }
     factory { ProfileScreenModel(get(), get()) }
 

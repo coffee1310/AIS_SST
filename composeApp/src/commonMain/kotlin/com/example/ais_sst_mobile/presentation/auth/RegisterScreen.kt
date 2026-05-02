@@ -164,556 +164,611 @@ fun RegisterScreen(component: RegisterComponent) {
 
     val isRegisterEnabled = isAgreedPD && isAgreedNewsletter
 
-    AppBackground {
-        if (showDatePicker) {
-            DatePickerDialog(
-                onDismissRequest = { showDatePicker = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showDatePicker = false
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            val instant = kotlinx.datetime.Instant.fromEpochMilliseconds(millis)
-                            val localDate = instant.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
-                            val day = localDate.dayOfMonth.toString().padStart(2, '0')
-                            val month = localDate.monthNumber.toString().padStart(2, '0')
-                            val year = localDate.year.toString()
-                            birthDate = "$day$month$year"
-                        }
-                    }) { Text("ОК", color = MaterialTheme.colorScheme.secondary) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDatePicker = false }) {
-                        Text("Отмена", color = MaterialTheme.colorScheme.onSurface)
-                    }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
+    LaunchedEffect(state.registerError) {
+        if (state.registerError != null) {
+            generalError = state.registerError
+            screenModel.clearError()
         }
+    }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .imePadding()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.safeDrawing))
-
-            val contentModifier = Modifier.fillMaxWidth(0.9f)
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            Box(
-                modifier = contentModifier,
-                contentAlignment = Alignment.CenterStart
+    AppBackground {
+        if (state.registerSuccess) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                CustomBackButton(onClick = { component.onGoBack() })
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            CustomTextField(
-                modifier = contentModifier,
-                value = surname,
-                onValueChange = { surname = it; generalError = null },
-                placeholder = "* Фамилия",
-                isError = isSurnameError,
-                errorMessage = if (isSurnameError) "Только кириллица, с заглавной буквы" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier,
-                value = name,
-                onValueChange = { name = it; generalError = null },
-                placeholder = "* Имя",
-                isError = isNameError,
-                errorMessage = if (isNameError) "Только кириллица, с заглавной буквы" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier,
-                value = patronymic,
-                onValueChange = { patronymic = it; generalError = null },
-                placeholder = "* Отчество",
-                isError = isPatronymicError,
-                errorMessage = if (isPatronymicError) "Только кириллица, с заглавной буквы" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier,
-                value = birthDate,
-                onValueChange = {
-                    if (it.length <= 8 && it.all { char -> char.isDigit() }) {
-                        birthDate = it
-                        generalError = null
-                    }
-                },
-                placeholder = "* Дата рождения",
-                isError = isBirthDateError,
-                errorMessage = if (isBirthDateError) "Некорректная дата (ДД.ММ.ГГГГ)" else null,
-                visualTransformation = DateTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.clearFocus() }),
-                trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(Icons.Default.DateRange, "Выбрать дату", tint = MaterialTheme.colorScheme.secondary)
-                    }
-                }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ExposedDropdownMenuBox(
-                expanded = expandedStatus,
-                onExpandedChange = { expandedStatus = !expandedStatus }
-            ) {
-                CustomTextField(
-                    modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
-                    value = selectedStatusesText,
-                    onValueChange = {},
-                    readOnly = true,
-                    placeholder = "  Социальный статус",
-                    trailingIcon = {
-                        val icon = if (expandedStatus) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
-                        Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
-                    },
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Успех",
+                    tint = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(80.dp)
                 )
-
-                ExposedDropdownMenu(
-                    expanded = expandedStatus,
-                    onDismissRequest = { expandedStatus = false }
-                ) {
-                    state.socialStatuses.forEach { item ->
-                        val isSelected = selectedSocialStatusIds.contains(item.id)
-
-                        DropdownMenuItem(
-                            text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Checkbox(
-                                        checked = isSelected,
-                                        onCheckedChange = null,
-                                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = item.title,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            },
-                            onClick = {
-                                selectedSocialStatusIds = if (isSelected) {
-                                    selectedSocialStatusIds - item.id
-                                } else {
-                                    selectedSocialStatusIds + item.id
-                                }
-                                generalError = null
-                            }
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val genders = listOf("Мужской", "Женский")
-            ExposedDropdownMenuBox(expanded = expandedGender, onExpandedChange = { expandedGender = !expandedGender }) {
-                CustomTextField(
-                    modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
-                    value = gender, onValueChange = {}, readOnly = true, placeholder = "* Пол",
-                    trailingIcon = {
-                        val icon = if (expandedGender) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
-                        Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
-                    }
-                )
-                ExposedDropdownMenu(expanded = expandedGender, onDismissRequest = { expandedGender = false }) {
-                    genders.forEach { selection ->
-                        DropdownMenuItem(
-                            text = { Text(selection, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
-                            onClick = { gender = selection; expandedGender = false; generalError = null }
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val courses = listOf("1", "2", "3", "4")
-            ExposedDropdownMenuBox(expanded = expandedCourse, onExpandedChange = { expandedCourse = !expandedCourse }) {
-                CustomTextField(
-                    modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
-                    value = course,
-                    onValueChange = {},
-                    readOnly = true,
-                    placeholder = "* Номер курса",
-                    trailingIcon = {
-                        val icon = if (expandedCourse) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
-                        Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
-                    }
-                )
-                ExposedDropdownMenu(expanded = expandedCourse, onDismissRequest = { expandedCourse = false }) {
-                    courses.forEach { selection ->
-                        DropdownMenuItem(
-                            text = { Text(selection, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
-                            onClick = {
-                                course = selection
-                                expandedCourse = false
-                                generalError = null
-                                selectedGroupId = null
-                                groupTitle = ""
-                            }
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ExposedDropdownMenuBox(expanded = expandedSpecialty, onExpandedChange = { expandedSpecialty = !expandedSpecialty }) {
-                CustomTextField(
-                    modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
-                    value = specialty,
-                    onValueChange = {},
-                    readOnly = true,
-                    placeholder = "* Специальность",
-                    trailingIcon = {
-                        val icon = if (expandedSpecialty) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
-                        Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
-                    }
-                )
-                ExposedDropdownMenu(expanded = expandedSpecialty, onDismissRequest = { expandedSpecialty = false }) {
-                    state.specialities.forEach { item ->
-                        DropdownMenuItem(
-                            text = { Text(item.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
-                            onClick = {
-                                specialty = item.title
-                                selectedSpecialtyId = item.id
-                                expandedSpecialty = false
-                                generalError = null
-                            }
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val availableGroups = remember(course, state.groups) {
-                val courseInt = course.toIntOrNull()
-                if (courseInt != null) {
-                    state.groups.filter { it.course == courseInt }
-                } else {
-                    emptyList()
-                }
-            }
-
-            ExposedDropdownMenuBox(
-                expanded = expandedGroup,
-                onExpandedChange = { if (course.isNotEmpty()) expandedGroup = !expandedGroup }
-            ) {
-                CustomTextField(
-                    modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
-                    value = groupTitle,
-                    onValueChange = {},
-                    readOnly = true,
-                    placeholder = if (course.isEmpty()) "Сначала выберите курс" else "* Номер группы",
-                    trailingIcon = {
-                        val icon = if (expandedGroup) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = if (course.isEmpty()) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                )
-                ExposedDropdownMenu(expanded = expandedGroup, onDismissRequest = { expandedGroup = false }) {
-                    availableGroups.forEach { item ->
-                        DropdownMenuItem(
-                            text = { Text(item.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
-                            onClick = {
-                                groupTitle = item.title
-                                selectedGroupId = item.id
-                                expandedGroup = false
-                                generalError = null
-                            }
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier,
-                value = corpEmail,
-                onValueChange = { newValue ->
-                    if (corpDomain == "@edu.fa.ru") {
-                        if (newValue.length <= 6 && newValue.all { c -> c.isDigit() }) {
-                            corpEmail = newValue
-                            generalError = null
-                        }
-                    } else {
-                        if (!newValue.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
-                            corpEmail = newValue
-                            generalError = null
-                        }
-                    }
-                },
-                placeholder = "* Корпоративная почта",
-                isError = isCorpEmailError,
-                errorMessage = if (isCorpEmailError) "Студбилет должен состоять из 6 цифр" else null,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = if (corpDomain == "@edu.fa.ru") KeyboardType.Number else KeyboardType.Email,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                suffix = {
-                    Box {
-                        Row(
-                            modifier = Modifier.clickable { expandedCorpDomain = true },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(corpDomain, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyLarge)
-                            Icon(
-                                if (expandedCorpDomain) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                "Выбрать домен", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(start = 2.dp).size(20.dp)
-                            )
-                        }
-                        DropdownMenu(expanded = expandedCorpDomain, onDismissRequest = { expandedCorpDomain = false }, containerColor = MaterialTheme.colorScheme.background) {
-                            listOf("@edu.fa.ru", "@fa.ru").forEach { domain ->
-                                DropdownMenuItem(
-                                    text = { Text(domain, style = MaterialTheme.typography.labelMedium) },
-                                    onClick = {
-                                        corpDomain = domain
-                                        expandedCorpDomain = false
-                                        generalError = null
-
-                                        if (domain == "@edu.fa.ru" && !corpEmail.all { it.isDigit() }) {
-                                            corpEmail = corpEmail.filter { it.isDigit() }.take(6)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier,
-                value = addEmail,
-                onValueChange = { addEmail = it; generalError = null },
-                placeholder = "  Дополнительная почта",
-                isError = isAddEmailError,
-                errorMessage = if (isAddEmailError) "Некорректный формат почты" else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier.onFocusChanged { isPhoneFocused = it.isFocused },
-                value = phone,
-                onValueChange = {
-                    if (it.length <= 10 && it.all { c -> c.isDigit() }) { phone = it; generalError = null }
-                },
-                placeholder = "* Номер телефона",
-                isError = isPhoneError,
-                errorMessage = if (isPhoneError) "Введите 10 цифр (без +7)" else null,
-                visualTransformation = PhoneTransformation(isPhoneFocused),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier.onFocusChanged { isVkFocused = it.isFocused },
-                value = vkLink,
-                onValueChange = { vkLink = it; generalError = null },
-                placeholder = "* Ссылка на ВКонтакте",
-                isError = isVkLinkError,
-                errorMessage = if (isVkLinkError) "Ссылка не должна содержать пробелов и русских букв" else null,
-                visualTransformation = PrefixTransformation("https://vk.com/", isVkFocused),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier,
-                value = password,
-                onValueChange = { password = it; generalError = null },
-                placeholder = "* Пароль",
-                isError = isPasswordError,
-                errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры и спецсимволы" else null,
-                visualTransformation = if (isPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                trailingIcon = {
-                    val icon = if (isPassVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                    IconButton(onClick = { isPassVisible = !isPassVisible }) {
-                        Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
-                    }
-                }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            CustomTextField(
-                modifier = contentModifier,
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it; generalError = null },
-                placeholder = "* Повторите пароль",
-                isError = isConfirmPasswordError,
-                errorMessage = if (isConfirmPasswordError) "Пароли не совпадают" else null,
-                visualTransformation = if (isConfirmPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                trailingIcon = {
-                    val icon = if (isConfirmPassVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                    IconButton(onClick = { isConfirmPassVisible = !isConfirmPassVisible }) {
-                        Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
-                    }
-                }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Box(modifier = contentModifier.clickable { singleImagePicker.launch() }) {
-                CustomTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = if (selectedImageBytes != null) "Фотография загружена" else "",
-                    onValueChange = {}, readOnly = true, placeholder = "* Официальная фотография",
-                    trailingIcon = {
-                        val icon = if (selectedImageBytes != null) Icons.Default.CheckCircle else Icons.Default.AddAPhoto
-                        Icon(icon, "Загрузить фото", tint = MaterialTheme.colorScheme.secondary)
-                    }
-                )
-                Box(modifier = Modifier.matchParentSize().clickable { singleImagePicker.launch() })
-            }
-
-            if (imageError != null) {
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = imageError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = contentModifier.padding(top = 16.dp),
+                    text = "Ваша заявка успешно отправлена на рассмотрение! Ответ придёт на корпоративную почту",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
-            }
-
-            selectedImageBytes?.let { bytes ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Image(
-                    bitmap = bytes.toImageBitmap(),
-                    contentDescription = "Превью профиля",
-                    modifier = Modifier.size(100.dp).clip(CircleShape).border(2.dp, MaterialTheme.colorScheme.secondary, CircleShape),
-                    contentScale = ContentScale.Crop
+                Spacer(modifier = Modifier.height(40.dp))
+                CustomButton(
+                    text = "Вернуться ко входу",
+                    onClick = { component.onGoBack() },
+                    modifier = Modifier.fillMaxWidth(0.9f)
                 )
             }
+        } else {
+            if (showDatePicker) {
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showDatePicker = false
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                val instant = kotlinx.datetime.Instant.fromEpochMilliseconds(millis)
+                                val localDate = instant.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+                                val day = localDate.dayOfMonth.toString().padStart(2, '0')
+                                val month = localDate.monthNumber.toString().padStart(2, '0')
+                                val year = localDate.year.toString()
+                                birthDate = "$day$month$year"
+                            }
+                        }) { Text("ОК", color = MaterialTheme.colorScheme.secondary) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) {
+                            Text("Отмена", color = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
 
-            Text(
-                text = "Внимание: пожалуйста, отнеситесь к выбору снимка ответственно! Если фотография не будет соответствовать правилам ниже, ваша заявка на вступление может быть отклонена. Загрузите подходящее фото сразу, чтобы процесс регистрации прошел быстро и без лишних возвратов.\n"
-                        + "\nТребования к снимку:" +
-                        "\nФормат: цветная фотография 3х4 (без белого уголка).\nФон: строго белый и однотонный. В кадре не должно быть теней, полос, узоров или посторонних предметов." +
-                        "\nПоза: строго анфас. Лицо открыто." +
-                        "\nПропорции: лицо 70-80% площади всей фотографии." +
-                        "\nОдежда: однотонная, чтобы не сливаться с фоном.",
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Thin),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = contentModifier.padding(top = 8.dp, bottom = 24.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .imePadding()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(Modifier.windowInsetsTopHeight(WindowInsets.safeDrawing))
 
-            Column(modifier = contentModifier, horizontalAlignment = Alignment.Start) {
+                val contentModifier = Modifier.fillMaxWidth(0.9f)
+
+                Spacer(modifier = Modifier.height(40.dp))
+
+                Box(
+                    modifier = contentModifier,
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    CustomBackButton(onClick = { component.onGoBack() })
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                CustomTextField(
+                    modifier = contentModifier,
+                    value = surname,
+                    onValueChange = { surname = it; generalError = null },
+                    placeholder = "* Фамилия",
+                    isError = isSurnameError,
+                    errorMessage = if (isSurnameError) "Только кириллица, с заглавной буквы" else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier,
+                    value = name,
+                    onValueChange = { name = it; generalError = null },
+                    placeholder = "* Имя",
+                    isError = isNameError,
+                    errorMessage = if (isNameError) "Только кириллица, с заглавной буквы" else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier,
+                    value = patronymic,
+                    onValueChange = { patronymic = it; generalError = null },
+                    placeholder = "* Отчество",
+                    isError = isPatronymicError,
+                    errorMessage = if (isPatronymicError) "Только кириллица, с заглавной буквы" else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier,
+                    value = birthDate,
+                    onValueChange = {
+                        if (it.length <= 8 && it.all { char -> char.isDigit() }) {
+                            birthDate = it
+                            generalError = null
+                        }
+                    },
+                    placeholder = "* Дата рождения",
+                    isError = isBirthDateError,
+                    errorMessage = if (isBirthDateError) "Некорректная дата (ДД.ММ.ГГГГ)" else null,
+                    visualTransformation = DateTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.clearFocus() }),
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.DateRange, "Выбрать дату", tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ExposedDropdownMenuBox(
+                    expanded = expandedStatus,
+                    onExpandedChange = { expandedStatus = !expandedStatus }
+                ) {
+                    CustomTextField(
+                        modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                        value = selectedStatusesText,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = "  Социальный статус",
+                        trailingIcon = {
+                            val icon = if (expandedStatus) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
+                            Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
+                        },
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expandedStatus,
+                        onDismissRequest = { expandedStatus = false }
+                    ) {
+                        state.socialStatuses.forEach { item ->
+                            val isSelected = selectedSocialStatusIds.contains(item.id)
+
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Checkbox(
+                                            checked = isSelected,
+                                            onCheckedChange = null,
+                                            colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = item.title,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selectedSocialStatusIds = if (isSelected) {
+                                        selectedSocialStatusIds - item.id
+                                    } else {
+                                        selectedSocialStatusIds + item.id
+                                    }
+                                    generalError = null
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val genders = listOf("Мужской", "Женский")
+                ExposedDropdownMenuBox(expanded = expandedGender, onExpandedChange = { expandedGender = !expandedGender }) {
+                    CustomTextField(
+                        modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                        value = gender, onValueChange = {}, readOnly = true, placeholder = "* Пол",
+                        trailingIcon = {
+                            val icon = if (expandedGender) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
+                            Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    )
+                    ExposedDropdownMenu(expanded = expandedGender, onDismissRequest = { expandedGender = false }) {
+                        genders.forEach { selection ->
+                            DropdownMenuItem(
+                                text = { Text(selection, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
+                                onClick = { gender = selection; expandedGender = false; generalError = null }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val courses = listOf("1", "2", "3", "4")
+                ExposedDropdownMenuBox(expanded = expandedCourse, onExpandedChange = { expandedCourse = !expandedCourse }) {
+                    CustomTextField(
+                        modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                        value = course,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = "* Номер курса",
+                        trailingIcon = {
+                            val icon = if (expandedCourse) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
+                            Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    )
+                    ExposedDropdownMenu(expanded = expandedCourse, onDismissRequest = { expandedCourse = false }) {
+                        courses.forEach { selection ->
+                            DropdownMenuItem(
+                                text = { Text(selection, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
+                                onClick = {
+                                    course = selection
+                                    expandedCourse = false
+                                    generalError = null
+                                    selectedGroupId = null
+                                    groupTitle = ""
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ExposedDropdownMenuBox(expanded = expandedSpecialty, onExpandedChange = { expandedSpecialty = !expandedSpecialty }) {
+                    CustomTextField(
+                        modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                        value = specialty,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = "* Специальность",
+                        trailingIcon = {
+                            val icon = if (expandedSpecialty) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
+                            Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    )
+                    ExposedDropdownMenu(expanded = expandedSpecialty, onDismissRequest = { expandedSpecialty = false }) {
+                        state.specialities.forEach { item ->
+                            DropdownMenuItem(
+                                text = { Text(item.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
+                                onClick = {
+                                    specialty = item.title
+                                    selectedSpecialtyId = item.id
+                                    expandedSpecialty = false
+                                    generalError = null
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val availableGroups = remember(course, state.groups) {
+                    val courseInt = course.toIntOrNull()
+                    if (courseInt != null) {
+                        state.groups.filter { it.course == courseInt }
+                    } else {
+                        emptyList()
+                    }
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = expandedGroup,
+                    onExpandedChange = { if (course.isNotEmpty()) expandedGroup = !expandedGroup }
+                ) {
+                    CustomTextField(
+                        modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),
+                        value = groupTitle,
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = if (course.isEmpty()) "Сначала выберите курс" else "* Номер группы",
+                        trailingIcon = {
+                            val icon = if (expandedGroup) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = if (course.isEmpty()) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    )
+                    ExposedDropdownMenu(expanded = expandedGroup, onDismissRequest = { expandedGroup = false }) {
+                        availableGroups.forEach { item ->
+                            DropdownMenuItem(
+                                text = { Text(item.title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface) },
+                                onClick = {
+                                    groupTitle = item.title
+                                    selectedGroupId = item.id
+                                    expandedGroup = false
+                                    generalError = null
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier,
+                    value = corpEmail,
+                    onValueChange = { newValue ->
+                        if (corpDomain == "@edu.fa.ru") {
+                            if (newValue.length <= 6 && newValue.all { c -> c.isDigit() }) {
+                                corpEmail = newValue
+                                generalError = null
+                            }
+                        } else {
+                            if (!newValue.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
+                                corpEmail = newValue
+                                generalError = null
+                            }
+                        }
+                    },
+                    placeholder = "* Корпоративная почта",
+                    isError = isCorpEmailError,
+                    errorMessage = if (isCorpEmailError) "Студбилет должен состоять из 6 цифр" else null,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = if (corpDomain == "@edu.fa.ru") KeyboardType.Number else KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                    suffix = {
+                        Box {
+                            Row(
+                                modifier = Modifier.clickable { expandedCorpDomain = true },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(corpDomain, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), style = MaterialTheme.typography.bodyLarge)
+                                Icon(
+                                    if (expandedCorpDomain) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    "Выбрать домен", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(start = 2.dp).size(20.dp)
+                                )
+                            }
+                            DropdownMenu(expanded = expandedCorpDomain, onDismissRequest = { expandedCorpDomain = false }, containerColor = MaterialTheme.colorScheme.background) {
+                                listOf("@edu.fa.ru", "@fa.ru").forEach { domain ->
+                                    DropdownMenuItem(
+                                        text = { Text(domain, style = MaterialTheme.typography.labelMedium) },
+                                        onClick = {
+                                            corpDomain = domain
+                                            expandedCorpDomain = false
+                                            generalError = null
+
+                                            if (domain == "@edu.fa.ru" && !corpEmail.all { it.isDigit() }) {
+                                                corpEmail = corpEmail.filter { it.isDigit() }.take(6)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier,
+                    value = addEmail,
+                    onValueChange = { addEmail = it; generalError = null },
+                    placeholder = "  Дополнительная почта",
+                    isError = isAddEmailError,
+                    errorMessage = if (isAddEmailError) "Некорректный формат почты" else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier.onFocusChanged { isPhoneFocused = it.isFocused },
+                    value = phone,
+                    onValueChange = {
+                        if (it.length <= 10 && it.all { c -> c.isDigit() }) { phone = it; generalError = null }
+                    },
+                    placeholder = "* Номер телефона",
+                    isError = isPhoneError,
+                    errorMessage = if (isPhoneError) "Введите 10 цифр (без +7)" else null,
+                    visualTransformation = PhoneTransformation(isPhoneFocused),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier.onFocusChanged { isVkFocused = it.isFocused },
+                    value = vkLink,
+                    onValueChange = { vkLink = it; generalError = null },
+                    placeholder = "* Ссылка на ВКонтакте",
+                    isError = isVkLinkError,
+                    errorMessage = if (isVkLinkError) "Ссылка не должна содержать пробелов и русских букв" else null,
+                    visualTransformation = PrefixTransformation("https://vk.com/", isVkFocused),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier,
+                    value = password,
+                    onValueChange = { password = it; generalError = null },
+                    placeholder = "* Пароль",
+                    isError = isPasswordError,
+                    errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры и спецсимволы" else null,
+                    visualTransformation = if (isPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                    trailingIcon = {
+                        val icon = if (isPassVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                        IconButton(onClick = { isPassVisible = !isPassVisible }) {
+                            Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                CustomTextField(
+                    modifier = contentModifier,
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it; generalError = null },
+                    placeholder = "* Повторите пароль",
+                    isError = isConfirmPasswordError,
+                    errorMessage = if (isConfirmPasswordError) "Пароли не совпадают" else null,
+                    visualTransformation = if (isConfirmPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    trailingIcon = {
+                        val icon = if (isConfirmPassVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                        IconButton(onClick = { isConfirmPassVisible = !isConfirmPassVisible }) {
+                            Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Box(modifier = contentModifier.clickable { singleImagePicker.launch() }) {
+                    CustomTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = if (selectedImageBytes != null) "Фотография загружена" else "",
+                        onValueChange = {}, readOnly = true, placeholder = "* Официальная фотография",
+                        trailingIcon = {
+                            val icon = if (selectedImageBytes != null) Icons.Default.CheckCircle else Icons.Default.AddAPhoto
+                            Icon(icon, "Загрузить фото", tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    )
+                    Box(modifier = Modifier.matchParentSize().clickable { singleImagePicker.launch() })
+                }
+
+                if (imageError != null) {
+                    Text(
+                        text = imageError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = contentModifier.padding(top = 16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                selectedImageBytes?.let { bytes ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Image(
+                        bitmap = bytes.toImageBitmap(),
+                        contentDescription = "Превью профиля",
+                        modifier = Modifier.size(100.dp).clip(CircleShape).border(2.dp, MaterialTheme.colorScheme.secondary, CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Text(
+                    text = "Внимание: пожалуйста, отнеситесь к выбору снимка ответственно! Если фотография не будет соответствовать правилам ниже, ваша заявка на вступление может быть отклонена. Загрузите подходящее фото сразу, чтобы процесс регистрации прошел быстро и без лишних возвратов.\n"
+                            + "\nТребования к снимку:" +
+                            "\nФормат: цветная фотография 3х4 (без белого уголка).\nФон: строго белый и однотонный. В кадре не должно быть теней, полос, узоров или посторонних предметов." +
+                            "\nПоза: строго анфас. Лицо открыто." +
+                            "\nПропорции: лицо 70-80% площади всей фотографии." +
+                            "\nОдежда: однотонная, чтобы не сливаться с фоном.",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Thin),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = contentModifier.padding(top = 8.dp, bottom = 24.dp)
+                )
+
+                Column(modifier = contentModifier, horizontalAlignment = Alignment.Start) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().clickable { isAgreedPD = !isAgreedPD }
+                    ) {
+                        Checkbox(
+                            checked = isAgreedPD, onCheckedChange = { isAgreedPD = it },
+                            colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
+                        )
+                        Text(
+                            text = "Я даю согласие на обработку персональных данных в соответствии с Политикой обработкой персональных данных",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Checkbox(
+                            checked = isAgreedNewsletter, onCheckedChange = { },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.secondary,
+                                disabledCheckedColor = MaterialTheme.colorScheme.secondary
+                            )
+                        )
+                        Text(
+                            text = "Я даю согласие на получение рассылки",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(25.dp))
+
+                CustomButton(
+                    modifier = contentModifier,
+                    text = "Зарегистрироваться",
+                    enabled = isRegisterEnabled,
+                    isLoading = state.isLoading,
+                    onClick = {
+                        val hasEmptyFields = surname.isBlank() || name.isBlank() || birthDate.length != 8 ||
+                                gender.isBlank() || course.isBlank() || selectedSpecialtyId == null ||
+                                selectedGroupId == null || corpEmail.isBlank() || phone.length != 10 ||
+                                vkLink.isBlank() || password.isBlank() || confirmPassword.isBlank() || selectedImageBytes == null
+
+                        val hasValidationErrors = isSurnameError || isNameError || isPatronymicError ||
+                                isBirthDateError || isCorpEmailError || isAddEmailError || isPhoneError ||
+                                isVkLinkError || isPasswordError || isConfirmPasswordError || imageError != null
+
+                        if (hasEmptyFields || hasValidationErrors) {
+                            generalError = "Корректно заполните все обязательные поля и загрузите фото"
+                        } else {
+                            generalError = null
+                            screenModel.register(
+                                surname = surname,
+                                name = name,
+                                patronymic = patronymic,
+                                birthDate = birthDate,
+                                socialStatusIds = selectedSocialStatusIds,
+                                gender = gender,
+                                course = course,
+                                specialtyId = selectedSpecialtyId!!,
+                                groupId = selectedGroupId!!,
+                                corpEmail = corpEmail,
+                                corpDomain = corpDomain,
+                                addEmail = addEmail,
+                                phone = phone,
+                                vkLink = vkLink,
+                                pass = password,
+                                photoBytes = selectedImageBytes!!
+                            )
+                        }
+                    }
+                )
+
+                generalError?.let { msg ->
+                    Text(
+                        text = msg,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = contentModifier.padding(top = 16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().clickable { isAgreedPD = !isAgreedPD }
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = contentModifier
                 ) {
-                    Checkbox(
-                        checked = isAgreedPD, onCheckedChange = { isAgreedPD = it },
-                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
-                    )
+                    Text("Уже есть аккаунт? ", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
                     Text(
-                        text = "Я даю согласие на обработку персональных данных в соответствии с Политикой обработкой персональных данных",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                        text = "Войти",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.clickable {
+                            component.onGoBack()
+                        }
                     )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Checkbox(
-                        checked = isAgreedNewsletter, onCheckedChange = { },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.secondary,
-                            disabledCheckedColor = MaterialTheme.colorScheme.secondary
-                        )
-                    )
-                    Text(
-                        text = "Я даю согласие на получение рассылки",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                    )
-                }
+
+                Spacer(modifier = Modifier.height(60.dp))
+
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
             }
-            Spacer(modifier = Modifier.height(25.dp))
-
-            CustomButton(
-                modifier = contentModifier,
-                text = "Зарегистрироваться",
-                enabled = isRegisterEnabled,
-                onClick = {
-                    val hasEmptyFields = surname.isBlank() || name.isBlank() || birthDate.length != 8 ||
-                            gender.isBlank() || course.isBlank() || selectedSpecialtyId == null ||
-                            selectedGroupId == null || corpEmail.isBlank() || phone.length != 10 ||
-                            vkLink.isBlank() || password.isBlank() || confirmPassword.isBlank() || selectedImageBytes == null
-
-                    val hasValidationErrors = isSurnameError || isNameError || isPatronymicError ||
-                            isBirthDateError || isCorpEmailError || isAddEmailError || isPhoneError ||
-                            isVkLinkError || isPasswordError || isConfirmPasswordError || imageError != null
-
-                    if (hasEmptyFields || hasValidationErrors) {
-                        generalError = "Корректно заполните все обязательные поля и загрузите фото"
-                    } else {
-                        generalError = null
-                        // TODO: Отправка на сервер
-                    }
-                }
-            )
-
-            generalError?.let { msg ->
-                Text(
-                    text = msg,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = contentModifier.padding(top = 16.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = contentModifier
-            ) {
-                Text("Уже есть аккаунт? ", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
-                Text(
-                    text = "Войти",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.clickable {
-                        component.onGoBack()
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(60.dp))
-
-            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
     }
 }
