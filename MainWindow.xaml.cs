@@ -3,6 +3,7 @@ using Diplom_Stud.Pages.General;
 using Diplom_Stud.Components;
 using System;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -19,16 +20,13 @@ namespace Diplom_Stud
             MainFrame.Navigate(new Pages.General.Auth());
         }
 
-        // Этот метод вызывается из Profile.xaml.cs после успешного получения данных
         public void UpdateUserMenu()
         {
             var data = App.CurrentUserProfile;
             if (data == null) return;
 
-            // Находим элементы внутри RadioButton NavProfile
             if (NavProfile.Content is StackPanel panel)
             {
-                // Ищем аватарку, Имя и Email по порядку
                 if (panel.Children.Count >= 3)
                 {
                     var ellipse = panel.Children[0] as System.Windows.Shapes.Ellipse;
@@ -36,42 +34,78 @@ namespace Diplom_Stud
                     var emailText = panel.Children[2] as TextBlock;
 
                     if (nameText != null)
-                        nameText.Text = $"{data.surname} {data.name}"; // Обычно в меню пишут Фамилию и Имя
+                        nameText.Text = $"{data.surname} {data.name}";
 
                     if (emailText != null)
                         emailText.Text = data.studentEmail ?? "";
 
-                    // Загружаем фото в боковое меню
                     if (ellipse != null && !string.IsNullOrEmpty(data.photo))
                     {
-                        try
+                        BitmapImage bmp = GetImageFromBase64(data.photo);
+                        if (bmp != null)
                         {
-                            string base64Data = data.photo;
-                            int commaIndex = base64Data.IndexOf(',');
-                            if (commaIndex >= 0)
-                            {
-                                base64Data = base64Data.Substring(commaIndex + 1);
-                            }
-
-                            byte[] imageBytes = Convert.FromBase64String(base64Data);
-                            using (var ms = new MemoryStream(imageBytes))
-                            {
-                                var bitmap = new BitmapImage();
-                                bitmap.BeginInit();
-                                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                bitmap.StreamSource = ms;
-                                bitmap.EndInit();
-
-                                ellipse.Fill = new ImageBrush(bitmap) { Stretch = Stretch.UniformToFill };
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Ошибка загрузки фото в меню: {ex.Message}");
+                            ellipse.Fill = new ImageBrush(bmp) { Stretch = Stretch.UniformToFill };
                         }
                     }
                 }
             }
+        }
+
+        private BitmapImage GetImageFromBase64(string base64String)
+        {
+            try
+            {
+                string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
+                byte[] imageBytes = null;
+
+                try
+                {
+                    byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
+                    string textInside = Encoding.UTF8.GetString(decodedFirstLevel);
+
+                    if (textInside.StartsWith("data:image"))
+                    {
+                        int commaIndex = textInside.IndexOf(',');
+                        if (commaIndex >= 0)
+                        {
+                            string actualBase64 = textInside.Substring(commaIndex + 1);
+                            imageBytes = Convert.FromBase64String(actualBase64);
+                        }
+                    }
+                    else
+                    {
+                        imageBytes = decodedFirstLevel;
+                    }
+                }
+                catch
+                {
+                    int commaIndex = cleanStr.IndexOf(',');
+                    if (commaIndex >= 0)
+                    {
+                        cleanStr = cleanStr.Substring(commaIndex + 1);
+                    }
+                    imageBytes = Convert.FromBase64String(cleanStr);
+                }
+
+                if (imageBytes != null)
+                {
+                    using (var ms = new MemoryStream(imageBytes))
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.StreamSource = ms;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        return bitmap;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка обработки фото: {ex.Message}");
+            }
+            return null;
         }
 
         private void MainFrame_Navigated(object sender, NavigationEventArgs e)

@@ -5,11 +5,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 
 namespace Diplom_Stud.Pages.Activist
@@ -124,30 +126,10 @@ namespace Diplom_Stud.Pages.Activist
 
                 if (!string.IsNullOrEmpty(data.photo))
                 {
-                    try
+                    BitmapImage bmp = GetImageFromBase64(data.photo);
+                    if (bmp != null)
                     {
-                        string base64Data = data.photo;
-                        int commaIndex = base64Data.IndexOf(',');
-                        if (commaIndex >= 0)
-                        {
-                            base64Data = base64Data.Substring(commaIndex + 1);
-                        }
-
-                        byte[] imageBytes = Convert.FromBase64String(base64Data);
-                        using (var ms = new MemoryStream(imageBytes))
-                        {
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.StreamSource = ms;
-                            bitmap.EndInit();
-
-                            ProfilePhoto.Fill = new ImageBrush(bitmap) { Stretch = Stretch.UniformToFill };
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Ошибка фото: {ex.Message}");
+                        ProfilePhoto.Fill = new ImageBrush(bmp) { Stretch = Stretch.UniformToFill };
                     }
                 }
             }
@@ -155,6 +137,63 @@ namespace Diplom_Stud.Pages.Activist
             {
                 Debug.WriteLine($"Error UI: {ex.Message}");
             }
+        }
+
+        private BitmapImage GetImageFromBase64(string base64String)
+        {
+            try
+            {
+                string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
+                byte[] imageBytes = null;
+
+                try
+                {
+                    byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
+                    string textInside = Encoding.UTF8.GetString(decodedFirstLevel);
+
+                    if (textInside.StartsWith("data:image"))
+                    {
+                        int commaIndex = textInside.IndexOf(',');
+                        if (commaIndex >= 0)
+                        {
+                            string actualBase64 = textInside.Substring(commaIndex + 1);
+                            imageBytes = Convert.FromBase64String(actualBase64);
+                        }
+                    }
+                    else
+                    {
+                        imageBytes = decodedFirstLevel;
+                    }
+                }
+                catch
+                {
+                    int commaIndex = cleanStr.IndexOf(',');
+                    if (commaIndex >= 0)
+                    {
+                        cleanStr = cleanStr.Substring(commaIndex + 1);
+                    }
+                    imageBytes = Convert.FromBase64String(cleanStr);
+                }
+
+                if (imageBytes != null)
+                {
+                    using (var ms = new MemoryStream(imageBytes))
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.StreamSource = ms;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        return bitmap;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка обработки фото: {ex.Message}");
+            }
+            return null;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)

@@ -3,10 +3,6 @@
   "WorkspaceRootPath": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\onedrive\\desktop\\\u0434\u0438\u043F\u043B\u043E\u043C\\diplom_stud\\pages\\activist\\sectordetails.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\sectordetails.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\pages\\activist\\sectordetails.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\sectordetails.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -42,50 +38,41 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "Sectors.xaml.cs",
               "DocumentMoniker": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\Sectors.xaml.cs",
               "RelativeDocumentMoniker": "Pages\\Activist\\Sectors.xaml.cs",
               "ToolTip": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\Sectors.xaml.cs",
               "RelativeToolTip": "Pages\\Activist\\Sectors.xaml.cs",
-              "ViewState": "AgIAAIoAAAAAAAAAAAAgwK8AAAAFAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAJgAAAA8AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-01T23:21:05.482Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "SectorDetails.xaml",
-              "DocumentMoniker": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\SectorDetails.xaml",
-              "RelativeDocumentMoniker": "Pages\\Activist\\SectorDetails.xaml",
-              "ToolTip": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\SectorDetails.xaml",
-              "RelativeToolTip": "Pages\\Activist\\SectorDetails.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-05-01T23:15:24.864Z",
+              "WhenOpened": "2026-05-01T23:21:05.482Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "SectorDetails.xaml.cs",
               "DocumentMoniker": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\SectorDetails.xaml.cs",
               "RelativeDocumentMoniker": "Pages\\Activist\\SectorDetails.xaml.cs",
               "ToolTip": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\SectorDetails.xaml.cs",
               "RelativeToolTip": "Pages\\Activist\\SectorDetails.xaml.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAH8AAAARAAAAAAAAAA==",
+              "ViewState": "AgIAAPUAAAAAAAAAAAAswAcBAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-01T23:09:12.648Z"
+              "WhenOpened": "2026-05-01T23:09:12.648Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "Sectors.xaml",
               "DocumentMoniker": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\Sectors.xaml",
               "RelativeDocumentMoniker": "Pages\\Activist\\Sectors.xaml",
               "ToolTip": "C:\\Users\\danii\\OneDrive\\Desktop\\\u0414\u0438\u043F\u043B\u043E\u043C\\Diplom_Stud\\Pages\\Activist\\Sectors.xaml",
               "RelativeToolTip": "Pages\\Activist\\Sectors.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-05-01T22:20:23.341Z"
+              "WhenOpened": "2026-05-01T22:20:23.341Z",
+              "EditorCaption": ""
             }
           ]
         },

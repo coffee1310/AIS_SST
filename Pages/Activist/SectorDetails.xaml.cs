@@ -2,6 +2,7 @@
 using Diplom_Stud.Pages.General;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -98,57 +99,26 @@ namespace Diplom_Stud.Pages.Activist
             SectorTitle.Text = _currentSector.title;
             SectorDescription.Text = _currentSector.description;
 
-            if (!string.IsNullOrEmpty(_currentSector.coordinatorFullName))
-            {
-                CoordinatorName.Text = _currentSector.coordinatorFullName;
-            }
-            else
-            {
-                CoordinatorName.Text = "Не назначен";
-            }
+            CoordinatorName.Text = !string.IsNullOrEmpty(_currentSector.coordinatorFullName)
+                ? _currentSector.coordinatorFullName
+                : "Не назначен";
 
             if (!string.IsNullOrEmpty(_currentSector.photo))
             {
-                try
-                {
-                    string base64Data = _currentSector.photo;
-                    int commaIndex = base64Data.IndexOf(',');
-                    if (commaIndex >= 0) base64Data = base64Data.Substring(commaIndex + 1);
-
-                    byte[] imageBytes = Convert.FromBase64String(base64Data);
-                    using (var ms = new MemoryStream(imageBytes))
-                    {
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.StreamSource = ms;
-                        bitmap.EndInit();
-                        SectorImage.ImageSource = bitmap;
-                    }
-                }
-                catch { }
+                BitmapImage bmp = GetImageFromBase64(_currentSector.photo);
+                if (bmp != null) SectorImage.ImageSource = bmp;
             }
-
             if (!string.IsNullOrEmpty(_currentSector.coordinatorPhoto))
             {
-                try
+                BitmapImage bmp = GetImageFromBase64(_currentSector.coordinatorPhoto);
+                if (bmp != null)
                 {
-                    string base64Data = _currentSector.coordinatorPhoto;
-                    int commaIndex = base64Data.IndexOf(',');
-                    if (commaIndex >= 0) base64Data = base64Data.Substring(commaIndex + 1);
-
-                    byte[] imageBytes = Convert.FromBase64String(base64Data);
-                    using (var ms = new MemoryStream(imageBytes))
-                    {
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.StreamSource = ms;
-                        bitmap.EndInit();
-                        CoordinatorPhotoBrush.ImageSource = bitmap;
-                    }
+                    CoordinatorPhotoBrush.ImageSource = bmp;
                 }
-                catch { }
+                else
+                {
+                    CoordinatorPhotoBrush.ImageSource = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"));
+                }
             }
             else
             {
@@ -181,6 +151,64 @@ namespace Diplom_Stud.Pages.Activist
                 ActionBtn.IsEnabled = true;
                 ActionBtn.Opacity = 1.0;
             }
+        }
+
+        private BitmapImage GetImageFromBase64(string base64String)
+        {
+            try
+            {
+                string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
+                byte[] imageBytes = null;
+
+                try
+                {
+                    byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
+                    string textInside = Encoding.UTF8.GetString(decodedFirstLevel);
+
+                    if (textInside.StartsWith("data:image"))
+                    {
+                        int commaIndex = textInside.IndexOf(',');
+                        if (commaIndex >= 0)
+                        {
+                            string actualBase64 = textInside.Substring(commaIndex + 1);
+                            imageBytes = Convert.FromBase64String(actualBase64);
+                        }
+                    }
+                    else
+                    {
+                        imageBytes = decodedFirstLevel;
+                    }
+                }
+                catch
+                {
+                    int commaIndex = cleanStr.IndexOf(',');
+                    if (commaIndex >= 0)
+                    {
+                        cleanStr = cleanStr.Substring(commaIndex + 1);
+                    }
+                    imageBytes = Convert.FromBase64String(cleanStr);
+                }
+
+                if (imageBytes != null)
+                {
+                    using (var ms = new MemoryStream(imageBytes))
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.StreamSource = ms;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        return bitmap;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка обработки фото: {ex.Message}");
+            }
+
+            return null;
         }
 
         private async void ActionBtn_Click(object sender, RoutedEventArgs e)
