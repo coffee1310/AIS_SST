@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.ais_sst_mobile.navigation.FullScreenRoute
 import com.example.ais_sst_mobile.navigation.ProfileComponent
 
 @Composable
@@ -44,7 +45,8 @@ fun SecretaryProfileContent(component: ProfileComponent, screenModel: ProfileScr
                     ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Folder, title = "Архив мероприятий", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Заявки на вступление", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Заявки на вступление", onClick = {
+                        component.onNavigateToFullScreen(FullScreenRoute.AccountRequests)})
                     ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Документы", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Group, title = "Правление студсовета", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.NotificationAdd, title = "Создание уведомлений", onClick = { })

@@ -361,7 +361,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val genders = listOf("Мужской", "Женский")
+                val genders = listOf("Мужчина", "Женщина")
                 ExposedDropdownMenuBox(expanded = expandedGender, onExpandedChange = { expandedGender = !expandedGender }) {
                     CustomTextField(
                         modifier = Modifier.menuAnchor().fillMaxWidth(0.9f),

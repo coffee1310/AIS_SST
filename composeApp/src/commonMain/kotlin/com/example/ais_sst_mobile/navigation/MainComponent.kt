@@ -10,7 +10,8 @@ import kotlinx.serialization.Serializable
 
 class MainComponent(
     componentContext: ComponentContext,
-    val onLogout: () -> Unit
+    val onLogout: () -> Unit,
+    val onNavigateToFullScreen: (FullScreenRoute) -> Unit
 ) : ComponentContext by componentContext {
 
     private val navigation = StackNavigation<Config>()
@@ -41,7 +42,7 @@ class MainComponent(
             is Config.Tasks -> Child.Tasks(TasksComponent(context))
             is Config.Calendar -> Child.Calendar(CalendarComponent(context))
             is Config.Sectors -> Child.Sectors(SectorsComponent(context))
-            is Config.Profile -> Child.Profile(ProfileComponent(context, onLogout))
+            is Config.Profile -> Child.Profile(ProfileComponent(context, onLogout, onNavigateToFullScreen))
         }
 
     sealed class Child {

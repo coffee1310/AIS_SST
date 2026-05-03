@@ -13,6 +13,7 @@ import com.example.ais_sst_mobile.presentation.auth.LoginScreenModel
 import com.example.ais_sst_mobile.presentation.auth.RegisterScreenModel
 import com.example.ais_sst_mobile.presentation.home.HomeScreenModel
 import com.example.ais_sst_mobile.presentation.profile.ProfileScreenModel
+import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreenModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import com.russhwolf.settings.Settings
@@ -36,6 +37,7 @@ val appModule = module {
     factory { RegisterScreenModel(get(), get()) }
     factory { HomeScreenModel(get()) }
     factory { ProfileScreenModel(get(), get()) }
+    factory { AccountRequestsScreenModel(get()) }
 
 }
 

@@ -13,8 +13,8 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.example.ais_sst_mobile.navigation.RootComponent
 import com.example.ais_sst_mobile.presentation.auth.LoginScreen
 import com.example.ais_sst_mobile.presentation.auth.RegisterScreen
-import com.example.ais_sst_mobile.presentation.home.HomeScreen
 import com.example.ais_sst_mobile.presentation.main.MainScreen
+import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreen
 import com.example.ais_sst_mobile.theme.AppTheme
 
 @OptIn(ExperimentalDecomposeApi::class)
@@ -40,6 +40,9 @@ fun App(root: RootComponent) {
                     is RootComponent.Child.Login -> LoginScreen(instance.component)
                     is RootComponent.Child.Register -> RegisterScreen(instance.component)
                     is RootComponent.Child.Main -> MainScreen(instance.component)
+                    is RootComponent.Child.AccountRequests -> AccountRequestsScreen(
+                        onBackClick = { instance.component.onGoBack() }
+                    )
                 }
             }
         }

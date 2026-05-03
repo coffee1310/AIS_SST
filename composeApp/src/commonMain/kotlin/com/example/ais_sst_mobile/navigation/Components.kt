@@ -2,6 +2,10 @@ package com.example.ais_sst_mobile.navigation
 
 import com.arkivanov.decompose.ComponentContext
 
+sealed interface FullScreenRoute {
+    data object AccountRequests : FullScreenRoute
+
+}
 class LoginComponent(
     componentContext: ComponentContext,
     val onNavigateToRegister: () -> Unit,
@@ -19,5 +23,11 @@ class CalendarComponent(componentContext: ComponentContext) : ComponentContext b
 class SectorsComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 class ProfileComponent(
     componentContext: ComponentContext,
-    val onLogout: () -> Unit
+    val onLogout: () -> Unit,
+    val onNavigateToFullScreen: (FullScreenRoute) -> Unit
+) : ComponentContext by componentContext
+
+class AccountRequestsComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

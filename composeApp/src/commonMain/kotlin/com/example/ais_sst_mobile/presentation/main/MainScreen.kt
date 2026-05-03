@@ -1,9 +1,7 @@
 package com.example.ais_sst_mobile.presentation.main
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -30,6 +28,7 @@ fun MainScreen(component: MainComponent) {
         is MainComponent.Child.Calendar -> "Календарь"
         is MainComponent.Child.Sectors -> "Сектора ССТ"
         is MainComponent.Child.Profile -> "Профиль"
+        else -> ""
     }
 
     val selectedIndex = when (activeComponent) {
@@ -38,6 +37,7 @@ fun MainScreen(component: MainComponent) {
         is MainComponent.Child.Calendar -> 2
         is MainComponent.Child.Sectors -> 3
         is MainComponent.Child.Profile -> 4
+        else -> 4
     }
 
     AppBackground {
@@ -51,7 +51,7 @@ fun MainScreen(component: MainComponent) {
                 stack = childStack,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(paddingValues),
             ) { child ->
                 when (val instance = child.instance) {
                     is MainComponent.Child.Home -> HomeScreen()
