@@ -65,9 +65,17 @@ class AccountRequestsScreenModel(
         removeRequestFromList(id)
     }
 
-    fun rejectRequest(id: Int) {
-        // TODO: Отправка запроса на отклонение
-        removeRequestFromList(id)
+    fun rejectRequest(id: Int, reason: String) {
+        viewModelScope.launch {
+            userRepository.rejectAccountRequest(id, reason)
+                .onSuccess {
+                    removeRequestFromList(id)
+                }
+                .onFailure {
+                    // TODO: Показать ошибку (например, через Snackbar или отдельный стейт)
+                    println("Ошибка отклонения заявки: ${it.message}")
+                }
+        }
     }
 
     private fun removeRequestFromList(id: Int) {

@@ -22,9 +22,14 @@ data class AccountRequestDto(
     val studentIdNumber: Int?,
     val courseNumber: Int?,
     val status: String,
+    val reasonForRefusal: String? = null,
     val groupId: Int?,
     val groupName: String? = null,
     val specialityId: Int?,
     val specialityName: String? = null,
     val photo: String? = null
+)
+@Serializable
+data class RejectRequestDto(
+    val rejectionReason: String
 )

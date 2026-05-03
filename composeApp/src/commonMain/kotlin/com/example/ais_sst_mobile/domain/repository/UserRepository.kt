@@ -6,4 +6,5 @@ import com.example.ais_sst_mobile.domain.model.User
 interface UserRepository {
     suspend fun getUserProfile(): Result<User>
     suspend fun getAccountRequests(): Result<List<AccountRequestDto>>
+    suspend fun rejectAccountRequest(id: Int, reason: String): Result<Unit>
 }
