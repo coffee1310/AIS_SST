@@ -25,9 +25,13 @@ public interface AccountCreatingRequestMapper {
     AccountCreatingRequestsSummaryDTO toDto(AccountCreatingRequest entity);
 
     @Mapping(target = "specialityId", source = "speciality.id")
+    @Mapping(target = "specialityName", source = "speciality.title")
     @Mapping(target = "groupId", source = "group.id")
+    @Mapping(target = "groupName", source = "group.title")
     @Mapping(target = "status", source = "status")
     @Mapping(target = "reasonForRefusal", source = "reasonForRefusal")
+    @Mapping(target = "photo", expression = "java(ImageUtil.encodeToBase64(entity.getPhoto()))")  // Добавлено преобразование фото
+    @Mapping(target = "gender", source = "gender")
     AccountCreatingRequestResponseDTO toResponseDto(AccountCreatingRequest entity);
 
     @Named("decodePhoto")

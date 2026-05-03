@@ -25,12 +25,12 @@ public class AccountCreatingRequestResponseDTO {
     private Short courseNumber;
     private AccountCreatingRequestStatus status;
     private String reasonForRefusal;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     private Long groupId;
     private String groupName;
     private Long specialityId;
     private String specialityName;
+    private String photo;
+
 
     public static AccountCreatingRequestResponseDTO from(AccountCreatingRequest request) {
         return AccountCreatingRequestResponseDTO.builder()

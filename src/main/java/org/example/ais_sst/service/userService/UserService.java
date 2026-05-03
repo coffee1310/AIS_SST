@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.ais_sst.dto.user.UserProfileInfoDTO;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.mapper.UserMapper;
+import org.example.ais_sst.repository.SectorParticipantRepository;
+import org.example.ais_sst.repository.SocialStatusStudentsRepository;
 import org.example.ais_sst.repository.UserRepository;
 import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.data.domain.*;
@@ -25,22 +27,27 @@ public class UserService implements UserServiceImpl {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final SocialStatusStudentsRepository socialStatusStudentRepository;
+    private final SectorParticipantRepository sectorParticipantRepository;
 
     @Override
     public UserProfileInfoDTO getUserBasicInfo(Long userId) {
-        UserProfileInfoDTO userProfileInfoDTO;
-        Optional<User> user_optional = userRepository.findUserById(userId);
-
-        if (!user_optional.isPresent()) throw new UserDoesNotExistException("Пользователь не найден");
-
-        User user = user_optional.get();
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
 
         // Конвертируем фото в Base64
         String photoBase64 = user.getPhoto() != null && user.getPhoto().length > 0
                 ? ImageUtil.encodeToBase64(user.getPhoto())
                 : null;
 
-        userProfileInfoDTO = UserProfileInfoDTO.builder()
+        // Получаем социальные статусы пользователя
+        List<String> socialStatuses = socialStatusStudentRepository.findSocialStatusTitlesByStudentId(userId);
+
+        // Получаем название сектора, где пользователь является координатором
+        String coordinatorSector = sectorParticipantRepository.findCoordinatorSectorTitleByUserId(userId)
+                .orElse(null);
+
+        return UserProfileInfoDTO.builder()
                 .id(userId)
                 .name(user.getName())
                 .surname(user.getSurname())
@@ -48,20 +55,22 @@ public class UserService implements UserServiceImpl {
                 .dateOfBirth(user.getDateOfBirth())
                 .gender(user.getGender())
                 .rank(0)
-                .specialityTitle(user.getSpeciality().getTitle())
-                .groupTitle(user.getGroup().getTitle())
+                .specialityTitle(user.getSpeciality() != null ? user.getSpeciality().getTitle() : null)
+                .groupTitle(user.getGroup() != null ? user.getGroup().getTitle() : null)
                 .courseNumber(user.getCourseNumber())
                 .additionalEmail(user.getAdditionalEmail())
                 .studentEmail(user.getStudentEmail())
                 .roleTitle(user.getRole().getTitle())
                 .vkLink(user.getVkLink())
-                .courseNumber(user.getCourseNumber())
                 .phoneNumber(user.getPhoneNumber())
-                .photo(photoBase64)  // Конвертированное фото
+                .photo(photoBase64)
+                .socialStatuses(socialStatuses)
+                .coordinatorSector(coordinatorSector)  // Добавляем сектор координатора
+                .events_count(0)
+                .points_count(0)
                 .build();
-
-        return userProfileInfoDTO;
     }
+
 
     @Transactional
     public Page<UserResponseDTO> getAllUsers(int page, int size, String sortBy, String sortDirection, UserFilterDTO filter) {

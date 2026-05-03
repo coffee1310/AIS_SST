@@ -13,6 +13,7 @@ import org.example.ais_sst.entity.Speciality;
 import org.example.ais_sst.entity.enums.Gender;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 @Builder
@@ -68,6 +69,10 @@ public class UserProfileInfoDTO {
     private String photo;
 
     private String roleTitle;
+
+    private String coordinatorSector;  // Добавлено поле для сектора координатора
+
+    private List<String> socialStatuses;  // Добавлено поле для социальных статусов
 
     public void validate(Validator validator) {
         Set<ConstraintViolation<UserProfileInfoDTO>> violations = validator.validate(this);

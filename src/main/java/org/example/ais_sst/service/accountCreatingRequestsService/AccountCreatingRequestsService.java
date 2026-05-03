@@ -170,4 +170,13 @@ public class AccountCreatingRequestsService {
         // Используем маппер для преобразования каждой сущности
         return requests.map(requestMapper::toResponseDto);
     }
+
+    public Page<AccountCreatingRequestResponseDTO> getPendingRequests(Pageable pageable) {
+        log.info("Getting pending account requests");
+
+        Page<AccountCreatingRequest> requests = accountCreatingRequestsRepository
+                .findByStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ, pageable);
+
+        return requests.map(requestMapper::toResponseDto);
+    }
 }

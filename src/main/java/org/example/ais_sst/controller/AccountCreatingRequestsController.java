@@ -63,4 +63,13 @@ public class AccountCreatingRequestsController {
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         return accountCreatingRequestsService.getRequests(pageable);
     }
+
+    @GetMapping("/pending")
+    public Page<AccountCreatingRequestResponseDTO> getPendingRequests(
+            @PageableDefault(size = 20, direction = Sort.Direction.DESC) Pageable pageable) {
+        log.info("GET /api/account_requests/pending - Getting pending requests");
+        return accountCreatingRequestsService.getPendingRequests(pageable);
+    }
+
+    // ToDo: добавить createdAt
 }
