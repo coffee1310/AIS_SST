@@ -220,8 +220,15 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="15,0,0,0" VerticalAlignment="Center">
                                             <TextBlock x:Name="Star" Text="*" Foreground="#02B3BA" Margin="0,0,5,0" Visibility="Collapsed"/>
-                                            <TextBlock x:Name="DisplayText" Text="{Binding SelectedItem.Content, RelativeSource={RelativeSource AncestorType=ComboBox}}" Foreground="{Binding SelectedItem.Foreground, RelativeSource={RelativeSource AncestorType=ComboBox}}" Visibility="Visible"/>
-                                            <TextBlock x:Name="PlaceholderText" Text="Выберите..." Foreground="#7A7886" Visibility="Collapsed"/>
+                                            <ContentPresenter x:Name="DisplayText" 
+                                                              Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}" 
+                                                              ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}" 
+                                                              ContentStringFormat="{Binding SelectionBoxItemStringFormat, RelativeSource={RelativeSource AncestorType=ComboBox}}" 
+                                                              VerticalAlignment="Center" 
+                                                              TextBlock.Foreground="White" 
+                                                              TextBlock.FontFamily="Montserrat Thin" 
+                                                              TextBlock.FontSize="14"/>
+                                            <TextBlock x:Name="PlaceholderText" Text="{TemplateBinding Tag}" Foreground="#7A7886" Visibility="Collapsed" FontFamily="Montserrat Thin" FontSize="14"/>
                                         </StackPanel>
                                         <Path Grid.Column="1" Fill="#02B3BA" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
                                     </Grid>
@@ -232,14 +239,13 @@
                                         <DataTrigger Binding="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="{x:Null}">
                                             <Setter TargetName="DisplayText" Property="Visibility" Value="Collapsed"/>
                                             <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible"/>
-                                            <Setter TargetName="Star" Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="Slide">
-                            <Border Background="#12101C" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="8" MinWidth="{TemplateBinding ActualWidth}" Margin="0,5,0,0">
+                            <Border Background="#12101C" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="8" MinWidth="{TemplateBinding ActualWidth}" Margin="0,5,0,0" MaxHeight="250">
                                 <ScrollViewer>
                                     <ItemsPresenter/>
                                 </ScrollViewer>
@@ -284,6 +290,8 @@
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Padding" Value="15,0"/>
         <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontFamily" Value="Montserrat Thin"/>
+        <Setter Property="CaretBrush" Value="White"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">

@@ -161,6 +161,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\Coordinator\CreateEvent.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Pages\General\Auth.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -216,6 +220,9 @@
     </Compile>
     <Compile Include="Pages\Coordinator\CoordinatorPanel.xaml.cs">
       <DependentUpon>CoordinatorPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Coordinator\CreateEvent.xaml.cs">
+      <DependentUpon>CreateEvent.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\General\Auth.xaml.cs">
       <DependentUpon>Auth.xaml</DependentUpon>

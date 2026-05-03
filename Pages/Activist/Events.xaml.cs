@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Diplom_Stud.Pages.Coordinator;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -41,6 +42,11 @@ namespace Diplom_Stud.Pages.Activist
         private void EventCard_Click(object sender, MouseButtonEventArgs e)
         {
             this.NavigationService.Navigate(new EventDetails());
+        }
+
+        private void CreateEvent_Click(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Navigate(new CreateEvent());
         }
     }
 }

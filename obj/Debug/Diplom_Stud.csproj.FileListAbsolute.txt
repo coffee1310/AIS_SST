@@ -73,3 +73,5 @@ C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Diplom_Stud.c
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\bin\Debug\System.ValueTuple.dll
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Coordinator\CoordinatorPanel.g.cs
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Coordinator\CoordinatorPanel.baml
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Coordinator\CreateEvent.g.cs
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Coordinator\CreateEvent.baml

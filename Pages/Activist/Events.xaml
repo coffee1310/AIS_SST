@@ -10,6 +10,7 @@
       Loaded="Page_Loaded">
 
     <Grid Background="Transparent">
+        <!-- Основной контент со скроллом -->
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" MaxWidth="1000" Margin="40,50,40,50">
 
@@ -221,5 +222,41 @@
 
             </StackPanel>
         </ScrollViewer>
+
+        <!-- ПЛАВАЮЩАЯ КНОПКА СОЗДАНИЯ МЕРОПРИЯТИЯ -->
+        <Button Width="64" Height="64" Margin="0,0,40,40" HorizontalAlignment="Right" VerticalAlignment="Bottom" Cursor="Hand" Click="CreateEvent_Click">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="fabBorder" Background="#615292" CornerRadius="32">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="15" Opacity="0.4" ShadowDepth="5" Color="Black"/>
+                        </Border.Effect>
+                        <TextBlock Text="+" Foreground="White" FontSize="40" FontFamily="Montserrat" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,-4,0,0"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Плавная анимация при наведении для парящей кнопки -->
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <ColorAnimation Storyboard.TargetName="fabBorder" 
+                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                    To="#7363A8" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <ColorAnimation Storyboard.TargetName="fabBorder" 
+                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
+                                                    To="#615292" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
     </Grid>
 </Page>
