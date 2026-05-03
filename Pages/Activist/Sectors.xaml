@@ -24,7 +24,7 @@
 
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource EventCardStyle}" Cursor="Hand" MouseLeftButtonUp="SectorCard_Click" Tag="{Binding Id}" Margin="15">
+                            <Border Style="{StaticResource EventCardStyle}" Height="420" Cursor="Hand" MouseLeftButtonUp="SectorCard_Click" Tag="{Binding Id}" Margin="15">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -32,9 +32,9 @@
                                     </Grid.RowDefinitions>
 
                                     <Grid Grid.Row="0" Height="180" Margin="20,20,20,0">
-                                        <Border x:Name="MaskBorder" Background="White" CornerRadius="12"/>
+                                        <Border x:Name="MaskBorder" Background="#12101C" CornerRadius="12"/>
 
-                                        <Image Source="{Binding Image}" Stretch="UniformToFill">
+                                        <Image Source="{Binding Image}" Stretch="Uniform">
                                             <Image.OpacityMask>
                                                 <VisualBrush Visual="{Binding ElementName=MaskBorder}"/>
                                             </Image.OpacityMask>
@@ -48,9 +48,9 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
-                                        <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="White" FontSize="18" FontFamily="Digital Pixel" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                                        <TextBlock Grid.Row="0" Text="{Binding Title}" Foreground="White" FontSize="16" FontFamily="Digital Pixel" Margin="0,0,0,12" TextWrapping="Wrap" MaxHeight="45" TextTrimming="CharacterEllipsis"/>
 
-                                        <TextBlock Grid.Row="1" Text="{Binding Description}" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,30" LineHeight="18"/>
+                                        <TextBlock Grid.Row="1" Text="{Binding Description}" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Margin="0,0,0,15" LineHeight="18"/>
 
                                         <Button Grid.Row="2" Content="{Binding ButtonText}" Style="{Binding ButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Bottom" IsHitTestVisible="False"/>
                                     </Grid>

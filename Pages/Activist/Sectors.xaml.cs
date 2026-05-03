@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -102,33 +103,18 @@ namespace Diplom_Stud.Pages.Activist
                                 vm.ButtonStyle = FindResource("SectorActiveButtonStyle") as Style;
                             }
 
+                            // --- ОБНОВЛЕННАЯ ЛОГИКА ЗАГРУЗКИ ФОТО СЕКТОРА ---
+                            // Сначала ставим заглушку по умолчанию
+                            vm.Image = new BitmapImage(new Uri("pack://application:,,,/Resources/sector.png"));
+
+                            // Если фото пришло, пробуем его "умно" декодировать
                             if (!string.IsNullOrEmpty(sector.photo))
                             {
-                                try
+                                BitmapImage bmp = GetImageFromBase64(sector.photo);
+                                if (bmp != null)
                                 {
-                                    string base64Data = sector.photo;
-                                    int commaIndex = base64Data.IndexOf(',');
-                                    if (commaIndex >= 0) base64Data = base64Data.Substring(commaIndex + 1);
-
-                                    byte[] imageBytes = Convert.FromBase64String(base64Data);
-                                    using (var ms = new MemoryStream(imageBytes))
-                                    {
-                                        var bitmap = new BitmapImage();
-                                        bitmap.BeginInit();
-                                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                        bitmap.StreamSource = ms;
-                                        bitmap.EndInit();
-                                        vm.Image = bitmap;
-                                    }
+                                    vm.Image = bmp; // Если получилось декодировать, ставим реальное фото
                                 }
-                                catch
-                                {
-                                    vm.Image = new BitmapImage(new Uri("pack://application:,,,/Resources/sector1.png"));
-                                }
-                            }
-                            else
-                            {
-                                vm.Image = new BitmapImage(new Uri("pack://application:,,,/Resources/sector1.png"));
                             }
 
                             viewModels.Add(vm);
@@ -146,6 +132,69 @@ namespace Diplom_Stud.Pages.Activist
             {
                 CustomMessageBox.Show($"Произошла ошибка при загрузке данных: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
+        }
+
+        // --- УМНЫЙ ДЕКОДЕР BASE64 ---
+        private BitmapImage GetImageFromBase64(string base64String)
+        {
+            try
+            {
+                string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
+                byte[] imageBytes = null;
+
+                try
+                {
+                    // Пробуем раскодировать первый слой
+                    byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
+                    string textInside = Encoding.UTF8.GetString(decodedFirstLevel);
+
+                    if (textInside.StartsWith("data:image"))
+                    {
+                        // Если внутри оказался текст с префиксом data:image
+                        int commaIndex = textInside.IndexOf(',');
+                        if (commaIndex >= 0)
+                        {
+                            string actualBase64 = textInside.Substring(commaIndex + 1);
+                            imageBytes = Convert.FromBase64String(actualBase64);
+                        }
+                    }
+                    else
+                    {
+                        // Если это были обычные байты (одинарная кодировка)
+                        imageBytes = decodedFirstLevel;
+                    }
+                }
+                catch
+                {
+                    // Если первый слой не раскодировался как двойной base64, 
+                    // возможно строка изначально имела префикс data:image/jpeg;base64,...
+                    int commaIndex = cleanStr.IndexOf(',');
+                    if (commaIndex >= 0)
+                    {
+                        cleanStr = cleanStr.Substring(commaIndex + 1);
+                    }
+                    imageBytes = Convert.FromBase64String(cleanStr);
+                }
+
+                if (imageBytes != null)
+                {
+                    using (var ms = new MemoryStream(imageBytes))
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.StreamSource = ms;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        return bitmap;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка обработки фото сектора: {ex.Message}");
+            }
+            return null;
         }
 
         private void SectorCard_Click(object sender, MouseButtonEventArgs e)

@@ -4,7 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:Diplom_Stud.Pages.Activist"
-      mc:Ignorable="d"
+      mc:Ignorable="d" 
       Title="Profile Page" UseLayoutRounding="True" SnapsToDevicePixels="True" 
       d:DesignHeight="1211" d:DesignWidth="1111"
       Loaded="Page_Loaded">
@@ -36,97 +36,129 @@
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock x:Name="NameTextBlock" Text="Загрузка..." Foreground="White" FontWeight="Bold" Margin="0,0,0,10" FontFamily="Digital Pixel" FontSize="26"/>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Активист студсовета" Foreground="White" FontSize="13" Margin="0,0,40,0"/>
+                            <!-- ИСПРАВЛЕНИЕ: Добавлено имя RoleTextBlock -->
+                            <TextBlock x:Name="RoleTextBlock" Text="Загрузка роли..." Foreground="White" FontSize="13" Margin="0,0,40,0"/>
                             <TextBlock x:Name="GroupTextBlock" Text="Группа: Загрузка..." Foreground="White" FontSize="13"/>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
 
                 <UniformGrid Grid.Row="1" Columns="3" Margin="0,0,0,20">
-                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,10,0">
+                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,10,0" Padding="10,15">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="Всего мероприятий:" Foreground="#02B3BA" FontSize="12" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="EventsCountTextBlock" Text="0" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontFamily="Digital Pixel" FontSize="36"/>
+                            <TextBlock Text="Всего мероприятий:" Foreground="#02B3BA" FontSize="12" Margin="0,0,0,5" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                            <TextBlock x:Name="EventsCountTextBlock" Text="0" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontFamily="Digital Pixel" FontSize="22"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{StaticResource CardBorderStyle}" Margin="10,0,10,0">
+                    <Border Style="{StaticResource CardBorderStyle}" Margin="10,0,10,0" Padding="10,15">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="Баллы рейтинга:" Foreground="#02B3BA" FontSize="12" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="PointsCountTextBlock" Text="0" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontFamily="Digital Pixel" FontSize="36"/>
+                            <TextBlock Text="Баллы рейтинга:" Foreground="#02B3BA" FontSize="12" Margin="0,0,0,5" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                            <TextBlock x:Name="PointsCountTextBlock" Text="0" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontFamily="Digital Pixel" FontSize="22"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{StaticResource CardBorderStyle}" Margin="10,0,0,0">
+                    <Border Style="{StaticResource CardBorderStyle}" Margin="10,0,0,0" Padding="10,15">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="Место в рейтинге:" Foreground="#02B3BA" FontSize="12" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="RankTextBlock" Text="0" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontFamily="Digital Pixel" FontSize="36"/>
+                            <TextBlock Text="Место в рейтинге:" Foreground="#02B3BA" FontSize="12" Margin="0,0,0,5" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                            <TextBlock x:Name="RankTextBlock" Text="0" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" FontFamily="Digital Pixel" FontSize="22"/>
                         </StackPanel>
                     </Border>
                 </UniformGrid>
 
                 <Grid Grid.Row="2" Margin="0,0,0,30">
                     <Button Content="Редактировать" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Left" Width="180" FontFamily="Digital Pixel" FontSize="12"/>
-                    <Button Content="История баллов" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Left" Width="182" Click="Button_Click" FontFamily="Digital Pixel" FontSize="12" Margin="537,0,0,1"/>
+                    <Button Content="История баллов" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" Width="182" Click="Button_Click" FontFamily="Digital Pixel" FontSize="12"/>
                 </Grid>
 
                 <Grid Grid.Row="3" Margin="0,0,0,20">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="1.2*"/>
                         <ColumnDefinition Width="20"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" VerticalAlignment="Top">
                         <StackPanel>
-                            <TextBlock Text="Общая информация" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18"/>
+                            <TextBlock Text="Общая информация" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18" TextWrapping="Wrap"/>
 
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid Margin="0,0,0,15">
-                                <TextBlock Text="Дата рождения" Foreground="White"/>
-                                <TextBlock x:Name="BirthDateTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Дата рождения:" Foreground="White" Margin="0,0,15,0"/>
+                                <TextBlock x:Name="BirthDateTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap"/>
                             </Grid>
 
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid Margin="0,0,0,15">
-                                <TextBlock Text="Номер студенческого билета" Foreground="White"/>
-                                <TextBlock x:Name="StudentIdTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Пол:" Foreground="White" Margin="0,0,15,0"/>
+                                <TextBlock x:Name="GenderTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap"/>
                             </Grid>
 
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid Margin="0,0,0,15">
-                                <TextBlock Text="Пол" Foreground="White"/>
-                                <TextBlock x:Name="GenderTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Учебная почта:" Foreground="White" Margin="0,0,15,0"/>
+                                <TextBlock x:Name="StudentEmailTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap"/>
                             </Grid>
 
+                            <!-- ИСПРАВЛЕНИЕ: Добавлен блок социальных статусов -->
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid>
-                                <TextBlock Text="Учебная почта" Foreground="White"/>
-                                <TextBlock x:Name="StudentEmailTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- VerticalAlignment="Top" чтобы заголовок не уезжал вниз, если статусов много -->
+                                <TextBlock Grid.Column="0" Text="Социальный статус:" Foreground="White" Margin="0,0,15,0" VerticalAlignment="Top"/>
+                                <TextBlock x:Name="SocialStatusesTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap" LineHeight="20"/>
                             </Grid>
+
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" VerticalAlignment="Center" Grid.ColumnSpan="2" Height="336" Margin="20,0,0,0">
+                    <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" VerticalAlignment="Top">
                         <StackPanel>
-                            <TextBlock Text="Контактная информация" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18"/>
+                            <TextBlock Text="Контактная информация" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18" TextWrapping="Wrap"/>
 
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid Margin="0,0,0,15">
-                                <TextBlock Text="Телефон" Foreground="White"/>
-                                <TextBlock x:Name="PhoneTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Телефон:" Foreground="White" Margin="0,0,15,0"/>
+                                <TextBlock x:Name="PhoneTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap"/>
                             </Grid>
 
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid Margin="0,0,0,15">
-                                <TextBlock Text="Дополнительная почта" Foreground="White"/>
-                                <TextBlock x:Name="AdditionalEmailTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Дополнительная почта:" Foreground="White" Margin="0,0,15,0"/>
+                                <TextBlock x:Name="AdditionalEmailTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap"/>
                             </Grid>
 
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid>
-                                <TextBlock Text="Ссылка на Вконтакте" Foreground="White"/>
-                                <TextBlock x:Name="VkLinkTextBlock" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Ссылка на Вконтакте:" Foreground="White" Margin="0,0,15,0"/>
+                                <TextBlock x:Name="VkLinkTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap"/>
                             </Grid>
                         </StackPanel>
                     </Border>

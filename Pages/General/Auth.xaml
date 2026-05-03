@@ -122,7 +122,7 @@
                             </Border>
 
                             <Border Grid.Column="1" Style="{StaticResource AuthInputBorderStyle}" Width="Auto" CornerRadius="0,8,8,0">
-                                <ComboBox x:Name="cbDomain" Style="{StaticResource ModernComboBoxStyle}" HorizontalAlignment="Stretch">
+                                <ComboBox x:Name="cbDomain" Style="{StaticResource ModernComboBoxStyle}" Cursor="Hand" HorizontalAlignment="Stretch">
                                     <ComboBoxItem Content="@edu.fa.ru" IsSelected="True" Foreground="White"/>
                                     <ComboBoxItem Content="@fa.ru" Foreground="White"/>
                                 </ComboBox>

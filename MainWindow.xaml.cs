@@ -1,9 +1,17 @@
 ﻿using Diplom_Stud.Pages.Activist;
+using Diplom_Stud.Pages.Coordinator; // Не забудьте добавить это пространство имен!
 using Diplom_Stud.Pages.General;
 using Diplom_Stud.Components;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -14,10 +22,19 @@ namespace Diplom_Stud
 {
     public partial class MainWindow : Window
     {
+        private static readonly HttpClient _httpClient = new HttpClient();
+
         public MainWindow()
         {
             InitializeComponent();
             MainFrame.Navigate(new Pages.General.Auth());
+
+            if (_httpClient.BaseAddress == null)
+            {
+                _httpClient.BaseAddress = new Uri(App.ApiBaseUrl);
+                _httpClient.DefaultRequestHeaders.Accept.Clear();
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
         }
 
         public void UpdateUserMenu()
@@ -48,6 +65,15 @@ namespace Diplom_Stud
                         }
                     }
                 }
+            }
+
+            if (data.roleTitle == "Sector_coordinator" || data.roleTitle == "Coordinator")
+            {
+                NavSectors.Content = "Мой сектор"; 
+            }
+            else
+            {
+                NavSectors.Content = "Сектора"; 
             }
         }
 
@@ -131,7 +157,7 @@ namespace Diplom_Stud
             {
                 NavEvents.IsChecked = true;
             }
-            else if (e.Content is Pages.Activist.Sectors || e.Content is Pages.Activist.SectorDetails)
+            else if (e.Content is Pages.Activist.Sectors || e.Content is Pages.Activist.SectorDetails || e.Content is Pages.Coordinator.CoordinatorPanel)
             {
                 NavSectors.IsChecked = true;
             }
@@ -177,11 +203,60 @@ namespace Diplom_Stud
             }
         }
 
-        private void MenuSectors_Click(object sender, RoutedEventArgs e)
+        private async void MenuSectors_Click(object sender, RoutedEventArgs e)
         {
-            if (!(MainFrame.Content is Pages.Activist.Sectors))
+            var data = App.CurrentUserProfile;
+            if (data == null) return;
+
+            if (data.roleTitle == "Sector_coordinator" || data.roleTitle == "Coordinator")
             {
-                MainFrame.Navigate(new Pages.Activist.Sectors());
+                try
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                    HttpResponseMessage response = await _httpClient.GetAsync("/api/sector");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        var sectors = JsonSerializer.Deserialize<List<Diplom_Stud.Pages.Coordinator.SectorDto>>(responseBody, options);
+
+                        var mySector = sectors?.FirstOrDefault(s => s.title == data.coordinatorSector);
+
+                        if (mySector != null)
+                        {
+                            if (!(MainFrame.Content is Pages.Coordinator.CoordinatorPanel currentPanel) || currentPanel.Tag?.ToString() != mySector.id.ToString())
+                            {
+                                var panel = new Pages.Coordinator.CoordinatorPanel(mySector.id);
+                                panel.Tag = mySector.id;
+                                MainFrame.Navigate(panel);
+                            }
+                        }
+                        else
+                        {
+                            if (!(MainFrame.Content is Pages.Activist.Sectors))
+                            {
+                                MainFrame.Navigate(new Pages.Activist.Sectors());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        CustomMessageBox.Show($"Ошибка при загрузке списка секторов: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CustomMessageBox.Show($"Сетевая ошибка: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+            else
+            {
+                if (!(MainFrame.Content is Pages.Activist.Sectors))
+                {
+                    MainFrame.Navigate(new Pages.Activist.Sectors());
+                }
             }
         }
 

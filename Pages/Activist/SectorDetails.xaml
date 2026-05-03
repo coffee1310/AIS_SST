@@ -10,6 +10,7 @@
       Loaded="Page_Loaded">
 
     <Grid Background="Transparent">
+
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" Width="950" Margin="40,50,40,50">
 
@@ -21,10 +22,12 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Width="380" Height="220" CornerRadius="12" Margin="0,0,40,0" ClipToBounds="True" VerticalAlignment="Top">
-                        <Border.Background>
-                            <ImageBrush x:Name="SectorImage" ImageSource="/Resources/sector1.png" Stretch="UniformToFill"/>
-                        </Border.Background>
+                    <Border Grid.Column="0" Width="380" Height="220" CornerRadius="12" Margin="0,0,40,0" Background="#12101C" ClipToBounds="True" VerticalAlignment="Top">
+                        <Rectangle>
+                            <Rectangle.Fill>
+                                <ImageBrush x:Name="SectorImage" ImageSource="/Resources/sector.png" Stretch="Uniform"/>
+                            </Rectangle.Fill>
+                        </Rectangle>
                     </Border>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Top">
@@ -58,5 +61,13 @@
 
             </StackPanel>
         </ScrollViewer>
+
+        <Grid x:Name="LoadingOverlay" Background="#E61A1A2E" Visibility="Visible">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4" Foreground="#02B3BA" Background="#2A283C" BorderThickness="0" Margin="0,0,0,15"/>
+                <TextBlock Text="Загрузка данных..." Foreground="White" FontFamily="Digital Pixel" FontSize="18" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
     </Grid>
 </Page>

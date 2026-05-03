@@ -1,5 +1,6 @@
 ﻿using Diplom_Stud.Components;
 using Diplom_Stud.Pages.Activist;
+using Microsoft.Toolkit.Uwp.Notifications; // Подключаем библиотеку уведомлений
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -164,6 +165,7 @@ namespace Diplom_Stud.Pages.General
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
+
             tbLoginError.Visibility = Visibility.Collapsed;
             tbPasswordError.Visibility = Visibility.Collapsed;
 
@@ -202,6 +204,7 @@ namespace Diplom_Stud.Pages.General
                 bool success = await AuthenticateUser(fullEmail, password);
                 if (success)
                 {
+
                     NavigateToUserProfile();
                 }
                 else

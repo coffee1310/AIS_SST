@@ -67,3 +67,9 @@ C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activis
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Activist\ProjectDetails.baml
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\General\CustomMessageBox.baml
 C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\General\CustomMessageBox.g.cs
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\bin\Debug\Microsoft.Toolkit.Uwp.Notifications.dll
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\bin\Debug\Microsoft.Toolkit.Uwp.Notifications.pdb
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Diplom_Stud.csproj.SuggestedBindingRedirects.cache
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\bin\Debug\System.ValueTuple.dll
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Coordinator\CoordinatorPanel.g.cs
+C:\Users\danii\OneDrive\Desktop\Диплом\Diplom_Stud\obj\Debug\Pages\Coordinator\CoordinatorPanel.baml

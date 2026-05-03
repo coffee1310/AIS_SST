@@ -53,6 +53,9 @@ namespace Diplom_Stud.Pages.Activist
 
         private async Task LoadSectorDataAsync()
         {
+            // Показываем экран загрузки
+            LoadingOverlay.Visibility = Visibility.Visible;
+
             try
             {
                 if (string.IsNullOrEmpty(App.AuthToken))
@@ -92,6 +95,11 @@ namespace Diplom_Stud.Pages.Activist
             {
                 CustomMessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
+            finally
+            {
+                // Обязательно скрываем загрузку в конце
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void UpdateUI()
@@ -108,6 +116,7 @@ namespace Diplom_Stud.Pages.Activist
                 BitmapImage bmp = GetImageFromBase64(_currentSector.photo);
                 if (bmp != null) SectorImage.ImageSource = bmp;
             }
+
             if (!string.IsNullOrEmpty(_currentSector.coordinatorPhoto))
             {
                 BitmapImage bmp = GetImageFromBase64(_currentSector.coordinatorPhoto);
