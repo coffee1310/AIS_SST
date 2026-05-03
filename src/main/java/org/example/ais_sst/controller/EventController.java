@@ -14,10 +14,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @Slf4j
 @RestController
@@ -48,16 +51,31 @@ public class EventController {
     }
 
     @GetMapping
-    @Operation(summary = "Получить список мероприятий")
-    public ResponseEntity<Page<EventResponseDTO>> getAllEvents(
+    @Operation(summary = "Универсальный поиск мероприятий с фильтрами")
+    public ResponseEntity<Page<EventResponseDTO>> getEvents(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String venue,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            @RequestParam(required = false) Boolean isPublic,
+            @RequestParam(required = false) Boolean isDraft,
+            @RequestParam(required = false) Boolean isCompleted,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) Long creatorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDirection) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        log.info("GET /api/events - Getting events");
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
-        Page<EventResponseDTO> events = eventService.getAllEvents(pageable);
+        log.info("GET /api/events - Getting events with filters");
+
+        // Временно без сортировки
+        Pageable pageable = PageRequest.of(page, size);
+
+        Long filterCreatorId = creatorId != null ? creatorId : (userDetails != null ? userDetails.getId() : null);
+
+        Page<EventResponseDTO> events = eventService.getEventsWithFilters(
+                title, venue, dateFrom, dateTo, isPublic, isDraft, isCompleted, isActive, filterCreatorId, pageable);
+
         return ResponseEntity.ok(events);
     }
 
@@ -121,5 +139,16 @@ public class EventController {
         log.info("DELETE /api/events/{} - Deleting event", id);
         eventService.deleteEvent(id, userDetails.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/complete")
+    @Operation(summary = "Завершить мероприятие")
+    public ResponseEntity<EventResponseDTO> completeEvent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        log.info("POST /api/events/{}/complete - Completing event", id);
+        EventResponseDTO response = eventService.completeEvent(id, userDetails.getId());
+        return ResponseEntity.ok(response);
     }
 }

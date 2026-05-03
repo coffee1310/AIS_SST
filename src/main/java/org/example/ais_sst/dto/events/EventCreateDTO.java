@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -24,24 +25,23 @@ public class EventCreateDTO {
 
     private String description;
 
-    private String photo;  // Путь к фото
-
-    @NotNull(message = "Время начала обязательно")
-    private LocalDateTime startTime;
-
-    @NotNull(message = "Время окончания обязательно")
-    private LocalDateTime endTime;
-
-    private String venue;  // Изменено с location на venue
-
-    @Builder.Default  // Добавлено поле isPublic с значением по умолчанию
-    private Boolean isPublic = true;
+    private String photo;  // Base64 строка фото
 
     private LocalDate dateOfEvent;
 
+    private LocalTime startTime;
+
+    private LocalTime endTime;
+
+    private String venue;
+
     private String referenceToPosition;
 
-    @NotNull(message = "Должен быть хотя бы один организатор")
-    @Size(min = 1, message = "Должен быть хотя бы один организатор")
-    private List<Long> organizerIds;  // ID пользователей-организаторов
+    @Builder.Default
+    private Boolean isPublic = true;
+
+    @Builder.Default
+    private Boolean isDraft = true;
+
+    private List<Long> organizerIds;
 }

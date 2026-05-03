@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -21,21 +22,23 @@ public class EventUpdateDTO {
 
     private String description;
 
-    private String photo;
+    private String photo;  // Base64 строка фото
 
     private LocalDate dateOfEvent;
 
+    private LocalTime startTime;
+
+    private LocalTime endTime;
+
+    private String venue;
+
     private String referenceToPosition;
 
-    private LocalDateTime startTime;
+    private Boolean isPublic;
 
-    private LocalDateTime endTime;
-
-    private String venue;  // Изменено с location на venue
+    private Boolean isDraft;
 
     private Boolean isActive;
 
-    private Boolean isPublic;  // Добавлено поле isPublic
-
-    private List<Long> organizerIds;  // Обновленный список организаторов
+    private List<Long> organizerIds;
 }

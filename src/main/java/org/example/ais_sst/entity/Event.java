@@ -69,6 +69,14 @@ public class Event {
     @Column(name = "date_of_event")  // Добавлено поле
     private LocalDate dateOfEvent;
 
+    @Column(name = "is_draft")
+    @Builder.Default
+    private Boolean isDraft = true;
+
+    @Column(name = "is_completed")
+    @Builder.Default
+    private Boolean isCompleted = false;
+
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<EventOrganizer> organizers = new ArrayList<>();
