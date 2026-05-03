@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +40,8 @@ public class Event {
     @Column(name = "end_time")
     private LocalDateTime endTime;
 
-    @Column(name = "location")
-    private String location;
+    @Column(name = "venue")  // Изменено с location на venue
+    private String venue;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_creator_id", nullable = false)
@@ -50,6 +51,10 @@ public class Event {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(name = "is_public")  // Добавлено поле is_public
+    @Builder.Default
+    private Boolean isPublic = true;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -57,6 +62,12 @@ public class Event {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "reference_to_position")  // Добавлено поле
+    private String referenceToPosition;
+
+    @Column(name = "date_of_event")  // Добавлено поле
+    private LocalDate dateOfEvent;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

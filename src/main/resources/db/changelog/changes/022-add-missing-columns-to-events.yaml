@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 027-add-missing-columns-to-events
+      author: coffee13102006
+      labels: add-columns
+      comment: "Добавление недостающих колонок в таблицу events"
+      changes:
+        # Добавление колонки is_active
+        - sql:
+            comment: "Добавление колонки is_active"
+            sql: ALTER TABLE events ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE NOT NULL

@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 029-add-location-to-events
+      author: coffee13102006
+      labels: add-column
+      comment: "Добавление колонки location в таблицу events"
+      changes:
+        - sql:
+            comment: "Добавление колонки location"
+            sql: ALTER TABLE events ADD COLUMN IF NOT EXISTS location VARCHAR(255)

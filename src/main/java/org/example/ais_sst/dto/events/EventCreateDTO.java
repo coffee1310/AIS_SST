@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,7 +32,14 @@ public class EventCreateDTO {
     @NotNull(message = "Время окончания обязательно")
     private LocalDateTime endTime;
 
-    private String location;
+    private String venue;  // Изменено с location на venue
+
+    @Builder.Default  // Добавлено поле isPublic с значением по умолчанию
+    private Boolean isPublic = true;
+
+    private LocalDate dateOfEvent;
+
+    private String referenceToPosition;
 
     @NotNull(message = "Должен быть хотя бы один организатор")
     @Size(min = 1, message = "Должен быть хотя бы один организатор")

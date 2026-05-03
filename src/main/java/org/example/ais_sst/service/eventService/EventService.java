@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -87,9 +88,14 @@ public class EventService {
         Event event = eventMapper.toEntity(dto);
         event.setEventCreator(creator);
 
+        // Инициализируем список организаторов, если null
+        if (event.getOrganizers() == null) {
+            event.setOrganizers(new ArrayList<>());
+        }
+
         Event savedEvent = eventRepository.save(event);
 
-        // Добавляем организаторов
+        // Добавляем организаторов и сразу добавляем их в список сущности
         for (Long organizerId : dto.getOrganizerIds()) {
             User organizer = userRepository.findById(organizerId)
                     .orElseThrow(() -> new OrganizerDoesNotExistException("Организатор с id " + organizerId + " не найден"));
@@ -99,11 +105,19 @@ public class EventService {
                     .user(organizer)
                     .build();
 
-            eventOrganizerRepository.save(eventOrganizer);
+            // Сохраняем организатора
+            EventOrganizer savedOrganizer = eventOrganizerRepository.save(eventOrganizer);
+
+            // Добавляем в список сущности
+            savedEvent.getOrganizers().add(savedOrganizer);
         }
 
         log.info("Event created successfully with id: {}", savedEvent.getId());
-        return getEventById(savedEvent.getId());
+
+        // Обновляем мероприятие с добавленными организаторами
+        Event updatedEvent = eventRepository.save(savedEvent);
+
+        return getEventById(updatedEvent.getId());
     }
 
     /**
@@ -153,8 +167,10 @@ public class EventService {
         if (dto.getPhoto() != null) event.setPhoto(dto.getPhoto());
         if (dto.getStartTime() != null) event.setStartTime(dto.getStartTime());
         if (dto.getEndTime() != null) event.setEndTime(dto.getEndTime());
-        if (dto.getLocation() != null) event.setLocation(dto.getLocation());
+        if (dto.getVenue() != null) event.setVenue(dto.getVenue());  // Изменено с getLocation на getVenue
         if (dto.getIsActive() != null) event.setIsActive(dto.getIsActive());
+        if (dto.getIsPublic() != null) event.setIsPublic(dto.getIsPublic());  // Добавлено обновление isPublic
+        if (dto.getDateOfEvent() != null) event.setDateOfEvent(dto.getDateOfEvent());
 
         // Обновляем организаторов, если передан новый список
         if (dto.getOrganizerIds() != null) {

@@ -33,3 +33,11 @@ databaseChangeLog:
       file: db/changelog/changes/018-remove-name-description-from-event-roles.yaml
   - include:
       file: db/changelog/changes/019-add-sector-to-global-roles-and-event-organizers.yaml
+  - include:
+      file: db/changelog/changes/020-add-timestamps-to-events.yaml
+  - include:
+      file: db/changelog/changes/021-add-description-to-events.yaml
+  - include:
+      file: db/changelog/changes/022-add-missing-columns-to-events.yaml
+  - include:
+      file: db/changelog/changes/023-add-location-to-events.yaml
