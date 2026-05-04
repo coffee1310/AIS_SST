@@ -12,12 +12,17 @@ data class LoginRequest(
 @Serializable
 data class AuthResponse(
     val token: String,
+    val refreshToken: String,
     val type: String = "Bearer",
     val id: Int,
     val email: String,
     val name: String,
     val surname: String,
     val roles: List<String>
+)
+@Serializable
+data class RefreshRequest(
+    val refreshToken: String
 )
 
 @Serializable

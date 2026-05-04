@@ -28,7 +28,7 @@ val coreModule = module {
 
 val appModule = module {
     // Repositories
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get()) }
     single<DictionaryRepository> { DictionaryRepositoryImpl(get()) }
     single<UserRepository> { UserRepositoryImpl(get()) }
 

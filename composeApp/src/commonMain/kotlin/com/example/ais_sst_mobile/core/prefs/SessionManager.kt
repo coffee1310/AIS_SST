@@ -9,6 +9,7 @@ class SessionManager(private val settings: Settings) {
 
     companion object {
         private const val KEY_TOKEN = "auth_token"
+        private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_REAL_ROLE = "real_role"
         private const val KEY_ACTIVE_ROLE = "active_role"
@@ -25,7 +26,13 @@ class SessionManager(private val settings: Settings) {
     fun fetchAuthToken(): String? {
         return settings.getStringOrNull(KEY_TOKEN)
     }
+    fun saveRefreshToken(token: String) {
+        settings.putString(KEY_REFRESH_TOKEN, token)
+    }
 
+    fun fetchRefreshToken(): String? {
+        return settings.getStringOrNull(KEY_REFRESH_TOKEN)
+    }
     fun saveUserId(id: Int) {
         settings.putInt(KEY_USER_ID, id)
     }
@@ -64,6 +71,7 @@ class SessionManager(private val settings: Settings) {
 
     fun logout() {
         settings.remove(KEY_TOKEN)
+        settings.remove(KEY_REFRESH_TOKEN)
         settings.remove(KEY_USER_ID)
         settings.remove(KEY_REAL_ROLE)
         settings.remove(KEY_ACTIVE_ROLE)

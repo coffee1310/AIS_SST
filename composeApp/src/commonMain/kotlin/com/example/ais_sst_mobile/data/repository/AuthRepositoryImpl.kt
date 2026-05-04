@@ -4,26 +4,27 @@ import com.example.ais_sst_mobile.data.network.dto.AuthResponse
 import com.example.ais_sst_mobile.data.network.dto.LoginRequest
 import com.example.ais_sst_mobile.data.network.dto.RegisterRequest
 import com.example.ais_sst_mobile.domain.repository.AuthRepository
-import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerAuthProvider
+import io.ktor.client.plugins.plugin
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 class AuthRepositoryImpl(
-    private val httpClient: HttpClient,
-    private val settings: Settings
+    private val httpClient: HttpClient
 ) : AuthRepository {
 
     override suspend fun login(request: LoginRequest): Result<AuthResponse> = runCatching {
+        httpClient.plugin(Auth).providers.filterIsInstance<BearerAuthProvider>().firstOrNull()?.clearToken()
+
         val response = httpClient.post("auth/login") {
             setBody(request)
         }.body<AuthResponse>()
 
-        settings.putString("jwt_token", response.token)
-        settings.putString("user_role", response.roles.joinToString(","))
         response
     }
 

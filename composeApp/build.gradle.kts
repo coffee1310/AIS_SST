@@ -50,6 +50,7 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
+            implementation("io.ktor:ktor-client-auth:2.3.11")
 
             // Koin
             implementation(libs.koin.core)

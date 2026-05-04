@@ -109,6 +109,7 @@ class LoginScreenModel(
                     failedAttempts = 0
 
                     sessionManager.saveAuthToken(response.token)
+                    sessionManager.saveRefreshToken(response.refreshToken)
                     sessionManager.saveUserId(response.id)
 
                     val roleString = response.roles.firstOrNull()

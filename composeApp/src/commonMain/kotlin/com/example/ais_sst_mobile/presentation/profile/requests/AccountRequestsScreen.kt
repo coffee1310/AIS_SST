@@ -240,7 +240,7 @@ fun RejectDialog(
                     ) {
                         Text(
                             "Отмена",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 15.sp),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -261,7 +261,7 @@ fun RejectDialog(
                     ) {
                         Text(
                             "Отклонить",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 15.sp),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp),
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
