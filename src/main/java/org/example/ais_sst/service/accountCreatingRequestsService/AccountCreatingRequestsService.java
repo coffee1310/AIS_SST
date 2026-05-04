@@ -140,6 +140,7 @@ public class AccountCreatingRequestsService {
                 .group(request.getGroup())
                 .speciality(request.getSpeciality())
                 .isActive(true)
+                .isBanned(false)
                 .build();
 
         User savedUser = userRepository.save(user);
