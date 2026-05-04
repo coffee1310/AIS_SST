@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: 042-add-timestamps-to-account-requests
+      author: coffee13102006
+      labels: add-columns
+      comment: "Добавление полей created_at и updated_at в таблицу account_creating_requests"
+      changes:
+        # Добавление колонки created_at
+        - sql:
+            comment: "Добавление колонки created_at"
+            sql: |
+              ALTER TABLE account_creating_requests 
+              ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL;
+
+        # Добавление колонки updated_at
+        - sql:
+            comment: "Добавление колонки updated_at"
+            sql: |
+              ALTER TABLE account_creating_requests 
+              ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+        # Добавление индекса на created_at для сортировки
+        - sql:
+            comment: "Добавление индекса на created_at"
+            sql: |
+              CREATE INDEX IF NOT EXISTS idx_account_requests_created_at 
+              ON account_creating_requests(created_at);
+
+        # Добавление индекса на updated_at
+        - sql:
+            comment: "Добавление индекса на updated_at"
+            sql: |
+              CREATE INDEX IF NOT EXISTS idx_account_requests_updated_at 
+              ON account_creating_requests(updated_at);
+
+        # Обновление существующих записей (установка created_at)
+        - sql:
+            comment: "Обновление существующих записей"
+            sql: |
+              UPDATE account_creating_requests 
+              SET created_at = CURRENT_TIMESTAMP 
+              WHERE created_at IS NULL;
+
+        # Добавление комментариев к колонкам
+        - sql:
+            comment: "Добавление комментариев к колонкам"
+            sql: |
+              COMMENT ON COLUMN account_creating_requests.created_at IS 'Дата и время создания заявки';
+              COMMENT ON COLUMN account_creating_requests.updated_at IS 'Дата и время последнего обновления заявки';

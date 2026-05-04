@@ -9,6 +9,7 @@ import org.example.ais_sst.entity.enums.AccountCreatingRequestStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @Builder
@@ -30,6 +31,9 @@ public class AccountCreatingRequestResponseDTO {
     private Long specialityId;
     private String specialityName;
     private String photo;
+
+    private LocalDateTime createdAt;   // Добавлено
+    private LocalDateTime updatedAt;   // Добавлено
 
 
     public static AccountCreatingRequestResponseDTO from(AccountCreatingRequest request) {

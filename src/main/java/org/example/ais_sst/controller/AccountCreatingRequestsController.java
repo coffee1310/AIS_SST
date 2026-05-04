@@ -3,20 +3,24 @@ package org.example.ais_sst.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.dto.account_request.AccountCreatingRequestFilterDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestRejectDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestResponseDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO;
 import org.example.ais_sst.dto.user.UserSummaryDTO;
 import org.example.ais_sst.entity.AccountCreatingRequest;
+import org.example.ais_sst.entity.enums.AccountCreatingRequestStatus;
 import org.example.ais_sst.service.accountCreatingRequestsService.AccountCreatingRequestsService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 @Slf4j
@@ -69,6 +73,51 @@ public class AccountCreatingRequestsController {
             @PageableDefault(size = 20, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/account_requests/pending - Getting pending requests");
         return accountCreatingRequestsService.getPendingRequests(pageable);
+    }
+
+    @GetMapping("/filter")
+    public Page<AccountCreatingRequestResponseDTO> getRequestsWithFilters(
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String surname,
+            @RequestParam(required = false) String patronymic,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            @RequestParam(required = false) String studentEmail,
+            @RequestParam(required = false) String phoneNumber,
+            @RequestParam(required = false) Integer studentIdNumber,
+            @RequestParam(required = false) Short courseNumber,
+            @RequestParam(required = false) AccountCreatingRequestStatus status,
+            @RequestParam(required = false) Long groupId,
+            @RequestParam(required = false) Long specialityId,
+            @RequestParam(required = false) Boolean hasPhoto,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
+
+        log.info("GET /api/account_requests/filter - Getting requests with filters");
+
+        AccountCreatingRequestFilterDTO filter = AccountCreatingRequestFilterDTO.builder()
+                .id(id)
+                .name(name)
+                .surname(surname)
+                .patronymic(patronymic)
+                .gender(gender)  // Добавлен gender
+                .dateFrom(dateFrom)
+                .dateTo(dateTo)
+                .studentEmail(studentEmail)
+                .phoneNumber(phoneNumber)
+                .studentIdNumber(studentIdNumber)
+                .courseNumber(courseNumber)
+                .status(status)
+                .groupId(groupId)
+                .specialityId(specialityId)
+                .hasPhoto(hasPhoto)
+                .build();
+
+        return accountCreatingRequestsService.getRequestsWithFilters(filter, page, size, sortBy, sortDirection);
     }
 
     // ToDo: добавить createdAt

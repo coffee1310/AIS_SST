@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -20,8 +21,8 @@ public class EventResponseDTO {
     private String description;
     private String photo;
     private LocalDate dateOfEvent;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private LocalTime startTime;
+    private LocalTime endTime;
     private String venue;  // Изменено с location на venue
     private Long eventCreatorId;
     private String referenceToPosition;
@@ -29,6 +30,8 @@ public class EventResponseDTO {
     private String eventCreatorSurname;
     private Boolean isActive;
     private Boolean isPublic;  // Добавлено поле isPublic
+    private Boolean isDraft;      // Добавлено
+    private Boolean isCompleted;  // Добавлено
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<EventOrganizerResponseDTO> organizers;

@@ -4,6 +4,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.dto.account_request.AccountCreatingRequestFilterDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestRejectDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestResponseDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO;
@@ -20,13 +21,13 @@ import org.example.ais_sst.service.socialStatusService.AccountCreatingRequestsSo
 import org.example.ais_sst.service.socialStatusService.SocialStatusService;
 import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -121,7 +122,7 @@ public class AccountCreatingRequestsService {
                     String.format("Заявка с id: %s уже обработана. Статус: %s", id, request.getStatus()));
         }
 
-        Role role = roleRepository.findByTitle("Активист")
+        Role role = roleRepository.findByTitle("Activist")
                 .orElseThrow(() -> new RuntimeException("Роль Активист не найдена"));
 
         User user = User.builder()
@@ -167,16 +168,125 @@ public class AccountCreatingRequestsService {
 
     public Page<AccountCreatingRequestResponseDTO> getRequests(Pageable pageable) {
         Page<AccountCreatingRequest> requests = accountCreatingRequestsRepository.findAll(pageable);
-        // Используем маппер для преобразования каждой сущности
         return requests.map(requestMapper::toResponseDto);
     }
 
     public Page<AccountCreatingRequestResponseDTO> getPendingRequests(Pageable pageable) {
         log.info("Getting pending account requests");
-
         Page<AccountCreatingRequest> requests = accountCreatingRequestsRepository
                 .findByStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ, pageable);
-
         return requests.map(requestMapper::toResponseDto);
+    }
+
+    /**
+     * Универсальный метод получения заявок с фильтрами
+     */
+    public Page<AccountCreatingRequestResponseDTO> getRequestsWithFilters(
+            AccountCreatingRequestFilterDTO filter,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection) {
+
+        log.info("Getting account requests with filters: {}", filter);
+
+        int offset = page * size;
+
+        String statusStr = filter.getStatus() != null ? filter.getStatus().name() : null;
+        String genderStr = filter.getGender();
+
+        List<Object[]> results = accountCreatingRequestsRepository.findAllWithFiltersNative(
+                filter.getId(),
+                filter.getName(),
+                filter.getSurname(),
+                filter.getPatronymic(),
+                genderStr,
+                filter.getDateFrom(),
+                filter.getDateTo(),
+                filter.getStudentEmail(),
+                filter.getPhoneNumber(),
+                filter.getStudentIdNumber(),
+                filter.getCourseNumber(),
+                statusStr,
+                filter.getGroupId(),
+                filter.getSpecialityId(),
+                offset,
+                size);
+
+        long total = accountCreatingRequestsRepository.countAllWithFiltersNative(
+                filter.getId(),
+                filter.getName(),
+                filter.getSurname(),
+                filter.getPatronymic(),
+                genderStr,
+                filter.getDateFrom(),
+                filter.getDateTo(),
+                filter.getStudentEmail(),
+                filter.getPhoneNumber(),
+                filter.getStudentIdNumber(),
+                filter.getCourseNumber(),
+                statusStr,
+                filter.getGroupId(),
+                filter.getSpecialityId());
+
+        List<AccountCreatingRequestResponseDTO> dtoList = results.stream()
+                .map(this::mapRowToAccountCreatingRequestResponseDTO)
+                .collect(Collectors.toList());
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return new PageImpl<>(dtoList, pageable, total);
+    }
+
+    private AccountCreatingRequestResponseDTO mapRowToAccountCreatingRequestResponseDTO(Object[] row) {
+        // Получаем статус из БД (русская строка)
+        String statusFromDb = (String) row[11];
+
+        // Преобразуем русскую строку в enum
+        AccountCreatingRequestStatus status = null;
+        if (statusFromDb != null) {
+            switch (statusFromDb) {
+                case "НА_РАССМОТРЕНИИ":
+                    status = AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ;
+                    break;
+                case "ОДОБРЕНА":
+                    status = AccountCreatingRequestStatus.ОДОБРЕНА;
+                    break;
+                case "ОТКЛОНЕНА":
+                    status = AccountCreatingRequestStatus.ОТКЛОНЕНА;
+                    break;
+                default:
+                    log.warn("Unknown status: {}", statusFromDb);
+            }
+        }
+
+        // Получаем фото как byte[]
+        byte[] photoBytes = (byte[]) row[18];
+        String photoBase64 = photoBytes != null && photoBytes.length > 0
+                ? ImageUtil.encodeToBase64(photoBytes)
+                : null;
+
+        return AccountCreatingRequestResponseDTO.builder()
+                .id(((Number) row[0]).longValue())
+                .name((String) row[1])
+                .surname((String) row[2])
+                .patronymic((String) row[3])
+                .gender((String) row[4])
+                .dateOfBirth(row[5] != null ? ((java.sql.Date) row[5]).toLocalDate() : null)
+                .courseNumber(row[6] != null ? ((Number) row[6]).shortValue() : null)
+                .studentIdNumber(row[7] != null ? ((Number) row[7]).intValue() : null)
+                .studentEmail((String) row[8])
+                .phoneNumber((String) row[9])
+                .reasonForRefusal((String) row[10])
+                .status(status)
+                .createdAt(row[12] != null ? ((java.sql.Timestamp) row[12]).toLocalDateTime() : null)
+                .updatedAt(row[13] != null ? ((java.sql.Timestamp) row[13]).toLocalDateTime() : null)
+                .groupId(row[14] != null ? ((Number) row[14]).longValue() : null)
+                .groupName((String) row[15])
+                .specialityId(row[16] != null ? ((Number) row[16]).longValue() : null)
+                .specialityName((String) row[17])
+                .photo(photoBase64)  // Устанавливаем фото в Base64
+                .build();
     }
 }

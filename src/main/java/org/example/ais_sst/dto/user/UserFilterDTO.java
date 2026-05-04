@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserFilterDTO {
+    private Long id;
     private String role;        // Фильтр по роли
     private String search;      // Поиск по имени, фамилии, email
     private Boolean isActive;   // Фильтр по активности

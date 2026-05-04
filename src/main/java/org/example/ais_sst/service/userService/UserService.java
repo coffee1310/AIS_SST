@@ -35,15 +35,11 @@ public class UserService implements UserServiceImpl {
         User user = userRepository.findUserById(userId)
                 .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
 
-        // Конвертируем фото в Base64
         String photoBase64 = user.getPhoto() != null && user.getPhoto().length > 0
                 ? ImageUtil.encodeToBase64(user.getPhoto())
                 : null;
 
-        // Получаем социальные статусы пользователя
         List<String> socialStatuses = socialStatusStudentRepository.findSocialStatusTitlesByStudentId(userId);
-
-        // Получаем название сектора, где пользователь является координатором
         String coordinatorSector = sectorParticipantRepository.findCoordinatorSectorTitleByUserId(userId)
                 .orElse(null);
 
@@ -65,24 +61,24 @@ public class UserService implements UserServiceImpl {
                 .phoneNumber(user.getPhoneNumber())
                 .photo(photoBase64)
                 .socialStatuses(socialStatuses)
-                .coordinatorSector(coordinatorSector)  // Добавляем сектор координатора
+                .coordinatorSector(coordinatorSector)
                 .events_count(0)
                 .points_count(0)
                 .build();
     }
 
-
     @Transactional
     public Page<UserResponseDTO> getAllUsers(int page, int size, String sortBy, String sortDirection, UserFilterDTO filter) {
-        log.info("Getting users with pagination: page={}, size={}", page, size);
+        log.info("Getting users with pagination: page={}, size={}, id={}", page, size, filter.getId());
 
         String role = (filter.getRole() != null && filter.getRole().isEmpty()) ? null : filter.getRole();
         String search = (filter.getSearch() != null && filter.getSearch().isEmpty()) ? null : filter.getSearch();
 
         int offset = page * size;
 
-        // Получаем данные через native query
+        // Получаем данные через native query с добавленным параметром id
         List<Object[]> results = userRepository.findAllWithFiltersNative(
+                filter.getId(),      // Добавлен параметр id
                 role,
                 search,
                 filter.getIsActive(),
@@ -94,8 +90,9 @@ public class UserService implements UserServiceImpl {
                 size
         );
 
-        // Получаем общее количество
+        // Получаем общее количество с добавленным параметром id
         long total = userRepository.countAllWithFiltersNative(
+                filter.getId(),      // Добавлен параметр id
                 role,
                 search,
                 filter.getIsActive(),
@@ -140,31 +137,6 @@ public class UserService implements UserServiceImpl {
                 .build();
     }
 
-    private UserResponseDTO mapToUserResponseDTO(Object[] row) {
-        return UserResponseDTO.builder()
-                .id(((Number) row[0]).longValue())
-                .name((String) row[1])
-                .surname((String) row[2])
-                .patronymic((String) row[3])
-                .gender((String) row[4])
-                .dateOfBirth((java.time.LocalDate) row[5])
-                .courseNumber(((Number) row[6]).shortValue())
-                .studentIdNumber(((Number) row[7]).intValue())
-                .studentEmail((String) row[8])
-                .additionalEmail((String) row[9])
-                .phoneNumber((String) row[10])
-                .vkLink((String) row[11])
-                .isActive((Boolean) row[12])
-                .isBanned((Boolean) row[13])
-                .role((String) row[14])
-                .groupId(row[15] != null ? ((Number) row[15]).longValue() : null)
-                .groupName((String) row[16])
-                .specialityId(row[17] != null ? ((Number) row[17]).longValue() : null)
-                .specialityName((String) row[18])
-                .photo(null)  // Фото не загружаем
-                .build();
-    }
-
     @Transactional
     public Page<UserResponseDTO> getAllUsersSimple(int page, int size, String sortBy, String sortDirection) {
         log.info("Getting all users with pagination: page={}, size={}, sortBy={}, sortDirection={}",
@@ -175,7 +147,6 @@ public class UserService implements UserServiceImpl {
 
         Page<User> usersPage = userRepository.findAll(pageable);
 
-        // Конвертируем фото в Base64
         return usersPage.map(user -> {
             UserResponseDTO dto = userMapper.toResponseDto(user);
             if (user.getPhoto() != null && user.getPhoto().length > 0) {
@@ -194,7 +165,6 @@ public class UserService implements UserServiceImpl {
 
         Page<User> usersPage = userRepository.findByRole(role, pageable);
 
-        // Конвертируем фото в Base64
         return usersPage.map(user -> {
             UserResponseDTO dto = userMapper.toResponseDto(user);
             if (user.getPhoto() != null && user.getPhoto().length > 0) {

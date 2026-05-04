@@ -48,6 +48,9 @@ public class UserController {
 
     @GetMapping("/all")
     public ResponseEntity<Page<UserResponseDTO>> getAllUsers(
+            @Parameter(description = "ID пользователя")
+            @RequestParam(required = false) Long id,
+
             @Parameter(description = "Номер страницы (начиная с 0)")
             @RequestParam(defaultValue = "0") int page,
 
@@ -82,6 +85,7 @@ public class UserController {
         log.info("GET /api/users/all - Getting users with filters");
 
         UserFilterDTO filter = UserFilterDTO.builder()
+                .id(id)
                 .role(role)
                 .search(search)
                 .isActive(isActive)

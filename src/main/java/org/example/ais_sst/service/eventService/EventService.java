@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -42,9 +42,18 @@ public class EventService {
             "Sector_coordinator", "Chairman"
     );
 
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
+    }
+
+    private Event findEventById(Long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие с id " + eventId + " не найдено"));
+    }
+
     private void checkCanCreateEvent(User user) {
-        String role = user.getRole().getTitle();
-        if (!ALLOWED_ROLES.contains(role)) {
+        if (!ALLOWED_ROLES.contains(user.getRole().getTitle())) {
             throw new UnauthorizedException(
                     "У вас нет прав для создания мероприятий. Требуются роли: " + ALLOWED_ROLES
             );
@@ -57,11 +66,196 @@ public class EventService {
         }
     }
 
+    private String savePhoto(String base64Photo) {
+        if (base64Photo == null || base64Photo.isEmpty()) {
+            return null;
+        }
+        try {
+            return eventPhotoService.savePhotoFromBase64(base64Photo);
+        } catch (IOException e) {
+            log.error("Failed to save photo", e);
+            throw new RuntimeException("Ошибка при сохранении фото", e);
+        }
+    }
+
+    private void deletePhoto(String photoPath) {
+        if (photoPath == null || photoPath.isEmpty()) {
+            return;
+        }
+        try {
+            eventPhotoService.deletePhoto(photoPath);
+        } catch (IOException e) {
+            log.error("Failed to delete photo: {}", photoPath, e);
+        }
+    }
+
+    private void addOrganizersToEvent(Event event, List<Long> organizerIds) {
+        if (organizerIds == null || organizerIds.isEmpty()) {
+            return;
+        }
+
+        for (Long organizerId : organizerIds) {
+            User organizer = findUserById(organizerId);
+            EventOrganizer eventOrganizer = EventOrganizer.builder()
+                    .event(event)
+                    .user(organizer)
+                    .build();
+            eventOrganizerRepository.save(eventOrganizer);
+        }
+    }
+
     @Transactional(readOnly = true)
     public EventResponseDTO getEventById(Long eventId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие с id " + eventId + " не найдено"));
+        Event event = findEventById(eventId);
+
+        log.info("Getting event with id: {}", eventId);
+        log.info("Event photo path: {}", event.getPhoto());
+
+        EventResponseDTO response = eventMapper.toResponseDto(event);
+
+        // Конвертируем фото в Base64
+        if (event.getPhoto() != null && !event.getPhoto().isEmpty()) {
+            log.info("Photo path exists, attempting to convert to base64");
+            String base64Photo = eventPhotoService.getPhotoAsBase64(event.getPhoto());
+            if (base64Photo != null) {
+                response.setPhoto(base64Photo);
+                log.info("Photo converted successfully, base64 length: {}", base64Photo.length());
+            } else {
+                log.warn("Failed to convert photo to base64");
+            }
+        } else {
+            log.warn("Photo path is null or empty for event: {}", eventId);
+        }
+
+        return response;
+    }
+
+    @Transactional
+    public EventResponseDTO createEvent(EventCreateDTO dto, Long creatorId) {
+        log.info("Creating event: {} by user: {}", dto.getTitle(), creatorId);
+
+        User creator = findUserById(creatorId);
+        checkCanCreateEvent(creator);
+
+        Event event = eventMapper.toEntity(dto);
+        event.setPhoto(savePhoto(dto.getPhoto()));
+        event.setEventCreator(creator);
+
+        Event savedEvent = eventRepository.save(event);
+        addOrganizersToEvent(savedEvent, dto.getOrganizerIds());
+
+        log.info("Event created successfully with id: {}", savedEvent.getId());
+        return eventMapper.toResponseDto(savedEvent);
+    }
+
+    @Transactional
+    public EventResponseDTO updateEvent(Long eventId, EventUpdateDTO dto, Long userId) {
+        log.info("Updating event: {} by user: {}", eventId, userId);
+
+        checkIsEventCreator(eventId, userId);
+        Event event = findEventById(eventId);
+
+        // Обновляем простые поля
+        if (dto.getTitle() != null) event.setTitle(dto.getTitle());
+        if (dto.getDescription() != null) event.setDescription(dto.getDescription());
+        if (dto.getDateOfEvent() != null) event.setDateOfEvent(dto.getDateOfEvent());
+        if (dto.getStartTime() != null) event.setStartTime(dto.getStartTime());
+        if (dto.getEndTime() != null) event.setEndTime(dto.getEndTime());
+        if (dto.getVenue() != null) event.setVenue(dto.getVenue());
+        if (dto.getReferenceToPosition() != null) event.setReferenceToPosition(dto.getReferenceToPosition());
+        if (dto.getIsPublic() != null) event.setIsPublic(dto.getIsPublic());
+        if (dto.getIsDraft() != null) event.setIsDraft(dto.getIsDraft());
+        if (dto.getIsActive() != null) event.setIsActive(dto.getIsActive());
+
+        // Обновляем фото
+        if (dto.getPhoto() != null && !dto.getPhoto().isEmpty()) {
+            deletePhoto(event.getPhoto());
+            event.setPhoto(savePhoto(dto.getPhoto()));
+        }
+
+        // Обновляем организаторов
+        if (dto.getOrganizerIds() != null) {
+            eventOrganizerRepository.deleteByEventId(eventId);
+            addOrganizersToEvent(event, dto.getOrganizerIds());
+        }
+
+        Event updatedEvent = eventRepository.save(event);
+        log.info("Event updated successfully: {}", eventId);
+
+        return eventMapper.toResponseDto(updatedEvent);
+    }
+
+    @Transactional
+    public EventResponseDTO completeEvent(Long eventId, Long userId) {
+        log.info("Completing event: {} by user: {}", eventId, userId);
+
+        checkIsEventCreator(eventId, userId);
+        Event event = findEventById(eventId);
+
+        if (Boolean.TRUE.equals(event.getIsCompleted())) {
+            throw new IllegalStateException("Мероприятие уже завершено");
+        }
+
+        event.setIsCompleted(true);
+        event.setIsActive(false);
+
+        Event completedEvent = eventRepository.save(event);
+        log.info("Event completed successfully: {}", eventId);
+
+        return eventMapper.toResponseDto(completedEvent);
+    }
+
+    @Transactional
+    public EventResponseDTO addOrganizer(Long eventId, Long organizerId, Long userId) {
+        log.info("Adding organizer {} to event {}", organizerId, eventId);
+
+        checkIsEventCreator(eventId, userId);
+        Event event = findEventById(eventId);
+        User organizer = findUserById(organizerId);
+
+        if (eventOrganizerRepository.existsByEventIdAndUserId(eventId, organizerId)) {
+            throw new IllegalArgumentException("Пользователь уже является организатором");
+        }
+
+        EventOrganizer eventOrganizer = EventOrganizer.builder()
+                .event(event)
+                .user(organizer)
+                .build();
+        eventOrganizerRepository.save(eventOrganizer);
+
+        log.info("Organizer added successfully");
         return eventMapper.toResponseDto(event);
+    }
+
+    @Transactional
+    public EventResponseDTO removeOrganizer(Long eventId, Long organizerId, Long userId) {
+        log.info("Removing organizer {} from event {}", organizerId, eventId);
+
+        checkIsEventCreator(eventId, userId);
+        Event event = findEventById(eventId);
+
+        long organizersCount = eventOrganizerRepository.countByEventId(eventId);
+        if (organizersCount <= 1) {
+            throw new IllegalArgumentException("Нельзя удалить единственного организатора мероприятия");
+        }
+
+        eventOrganizerRepository.deleteByEventIdAndUserId(eventId, organizerId);
+        log.info("Organizer removed successfully");
+
+        return eventMapper.toResponseDto(event);
+    }
+
+    @Transactional
+    public void deleteEvent(Long eventId, Long userId) {
+        log.info("Deleting event: {} by user: {}", eventId, userId);
+
+        checkIsEventCreator(eventId, userId);
+        Event event = findEventById(eventId);
+
+        event.setIsActive(false);
+        eventRepository.save(event);
+
+        log.info("Event deactivated successfully: {}", eventId);
     }
 
     @Transactional(readOnly = true)
@@ -74,199 +268,6 @@ public class EventService {
     public Page<EventResponseDTO> getEventsByCreator(Long creatorId, Pageable pageable) {
         return eventRepository.findByEventCreatorId(creatorId, pageable)
                 .map(eventMapper::toResponseDto);
-    }
-
-    /**
-     * Создание мероприятия (ОДИН метод)
-     */
-    @Transactional
-    public EventResponseDTO createEvent(EventCreateDTO dto, Long creatorId) {
-        log.info("Creating event: {} by user: {}", dto.getTitle(), creatorId);
-
-        User creator = userRepository.findById(creatorId)
-                .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
-        checkCanCreateEvent(creator);
-
-        Event event = eventMapper.toEntity(dto);
-
-        // Сохраняем фото если есть
-        if (dto.getPhoto() != null && !dto.getPhoto().isEmpty()) {
-            try {
-                String photoPath = eventPhotoService.savePhotoFromBase64(dto.getPhoto());
-                event.setPhoto(photoPath);  // Используем setPhoto, а не setPhotoPath
-            } catch (IOException e) {
-                log.error("Failed to save photo", e);
-                throw new RuntimeException("Ошибка при сохранении фото", e);
-            }
-        }
-
-        event.setEventCreator(creator);
-        Event savedEvent = eventRepository.save(event);
-
-        // Добавляем организаторов
-        if (dto.getOrganizerIds() != null && !dto.getOrganizerIds().isEmpty()) {
-            for (Long organizerId : dto.getOrganizerIds()) {
-                User organizer = userRepository.findById(organizerId)
-                        .orElseThrow(() -> new OrganizerDoesNotExistException("Организатор с id " + organizerId + " не найден"));
-
-                EventOrganizer eventOrganizer = EventOrganizer.builder()
-                        .event(savedEvent)
-                        .user(organizer)
-                        .build();
-
-                eventOrganizerRepository.save(eventOrganizer);
-            }
-        }
-
-        log.info("Event created successfully with id: {}", savedEvent.getId());
-        return getEventById(savedEvent.getId());
-    }
-
-    /**
-     * Обновление мероприятия (ОДИН метод)
-     */
-    @Transactional
-    public EventResponseDTO updateEvent(Long eventId, EventUpdateDTO dto, Long userId) {
-        log.info("Updating event: {} by user: {}", eventId, userId);
-
-        checkIsEventCreator(eventId, userId);
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
-
-        // Обновляем поля
-        if (dto.getTitle() != null) event.setTitle(dto.getTitle());
-        if (dto.getDescription() != null) event.setDescription(dto.getDescription());
-        if (dto.getDateOfEvent() != null) event.setDateOfEvent(dto.getDateOfEvent());
-        if (dto.getStartTime() != null) event.setStartTime(LocalDateTime.from(dto.getStartTime()));
-        if (dto.getEndTime() != null) event.setEndTime(LocalDateTime.from(dto.getEndTime()));
-        if (dto.getVenue() != null) event.setVenue(dto.getVenue());
-        if (dto.getReferenceToPosition() != null) event.setReferenceToPosition(dto.getReferenceToPosition());
-        if (dto.getIsPublic() != null) event.setIsPublic(dto.getIsPublic());
-        if (dto.getIsDraft() != null) event.setIsDraft(dto.getIsDraft());
-        if (dto.getIsActive() != null) event.setIsActive(dto.getIsActive());
-
-        // Обновляем фото если есть
-        if (dto.getPhoto() != null && !dto.getPhoto().isEmpty()) {
-            try {
-                // Удаляем старое фото если есть
-                if (event.getPhoto() != null) {
-                    eventPhotoService.deletePhoto(event.getPhoto());
-                }
-                String photoPath = eventPhotoService.savePhotoFromBase64(dto.getPhoto());
-                event.setPhoto(photoPath);  // Используем setPhoto
-            } catch (IOException e) {
-                log.error("Failed to save photo", e);
-                throw new RuntimeException("Ошибка при сохранении фото", e);
-            }
-        }
-
-        // Обновляем организаторов
-        if (dto.getOrganizerIds() != null) {
-            eventOrganizerRepository.deleteByEventId(eventId);
-            for (Long organizerId : dto.getOrganizerIds()) {
-                User organizer = userRepository.findById(organizerId)
-                        .orElseThrow(() -> new OrganizerDoesNotExistException("Организатор с id " + organizerId + " не найден"));
-
-                EventOrganizer eventOrganizer = EventOrganizer.builder()
-                        .event(event)
-                        .user(organizer)
-                        .build();
-
-                eventOrganizerRepository.save(eventOrganizer);
-            }
-        }
-
-        Event updatedEvent = eventRepository.save(event);
-        log.info("Event updated successfully: {}", eventId);
-
-        return getEventById(eventId);
-    }
-
-    /**
-     * Завершение мероприятия
-     */
-    @Transactional
-    public EventResponseDTO completeEvent(Long eventId, Long userId) {
-        log.info("Completing event: {} by user: {}", eventId, userId);
-
-        checkIsEventCreator(eventId, userId);
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
-
-        if (event.getIsCompleted() != null && event.getIsCompleted()) {
-            throw new IllegalStateException("Мероприятие уже завершено");
-        }
-
-        event.setIsCompleted(true);
-        event.setIsActive(false);
-
-        Event completedEvent = eventRepository.save(event);
-        log.info("Event completed successfully: {}", eventId);
-
-        return getEventById(eventId);
-    }
-
-    @Transactional
-    public EventResponseDTO addOrganizer(Long eventId, Long organizerId, Long userId) {
-        log.info("Adding organizer {} to event {}", organizerId, eventId);
-
-        checkIsEventCreator(eventId, userId);
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
-
-        User organizer = userRepository.findById(organizerId)
-                .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
-
-        if (eventOrganizerRepository.existsByEventIdAndUserId(eventId, organizerId)) {
-            throw new IllegalArgumentException("Пользователь уже является организатором");
-        }
-
-        EventOrganizer eventOrganizer = EventOrganizer.builder()
-                .event(event)
-                .user(organizer)
-                .build();
-
-        eventOrganizerRepository.save(eventOrganizer);
-        log.info("Organizer added successfully");
-
-        return getEventById(eventId);
-    }
-
-    @Transactional
-    public EventResponseDTO removeOrganizer(Long eventId, Long organizerId, Long userId) {
-        log.info("Removing organizer {} from event {}", organizerId, eventId);
-
-        checkIsEventCreator(eventId, userId);
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
-
-        long organizersCount = eventOrganizerRepository.countByEventId(eventId);
-        if (organizersCount <= 1) {
-            throw new IllegalArgumentException("Нельзя удалить единственного организатора мероприятия");
-        }
-
-        eventOrganizerRepository.deleteByEventIdAndUserId(eventId, organizerId);
-        log.info("Organizer removed successfully");
-
-        return getEventById(eventId);
-    }
-
-    @Transactional
-    public void deleteEvent(Long eventId, Long userId) {
-        log.info("Deleting event: {} by user: {}", eventId, userId);
-
-        checkIsEventCreator(eventId, userId);
-
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
-
-        event.setIsActive(false);
-        eventRepository.save(event);
-        log.info("Event deactivated successfully: {}", eventId);
     }
 
     @Transactional(readOnly = true)
@@ -284,9 +285,8 @@ public class EventService {
 
         log.info("Getting events with filters");
 
-        Page<Event> events = eventRepository.findAllWithFilters(
-                title, venue, dateFrom, dateTo, isPublic, isDraft, isCompleted, isActive, creatorId, pageable);
-
-        return events.map(eventMapper::toResponseDto);
+        return eventRepository.findAllWithFilters(
+                        title, venue, dateFrom, dateTo, isPublic, isDraft, isCompleted, isActive, creatorId, pageable)
+                .map(eventMapper::toResponseDto);
     }
 }

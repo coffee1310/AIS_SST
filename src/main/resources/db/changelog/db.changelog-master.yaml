@@ -41,3 +41,5 @@ databaseChangeLog:
       file: db/changelog/changes/022-add-missing-columns-to-events.yaml
   - include:
       file: db/changelog/changes/023-add-location-to-events.yaml
+  - include:
+      file: db/changelog/changes/024-add-timestamps-to-account-requests.yaml

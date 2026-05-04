@@ -47,7 +47,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
         LEFT JOIN groups g ON g.id = u.group_id
         LEFT JOIN specialities s ON s.id = u.speciality_id
         LEFT JOIN sector_participants sp ON sp.student_id = u.id
-        WHERE (CAST(:role AS text) IS NULL OR r.title = CAST(:role AS text))
+        WHERE (CAST(:id AS bigint) IS NULL OR u.id = CAST(:id AS bigint))
+        AND (CAST(:role AS text) IS NULL OR r.title = CAST(:role AS text))
         AND (CAST(:search AS text) IS NULL OR 
              u.name ILIKE CONCAT('%', CAST(:search AS text), '%') OR
              u.surname ILIKE CONCAT('%', CAST(:search AS text), '%') OR
@@ -61,6 +62,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
         """, nativeQuery = true)
     List<Object[]> findAllWithFiltersNative(
+            @Param("id") Long id,
             @Param("role") String role,
             @Param("search") String search,
             @Param("isActive") Boolean isActive,
@@ -78,7 +80,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
         LEFT JOIN groups g ON g.id = u.group_id
         LEFT JOIN specialities s ON s.id = u.speciality_id
         LEFT JOIN sector_participants sp ON sp.student_id = u.id
-        WHERE (CAST(:role AS text) IS NULL OR r.title = CAST(:role AS text))
+        WHERE (CAST(:id AS bigint) IS NULL OR u.id = CAST(:id AS bigint))
+        AND (CAST(:role AS text) IS NULL OR r.title = CAST(:role AS text))
         AND (CAST(:search AS text) IS NULL OR 
              u.name ILIKE CONCAT('%', CAST(:search AS text), '%') OR
              u.surname ILIKE CONCAT('%', CAST(:search AS text), '%') OR
@@ -90,6 +93,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         AND (CAST(:sectorId AS bigint) IS NULL OR sp.sector_id = CAST(:sectorId AS bigint))
         """, nativeQuery = true)
     long countAllWithFiltersNative(
+            @Param("id") Long id,
             @Param("role") String role,
             @Param("search") String search,
             @Param("isActive") Boolean isActive,

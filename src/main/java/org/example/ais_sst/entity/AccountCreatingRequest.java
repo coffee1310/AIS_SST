@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.example.ais_sst.entity.enums.AccountCreatingRequestStatus;
 import org.example.ais_sst.entity.enums.Gender;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -26,11 +27,13 @@ import org.example.ais_sst.repository.AccountCreatingRequestsRepository;
 import org.example.ais_sst.repository.GroupRepository;
 import org.example.ais_sst.repository.SpecialityRepository;
 import org.example.ais_sst.repository.UserRepository;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Getter
@@ -104,6 +107,14 @@ public class AccountCreatingRequest {
     @NotNull
     @Column(name = "password", nullable = false, length = 256)
     private String password;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @NotNull
     @Column(name = "status", nullable = false)
