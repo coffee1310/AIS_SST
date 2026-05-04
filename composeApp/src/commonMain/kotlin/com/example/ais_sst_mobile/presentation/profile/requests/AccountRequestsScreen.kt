@@ -38,112 +38,128 @@ fun AccountRequestsScreen(onBackClick: () -> Unit) {
     val koin = getKoin()
     val screenModel = remember { koin.get<AccountRequestsScreenModel>() }
     val state by screenModel.state.collectAsState()
-
     var rejectingRequestId by remember { mutableStateOf<Int?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    AppBackground {
-        rejectingRequestId?.let { id ->
-            RejectDialog(
-                onDismiss = { rejectingRequestId = null },
-                onConfirm = { reason ->
-                    screenModel.rejectRequest(id, reason)
-                    rejectingRequestId = null
-                }
-            )
+    LaunchedEffect(Unit) {
+        screenModel.effect.collect { message ->
+            snackbarHostState.showSnackbar(message)
         }
-
-        Column(modifier = Modifier.fillMaxSize()) {
-            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.safeDrawing))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .height(56.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CustomBackButton(onClick = onBackClick)
-
-                Text(
-                    text = "Заявки на вступление",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
+    }
+    AppBackground {
+        Box(modifier = Modifier.fillMaxSize()){
+            rejectingRequestId?.let { id ->
+                RejectDialog(
+                    onDismiss = { rejectingRequestId = null },
+                    onConfirm = { reason ->
+                        screenModel.rejectRequest(id, reason)
+                        rejectingRequestId = null
+                    }
                 )
-
-                Spacer(modifier = Modifier.width(48.dp))
             }
 
-            if (state is RequestsState.Success) {
-                val successState = state as RequestsState.Success
+            Column(modifier = Modifier.fillMaxSize()) {
+                Spacer(Modifier.windowInsetsTopHeight(WindowInsets.safeDrawing))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(56.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CustomTextField(
-                        value = successState.searchQuery,
-                        onValueChange = { screenModel.search(it) },
-                        placeholder = "Поиск по ФИО",
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
+                    CustomBackButton(onClick = onBackClick)
+
+                    Text(
+                        text = "Заявки на вступление",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
 
-                    Box(
+                if (state is RequestsState.Success) {
+                    val successState = state as RequestsState.Success
+                    Row(
                         modifier = Modifier
-                            .size(52.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.02f),
-                                shape = MaterialTheme.shapes.medium
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                shape = MaterialTheme.shapes.medium
-                            )
-                            .clip(MaterialTheme.shapes.medium)
-                            .clickable { /* TODO: Фильтры */ },
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Tune,
-                            contentDescription = "Фильтр",
-                            tint = MaterialTheme.colorScheme.onSurface
+                        CustomTextField(
+                            value = successState.searchQuery,
+                            onValueChange = { screenModel.search(it) },
+                            placeholder = "Поиск по ФИО",
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(52.dp)
                         )
-                    }
-                }
 
-                Text(
-                    text = "Список заявок (${successState.requests.size})",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
+                        Spacer(modifier = Modifier.width(12.dp))
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(successState.requests) { request ->
-                        RequestCard(
-                            request = request,
-                            onAccept = { screenModel.acceptRequest(request.id) },
-                            onReject = { rejectingRequestId = request.id }
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(52.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.02f),
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                                .clip(MaterialTheme.shapes.medium)
+                                .clickable { /* TODO: Фильтры */ },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Tune,
+                                contentDescription = "Фильтр",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
-                    item { Spacer(modifier = Modifier.height(100.dp)) }
-                }
-            } else if (state is RequestsState.Loading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+
+                    Text(
+                        text = "Список заявок (${successState.requests.size})",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(successState.requests) { request ->
+                            RequestCard(
+                                request = request,
+                                onAccept = { screenModel.acceptRequest(request.id) },
+                                onReject = { rejectingRequestId = request.id }
+                            )
+                        }
+                        item { Spacer(modifier = Modifier.height(100.dp)) }
+                    }
+                } else if (state is RequestsState.Loading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+                    }
                 }
             }
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = 16.dp)
+                    .background(MaterialTheme.colorScheme.secondary)
+            )
         }
+
     }
 }
 

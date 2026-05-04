@@ -37,4 +37,7 @@ class UserRepositoryImpl(
             setBody(RejectRequestDto(rejectionReason = reason))
         }
     }
+    override suspend fun acceptAccountRequest(id: Int): Result<Unit> = runCatching {
+        httpClient.put("account_requests/accept/$id")
+    }
 }

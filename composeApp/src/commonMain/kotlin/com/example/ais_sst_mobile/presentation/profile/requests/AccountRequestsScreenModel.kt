@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ais_sst_mobile.data.network.dto.AccountRequestDto
 import com.example.ais_sst_mobile.domain.repository.UserRepository
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,7 +26,8 @@ class AccountRequestsScreenModel(
 
     private val _state = MutableStateFlow<RequestsState>(RequestsState.Loading)
     val state = _state.asStateFlow()
-
+    private val _effect = Channel<String>()
+    val effect = _effect.receiveAsFlow()
     private var allRequests: List<AccountRequestDto> = emptyList()
 
     init {
@@ -60,9 +63,16 @@ class AccountRequestsScreenModel(
     }
 
     fun acceptRequest(id: Int) {
-        // TODO: Отправка POST/PUT запроса на сервер
-        // Пока просто удаляем из списка для UI
-        removeRequestFromList(id)
+        viewModelScope.launch {
+            userRepository.acceptAccountRequest(id)
+                .onSuccess {
+                    removeRequestFromList(id)
+                    _effect.send("Заявка принята")
+                }
+                .onFailure { exception ->
+                    _effect.send("Ошибка: не удалось принять заявку")
+                }
+        }
     }
 
     fun rejectRequest(id: Int, reason: String) {
@@ -70,10 +80,10 @@ class AccountRequestsScreenModel(
             userRepository.rejectAccountRequest(id, reason)
                 .onSuccess {
                     removeRequestFromList(id)
+                    _effect.send("Заявка отклонена")
                 }
-                .onFailure {
-                    // TODO: Показать ошибку (например, через Snackbar или отдельный стейт)
-                    println("Ошибка отклонения заявки: ${it.message}")
+                .onFailure { exception ->
+                    _effect.send("Ошибка: не удалось отклонить заявку")
                 }
         }
     }
