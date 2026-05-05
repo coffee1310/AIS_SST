@@ -1,6 +1,7 @@
 package com.example.ais_sst_mobile.presentation.profile
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,11 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.domain.model.AppRole
+import com.preat.peekaboo.image.picker.toImageBitmap
+import io.ktor.util.decodeBase64Bytes
 
 @Composable
 fun ProfileHeader(
@@ -32,8 +37,34 @@ fun ProfileHeader(
     realRole: AppRole,
     onRoleSelected: (AppRole) -> Unit
 ) {
-    Box(modifier = Modifier.size(100.dp).clip(CircleShape).background(Color(0xFFFFEAD1)), contentAlignment = Alignment.Center) {
-        Icon(Icons.Outlined.Person, null, modifier = Modifier.size(60.dp), tint = Color(0xFFD6A87C))
+    val imageBitmap = remember(user.photoUrl) {
+        try {
+            user.photoUrl?.substringAfter("base64,")?.trim()?.decodeBase64Bytes()?.toImageBitmap()
+        } catch (e: Exception) { null }
+    }
+
+    Box(
+        modifier = Modifier
+            .size(100.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.2f)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (imageBitmap != null) {
+            Image(
+                bitmap = imageBitmap,
+                contentDescription = "Аватар",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.size(60.dp),
+                tint = MaterialTheme.colorScheme.secondary
+            )
+        }
     }
 
     Spacer(modifier = Modifier.height(16.dp))

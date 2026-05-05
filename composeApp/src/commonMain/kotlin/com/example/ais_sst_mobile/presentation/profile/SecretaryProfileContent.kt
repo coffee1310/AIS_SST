@@ -50,7 +50,8 @@ fun SecretaryProfileContent(component: ProfileComponent, screenModel: ProfileScr
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = {
+                        component.onNavigateToFullScreen(FullScreenRoute.MyData)})
                     ProfileMenuRow(icon = Icons.Outlined.Folder, title = "Архив мероприятий", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Заявки на вступление", onClick = {

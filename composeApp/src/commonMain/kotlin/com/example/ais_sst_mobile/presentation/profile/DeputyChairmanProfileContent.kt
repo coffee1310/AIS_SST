@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.ais_sst_mobile.navigation.FullScreenRoute
 import com.example.ais_sst_mobile.navigation.ProfileComponent
 
 @Composable
@@ -49,7 +50,8 @@ fun DeputyChairmanProfileContent(component: ProfileComponent, screenModel: Profi
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = {
+                        component.onNavigateToFullScreen(FullScreenRoute.MyData) })
                     ProfileMenuRow(icon = Icons.Outlined.Folder, title = "Архив мероприятий", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Документы", onClick = { })

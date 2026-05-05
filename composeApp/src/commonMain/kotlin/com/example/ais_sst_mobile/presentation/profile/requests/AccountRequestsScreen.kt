@@ -156,7 +156,6 @@ fun AccountRequestsScreen(onBackClick: () -> Unit) {
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
                     .padding(bottom = 16.dp)
-                    .background(MaterialTheme.colorScheme.secondary)
             )
         }
 

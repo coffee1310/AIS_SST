@@ -11,8 +11,10 @@ import io.ktor.client.plugins.auth.providers.BearerAuthProvider
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 
 class AuthRepositoryImpl(
     private val httpClient: HttpClient
@@ -29,9 +31,20 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun register(request: RegisterRequest): Result<Unit> = runCatching {
-        httpClient.post("account_requests") {
+        val response = httpClient.post("account_requests") {
             contentType(ContentType.Application.Json)
             setBody(request)
+        }
+
+        if (!response.status.isSuccess()) {
+            val errorBody = response.bodyAsText()
+
+            if (response.status.value == 500) {
+                throw Exception("Пользователь с такой почтой или телефоном уже существует")
+            } else {
+                throw Exception("Ошибка регистрации (${response.status.value}). Попробуйте позже.")
+
+            }
         }
     }
 }
