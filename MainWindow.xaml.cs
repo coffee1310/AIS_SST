@@ -1,5 +1,5 @@
 ﻿using Diplom_Stud.Pages.Activist;
-using Diplom_Stud.Pages.Coordinator; // Не забудьте добавить это пространство имен!
+using Diplom_Stud.Pages.Coordinator;
 using Diplom_Stud.Pages.General;
 using Diplom_Stud.Components;
 using System;
@@ -69,12 +69,63 @@ namespace Diplom_Stud
 
             if (data.roleTitle == "Sector_coordinator" || data.roleTitle == "Coordinator")
             {
-                NavSectors.Content = "Мой сектор"; 
+                NavSectorsText.Text = "Мой сектор";
+                _ = CheckSectorNotificationsAsync();
             }
             else
             {
-                NavSectors.Content = "Сектора"; 
+                NavSectorsText.Text = "Сектора";
+                NavSectorsBadge.Visibility = Visibility.Collapsed;
             }
+        }
+
+        public async Task CheckSectorNotificationsAsync()
+        {
+            var data = App.CurrentUserProfile;
+            if (data == null || (data.roleTitle != "Sector_coordinator" && data.roleTitle != "Coordinator"))
+            {
+                SetSectorNotification(false);
+                return;
+            }
+
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                HttpResponseMessage sectorResp = await _httpClient.GetAsync("/api/sector");
+                if (sectorResp.IsSuccessStatusCode)
+                {
+                    string sectorBody = await sectorResp.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var sectors = JsonSerializer.Deserialize<List<Pages.Coordinator.SectorDto>>(sectorBody, options);
+                    var mySector = sectors?.FirstOrDefault(s => s.title == data.coordinatorSector);
+
+                    if (mySector != null)
+                    {
+                        HttpResponseMessage reqResp = await _httpClient.GetAsync("/api/sector/introductions");
+                        if (reqResp.IsSuccessStatusCode)
+                        {
+                            string reqBody = await reqResp.Content.ReadAsStringAsync();
+                            var allRequests = JsonSerializer.Deserialize<List<IntroductionDto>>(reqBody, options);
+
+                            bool hasActive = allRequests?.Any(r => r.sector_id == mySector.id && r.status == "На рассмотрении") == true;
+
+                            SetSectorNotification(hasActive);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        public void SetSectorNotification(bool hasNotifications)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                NavSectorsBadge.Visibility = hasNotifications ? Visibility.Visible : Visibility.Collapsed;
+            });
         }
 
         private BitmapImage GetImageFromBase64(string base64String)
@@ -309,6 +360,9 @@ namespace Diplom_Stud
                 NavProjects.IsChecked = false;
                 NavRating.IsChecked = false;
                 NavNotifications.IsChecked = false;
+
+                NavSectorsText.Text = "Сектора";
+                NavSectorsBadge.Visibility = Visibility.Collapsed;
 
                 App.AuthToken = null;
                 App.CurrentUserProfile = null;

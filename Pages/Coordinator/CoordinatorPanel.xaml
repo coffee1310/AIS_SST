@@ -46,40 +46,21 @@
                 <TextBlock Text="Управление сектором" FontSize="40" FontFamily="Digital Pixel" Foreground="White" Margin="0,0,0,40"/>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
-                    <RadioButton x:Name="TabEdit" Content="Настройки" Style="{StaticResource TabRadioButtonStyle}" IsChecked="True" Checked="Tab_Checked"/>
-                    <RadioButton x:Name="TabParticipants" Content="Участники" Style="{StaticResource TabRadioButtonStyle}" Checked="Tab_Checked"/>
-                    <RadioButton x:Name="TabRequests" Content="Заявки" Style="{StaticResource TabRadioButtonStyle}" Checked="Tab_Checked"/>
+                    <RadioButton x:Name="TabParticipants" Content="Участники" Style="{StaticResource TabRadioButtonStyle}" IsChecked="True" Checked="Tab_Checked"/>
+
+                    <RadioButton x:Name="TabRequests" Style="{StaticResource TabRadioButtonStyle}" Checked="Tab_Checked">
+                        <RadioButton.Content>
+                            <Grid>
+                                <TextBlock Text="Заявки" VerticalAlignment="Center"/>
+                                <Border x:Name="BadgeRequests" Width="6" Height="6" Background="#E81123" CornerRadius="3" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-8,0" Visibility="Collapsed"/>
+                            </Grid>
+                        </RadioButton.Content>
+                    </RadioButton>
+
+                    <RadioButton x:Name="TabEdit" Content="Настройки" Style="{StaticResource TabRadioButtonStyle}" Checked="Tab_Checked"/>
                 </StackPanel>
 
-                <Grid x:Name="GridEdit" Visibility="Visible">
-                    <Border Style="{StaticResource CardBorderStyle}">
-                        <StackPanel>
-                            <TextBlock Text="Обложка сектора" Foreground="White" FontFamily="Montserrat" FontSize="16" Margin="0,0,0,15"/>
-                            <Grid Margin="0,0,0,30">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Border Grid.Column="0" Width="200" Height="120" CornerRadius="8" ClipToBounds="True" Margin="0,0,20,0" BorderBrush="#2A283C" BorderThickness="1">
-                                    <Border.Background>
-                                        <ImageBrush x:Name="EditSectorImage" Stretch="UniformToFill" ImageSource="/Resources/sector.png"/>
-                                    </Border.Background>
-                                </Border>
-                                <Button Grid.Column="1" Content="Загрузить новое" Style="{StaticResource OutlineButtonStyle}" VerticalAlignment="Center" Click="UploadImage_Click"/>
-                            </Grid>
-
-                            <TextBlock Text="Описание сектора" Foreground="White" FontFamily="Montserrat" FontSize="16" Margin="0,0,0,10"/>
-                            <Border Style="{StaticResource RegInputBorderStyle}" Height="120" Margin="0,0,0,30">
-                                <TextBox x:Name="EditDescriptionBox" Style="{StaticResource RegInnerInputStyle}" TextWrapping="Wrap" AcceptsReturn="True" VerticalAlignment="Top" Padding="15,15"/>
-                            </Border>
-
-                            <Button Content="Сохранить изменения" Style="{StaticResource RegModernButtonStyle}" HorizontalAlignment="Left" Click="SaveSector_Click"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-
-                <Grid x:Name="GridParticipants" Visibility="Collapsed">
+                <Grid x:Name="GridParticipants" Visibility="Visible">
                     <StackPanel>
                         <Grid Margin="0,0,0,20">
                             <Grid.ColumnDefinitions>
@@ -114,7 +95,17 @@
                                                 <TextBlock Text="{Binding GroupAndEmail}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12"/>
                                             </StackPanel>
 
-                                            <Button Grid.Column="2" Content="Исключить" Style="{StaticResource OutlineButtonStyle}" Foreground="#E81123" BorderBrush="#E81123" VerticalAlignment="Center" Tag="{Binding Id}" Click="RemoveParticipant_Click"/>
+                                            <Button Grid.Column="2" Content="Исключить" Foreground="#E81123" BorderBrush="#E81123" VerticalAlignment="Center" Tag="{Binding Id}" Click="RemoveParticipant_Click">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource OutlineButtonStyle}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCoordinator}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -161,6 +152,34 @@
 
                         <TextBlock x:Name="EmptyRequestsText" Text="Актуальных заявок нет." Foreground="#7A7886" HorizontalAlignment="Center" Margin="0,40,0,0" Visibility="Collapsed"/>
                     </StackPanel>
+                </Grid>
+
+                <Grid x:Name="GridEdit" Visibility="Collapsed">
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Обложка сектора" Foreground="White" FontFamily="Montserrat" FontSize="16" Margin="0,0,0,15"/>
+                            <Grid Margin="0,0,0,30">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Width="200" Height="120" CornerRadius="8" ClipToBounds="True" Margin="0,0,20,0" BorderBrush="#2A283C" BorderThickness="1">
+                                    <Border.Background>
+                                        <ImageBrush x:Name="EditSectorImage" Stretch="UniformToFill" ImageSource="/Resources/sector.png"/>
+                                    </Border.Background>
+                                </Border>
+                                <Button Grid.Column="1" Content="Загрузить новое" Style="{StaticResource OutlineButtonStyle}" VerticalAlignment="Center" Click="UploadImage_Click"/>
+                            </Grid>
+
+                            <TextBlock Text="Описание сектора" Foreground="White" FontFamily="Montserrat" FontSize="16" Margin="0,0,0,10"/>
+                            <Border Style="{StaticResource RegInputBorderStyle}" Height="120" Margin="0,0,0,30">
+                                <TextBox x:Name="EditDescriptionBox" Style="{StaticResource RegInnerInputStyle}" TextWrapping="Wrap" AcceptsReturn="True" VerticalAlignment="Top" Padding="15,15"/>
+                            </Border>
+
+                            <Button Content="Сохранить изменения" Style="{StaticResource RegModernButtonStyle}" HorizontalAlignment="Left" Click="SaveSector_Click"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
 
             </StackPanel>

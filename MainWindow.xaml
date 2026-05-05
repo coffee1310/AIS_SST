@@ -96,7 +96,20 @@
                     <StackPanel Grid.Row="1" Margin="0,0,0,0">
                         <RadioButton x:Name="NavHome" Content="Главная" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" Click="MenuHome_Click"/>
                         <RadioButton x:Name="NavEvents" Content="Мероприятия" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" Click="MenuEvents_Click"/>
-                        <RadioButton x:Name="NavSectors" Content="Сектора" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" Click="MenuSectors_Click"/>
+
+                        <RadioButton x:Name="NavSectors" Style="{StaticResource MenuRadioButtonStyle}" Click="MenuSectors_Click">
+                            <RadioButton.Content>
+                                <Grid>
+                                    <TextBlock x:Name="NavSectorsText" Text="Сектора" FontFamily="Digital Pixel" VerticalAlignment="Center"/>
+                                    <Border x:Name="NavSectorsBadge" Width="6" Height="6" Background="#E81123" CornerRadius="3" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-10,0" Visibility="Collapsed">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#E81123" BlurRadius="6" ShadowDepth="0" Opacity="0.9"/>
+                                        </Border.Effect>
+                                    </Border>
+                                </Grid>
+                            </RadioButton.Content>
+                        </RadioButton>
+
                         <RadioButton x:Name="NavTasks" Content="Задачи" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" Click="MenuTasks_Click"/>
                         <RadioButton x:Name="NavProjects" Content="Проекты" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" Click="MenuProjects_Click"/>
                         <RadioButton x:Name="NavRating" Content="Рейтинг" Style="{StaticResource MenuRadioButtonStyle}" FontFamily="Digital Pixel" Click="MenuRating_Click"/>

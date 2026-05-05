@@ -498,7 +498,7 @@
                                         </ToggleButton>
                                     </Grid>
                                 </Border>
-                                <TextBlock x:Name="errPassword" Text="Заполните пароль" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                                <TextBlock x:Name="errPassword" Text="Заполните пароль" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin" TextWrapping="Wrap"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="9" Grid.Column="1" Margin="5">
@@ -529,7 +529,7 @@
                                         </ToggleButton>
                                     </Grid>
                                 </Border>
-                                <TextBlock x:Name="errConfirmPassword" Text="Пароли не совпадают" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
+                                <TextBlock x:Name="errConfirmPassword" Text="Пароли не совпадают" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin" TextWrapping="Wrap"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="10" Grid.ColumnSpan="2" Margin="5">

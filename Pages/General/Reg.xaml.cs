@@ -221,6 +221,16 @@ namespace Diplom_Stud.Pages.General
 
         private void SelectPhoto_Click(object sender, RoutedEventArgs e)
         {
+            string msg = "Внимание: пожалуйста, отнеситесь к выбору снимка ответственно! Если фотография не будет соответствовать правилам ниже, ваша заявка на вступление может быть отклонена. Загрузите подходящее фото сразу, чтобы процесс регистрации прошел быстро и без лишних возвратов.\n\n"
+                       + "Требования к снимку:\n"
+                       + "• Формат: цветная фотография 3х4 (без белого уголка).\n"
+                       + "• Фон: строго белый и однотонный. В кадре не должно быть теней, полос, узоров или посторонних предметов.\n"
+                       + "• Поза: строго анфас. Лицо открыто.\n"
+                       + "• Пропорции: лицо 70-80% площади всей фотографии.\n"
+                       + "• Одежда: однотонная, чтобы не сливаться с фоном.";
+
+            CustomMessageBox.Show(msg, "Требования к фотографии", CustomMessageBox.MessageType.Info);
+
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg|All files (*.*)|*.*";
             openFileDialog.Title = "Выберите фотографию";
@@ -350,11 +360,20 @@ namespace Diplom_Stud.Pages.General
             if (string.IsNullOrWhiteSpace(tbVkLink.Text)) { errVkLink.Visibility = Visibility.Visible; hasError = true; }
             if (string.IsNullOrWhiteSpace(tbPhoto.Text)) { errPhoto.Visibility = Visibility.Visible; hasError = true; }
 
-            if (string.IsNullOrWhiteSpace(pbPassword.Password))
+            string pwd = pbPassword.Password;
+            if (string.IsNullOrWhiteSpace(pwd))
             {
+                errPassword.Text = "Заполните пароль";
                 errPassword.Visibility = Visibility.Visible;
                 hasError = true;
             }
+            else if (pwd.Length < 8 || !pwd.Any(char.IsUpper) || !pwd.Any(char.IsDigit) || !pwd.Any(ch => !char.IsLetterOrDigit(ch)))
+            {
+                errPassword.Text = "Мин. 8 символов, 1 заглавная, 1 цифра и спецсимвол";
+                errPassword.Visibility = Visibility.Visible;
+                hasError = true;
+            }
+
             if (string.IsNullOrWhiteSpace(pbConfirmPassword.Password))
             {
                 errConfirmPassword.Text = "Повторите пароль";
