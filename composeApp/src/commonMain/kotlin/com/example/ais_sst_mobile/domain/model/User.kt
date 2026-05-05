@@ -17,5 +17,7 @@ data class User(
     val phoneNumber: String,
     val vkLink: String?,
     val photo: String?,
-    val roleTitle: String
+    val roleTitle: String,
+    val gender: String?,
+    val socialStatuses: List<String>?
 )

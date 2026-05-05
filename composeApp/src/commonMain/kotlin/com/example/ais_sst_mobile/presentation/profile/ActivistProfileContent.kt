@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.ais_sst_mobile.navigation.FullScreenRoute
 import com.example.ais_sst_mobile.navigation.ProfileComponent
 
 @Composable
@@ -30,18 +31,27 @@ fun ActivistProfileContent(component: ProfileComponent, screenModel: ProfileScre
 
         when (val currentState = state) {
             is ProfileState.Loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary) }
-            is ProfileState.Error -> Text(currentState.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
+            is ProfileState.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        currentState.message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
             is ProfileState.Success -> {
                 val user = currentState.profile
 
                 ProfileHeader(user, activeRole, realRole) { screenModel.setRole(it) }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(22.dp))
 
                 ProfileStatsCard(user)
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = {
+                        component.onNavigateToFullScreen(FullScreenRoute.MyData)})
                     ProfileMenuRow(icon = Icons.Outlined.StarOutline, title = "История баллов", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.WorkOutline, title = "Портфолио", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Settings, title = "Настройки", onClick = { })

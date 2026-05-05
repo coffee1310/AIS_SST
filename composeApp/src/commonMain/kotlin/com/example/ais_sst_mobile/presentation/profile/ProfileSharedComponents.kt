@@ -47,7 +47,7 @@ fun ProfileHeader(
             modifier = Modifier
                 .clip(MaterialTheme.shapes.small)
                 .clickable(enabled = realRole.isBoardMember()) { isRoleMenuExpanded = true }
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -73,11 +73,11 @@ fun ProfileHeader(
                 containerColor = MaterialTheme.colorScheme.background
             ) {
                 DropdownMenuItem(
-                    text = { Text(realRole.uiName, style = MaterialTheme.typography.labelMedium) },
+                    text = { Text(realRole.uiName, style = MaterialTheme.typography.labelSmall.copy(fontSize = 16.sp)) },
                     onClick = { onRoleSelected(realRole); isRoleMenuExpanded = false }
                 )
                 DropdownMenuItem(
-                    text = { Text(AppRole.ACTIVIST.uiName, style = MaterialTheme.typography.labelMedium) },
+                    text = { Text(AppRole.ACTIVIST.uiName, style = MaterialTheme.typography.labelSmall.copy(fontSize = 16.sp)) },
                     onClick = { onRoleSelected(AppRole.ACTIVIST); isRoleMenuExpanded = false }
                 )
             }

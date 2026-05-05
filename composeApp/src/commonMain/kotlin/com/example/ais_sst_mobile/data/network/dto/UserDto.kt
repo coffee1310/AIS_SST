@@ -21,7 +21,9 @@ data class UserProfileDto(
     val phoneNumber: String,
     val vkLink: String? = null,
     val photo: String? = null,
-    val roleTitle: String
+    val roleTitle: String,
+    val gender: String? = null,
+    val socialStatuses: List<String>? = null
 ) {
     fun toDomain(): User {
         return User(
@@ -41,7 +43,9 @@ data class UserProfileDto(
             phoneNumber = phoneNumber,
             vkLink = vkLink,
             photo = photo,
-            roleTitle = roleTitle
+            roleTitle = roleTitle,
+            gender = gender,
+            socialStatuses = socialStatuses
         )
     }
 }

@@ -22,6 +22,7 @@ interface RootComponent {
         class Register(val component: RegisterComponent) : Child()
         class Main(val component: MainComponent) : Child()
         class AccountRequests(val component: AccountRequestsComponent) : Child()
+        class MyData(val component: MyDataComponent) : Child()
     }
 }
 
@@ -66,13 +67,19 @@ class DefaultRootComponent(
                     onNavigateToFullScreen = { route ->
                         when (route) {
                             is FullScreenRoute.AccountRequests -> navigation.pushNew(Config.AccountRequests)
-                            // is FullScreenRoute.Documents -> navigation.pushNew(Config.Documents)
+                            is FullScreenRoute.MyData -> navigation.pushNew(Config.MyData)
                         }
                     }
                 )
             )
             is Config.AccountRequests -> RootComponent.Child.AccountRequests(
                 AccountRequestsComponent(
+                    componentContext = context,
+                    onGoBack = { navigation.pop() }
+                )
+            )
+            is Config.MyData -> RootComponent.Child.MyData(
+                MyDataComponent(
                     componentContext = context,
                     onGoBack = { navigation.pop() }
                 )
@@ -85,5 +92,6 @@ class DefaultRootComponent(
         @Serializable data object Register : Config
         @Serializable data object Main : Config
         @Serializable data object AccountRequests : Config
+        @Serializable data object MyData : Config
     }
 }

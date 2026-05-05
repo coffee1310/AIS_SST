@@ -31,12 +31,20 @@ fun CuratorProfileContent(component: ProfileComponent, screenModel: ProfileScree
 
         when (val currentState = state) {
             is ProfileState.Loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary) }
-            is ProfileState.Error -> Text(currentState.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
+            is ProfileState.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        currentState.message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
             is ProfileState.Success -> {
                 val user = currentState.profile
 
                 ProfileHeader(user, activeRole, realRole) { screenModel.setRole(it) }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(22.dp))
 
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ProfileMenuRow(icon = Icons.Outlined.Folder, title = "Архив мероприятий", onClick = { })

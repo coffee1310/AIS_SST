@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 
 sealed interface FullScreenRoute {
     data object AccountRequests : FullScreenRoute
+    data object MyData : FullScreenRoute
 
 }
 class LoginComponent(
@@ -28,6 +29,10 @@ class ProfileComponent(
 ) : ComponentContext by componentContext
 
 class AccountRequestsComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+class MyDataComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

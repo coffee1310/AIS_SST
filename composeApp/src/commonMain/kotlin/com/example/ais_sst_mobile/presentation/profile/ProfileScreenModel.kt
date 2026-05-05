@@ -56,7 +56,6 @@ class ProfileScreenModel(
                     _state.value = ProfileState.Success(mapDomainToUi(user))
                 }
                 .onFailure { error ->
-                    println("Ошибка профиля: ${error.message}")
                     _state.value = ProfileState.Error("Не удалось загрузить профиль")
                 }
         }

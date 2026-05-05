@@ -17,6 +17,7 @@ import org.jetbrains.compose.resources.Font
 import ais_sst_mobile.composeapp.generated.resources.Res
 import ais_sst_mobile.composeapp.generated.resources.digital_pixel_regular
 import ais_sst_mobile.composeapp.generated.resources.montserrat_light
+import ais_sst_mobile.composeapp.generated.resources.montserrat_medium
 import ais_sst_mobile.composeapp.generated.resources.montserrat_regular
 
 @OptIn(ExperimentalAdaptiveApi::class)
@@ -29,35 +30,36 @@ fun AppTheme(
     val cupertinoColors = if (useDarkTheme) darkColorScheme() else lightColorScheme()
 
     val digitalFont = FontFamily(Font(Res.font.digital_pixel_regular))
-    val montserratFont = FontFamily(Font(Res.font.montserrat_light))
+    val montserratFontLight = FontFamily(Font(Res.font.montserrat_light))
     val montserratFontRegular = FontFamily(Font(Res.font.montserrat_regular))
+    val montserratFontMedium = FontFamily(Font(Res.font.montserrat_medium))
 
     val typography = Typography(
         titleLarge = TextStyle(
             fontFamily = digitalFont,
-            fontWeight = FontWeight.Normal,
             fontSize = 18.sp,
             letterSpacing = 1.sp
         ),
         titleMedium = TextStyle(
             fontFamily = digitalFont,
-            fontWeight = FontWeight.Normal,
             fontSize = 14.sp,
             letterSpacing = 1.sp
         ),
         bodyLarge = TextStyle(
-            fontFamily = montserratFont,
-            fontWeight = FontWeight.Normal,
+            fontFamily = montserratFontLight,
             fontSize = 17.sp
         ),
         labelMedium = TextStyle(
-            fontFamily = montserratFont,
-            fontWeight = FontWeight.Normal,
+            fontFamily = montserratFontLight,
             fontSize = 15.sp
         ),
         labelSmall = TextStyle(
             fontFamily = montserratFontRegular,
             fontSize = 13.sp
+        ),
+        displayMedium = TextStyle(
+            fontFamily = montserratFontMedium,
+            fontSize = 14.sp
         )
     )
 

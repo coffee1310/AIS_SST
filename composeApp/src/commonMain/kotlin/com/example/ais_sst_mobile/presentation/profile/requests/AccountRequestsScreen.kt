@@ -59,11 +59,11 @@ fun AccountRequestsScreen(onBackClick: () -> Unit) {
             }
 
             Column(modifier = Modifier.fillMaxSize()) {
-                Spacer(Modifier.windowInsetsTopHeight(WindowInsets.safeDrawing))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+                        .padding(horizontal = 16.dp)
                         .height(56.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
