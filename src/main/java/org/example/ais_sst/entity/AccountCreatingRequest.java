@@ -122,4 +122,7 @@ public class AccountCreatingRequest {
 
     @Column(name = "photo")
     private byte[] photo;
+
+    @Column(name = "vk_link")
+    private String vkLink;
 }

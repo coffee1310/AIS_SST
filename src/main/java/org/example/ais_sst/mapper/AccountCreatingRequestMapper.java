@@ -13,6 +13,7 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring", imports = {ImageUtil.class})
 public interface AccountCreatingRequestMapper {
 
+    @Mapping(target = "vkLink", source = "vkLink")
     @Mapping(target = "photo", expression = "java(ImageUtil.decodeFromBase64(dto.getPhoto()))")
     @Mapping(target = "group", ignore = true)
     @Mapping(target = "speciality", ignore = true)
@@ -21,9 +22,11 @@ public interface AccountCreatingRequestMapper {
     @Mapping(target = "id", ignore = true)
     AccountCreatingRequest toEntity(AccountCreatingRequestsSummaryDTO dto);
 
+    @Mapping(target = "vkLink", source = "vkLink")
     @Mapping(target = "photo", expression = "java(ImageUtil.encodeToBase64(entity.getPhoto()))")
     AccountCreatingRequestsSummaryDTO toDto(AccountCreatingRequest entity);
 
+    @Mapping(target = "vkLink", source = "vkLink")
     @Mapping(target = "specialityId", source = "speciality.id")
     @Mapping(target = "specialityName", source = "speciality.title")
     @Mapping(target = "groupId", source = "group.id")

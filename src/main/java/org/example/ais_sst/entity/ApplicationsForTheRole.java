@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.ais_sst.entity.enums.RoleApplicationStatuses;
 
 import java.time.LocalDate;
 
@@ -15,7 +16,7 @@ public class ApplicationsForTheRole {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -24,14 +25,12 @@ public class ApplicationsForTheRole {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "role", nullable = false)
+    @JoinColumn(name = "role_id", nullable = false)
     private GlobalEventRole role;
 
     @Column(name = "status", columnDefinition = "role_application_statuses not null")
-    private Object status;
+    private RoleApplicationStatuses status;
 
     @Column(name = "date_of_application")
     private LocalDate dateOfApplication;
-
-
 }

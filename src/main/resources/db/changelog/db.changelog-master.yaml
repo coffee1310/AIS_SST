@@ -43,3 +43,7 @@ databaseChangeLog:
       file: db/changelog/changes/023-add-location-to-events.yaml
   - include:
       file: db/changelog/changes/024-add-timestamps-to-account-requests.yaml
+  - include:
+      file: db/changelog/changes/025-rename-role-to-role-id-in-application-for-the-role.yaml
+  - include:
+      file: db/changelog/changes/026-add-vk-link-to-account-requests.yaml

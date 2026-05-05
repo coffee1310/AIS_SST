@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 044-rename-role-to-role-id-in-application-for-the-role
+      author: coffee13102006
+      labels: rename-column
+      comment: "Переименование колонки role в role_id в таблице application_for_the_role"
+      changes:
+        # Переименование колонки role в role_id
+        - renameColumn:
+            tableName: applications_for_the_role
+            oldColumnName: role
+            newColumnName: role_id
+            columnDataType: bigint
+
+        # Добавление комментария к колонке
+        - sql:
+            comment: "Добавление комментария к колонке role_id"
+            sql: |
+              COMMENT ON COLUMN applications_for_the_role.role_id IS 'ID роли в мероприятии';

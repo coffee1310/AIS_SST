@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 045-add-vk-link-to-account-requests
+      author: coffee13102006
+      labels: add-column
+      comment: "Добавление поля vk_link в таблицу account_creating_requests"
+      changes:
+        - addColumn:
+            tableName: account_creating_requests
+            columns:
+              - column:
+                  name: vk_link
+                  type: VARCHAR(256)
+                  remarks: "Ссылка на профиль ВКонтакте"

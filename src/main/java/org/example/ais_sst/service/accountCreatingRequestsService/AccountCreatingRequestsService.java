@@ -77,7 +77,6 @@ public class AccountCreatingRequestsService {
         accountCreatingRequest.setPassword(passwordEncoder.encode(dto.getPassword()));
         accountCreatingRequest.setStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ);
         accountCreatingRequest.setPhoto(photoBytes);
-
         AccountCreatingRequest savedRequest = accountCreatingRequestsRepository.save(accountCreatingRequest);
         log.info("Account request registered successfully with ID: {}", savedRequest.getId());
 
@@ -141,6 +140,7 @@ public class AccountCreatingRequestsService {
                 .speciality(request.getSpeciality())
                 .isActive(true)
                 .isBanned(false)
+                .vkLink(request.getVkLink())
                 .build();
 
         User savedUser = userRepository.save(user);
