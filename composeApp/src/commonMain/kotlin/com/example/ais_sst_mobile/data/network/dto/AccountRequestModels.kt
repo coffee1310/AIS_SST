@@ -18,16 +18,18 @@ data class AccountRequestDto(
     val gender: String?,
     val dateOfBirth: String?,
     val studentEmail: String?,
+    val additionalEmail: String? = null,
     val phoneNumber: String?,
     val studentIdNumber: Int?,
     val courseNumber: Int?,
-    val status: String,
+    val status: String?,
     val reasonForRefusal: String? = null,
     val groupId: Int?,
     val groupName: String? = null,
     val specialityId: Int?,
     val specialityName: String? = null,
-    val photo: String? = null
+    val photo: String? = null,
+    val vkLink: String? = null
 )
 @Serializable
 data class RejectRequestDto(

@@ -40,4 +40,11 @@ class UserRepositoryImpl(
     override suspend fun acceptAccountRequest(id: Int): Result<Unit> = runCatching {
         httpClient.put("account_requests/accept/$id")
     }
+    override suspend fun getAccountRequestById(id: Int): Result<AccountRequestDto> = runCatching {
+        val response = httpClient.get("account_requests/filter") {
+            parameter("id", id)
+        }.body<PageableResponse<AccountRequestDto>>()
+
+        response.content.firstOrNull() ?: throw Exception("Заявка не найдена")
+    }
 }

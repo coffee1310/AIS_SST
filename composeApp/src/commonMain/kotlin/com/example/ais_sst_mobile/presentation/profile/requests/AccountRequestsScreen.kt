@@ -28,13 +28,16 @@ import com.example.ais_sst_mobile.presentation.components.AppBackground
 import com.example.ais_sst_mobile.presentation.components.CustomBackButton
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import com.example.ais_sst_mobile.navigation.AccountRequestsComponent
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.RequestCard
 import org.koin.compose.getKoin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountRequestsScreen(onBackClick: () -> Unit) {
+fun AccountRequestsScreen(onBackClick: () -> Unit,
+                          component: AccountRequestsComponent
+) {
     val koin = getKoin()
     val screenModel = remember { koin.get<AccountRequestsScreenModel>() }
     val state by screenModel.state.collectAsState()
@@ -139,7 +142,10 @@ fun AccountRequestsScreen(onBackClick: () -> Unit) {
                             RequestCard(
                                 request = request,
                                 onAccept = { screenModel.acceptRequest(request.id) },
-                                onReject = { rejectingRequestId = request.id }
+                                onReject = { rejectingRequestId = request.id },
+                                modifier = Modifier.clickable {
+                                    component.onNavigateToRequestDetails(request.id)
+                                }
                             )
                         }
                         item { Spacer(modifier = Modifier.height(100.dp)) }

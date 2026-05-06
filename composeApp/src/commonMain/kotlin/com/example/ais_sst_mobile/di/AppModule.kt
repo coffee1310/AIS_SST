@@ -15,6 +15,7 @@ import com.example.ais_sst_mobile.presentation.home.HomeScreenModel
 import com.example.ais_sst_mobile.presentation.profile.ProfileScreenModel
 import com.example.ais_sst_mobile.presentation.profile.my_data.MyDataScreenModel
 import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreenModel
+import com.example.ais_sst_mobile.presentation.profile.requests.RequestDetailsScreenModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import com.russhwolf.settings.Settings
@@ -40,6 +41,7 @@ val appModule = module {
     factory { ProfileScreenModel(get(), get()) }
     factory { AccountRequestsScreenModel(get()) }
     factory { MyDataScreenModel(get()) }
+    factory { RequestDetailsScreenModel(get()) }
 
 }
 

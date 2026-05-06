@@ -16,6 +16,7 @@ import com.example.ais_sst_mobile.presentation.auth.RegisterScreen
 import com.example.ais_sst_mobile.presentation.main.MainScreen
 import com.example.ais_sst_mobile.presentation.profile.my_data.MyDataScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreen
+import com.example.ais_sst_mobile.presentation.profile.requests.RequestDetailsScreen
 import com.example.ais_sst_mobile.theme.AppTheme
 
 @OptIn(ExperimentalDecomposeApi::class)
@@ -42,9 +43,14 @@ fun App(root: RootComponent) {
                     is RootComponent.Child.Register -> RegisterScreen(instance.component)
                     is RootComponent.Child.Main -> MainScreen(instance.component)
                     is RootComponent.Child.AccountRequests -> AccountRequestsScreen(
-                        onBackClick = { instance.component.onGoBack() }
+                        onBackClick = { instance.component.onGoBack() },
+                        component = instance.component
                     )
                     is RootComponent.Child.MyData -> MyDataScreen(
+                        onBackClick = { instance.component.onGoBack() }
+                    )
+                    is RootComponent.Child.RequestDetails -> RequestDetailsScreen(
+                        requestId = instance.component.requestId,
                         onBackClick = { instance.component.onGoBack() }
                     )
                 }

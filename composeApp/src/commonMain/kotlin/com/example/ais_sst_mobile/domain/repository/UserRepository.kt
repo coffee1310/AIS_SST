@@ -8,4 +8,5 @@ interface UserRepository {
     suspend fun getAccountRequests(): Result<List<AccountRequestDto>>
     suspend fun rejectAccountRequest(id: Int, reason: String): Result<Unit>
     suspend fun acceptAccountRequest(id: Int): Result<Unit>
+    suspend fun getAccountRequestById(id: Int): Result<AccountRequestDto>
 }

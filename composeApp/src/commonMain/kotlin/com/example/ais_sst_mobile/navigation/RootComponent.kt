@@ -23,6 +23,7 @@ interface RootComponent {
         class Main(val component: MainComponent) : Child()
         class AccountRequests(val component: AccountRequestsComponent) : Child()
         class MyData(val component: MyDataComponent) : Child()
+        class RequestDetails(val component: RequestDetailsComponent) : Child()
     }
 }
 
@@ -68,6 +69,7 @@ class DefaultRootComponent(
                         when (route) {
                             is FullScreenRoute.AccountRequests -> navigation.pushNew(Config.AccountRequests)
                             is FullScreenRoute.MyData -> navigation.pushNew(Config.MyData)
+                            is FullScreenRoute.RequestDetails -> navigation.pushNew(Config.RequestDetails(route.id))
                         }
                     }
                 )
@@ -75,12 +77,22 @@ class DefaultRootComponent(
             is Config.AccountRequests -> RootComponent.Child.AccountRequests(
                 AccountRequestsComponent(
                     componentContext = context,
-                    onGoBack = { navigation.pop() }
+                    onGoBack = { navigation.pop() },
+                    onNavigateToRequestDetails = { id ->
+                        navigation.pushNew(Config.RequestDetails(id))
+                    }
                 )
             )
             is Config.MyData -> RootComponent.Child.MyData(
                 MyDataComponent(
                     componentContext = context,
+                    onGoBack = { navigation.pop() }
+                )
+            )
+            is Config.RequestDetails -> RootComponent.Child.RequestDetails(
+                RequestDetailsComponent(
+                    componentContext = context,
+                    requestId = config.id,
                     onGoBack = { navigation.pop() }
                 )
             )
@@ -93,5 +105,6 @@ class DefaultRootComponent(
         @Serializable data object Main : Config
         @Serializable data object AccountRequests : Config
         @Serializable data object MyData : Config
+        @Serializable data class RequestDetails(val id: Int) : Config
     }
 }
