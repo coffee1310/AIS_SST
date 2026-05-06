@@ -47,3 +47,9 @@ databaseChangeLog:
       file: db/changelog/changes/025-rename-role-to-role-id-in-application-for-the-role.yaml
   - include:
       file: db/changelog/changes/026-add-vk-link-to-account-requests.yaml
+  - include:
+      file: db/changelog/changes/027-refactor-applications-for-the-role-table.yaml
+  - include:
+      file: db/changelog/changes/028-recreate-applications-for-the-role-table.yaml
+  - include:
+      file: db/changelog/changes/029-add-is-deleted-to-event-roles.yaml

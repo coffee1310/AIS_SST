@@ -1,0 +1,155 @@
+databaseChangeLog:
+  - changeSet:
+      id: 048-recreate-applications-for-the-role-table
+      author: coffee13102006
+      labels: recreate-table
+      comment: "Пересоздание таблицы applications_for_the_role с новыми полями"
+      changes:
+        # 1. Удаляем старую таблицу если существует
+        - dropTable:
+            tableName: applications_for_the_role
+            cascadeConstraints: true
+
+        # 2. Создаем новую таблицу
+        - createTable:
+            tableName: applications_for_the_role
+            remarks: "Таблица заявок на роли в мероприятиях"
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                  remarks: "Первичный ключ"
+
+              - column:
+                  name: student_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                  remarks: "ID студента"
+
+              - column:
+                  name: event_role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                  remarks: "ID роли в мероприятии"
+
+              - column:
+                  name: is_reserve
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                  remarks: "Является ли заявка резервной"
+
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: "PENDING"
+                  constraints:
+                    nullable: false
+                  remarks: "Статус заявки"
+
+              - column:
+                  name: rejection_reason
+                  type: TEXT
+                  constraints:
+                    nullable: true
+                  remarks: "Причина отклонения"
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+                  remarks: "Дата и время создания"
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+                  remarks: "Дата и время последнего обновления"
+
+        # 3. Добавляем foreign key на users
+        - addForeignKeyConstraint:
+            constraintName: fk_applications_student_id
+            baseTableName: applications_for_the_role
+            baseColumnNames: student_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # 4. Добавляем foreign key на event_roles
+        - addForeignKeyConstraint:
+            constraintName: fk_applications_event_role_id
+            baseTableName: applications_for_the_role
+            baseColumnNames: event_role_id
+            referencedTableName: event_roles
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # 5. Добавляем уникальное ограничение
+        - addUniqueConstraint:
+            constraintName: uk_student_event_role
+            tableName: applications_for_the_role
+            columnNames: student_id, event_role_id
+            remarks: "Один студент может подать только одну заявку на конкретную роль"
+
+        # 6. Добавляем CHECK约束 для статуса
+        - sql:
+            comment: "Добавление CHECK约束 для статуса"
+            sql: |
+              ALTER TABLE applications_for_the_role 
+              ADD CONSTRAINT chk_applications_status 
+              CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'))
+
+        # 7. Создаем индексы для оптимизации
+        - createIndex:
+            indexName: idx_applications_student_id
+            tableName: applications_for_the_role
+            columns:
+              - name: student_id
+
+        - createIndex:
+            indexName: idx_applications_event_role_id
+            tableName: applications_for_the_role
+            columns:
+              - name: event_role_id
+
+        - createIndex:
+            indexName: idx_applications_status
+            tableName: applications_for_the_role
+            columns:
+              - name: status
+
+        - createIndex:
+            indexName: idx_applications_is_reserve
+            tableName: applications_for_the_role
+            columns:
+              - name: is_reserve
+
+        - createIndex:
+            indexName: idx_applications_created_at
+            tableName: applications_for_the_role
+            columns:
+              - name: created_at
+
+        # 8. Добавляем комментарии к колонкам
+        - sql:
+            comment: "Добавление комментариев к колонкам"
+            sql: |
+              COMMENT ON COLUMN applications_for_the_role.id IS 'Уникальный идентификатор заявки';
+              COMMENT ON COLUMN applications_for_the_role.student_id IS 'ID студента, подавшего заявку';
+              COMMENT ON COLUMN applications_for_the_role.event_role_id IS 'ID роли в мероприятии';
+              COMMENT ON COLUMN applications_for_the_role.is_reserve IS 'Флаг, указывающий что заявка в резерве (когда места закончились)';
+              COMMENT ON COLUMN applications_for_the_role.status IS 'Статус заявки: PENDING (на рассмотрении), APPROVED (одобрена), REJECTED (отклонена)';
+              COMMENT ON COLUMN applications_for_the_role.rejection_reason IS 'Причина отклонения заявки';
+              COMMENT ON COLUMN applications_for_the_role.created_at IS 'Дата и время создания заявки';
+              COMMENT ON COLUMN applications_for_the_role.updated_at IS 'Дата и время последнего обновления заявки'

@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: 046-refactor-applications-for-the-role-table
+      author: coffee13102006
+      labels: modify-table
+      comment: "Рефакторинг таблицы applications_for_the_role: замена role_id на event_role_id, переименование student_id в sector_participant_id"
+      changes:
+        # 1. Удаляем существующие foreign key constraints
+        - sql:
+            comment: "Удаление существующих foreign key constraints"
+            sql: |
+              ALTER TABLE applications_for_the_role DROP CONSTRAINT IF EXISTS fk_applications_role_id;
+              ALTER TABLE applications_for_the_role DROP CONSTRAINT IF EXISTS fk_applications_student_id;
+
+        # 2. Удаляем колонку role_id
+        - dropColumn:
+            tableName: applications_for_the_role
+            columnName: role_id
+
+        # 3. Добавляем колонку event_role_id
+        - addColumn:
+            tableName: applications_for_the_role
+            columns:
+              - column:
+                  name: event_role_id
+                  type: BIGINT
+                  remarks: "ID роли в мероприятии"
+
+        # 4. Добавляем foreign key на event_roles
+        - addForeignKeyConstraint:
+            constraintName: fk_applications_event_role_id
+            baseTableName: applications_for_the_role
+            baseColumnNames: event_role_id
+            referencedTableName: event_roles
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # 5. Переименовываем student_id в sector_participant_id
+        - renameColumn:
+            tableName: applications_for_the_role
+            oldColumnName: student_id
+            newColumnName: sector_participant_id
+            columnDataType: BIGINT
+
+        # 6. Добавляем NOT NULL constraint на sector_participant_id
+        - addNotNullConstraint:
+            tableName: applications_for_the_role
+            columnName: sector_participant_id
+            columnDataType: BIGINT
+
+        # 7. Добавляем foreign key на sector_participants
+        - addForeignKeyConstraint:
+            constraintName: fk_applications_sector_participant_id
+            baseTableName: applications_for_the_role
+            baseColumnNames: sector_participant_id
+            referencedTableName: sector_participants
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # 8. Добавляем уникальное ограничение на (sector_participant_id, event_role_id)
+        - addUniqueConstraint:
+            constraintName: uk_applications_sector_participant_event_role
+            tableName: applications_for_the_role
+            columnNames: sector_participant_id, event_role_id
+
+        # 9. Добавляем комментарии к колонкам
+        - sql:
+            comment: "Добавление комментариев к колонкам"
+            sql: |
+              COMMENT ON COLUMN applications_for_the_role.event_role_id IS 'ID роли в мероприятии';
+              COMMENT ON COLUMN applications_for_the_role.sector_participant_id IS 'ID участника сектора';
