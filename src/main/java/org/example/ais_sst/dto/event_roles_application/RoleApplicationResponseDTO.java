@@ -17,6 +17,8 @@ public class RoleApplicationResponseDTO {
     private Long studentId;
     private String studentName;
     private String studentSurname;
+    private Long sectorParticipantId;  // Добавлено поле
+    private String sectorTitle;  // Добавлено поле sectorTitle
     private String studentPatronymic;
     private String studentEmail;
     private Long eventRoleId;

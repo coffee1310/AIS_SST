@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 051-change-student-id-to-sector-participant-id
+      author: coffee13102006
+      labels: modify-column
+      comment: "Изменение колонки student_id на sector_participant_id в таблице applications_for_the_role"
+      changes:
+        # Переименовываем колонку student_id в sector_participant_id
+        - renameColumn:
+            tableName: applications_for_the_role
+            oldColumnName: student_id
+            newColumnName: sector_participant_id
+            columnDataType: BIGINT
+
+        # Обновляем foreign key constraint
+        - dropForeignKeyConstraint:
+            constraintName: fk_applications_student_id
+            baseTableName: applications_for_the_role
+
+        - addForeignKeyConstraint:
+            constraintName: fk_applications_sector_participant_id
+            baseTableName: applications_for_the_role
+            baseColumnNames: sector_participant_id
+            referencedTableName: sector_participants
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # Обновляем уникальное ограничение
+        - dropUniqueConstraint:
+            constraintName: uk_student_event_role
+            tableName: applications_for_the_role
+
+        - addUniqueConstraint:
+            constraintName: uk_sector_participant_event_role
+            tableName: applications_for_the_role
+            columnNames: sector_participant_id, event_role_id
+
+        # Обновляем индекс
+        - dropIndex:
+            indexName: idx_applications_student_id
+            tableName: applications_for_the_role
+
+        - createIndex:
+            indexName: idx_applications_sector_participant_id
+            tableName: applications_for_the_role
+            columns:
+              - name: sector_participant_id
+
+        # Обновляем комментарий
+        - sql:
+            comment: "Обновление комментария к колонке"
+            sql: |
+              COMMENT ON COLUMN applications_for_the_role.sector_participant_id IS 'ID участника сектора';

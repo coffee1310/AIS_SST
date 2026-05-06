@@ -193,7 +193,8 @@ public class AccountCreatingRequestsService {
 
         int offset = page * size;
 
-        String statusStr = filter.getStatus() != null ? filter.getStatus().name() : null;
+        // Исправлено: преобразуем enum в значение, которое хранится в БД
+        String statusStr = convertStatusToDbValue(filter.getStatus());
         String genderStr = filter.getGender();
 
         List<Object[]> results = accountCreatingRequestsRepository.findAllWithFiltersNative(
@@ -240,27 +241,31 @@ public class AccountCreatingRequestsService {
         return new PageImpl<>(dtoList, pageable, total);
     }
 
+    /**
+     * Конвертирует enum статус в значение для БД
+     */
+    private String convertStatusToDbValue(AccountCreatingRequestStatus status) {
+        if (status == null) {
+            return null;
+        }
+        switch (status) {
+            case НА_РАССМОТРЕНИИ:
+                return "На рассмотрении";
+            case ОДОБРЕНА:
+                return "Одобрена";
+            case ОТКЛОНЕНА:
+                return "Отклонена";
+            default:
+                return null;
+        }
+    }
+
     private AccountCreatingRequestResponseDTO mapRowToAccountCreatingRequestResponseDTO(Object[] row) {
         // Получаем статус из БД (русская строка)
         String statusFromDb = (String) row[11];
 
         // Преобразуем русскую строку в enum
-        AccountCreatingRequestStatus status = null;
-        if (statusFromDb != null) {
-            switch (statusFromDb) {
-                case "НА_РАССМОТРЕНИИ":
-                    status = AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ;
-                    break;
-                case "ОДОБРЕНА":
-                    status = AccountCreatingRequestStatus.ОДОБРЕНА;
-                    break;
-                case "ОТКЛОНЕНА":
-                    status = AccountCreatingRequestStatus.ОТКЛОНЕНА;
-                    break;
-                default:
-                    log.warn("Unknown status: {}", statusFromDb);
-            }
-        }
+        AccountCreatingRequestStatus status = convertDbValueToStatus(statusFromDb);
 
         // Получаем фото как byte[]
         byte[] photoBytes = (byte[]) row[18];
@@ -287,7 +292,27 @@ public class AccountCreatingRequestsService {
                 .groupName((String) row[15])
                 .specialityId(row[16] != null ? ((Number) row[16]).longValue() : null)
                 .specialityName((String) row[17])
-                .photo(photoBase64)  // Устанавливаем фото в Base64
+                .photo(photoBase64)
                 .build();
+    }
+
+    /**
+     * Конвертирует значение из БД в enum статус
+     */
+    private AccountCreatingRequestStatus convertDbValueToStatus(String dbValue) {
+        if (dbValue == null) {
+            return null;
+        }
+        switch (dbValue) {
+            case "На рассмотрении":
+                return AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ;
+            case "Одобрена":
+                return AccountCreatingRequestStatus.ОДОБРЕНА;
+            case "Отклонена":
+                return AccountCreatingRequestStatus.ОТКЛОНЕНА;
+            default:
+                log.warn("Unknown status from DB: {}", dbValue);
+                return null;
+        }
     }
 }

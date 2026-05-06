@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "applications_for_the_role", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"student_id", "event_role_id"}, name = "uk_student_event_role")
+        @UniqueConstraint(columnNames = {"sector_participant_id", "event_role_id"}, name = "uk_sector_participant_event_role")
 })
 public class ApplicationsForTheRole {
 
@@ -27,8 +27,8 @@ public class ApplicationsForTheRole {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "student_id", nullable = false)
-    private User student;
+    @JoinColumn(name = "sector_participant_id", nullable = false)
+    private SectorParticipant sectorParticipant;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -40,7 +40,7 @@ public class ApplicationsForTheRole {
     private Boolean isReserve = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", columnDefinition = "role_application_statuses", nullable = false)
+    @Column(name = "status", nullable = false)
     @Builder.Default
     private RoleApplicationStatuses status = RoleApplicationStatuses.НА_РАССМОТРЕНИИ;
 

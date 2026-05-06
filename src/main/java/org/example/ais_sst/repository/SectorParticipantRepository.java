@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface SectorParticipantRepository extends JpaRepository<SectorParticipant, Long> {
 
+
     List<SectorParticipant> findByStudentId(Long studentId);
 
     List<SectorParticipant> findBySectorId(Long sectorId);

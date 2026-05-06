@@ -53,3 +53,5 @@ databaseChangeLog:
       file: db/changelog/changes/028-recreate-applications-for-the-role-table.yaml
   - include:
       file: db/changelog/changes/029-add-is-deleted-to-event-roles.yaml
+  - include:
+      file: db/changelog/changes/030-change-student-id-to-sector-participant-id.yaml

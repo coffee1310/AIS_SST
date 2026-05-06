@@ -17,4 +17,6 @@ public class RoleApplicationFilterDTO {
     private Boolean isReserve;
     private LocalDateTime dateFrom;
     private LocalDateTime dateTo;
+    private Long sectorParticipantId;
+
 }
