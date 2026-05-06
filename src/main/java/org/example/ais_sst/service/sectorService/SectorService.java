@@ -56,6 +56,14 @@ public class SectorService {
     }
 
     @Transactional
+    public SectorDTO getSectorById(Long id) {
+        Sector sector = sectorRepository.findSectorById(id)
+                .orElseThrow(() -> new SectorDoesNotExistException("Такой сектор не существует"));
+
+        return sectorMapper.toSectorDTO(sector);
+    }
+
+    @Transactional
     public List<SectorWithUserStatusDTO> getSectorsWithUserStatus(Long userId) {
         log.debug("Getting sectors with status for userId: {}", userId);
 

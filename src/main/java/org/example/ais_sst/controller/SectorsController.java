@@ -43,6 +43,12 @@ public class SectorsController {
         return new ResponseEntity<>(sectors, HttpStatus.OK);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getSectorById(@PathVariable Long id) {
+        SectorDTO sector = sectorService.getSectorById(id);
+        return new ResponseEntity<>(sector, HttpStatus.OK);
+    }
+
     @PostMapping("/{sector_id}")
     public ResponseEntity<?> createSectorIntroductionRequest(@AuthenticationPrincipal CustomUserDetails customUserDetails,
                                                              @PathVariable Long sector_id) {

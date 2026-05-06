@@ -42,5 +42,7 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     ORDER BY is_participant DESC, has_active_request DESC, s.title ASC
     """, nativeQuery = true)
     List<Object[]> findSectorsWithUserStatus(@Param("userId") Long userId);
+
+    Sector getSectorById(Long id);
 }
 
