@@ -16,6 +16,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 
 namespace Diplom_Stud.Pages.General
 {
@@ -26,6 +27,7 @@ namespace Diplom_Stud.Pages.General
         private List<int> _selectedStatuses = new List<int>();
         private bool _isUpdatingPassword = false;
         private bool _isUpdatingConfirmPassword = false;
+        private byte[] _selectedImageBytes = null;
 
         public Reg()
         {
@@ -237,7 +239,60 @@ namespace Diplom_Stud.Pages.General
 
             if (openFileDialog.ShowDialog() == true)
             {
-                tbPhoto.Text = openFileDialog.FileName;
+                try
+                {
+                    byte[] compressedBytes = CompressAndResizeImage(openFileDialog.FileName);
+                    long maxImageSizeBytes = 2 * 1024 * 1024;
+
+                    if (compressedBytes.Length > maxImageSizeBytes)
+                    {
+                        CustomMessageBox.Show("Файл слишком большой даже после сжатия. Выберите фото размером до 2 МБ.", "Ошибка", CustomMessageBox.MessageType.Error);
+                        tbPhoto.Text = "";
+                        _selectedImageBytes = null;
+                    }
+                    else
+                    {
+                        tbPhoto.Text = openFileDialog.FileName;
+                        _selectedImageBytes = compressedBytes;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CustomMessageBox.Show($"Ошибка при обработке фотографии: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+        }
+
+        private byte[] CompressAndResizeImage(string filePath)
+        {
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                BitmapDecoder decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                BitmapSource original = decoder.Frames[0];
+
+                double maxWidth = 800;
+                double maxHeight = 800;
+                BitmapSource finalImage = original;
+
+                if (original.PixelWidth > maxWidth || original.PixelHeight > maxHeight)
+                {
+                    double ratioX = maxWidth / original.PixelWidth;
+                    double ratioY = maxHeight / original.PixelHeight;
+                    double ratio = Math.Min(ratioX, ratioY);
+
+                    TransformedBitmap resized = new TransformedBitmap(original, new ScaleTransform(ratio, ratio));
+                    finalImage = resized;
+                }
+
+                JpegBitmapEncoder encoder = new JpegBitmapEncoder();
+                encoder.QualityLevel = 80;
+                encoder.Frames.Add(BitmapFrame.Create(finalImage));
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    encoder.Save(ms);
+                    return ms.ToArray();
+                }
             }
         }
 
@@ -418,13 +473,9 @@ namespace Diplom_Stud.Pages.General
             try
             {
                 string photoBase64 = "";
-                if (File.Exists(tbPhoto.Text))
+                if (_selectedImageBytes != null)
                 {
-                    byte[] imageBytes = File.ReadAllBytes(tbPhoto.Text);
-                    string ext = Path.GetExtension(tbPhoto.Text).ToLower().Replace(".", "");
-                    if (ext == "jpg") ext = "jpeg";
-
-                    photoBase64 = $"data:image/{ext};base64,{Convert.ToBase64String(imageBytes)}";
+                    photoBase64 = $"data:image/jpeg;base64,{Convert.ToBase64String(_selectedImageBytes)}";
                 }
 
                 string corporateEmail = tbStudentId.Text.Trim() + ((ComboBoxItem)cbDomain.SelectedItem).Content.ToString();
