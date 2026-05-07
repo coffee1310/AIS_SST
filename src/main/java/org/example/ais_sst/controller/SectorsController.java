@@ -1,16 +1,22 @@
 package org.example.ais_sst.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTO;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTOSummary;
 import org.example.ais_sst.dto.sector.SectorDTO;
+import org.example.ais_sst.dto.sector.SectorParticipantResponseDTO;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.service.sectorService.SectorIntroductionRequestService;
 import org.example.ais_sst.service.sectorService.SectorService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -43,10 +49,49 @@ public class SectorsController {
         return new ResponseEntity<>(sectors, HttpStatus.OK);
     }
 
+
     @GetMapping("/{id}")
-    public ResponseEntity<?> getSectorById(@PathVariable Long id) {
+    @Operation(summary = "Получить сектор по ID")
+    public ResponseEntity<SectorDTO> getSectorById(@PathVariable Long id) {
         SectorDTO sector = sectorService.getSectorById(id);
-        return new ResponseEntity<>(sector, HttpStatus.OK);
+        return ResponseEntity.ok(sector);
+    }
+
+    /**
+     * Получить участников сектора по ID сектора
+     */
+    @GetMapping("/{id}/participants")
+    @Operation(summary = "Получить участников сектора")
+    public ResponseEntity<Page<SectorParticipantResponseDTO>> getSectorParticipants(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "entryDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection) {
+
+        log.info("GET /api/sectors/{}/participants - Getting participants", id);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        Page<SectorParticipantResponseDTO> participants = sectorService.getSectorParticipants(id, pageable);
+
+        return ResponseEntity.ok(participants);
+    }
+
+    /**
+     * Получить координатора сектора
+     */
+    @GetMapping("/{id}/coordinator")
+    @Operation(summary = "Получить координатора сектора")
+    public ResponseEntity<SectorParticipantResponseDTO> getSectorCoordinator(@PathVariable Long id) {
+        log.info("GET /api/sectors/{}/coordinator - Getting coordinator", id);
+
+        SectorParticipantResponseDTO coordinator = sectorService.getSectorCoordinator(id);
+
+        if (coordinator == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(coordinator);
     }
 
     @PostMapping("/{sector_id}")

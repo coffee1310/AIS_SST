@@ -1,6 +1,8 @@
 package org.example.ais_sst.repository;
 
 import org.example.ais_sst.entity.SectorParticipant;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -40,4 +42,14 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     boolean existsByStudentId(Long studentId);
 
     boolean existsBySectorId(Long sectorId);
+
+    // Получить всех участников сектора с пагинацией
+    Page<SectorParticipant> findBySectorId(Long sectorId, Pageable pageable);
+
+
+    // Получить всех активных участников сектора
+    @Query("SELECT sp FROM SectorParticipant sp WHERE sp.sector.id = :sectorId AND sp.status = 'Активный'")
+    Page<SectorParticipant> findActiveBySectorId(@Param("sectorId") Long sectorId, Pageable pageable);
+
+    long countBySectorId(Long sectorId);
 }

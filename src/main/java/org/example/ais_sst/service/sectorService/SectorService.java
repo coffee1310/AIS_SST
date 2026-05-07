@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.sector.SectorDTO;
+import org.example.ais_sst.dto.sector.SectorParticipantResponseDTO;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
 import org.example.ais_sst.entity.*;
 import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
@@ -11,9 +12,12 @@ import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
 import org.example.ais_sst.exception.SectorDoesNotExistException;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.SectorMapper;
+import org.example.ais_sst.mapper.SectorParticipantMapper;
 import org.example.ais_sst.mapper.converter.SectorWithUserStatusConverter;
 import org.example.ais_sst.repository.*;
 import org.example.ais_sst.utils.ImageUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.management.relation.RoleNotFoundException;
@@ -29,6 +33,7 @@ public class SectorService {
 
     private final SectorRepository sectorRepository;
     private final SectorMapper sectorMapper;
+    private final SectorParticipantMapper sectorParticipantMapper;
     private final SectorWithUserStatusConverter sectorWithUserStatusConverter;
 
     private final UserRepository userRepository;
@@ -54,6 +59,36 @@ public class SectorService {
         log.info("Saved sector with id: {}", sectorDTO.getId());
 
         return sectorDTO;
+    }
+
+    @Transactional()
+    public Page<SectorParticipantResponseDTO> getSectorParticipants(Long sectorId, Pageable pageable) {
+        log.info("Getting participants for sector id: {}", sectorId);
+
+        // Проверяем, существует ли сектор
+        Sector sector = sectorRepository.findById(sectorId)
+                .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + sectorId + " не существует"));
+
+        Page<SectorParticipant> participants = sectorParticipantRepository.findBySectorId(sectorId, pageable);
+
+        return participants.map(sectorParticipantMapper::toResponseDto);
+    }
+
+    /**
+     * Получить координатора сектора
+     */
+    @Transactional()
+    public SectorParticipantResponseDTO getSectorCoordinator(Long sectorId) {
+        log.info("Getting coordinator for sector id: {}", sectorId);
+
+        SectorParticipant coordinator = sectorParticipantRepository.findBySectorIdAndIsCoordinatorTrue(sectorId)
+                .orElse(null);
+
+        if (coordinator == null) {
+            return null;
+        }
+
+        return sectorParticipantMapper.toResponseDto(coordinator);
     }
 
     @Transactional

@@ -43,6 +43,7 @@ public class AccountCreatingRequestsService {
     private final PasswordEncoder passwordEncoder;
     private final AccountCreatingRequestsRepository accountCreatingRequestsRepository;
     private final RoleRepository roleRepository;
+    private final AccountCreatingRequestSocialStatusRepository accountCreatingRequestsSocialStatusesRepository;
 
     // Мапперы
     private final AccountCreatingRequestMapper requestMapper;
@@ -170,14 +171,32 @@ public class AccountCreatingRequestsService {
 
     public Page<AccountCreatingRequestResponseDTO> getRequests(Pageable pageable) {
         Page<AccountCreatingRequest> requests = accountCreatingRequestsRepository.findAll(pageable);
-        return requests.map(requestMapper::toResponseDto);
+        return requests.map(request -> {
+            AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request);
+            // Добавляем социальные статусы
+            List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
+                    .findSocialStatusTitlesByRequestId(request.getId());
+            dto.setSocialStatuses(socialStatuses);
+            return dto;
+        });
     }
 
     public Page<AccountCreatingRequestResponseDTO> getPendingRequests(Pageable pageable) {
         log.info("Getting pending account requests");
         Page<AccountCreatingRequest> requests = accountCreatingRequestsRepository
                 .findByStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ, pageable);
-        return requests.map(requestMapper::toResponseDto);
+
+        return requests.map(request -> {
+            AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request);
+            // Добавляем социальные статусы
+            List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
+                    .findSocialStatusTitlesByRequestId(request.getId());
+            dto.setSocialStatuses(socialStatuses);
+            // Добавляем additionalEmail и vkLink
+            dto.setAdditionalEmail(request.getAdditionalEmail());
+            dto.setVkLink(request.getVkLink());
+            return dto;
+        });
     }
 
     /**
@@ -233,7 +252,15 @@ public class AccountCreatingRequestsService {
                 filter.getSpecialityId());
 
         List<AccountCreatingRequestResponseDTO> dtoList = results.stream()
-                .map(this::mapRowToAccountCreatingRequestResponseDTO)
+                .map(row -> {
+                    AccountCreatingRequestResponseDTO dto = mapRowToAccountCreatingRequestResponseDTO(row);
+                    // Получаем ID заявки для поиска социальных статусов
+                    Long requestId = ((Number) row[0]).longValue();
+                    List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
+                            .findSocialStatusTitlesByRequestId(requestId);
+                    dto.setSocialStatuses(socialStatuses);
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
