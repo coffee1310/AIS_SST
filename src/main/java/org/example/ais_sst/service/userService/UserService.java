@@ -138,25 +138,6 @@ public class UserService implements UserServiceImpl {
     }
 
     @Transactional
-    public Page<UserResponseDTO> getAllUsersSimple(int page, int size, String sortBy, String sortDirection) {
-        log.info("Getting all users with pagination: page={}, size={}, sortBy={}, sortDirection={}",
-                page, size, sortBy, sortDirection);
-
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<User> usersPage = userRepository.findAll(pageable);
-
-        return usersPage.map(user -> {
-            UserResponseDTO dto = userMapper.toResponseDto(user);
-            if (user.getPhoto() != null && user.getPhoto().length > 0) {
-                dto.setPhoto(ImageUtil.encodeToBase64(user.getPhoto()));
-            }
-            return dto;
-        });
-    }
-
-    @Transactional
     public Page<UserResponseDTO> getUsersByRole(String role, int page, int size, String sortBy, String sortDirection) {
         log.info("Getting users by role: {}, page={}, size={}", role, page, size);
 

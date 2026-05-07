@@ -28,4 +28,15 @@ public class SectorDTO {
     private Boolean isActive = true;
 
     private String photo;
+
+    // Информация о координаторе
+    private Long coordinatorId;
+    private String coordinatorFullName;      // ФИО координатора
+    private String coordinatorName;
+    private String coordinatorSurname;
+    private String coordinatorPatronymic;
+    private String coordinatorPhoto;          // фото координатора (Base64)
+    private Short coordinatorCourseNumber;    // курс координатора
+    private String coordinatorGroupTitle;     // группа координатора
+    private String coordinatorSpecialityTitle; // специальность координатора
 }

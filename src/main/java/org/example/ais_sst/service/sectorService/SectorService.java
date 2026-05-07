@@ -13,6 +13,7 @@ import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.SectorMapper;
 import org.example.ais_sst.mapper.converter.SectorWithUserStatusConverter;
 import org.example.ais_sst.repository.*;
+import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.stereotype.Service;
 
 import javax.management.relation.RoleNotFoundException;
@@ -60,7 +61,45 @@ public class SectorService {
         Sector sector = sectorRepository.findSectorById(id)
                 .orElseThrow(() -> new SectorDoesNotExistException("Такой сектор не существует"));
 
-        return sectorMapper.toSectorDTO(sector);
+        SectorDTO sectorDTO = sectorMapper.toSectorDTO(sector);
+
+        // Находим координатора сектора
+        SectorParticipant coordinator = sectorParticipantRepository
+                .findBySectorIdAndIsCoordinatorTrue(id)
+                .orElse(null);
+
+        if (coordinator != null && coordinator.getStudent() != null) {
+            User coordinatorUser = coordinator.getStudent();
+            sectorDTO.setCoordinatorId(coordinatorUser.getId());
+            sectorDTO.setCoordinatorName(coordinatorUser.getName());
+            sectorDTO.setCoordinatorSurname(coordinatorUser.getSurname());
+            sectorDTO.setCoordinatorPatronymic(coordinatorUser.getPatronymic());
+
+            // Формируем ФИО
+            String fullName = coordinatorUser.getSurname() + " " + coordinatorUser.getName();
+            if (coordinatorUser.getPatronymic() != null && !coordinatorUser.getPatronymic().isEmpty()) {
+                fullName += " " + coordinatorUser.getPatronymic();
+            }
+            sectorDTO.setCoordinatorFullName(fullName);
+
+            // Фото координатора
+            if (coordinatorUser.getPhoto() != null && coordinatorUser.getPhoto().length > 0) {
+                sectorDTO.setCoordinatorPhoto(ImageUtil.encodeToBase64(coordinatorUser.getPhoto()));
+            }
+
+            // Информация о курсе, группе и специальности
+            sectorDTO.setCoordinatorCourseNumber(coordinatorUser.getCourseNumber());
+
+            if (coordinatorUser.getGroup() != null) {
+                sectorDTO.setCoordinatorGroupTitle(coordinatorUser.getGroup().getTitle());
+            }
+
+            if (coordinatorUser.getSpeciality() != null) {
+                sectorDTO.setCoordinatorSpecialityTitle(coordinatorUser.getSpeciality().getTitle());
+            }
+        }
+
+        return sectorDTO;
     }
 
     @Transactional
