@@ -100,12 +100,17 @@
                         <RadioButton x:Name="NavSectors" Style="{StaticResource MenuRadioButtonStyle}" Click="MenuSectors_Click">
                             <RadioButton.Content>
                                 <Grid>
-                                    <TextBlock x:Name="NavSectorsText" Text="Сектора" FontFamily="Digital Pixel" VerticalAlignment="Center"/>
-                                    <Border x:Name="NavSectorsBadge" Width="6" Height="6" Background="#E81123" CornerRadius="3" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-10,0" Visibility="Collapsed">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="#E81123" BlurRadius="6" ShadowDepth="0" Opacity="0.9"/>
-                                        </Border.Effect>
-                                    </Border>
+                                    <TextBlock x:Name="NavSectorsText" Text="Сектора" FontFamily="Digital Pixel" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                                    <Border x:Name="NavSectorsBadge" Width="6" Height="6" Background="#E81123" CornerRadius="3" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" Visibility="Collapsed"/>
+                                </Grid>
+                            </RadioButton.Content>
+                        </RadioButton>
+
+                        <RadioButton x:Name="NavRegistrationRequests" Style="{StaticResource MenuRadioButtonStyle}" Click="MenuRegistrationRequests_Click" Visibility="Collapsed">
+                            <RadioButton.Content>
+                                <Grid>
+                                    <TextBlock Text="Заявки" FontFamily="Digital Pixel" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                                    <Border x:Name="NavRegistrationRequestsBadge" Width="6" Height="6" Background="#E81123" CornerRadius="3" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" Visibility="Collapsed"/>
                                 </Grid>
                             </RadioButton.Content>
                         </RadioButton>

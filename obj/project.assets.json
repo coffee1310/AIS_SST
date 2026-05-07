@@ -1673,11 +1673,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\danii\\OneDrive\\Desktop\\Диплом\\Diplom_Stud\\Diplom_Stud.csproj",
+      "projectUniqueName": "C:\\Users\\danii\\Source\\Repos\\AIS_SST\\Diplom_Stud.csproj",
       "projectName": "Diplom_Stud",
-      "projectPath": "C:\\Users\\danii\\OneDrive\\Desktop\\Диплом\\Diplom_Stud\\Diplom_Stud.csproj",
+      "projectPath": "C:\\Users\\danii\\Source\\Repos\\AIS_SST\\Diplom_Stud.csproj",
       "packagesPath": "C:\\Users\\danii\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\danii\\OneDrive\\Desktop\\Диплом\\Diplom_Stud\\obj\\",
+      "outputPath": "C:\\Users\\danii\\Source\\Repos\\AIS_SST\\obj\\",
       "projectStyle": "PackageReference",
       "skipContentFileWrite": true,
       "UsingMicrosoftNETSdk": false,

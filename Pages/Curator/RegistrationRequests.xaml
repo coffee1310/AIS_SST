@@ -1,0 +1,151 @@
+﻿<Page x:Class="Diplom_Stud.Pages.Curator.RegistrationRequests"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Diplom_Stud.Pages.Curator"
+      mc:Ignorable="d" 
+      d:DesignHeight="1000" d:DesignWidth="1111"
+      Title="Registration Requests"
+      Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="TabRadioButtonStyle" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#7A7886"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,30,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <StackPanel>
+                            <ContentPresenter HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                            <Rectangle x:Name="ActiveIndicator" Height="2" Fill="Transparent" RadiusX="1" RadiusY="1"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="ActiveIndicator" Property="Fill" Value="#02B3BA"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <Grid Background="Transparent">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel HorizontalAlignment="Center" Width="950" Margin="40,50,40,50">
+
+                <TextBlock Text="Заявки на регистрацию" FontSize="40" FontFamily="Digital Pixel" Foreground="White" Margin="0,0,0,40"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
+                    <RadioButton x:Name="TabPending" Style="{StaticResource TabRadioButtonStyle}" IsChecked="True" Checked="Tab_Checked" Tag="НА_РАССМОТРЕНИИ">
+                        <RadioButton.Content>
+                            <Grid>
+                                <TextBlock Text="На рассмотрении" FontFamily="Montserrat" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <Border x:Name="BadgePendingRequests" Width="6" Height="6" Background="#E81123" CornerRadius="3" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" Visibility="Collapsed"/>
+                            </Grid>
+                        </RadioButton.Content>
+                    </RadioButton>
+
+                    <RadioButton x:Name="TabApproved" Content="Одобренные" Style="{StaticResource TabRadioButtonStyle}" Checked="Tab_Checked" Tag="ОДОБРЕНА"/>
+                    <RadioButton x:Name="TabRejected" Content="Отклоненные" Style="{StaticResource TabRadioButtonStyle}" Checked="Tab_Checked" Tag="ОТКЛОНЕНА"/>
+                </StackPanel>
+
+                <ItemsControl x:Name="RequestsListControl">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,15" Padding="20">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Ellipse Grid.Column="0" Width="80" Height="80" Margin="0,0,20,0" VerticalAlignment="Top">
+                                        <Ellipse.Fill>
+                                            <ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill"/>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
+                                        <TextBlock Text="{Binding FullName}" Foreground="White" FontFamily="Montserrat" FontSize="18" FontWeight="Medium" Margin="0,0,0,5"/>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                            <TextBlock Text="{Binding CourseGroupSpec}" Foreground="#02B3BA" FontFamily="Montserrat" FontSize="12" Margin="0,0,15,0"/>
+                                            <TextBlock Text="{Binding AgeInfo}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12"/>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                            <TextBlock Text="{Binding StudentEmail}" Foreground="#D1CDEF" FontFamily="Montserrat Thin" FontSize="12" Margin="0,0,15,0"/>
+                                            <TextBlock Text="{Binding PhoneNumber}" Foreground="#D1CDEF" FontFamily="Montserrat Thin" FontSize="12"/>
+                                        </StackPanel>
+
+                                        <TextBlock Text="{Binding VkLinkDisplay}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12" Margin="0,5,0,0" Visibility="{Binding HasVkLink, Converter={StaticResource BoolToVis}}"/>
+
+                                        <TextBlock Text="{Binding RejectionReasonDisplay}" Foreground="#E81123" FontFamily="Montserrat Thin" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap" Visibility="{Binding ShowRejectionReason, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Orientation="Vertical" VerticalAlignment="Center" Visibility="{Binding ShowActions, Converter={StaticResource BoolToVis}}">
+                                        <Button Content="Одобрить" Style="{StaticResource BaseModernButtonStyle}" Width="130" Height="36" Margin="0,0,0,10" Tag="{Binding Id}" Click="ApproveRequest_Click"/>
+                                        <Button Content="Отклонить" Style="{StaticResource OutlineButtonStyle}" Foreground="#E81123" BorderBrush="#E81123" Width="130" Height="36" Padding="0" Tag="{Binding Id}" Click="RejectRequest_Click"/>
+                                    </StackPanel>
+
+                                    <Border Grid.Column="2" VerticalAlignment="Center" Padding="15,8" CornerRadius="8" Background="#1A1A24" BorderBrush="#2A283C" BorderThickness="1" Visibility="{Binding ShowStatusBadge, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}" FontFamily="Montserrat" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock x:Name="EmptyRequestsText" Text="Заявки не найдены." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="16" HorizontalAlignment="Center" Margin="0,40,0,0" Visibility="Collapsed"/>
+
+                <StackPanel x:Name="PaginationPanel" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,30,0,20" Visibility="Collapsed">
+                    <Button x:Name="BtnPrevPage" Content="&lt;" Style="{StaticResource PaginationPageButtonStyle}" Click="PrevPage_Click" Margin="0,0,15,0"/>
+                    <TextBlock x:Name="TxtPageInfo" Text="Страница 1 из 1" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" VerticalAlignment="Center"/>
+                    <Button x:Name="BtnNextPage" Content="&gt;" Style="{StaticResource PaginationPageButtonStyle}" Click="NextPage_Click" Margin="15,0,0,0"/>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid x:Name="RejectionOverlay" Background="#E61A1A2E" Visibility="Collapsed">
+            <Border Style="{StaticResource CardBorderStyle}" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="ОТКЛОНЕНИЕ ЗАЯВКИ" Foreground="#E81123" FontFamily="Digital Pixel" FontSize="18" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                    <TextBlock Text="Укажите причину отклонения (обязательно):" Foreground="White" FontFamily="Montserrat Thin" FontSize="12" Margin="0,0,0,10"/>
+
+                    <Border Style="{StaticResource RegInputBorderStyle}" Height="100" Margin="0,0,0,20">
+                        <TextBox x:Name="TbRejectionReason" Style="{StaticResource RegInnerInputStyle}" TextWrapping="Wrap" AcceptsReturn="True" VerticalAlignment="Top" Padding="15" Foreground="White"/>
+                    </Border>
+
+                    <TextBlock x:Name="ErrRejectionReason" Text="Причина не может быть пустой" Foreground="#E81123" FontFamily="Montserrat Thin" FontSize="11" Visibility="Collapsed" Margin="0,-15,0,15"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Отмена" Style="{StaticResource OutlineButtonStyle}" Width="120" Height="40" Padding="0" Margin="0,0,15,0" Click="CancelRejection_Click"/>
+                        <Button Content="Подтвердить" Style="{StaticResource BaseModernButtonStyle}" Background="#E81123" Width="120" Height="40" Click="ConfirmRejection_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="LoadingOverlay" Background="#E61A1A2E" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4" Foreground="#02B3BA" Background="#2A283C" BorderThickness="0" Margin="0,0,0,15"/>
+                <TextBlock Text="Загрузка данных..." Foreground="White" FontFamily="Digital Pixel" FontSize="18" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>
