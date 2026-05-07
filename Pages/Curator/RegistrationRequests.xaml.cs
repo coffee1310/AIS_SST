@@ -90,7 +90,6 @@ namespace Diplom_Stud.Pages.Curator
 
                         foreach (var dto in pageData.content)
                         {
-                            // УНИВЕРСАЛЬНАЯ ПРОВЕРКА (Игнорирует капс и окончания)
                             string rawStatus = dto.status?.ToUpper() ?? "";
                             bool isPending = rawStatus.Contains("РАССМОТРЕНИ");
                             bool isApproved = rawStatus.Contains("ОДОБР") || rawStatus.Contains("ПРИНЯТ");
@@ -120,11 +119,9 @@ namespace Diplom_Stud.Pages.Curator
 
                                 ShowActions = isPending,
                                 ShowStatusBadge = !isPending,
-                                // Зеленый для принятых
                                 StatusText = isApproved ? "ПРИНЯТО" : (isRejected ? "ОТКЛОНЕНО" : dto.status),
                                 StatusColor = isApproved ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00C853")) : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E81123")),
 
-                                // Показ причины отказа
                                 ShowRejectionReason = isRejected && !string.IsNullOrEmpty(dto.reasonForRefusal),
                                 RejectionReasonDisplay = $"Причина отклонения: {dto.reasonForRefusal}"
                             });
@@ -181,6 +178,90 @@ namespace Diplom_Stud.Pages.Curator
                 }
             }
             catch { }
+        }
+
+        // --- ЛОГИКА ОКНА "ПОДРОБНЕЕ" ---
+        private async void OpenDetails_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is int reqId)
+            {
+                LoadingOverlay.Visibility = Visibility.Visible;
+                try
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                    var response = await _httpClient.GetAsync($"/api/account_requests/filter?id={reqId}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = await response.Content.ReadAsStringAsync();
+                        var pageData = JsonSerializer.Deserialize<PageResponse<AccountRequestDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        var dto = pageData?.content?.FirstOrDefault();
+
+                        if (dto != null)
+                        {
+                            string rawStatus = dto.status?.ToUpper() ?? "";
+                            bool isApproved = rawStatus.Contains("ОДОБР") || rawStatus.Contains("ПРИНЯТ");
+                            bool isRejected = rawStatus.Contains("ОТКЛОН");
+
+                            int age = 0;
+                            if (DateTime.TryParse(dto.dateOfBirth, out DateTime dob))
+                            {
+                                age = DateTime.Today.Year - dob.Year;
+                                if (dob.Date > DateTime.Today.AddYears(-age)) age--;
+                            }
+
+                            // Обработка социальных статусов
+                            string socialDisplay = (dto.socialStatuses != null && dto.socialStatuses.Count > 0)
+                                ? string.Join(", ", dto.socialStatuses)
+                                : "Не указаны";
+
+                            var detailsVm = new RequestDetailsViewModel
+                            {
+                                Avatar = GetImageFromBase64(dto.photo) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
+                                FullName = $"{dto.surname} {dto.name} {dto.patronymic}".Trim(),
+                                Gender = dto.gender ?? "Не указан",
+                                DateOfBirth = string.IsNullOrEmpty(dto.dateOfBirth) ? "Не указана" : dto.dateOfBirth,
+                                Age = age > 0 ? age.ToString() : "—",
+                                StudentId = dto.studentIdNumber.ToString(),
+                                GroupInfo = $"{dto.courseNumber} курс, {dto.groupName}",
+                                SpecialityName = dto.specialityName,
+                                Phone = string.IsNullOrEmpty(dto.phoneNumber) ? "Не указан" : dto.phoneNumber,
+                                Email = dto.studentEmail,
+                                AdditionalEmailDisplay = string.IsNullOrEmpty(dto.additionalEmail) ? "Не указана" : dto.additionalEmail,
+                                VkLink = string.IsNullOrEmpty(dto.vkLink) ? "Не указана" : dto.vkLink,
+                                SocialStatusesDisplay = socialDisplay,
+                                CreatedAtDisplay = DateTime.TryParse(dto.createdAt, out DateTime cd) ? $"Создана: {cd:dd.MM.yyyy HH:mm}" : "",
+
+                                Status = isApproved ? "ПРИНЯТО" : (isRejected ? "ОТКЛОНЕНО" : "НА РАССМОТРЕНИИ"),
+                                StatusColor = isApproved ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00C853")) : (isRejected ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E81123")) : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#02B3BA"))),
+
+                                RejectionReason = dto.reasonForRefusal,
+                                RejectionVisibility = isRejected ? Visibility.Visible : Visibility.Collapsed
+                            };
+
+                            RequestDetailsOverlay.DataContext = detailsVm;
+                            RequestDetailsOverlay.Visibility = Visibility.Visible;
+                        }
+                    }
+                    else
+                    {
+                        CustomMessageBox.Show($"Ошибка сервера при получении данных: {response.StatusCode}", "Ошибка API", CustomMessageBox.MessageType.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CustomMessageBox.Show($"Сетевая ошибка: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+                finally
+                {
+                    LoadingOverlay.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
+
+        private void CloseDetails_Click(object sender, RoutedEventArgs e)
+        {
+            RequestDetailsOverlay.Visibility = Visibility.Collapsed;
         }
 
         private async void PrevPage_Click(object sender, RoutedEventArgs e)
@@ -363,6 +444,7 @@ namespace Diplom_Stud.Pages.Curator
         public string gender { get; set; }
         public string dateOfBirth { get; set; }
         public string studentEmail { get; set; }
+        public string additionalEmail { get; set; }
         public string phoneNumber { get; set; }
         public int studentIdNumber { get; set; }
         public int courseNumber { get; set; }
@@ -372,6 +454,7 @@ namespace Diplom_Stud.Pages.Curator
         public string groupName { get; set; }
         public int specialityId { get; set; }
         public string specialityName { get; set; }
+        public List<string> socialStatuses { get; set; }
         public string photo { get; set; }
         public string vkLink { get; set; }
         public string createdAt { get; set; }
@@ -397,5 +480,27 @@ namespace Diplom_Stud.Pages.Curator
 
         public bool ShowRejectionReason { get; set; }
         public string RejectionReasonDisplay { get; set; }
+    }
+
+    public class RequestDetailsViewModel
+    {
+        public ImageSource Avatar { get; set; }
+        public string FullName { get; set; }
+        public string Gender { get; set; }
+        public string DateOfBirth { get; set; }
+        public string Age { get; set; }
+        public string StudentId { get; set; }
+        public string GroupInfo { get; set; }
+        public string SpecialityName { get; set; }
+        public string Phone { get; set; }
+        public string Email { get; set; }
+        public string AdditionalEmailDisplay { get; set; }
+        public string VkLink { get; set; }
+        public string SocialStatusesDisplay { get; set; }
+        public string CreatedAtDisplay { get; set; }
+        public string Status { get; set; }
+        public Brush StatusColor { get; set; }
+        public string RejectionReason { get; set; }
+        public Visibility RejectionVisibility { get; set; }
     }
 }

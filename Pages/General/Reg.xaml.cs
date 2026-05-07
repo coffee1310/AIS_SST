@@ -443,7 +443,6 @@ namespace Diplom_Stud.Pages.General
             }
 
             if (dpBirthDate.SelectedDate == null) { errBirthDate.Visibility = Visibility.Visible; hasError = true; }
-            if (_selectedStatuses.Count == 0) { errStatus.Visibility = Visibility.Visible; hasError = true; }
 
             if (cbGender.SelectedIndex <= 0) { errGender.Visibility = Visibility.Visible; hasError = true; }
             if (cbCourse.SelectedIndex <= 0) { errCourse.Visibility = Visibility.Visible; hasError = true; }
@@ -451,7 +450,7 @@ namespace Diplom_Stud.Pages.General
             if (cbGroup.SelectedItem == null) { errGroup.Visibility = Visibility.Visible; hasError = true; }
             if (cbSpeciality.SelectedIndex <= 0) { errSpeciality.Visibility = Visibility.Visible; hasError = true; }
 
-            if (tbStudentId.Text.Length != 6) { errStudentId.Visibility = Visibility.Visible; hasError = true; }
+            if (tbStudentId.Text.Length < 6) { errStudentId.Visibility = Visibility.Visible; hasError = true; }
             if (cbAgreement.IsChecked != true) { errAgreement.Visibility = Visibility.Visible; hasError = true; }
 
             string additionalEmail = tbAdditionalEmail.Text.Trim();
@@ -480,12 +479,15 @@ namespace Diplom_Stud.Pages.General
 
                 string corporateEmail = tbStudentId.Text.Trim() + ((ComboBoxItem)cbDomain.SelectedItem).Content.ToString();
 
+                string uiGender = ((ComboBoxItem)cbGender.SelectedItem).Content.ToString();
+                string genderVal = uiGender == "Мужской" ? "Мужчина" : (uiGender == "Женский" ? "Женщина" : uiGender);
+
                 var requestObj = new
                 {
                     name = tbFirstName.Text.Trim(),
                     surname = tbLastName.Text.Trim(),
                     patronymic = tbPatronymic.Text.Trim(),
-                    gender = ((ComboBoxItem)cbGender.SelectedItem).Content.ToString(),
+                    gender = genderVal,
                     dateOfBirth = dpBirthDate.SelectedDate.Value.ToString("yyyy-MM-dd"),
                     courseNumber = int.Parse(((ComboBoxItem)cbCourse.SelectedItem).Content.ToString()),
                     speciality_id = (int)((ComboBoxItem)cbSpeciality.SelectedItem).Tag,
@@ -493,9 +495,9 @@ namespace Diplom_Stud.Pages.General
                     studentIdNumber = int.Parse(tbStudentId.Text.Trim()),
                     studentEmail = corporateEmail,
                     phoneNumber = tbPhone.Text.Trim().Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", ""),
-                    additionalEmail = additionalEmail,
                     password = pbPassword.Password,
-                    vk_link = tbVkLink.Text.Trim(),
+                    vkLink = tbVkLink.Text.Trim(),
+                    // ИСПРАВЛЕНИЕ: Теперь всегда отправляем массив (даже если он пустой [])
                     social_statuses_id = _selectedStatuses.ToArray(),
                     photo = photoBase64
                 };

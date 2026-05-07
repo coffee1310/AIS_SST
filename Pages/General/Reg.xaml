@@ -365,7 +365,6 @@
                                                             <ColumnDefinition Width="30"/>
                                                         </Grid.ColumnDefinitions>
                                                         <StackPanel Orientation="Horizontal" Margin="15,0,0,0" VerticalAlignment="Center">
-                                                            <TextBlock Text="*" Foreground="#02B3BA" Margin="0,0,5,0"/>
                                                             <TextBlock x:Name="txtStatusDisplay" Text="Социальный статус" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14"/>
                                                         </StackPanel>
                                                         <Path Grid.Column="1" Fill="#02B3BA" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
