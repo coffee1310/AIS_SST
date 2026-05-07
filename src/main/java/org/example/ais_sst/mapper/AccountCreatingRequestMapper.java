@@ -13,6 +13,7 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring", imports = {ImageUtil.class})
 public interface AccountCreatingRequestMapper {
 
+    @Mapping(target = "additionalEmail", source = "additionalEmail")
     @Mapping(target = "vkLink", source = "vkLink")
     @Mapping(target = "photo", expression = "java(ImageUtil.decodeFromBase64(dto.getPhoto()))")
     @Mapping(target = "group", ignore = true)

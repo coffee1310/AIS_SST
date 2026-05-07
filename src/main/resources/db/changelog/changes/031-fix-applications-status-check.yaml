@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 052-fix-applications-status-check
+      author: coffee13102006
+      labels: modify-constraint
+      comment: "Исправление CHECK constraint для статусов заявок"
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE applications_for_the_role DROP CONSTRAINT IF EXISTS chk_applications_status;
+              ALTER TABLE applications_for_the_role 
+              ADD CONSTRAINT chk_applications_status 
+              CHECK (status IN ('НА_РАССМОТРЕНИИ', 'ОДОБРЕНА', 'ОТКЛОНЕНА'));

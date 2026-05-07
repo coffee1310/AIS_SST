@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 054-add-additional-email-to-account-requests
+      author: coffee13102006
+      labels: add-column
+      comment: "Добавление поля additional_email в таблицу account_creating_requests"
+      changes:
+        - addColumn:
+            tableName: account_creating_requests
+            columns:
+              - column:
+                  name: additional_email
+                  type: VARCHAR(256)
+                  remarks: "Дополнительная электронная почта"

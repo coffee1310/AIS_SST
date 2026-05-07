@@ -141,6 +141,7 @@ public class AccountCreatingRequestsService {
                 .isActive(true)
                 .isBanned(false)
                 .vkLink(request.getVkLink())
+                .additionalEmail(request.getAdditionalEmail())
                 .build();
 
         User savedUser = userRepository.save(user);

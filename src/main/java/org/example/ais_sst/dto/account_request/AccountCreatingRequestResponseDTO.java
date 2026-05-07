@@ -32,6 +32,7 @@ public class AccountCreatingRequestResponseDTO {
     private String specialityName;
     private String photo;
     private String vkLink;
+    private String additionalEmail;
 
     private LocalDateTime createdAt;   // Добавлено
     private LocalDateTime updatedAt;   // Добавлено
@@ -56,6 +57,7 @@ public class AccountCreatingRequestResponseDTO {
                 .specialityId(request.getSpeciality() != null ? request.getSpeciality().getId() : null)
                 .specialityName(request.getSpeciality() != null ? request.getSpeciality().getTitle() : null)
                 .vkLink(request.getVkLink())
+                .additionalEmail(request.getAdditionalEmail())
                 .build();
     }
 }

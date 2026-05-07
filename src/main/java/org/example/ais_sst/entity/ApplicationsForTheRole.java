@@ -3,6 +3,7 @@ package org.example.ais_sst.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.example.ais_sst.entity.converter.RoleApplicationStatusesConverter;
 import org.example.ais_sst.entity.enums.RoleApplicationStatuses;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -39,7 +40,7 @@ public class ApplicationsForTheRole {
     @Builder.Default
     private Boolean isReserve = false;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = RoleApplicationStatusesConverter.class)
     @Column(name = "status", nullable = false)
     @Builder.Default
     private RoleApplicationStatuses status = RoleApplicationStatuses.НА_РАССМОТРЕНИИ;

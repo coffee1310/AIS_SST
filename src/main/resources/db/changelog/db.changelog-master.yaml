@@ -55,3 +55,9 @@ databaseChangeLog:
       file: db/changelog/changes/029-add-is-deleted-to-event-roles.yaml
   - include:
       file: db/changelog/changes/030-change-student-id-to-sector-participant-id.yaml
+  - include:
+      file: db/changelog/changes/031-fix-applications-status-check.yaml
+  - include:
+      file: db/changelog/changes/032-create-application-status-enum.yaml
+  - include:
+      file: db/changelog/changes/033-add-additional-email-to-account-requests..yaml

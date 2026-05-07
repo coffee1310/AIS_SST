@@ -120,6 +120,11 @@ public class AccountCreatingRequest {
     @Column(name = "status", nullable = false)
     private AccountCreatingRequestStatus status;
 
+    @Size(max = 256)
+    @Column(name = "additional_email", length = 256)
+    private String additionalEmail;
+
+
     @Column(name = "photo")
     private byte[] photo;
 

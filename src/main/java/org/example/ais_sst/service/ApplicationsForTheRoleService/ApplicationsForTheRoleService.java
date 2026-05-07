@@ -64,6 +64,7 @@ public class ApplicationsForTheRoleService {
 
         // Подсчитываем количество уже одобренных заявок
         long approvedCount = roleApplicationRepository.countApprovedByEventRoleId(eventRoleId);
+
         int maxSlots = eventRole.getCapacity() != null ? eventRole.getCapacity() : Integer.MAX_VALUE;
         boolean isReserve = approvedCount >= maxSlots;
 
@@ -108,6 +109,7 @@ public class ApplicationsForTheRoleService {
         }
 
         long approvedCount = roleApplicationRepository.countApprovedByEventRoleId(application.getEventRole().getId());
+
         int maxSlots = application.getEventRole().getCapacity() != null
                 ? application.getEventRole().getCapacity()
                 : Integer.MAX_VALUE;

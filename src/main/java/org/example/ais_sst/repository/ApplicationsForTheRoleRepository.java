@@ -31,14 +31,13 @@ public interface ApplicationsForTheRoleRepository extends JpaRepository<Applicat
 
     Optional<ApplicationsForTheRole> findById(Long id);
 
-    @Query("SELECT COUNT(a) FROM ApplicationsForTheRole a WHERE a.eventRole.id = :eventRoleId AND a.status = 'ОДОБРЕНА'")
+    @Query("SELECT COUNT(a) FROM ApplicationsForTheRole a WHERE a.eventRole.id = :eventRoleId AND a.status = 'Одобрена'")
     long countApprovedByEventRoleId(@Param("eventRoleId") Long eventRoleId);
 
     boolean existsBySectorParticipantIdAndEventRoleId(Long sectorParticipantId, Long eventRoleId);
 
     Page<ApplicationsForTheRole> findBySectorParticipantId(Long sectorParticipantId, Pageable pageable);
 
-    // Метод для поиска по нескольким sectorParticipantId
     Page<ApplicationsForTheRole> findBySectorParticipantIdIn(List<Long> sectorParticipantIds, Pageable pageable);
 
     @Query("SELECT a FROM ApplicationsForTheRole a WHERE " +

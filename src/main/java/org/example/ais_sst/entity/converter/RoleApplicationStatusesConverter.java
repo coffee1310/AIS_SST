@@ -8,15 +8,20 @@ import org.springframework.stereotype.Component;
 
 @Converter(autoApply = true)
 public class RoleApplicationStatusesConverter implements AttributeConverter<RoleApplicationStatuses, String> {
+
     @Override
-    public String convertToDatabaseColumn(RoleApplicationStatuses roleApplicationStatuses) {
-        if (roleApplicationStatuses == null) return null;
-        return roleApplicationStatuses.name();
+    public String convertToDatabaseColumn(RoleApplicationStatuses attribute) {
+        if (attribute == null) {
+            return null;
+        }
+        return attribute.getDbValue();
     }
 
     @Override
-    public RoleApplicationStatuses convertToEntityAttribute(String s) {
-        if (s == null) return null;
-        return RoleApplicationStatuses.valueOf(s);  // Из строки в enum
+    public RoleApplicationStatuses convertToEntityAttribute(String dbData) {
+        if (dbData == null) {
+            return null;
+        }
+        return RoleApplicationStatuses.fromDbValue(dbData);
     }
 }

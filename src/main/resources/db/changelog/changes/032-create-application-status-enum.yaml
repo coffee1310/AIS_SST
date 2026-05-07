@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 053-recreate-status-as-enum
+      author: coffee13102006
+      labels: modify-column
+      comment: "Пересоздание колонки status как enum типа"
+      changes:
+        # 1. Удаляем CHECK constraint если существует
+        - sql:
+            sql: "ALTER TABLE applications_for_the_role DROP CONSTRAINT IF EXISTS chk_applications_status;"
+            dbms: postgresql
+
+        # 2. Создаем enum тип
+        - sql:
+            sql: "CREATE TYPE application_status AS ENUM ('На рассмотрении', 'Одобрена', 'Отклонена');"
+            dbms: postgresql
+
+        # 3. Удаляем старую колонку status
+        - dropColumn:
+            tableName: applications_for_the_role
+            columnName: status
+
+        # 4. Добавляем новую колонку status с типом enum
+        - addColumn:
+            tableName: applications_for_the_role
+            columns:
+              - column:
+                  name: status
+                  type: application_status
+                  defaultValue: "На рассмотрении"
+                  constraints:
+                    nullable: false
+                  remarks: "Статус заявки"
+
+        # 5. Добавляем комментарий
+        - sql:
+            sql: "COMMENT ON TYPE application_status IS 'Статусы заявок на роли: На рассмотрении, Одобрена, Отклонена';"
+            dbms: postgresql

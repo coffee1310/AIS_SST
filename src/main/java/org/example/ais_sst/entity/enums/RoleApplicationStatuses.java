@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum RoleApplicationStatuses {
-    ОТКЛОНЕНА("Отклонено"),
     НА_РАССМОТРЕНИИ("На рассмотрении"),
-    ОДОБРЕНА("Принято");
+    ОДОБРЕНА("Одобрена"),
+    ОТКЛОНЕНА("Отклонена");
 
     private final String dbValue;
 
