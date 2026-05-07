@@ -76,7 +76,7 @@ class RegisterScreenModel(
 
             try {
                 val formattedDate = "${birthDate.substring(4, 8)}-${birthDate.substring(2, 4)}-${birthDate.substring(0, 2)}"
-                val fullVkLink = "https://vk.com/${vkLink.trim()}"
+                val fullVkLink = "https://vk.ru/${vkLink.trim()}"
                 val base64Photo = "data:image/jpeg;base64,${photoBytes.encodeBase64()}"
 
                 val request = RegisterRequest(

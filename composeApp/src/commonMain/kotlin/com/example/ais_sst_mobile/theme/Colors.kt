@@ -21,6 +21,7 @@ val BackgroundCard = Color(0xFF575757)
 val MenuInactiveDark = Color(0xFFCBCBCB)
 val MenuInactiveLight = Color(0xFF4E4E4E)
 val IconDark = Color(0xFF02B3BA)
+val errorConteiner = Color(0xFF9E2E2E)
 
 val LightColors = lightColorScheme(
     primary = PrimaryPurple,
@@ -34,7 +35,8 @@ val LightColors = lightColorScheme(
     onBackground = BackgroundCustomTab,
     onPrimaryContainer = PrimaryPurple,
     outlineVariant = MenuInactiveLight,
-    surfaceTint = AccentTeal
+    surfaceTint = AccentTeal,
+    errorContainer = errorConteiner
 )
 
 val DarkColors = darkColorScheme(
@@ -48,5 +50,6 @@ val DarkColors = darkColorScheme(
     onBackground = BackgroundCustomTab,
     onPrimaryContainer = BackgroundCard,
     outlineVariant = MenuInactiveDark,
-    surfaceTint = IconDark
+    surfaceTint = IconDark,
+    errorContainer = errorConteiner
 )

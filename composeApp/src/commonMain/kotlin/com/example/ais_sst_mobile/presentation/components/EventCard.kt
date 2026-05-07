@@ -33,7 +33,7 @@ fun EventCard(
 ) {
     Card(
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.1f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.15f)),
         border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
         modifier = modifier
             .height(254.dp)
@@ -75,7 +75,7 @@ fun EventCard(
                 Text(
                     text = event.dateStr,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )
             }
 
@@ -92,7 +92,7 @@ fun EventCard(
                 Text(
                     text = event.venue,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

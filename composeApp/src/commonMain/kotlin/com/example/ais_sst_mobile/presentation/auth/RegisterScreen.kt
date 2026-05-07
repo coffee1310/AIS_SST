@@ -131,7 +131,7 @@ fun RegisterScreen(component: RegisterComponent) {
     val nameRegex = remember { Regex("^[А-ЯЁ][а-яё]*$") }
     val emailRegex = remember { Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-z]+$") }
     val vkRegex = remember { Regex("""^[a-zA-Z0-9_.\-/?=&!@#$%]+$""") }
-    val passwordRegex = remember { Regex("""^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]{8,}$""") }
+    val passwordRegex = remember { Regex("""^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?])[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]{8,}$""") }
     val isSurnameError = surname.isNotEmpty() && !nameRegex.matches(surname.trim())
     val isNameError = name.isNotEmpty() && !nameRegex.matches(name.trim())
     val isPatronymicError = patronymic.isNotEmpty() && !nameRegex.matches(patronymic.trim())
@@ -575,7 +575,7 @@ fun RegisterScreen(component: RegisterComponent) {
                     placeholder = "* Ссылка на ВКонтакте",
                     isError = isVkLinkError,
                     errorMessage = if (isVkLinkError) "Ссылка не должна содержать пробелов и русских букв" else null,
-                    visualTransformation = PrefixTransformation("https://vk.com/", isVkFocused),
+                    visualTransformation = PrefixTransformation("https://vk.ru/", isVkFocused),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )

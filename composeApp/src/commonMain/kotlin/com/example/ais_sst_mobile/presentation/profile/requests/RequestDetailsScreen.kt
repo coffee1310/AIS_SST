@@ -89,7 +89,7 @@ fun RequestDetailsScreen(
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.width(48.dp))
+                    Spacer(modifier = Modifier.width(40.dp))
                 }
 
                 when (val currentState = state) {

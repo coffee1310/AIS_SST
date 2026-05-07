@@ -59,7 +59,7 @@ fun MyDataScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.width(48.dp))
+                    Spacer(modifier = Modifier.width(40.dp))
                 }
 
                 when (val currentState = state) {
@@ -90,8 +90,30 @@ fun MyDataScreen(onBackClick: () -> Unit) {
                             Spacer(modifier = Modifier.height(8.dp))
                             val imageBitmap = remember(user.photo) {
                                 try {
-                                    user.photo?.substringAfter("base64,")?.trim()?.decodeBase64Bytes()?.toImageBitmap()
-                                } catch (e: Exception) { null }
+                                    user.photo?.let { rawString ->
+                                        var textToDecode = rawString.trim()
+
+                                        if (textToDecode.startsWith("ZGF0Y")) {
+                                            val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
+                                            if (decodedText.startsWith("data:image")) {
+                                                textToDecode = decodedText
+                                            }
+                                        }
+
+                                        if (textToDecode.contains("base64,")) {
+                                            textToDecode = textToDecode.substringAfter("base64,").trim()
+                                        }
+
+                                        val bytes = textToDecode.decodeBase64Bytes()
+
+                                        if (bytes.isNotEmpty()) {
+                                            bytes.toImageBitmap()
+                                        } else null
+                                    }
+                                } catch (e: Throwable) {
+                                    e.printStackTrace()
+                                    null
+                                }
                             }
 
                             Box(
@@ -133,7 +155,7 @@ fun MyDataScreen(onBackClick: () -> Unit) {
                                 modifier = Modifier.fillMaxWidth().height(48.dp),
                                 shape = MaterialTheme.shapes.medium,
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
+                                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f),
                                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 ),
                                 border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline)

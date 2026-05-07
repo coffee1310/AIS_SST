@@ -41,7 +41,7 @@ class MainComponent(
             is Config.Home -> Child.Home(HomeComponent(context))
             is Config.Tasks -> Child.Tasks(TasksComponent(context))
             is Config.Calendar -> Child.Calendar(CalendarComponent(context))
-            is Config.Sectors -> Child.Sectors(SectorsComponent(context))
+            is Config.Sectors -> Child.Sectors(SectorsComponent(context, onNavigateToFullScreen))
             is Config.Profile -> Child.Profile(ProfileComponent(context, onLogout, onNavigateToFullScreen))
         }
 

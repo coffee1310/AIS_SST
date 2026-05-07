@@ -39,9 +39,32 @@ fun ProfileHeader(
 ) {
     val imageBitmap = remember(user.photoUrl) {
         try {
-            user.photoUrl?.substringAfter("base64,")?.trim()?.decodeBase64Bytes()?.toImageBitmap()
-        } catch (e: Exception) { null }
+            user.photoUrl?.let { rawString ->
+                var textToDecode = rawString.trim()
+
+                if (textToDecode.startsWith("ZGF0Y")) {
+                    val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
+                    if (decodedText.startsWith("data:image")) {
+                        textToDecode = decodedText
+                    }
+                }
+
+                if (textToDecode.contains("base64,")) {
+                    textToDecode = textToDecode.substringAfter("base64,").trim()
+                }
+
+                val bytes = textToDecode.decodeBase64Bytes()
+
+                if (bytes.isNotEmpty()) {
+                    bytes.toImageBitmap()
+                } else null
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            null
+        }
     }
+
 
     Box(
         modifier = Modifier
@@ -120,7 +143,7 @@ fun ProfileHeader(
 fun ProfileStatsCard(user: UserUiModel) {
     Card(
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)),
         border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
         modifier = Modifier.fillMaxWidth()
     ) {

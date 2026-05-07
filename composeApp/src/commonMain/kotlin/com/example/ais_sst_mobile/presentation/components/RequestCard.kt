@@ -45,7 +45,7 @@ fun RequestCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)
+            containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
         ),
         border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline)
     ) {

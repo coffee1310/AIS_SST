@@ -80,7 +80,7 @@ fun AccountRequestsScreen(onBackClick: () -> Unit,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.width(48.dp))
+                    Spacer(modifier = Modifier.width(40.dp))
                 }
 
                 if (state is RequestsState.Success) {

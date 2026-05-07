@@ -13,22 +13,41 @@ import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.example.ais_sst_mobile.navigation.MainComponent
+import com.example.ais_sst_mobile.navigation.SectorsComponent
 import com.example.ais_sst_mobile.presentation.components.AppBackground
+import com.example.ais_sst_mobile.presentation.components.CustomBackButton
 import com.example.ais_sst_mobile.presentation.home.HomeScreen
 import com.example.ais_sst_mobile.presentation.profile.ProfileScreen
+import com.example.ais_sst_mobile.presentation.sectors.SectorsTab
 
 @Composable
 fun MainScreen(component: MainComponent) {
     val childStack by component.stack.subscribeAsState()
     val activeComponent = childStack.active.instance
 
-    val title = when (activeComponent) {
-        is MainComponent.Child.Home -> "Главная"
-        is MainComponent.Child.Tasks -> "Мои заявки"
-        is MainComponent.Child.Calendar -> "Календарь"
-        is MainComponent.Child.Sectors -> "Сектора ССТ"
-        is MainComponent.Child.Profile -> "Профиль"
-        else -> ""
+    var title = ""
+    var showBackButton = false
+    var onBackClick: (() -> Unit)? = null
+
+    if (activeComponent is MainComponent.Child.Sectors) {
+        val sectorsStack by activeComponent.component.stack.subscribeAsState()
+        val sectorsActive = sectorsStack.active.instance
+
+        if (sectorsActive is SectorsComponent.Child.Details) {
+            title = "Данные сектора"
+            showBackButton = true
+            onBackClick = { sectorsActive.component.onGoBack() }
+        } else {
+            title = "Сектора ССТ"
+        }
+    } else {
+        title = when (activeComponent) {
+            is MainComponent.Child.Home -> "Главная"
+            is MainComponent.Child.Tasks -> "Мои заявки"
+            is MainComponent.Child.Calendar -> "Календарь"
+            is MainComponent.Child.Profile -> "Профиль"
+            else -> ""
+        }
     }
 
     val selectedIndex = when (activeComponent) {
@@ -44,7 +63,7 @@ fun MainScreen(component: MainComponent) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
-            topBar = { SharedTopBar(title = title) },
+            topBar = { SharedTopBar(title = title, showBackButton = showBackButton, onBackClick = onBackClick) },
             bottomBar = { SharedBottomNav(selectedIndex, component::onTabSelected) }
         ) { paddingValues ->
             Children(
@@ -57,7 +76,7 @@ fun MainScreen(component: MainComponent) {
                     is MainComponent.Child.Home -> HomeScreen()
                     is MainComponent.Child.Tasks -> Box(Modifier.fillMaxSize()) { Text("Задачи", color = Color.White) }
                     is MainComponent.Child.Calendar -> Box(Modifier.fillMaxSize()) { Text("Календарь", color = Color.White) }
-                    is MainComponent.Child.Sectors -> Box(Modifier.fillMaxSize()) { Text("Сектора", color = Color.White) }
+                    is MainComponent.Child.Sectors -> SectorsTab(instance.component)
                     is MainComponent.Child.Profile -> ProfileScreen(instance.component)
                 }
             }
@@ -66,7 +85,11 @@ fun MainScreen(component: MainComponent) {
 }
 
 @Composable
-fun SharedTopBar(title: String) {
+fun SharedTopBar(
+    title: String,
+    showBackButton: Boolean = false,
+    onBackClick: (() -> Unit)? = null
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -75,12 +98,18 @@ fun SharedTopBar(title: String) {
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center
     ) {
+        if (showBackButton && onBackClick != null) {
+            CustomBackButton(
+                onClick = onBackClick,
+                modifier = Modifier.align(Alignment.CenterStart)
+            )
+        }
+
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
-
         IconButton(
             onClick = { /* TODO: Уведомления */ },
             modifier = Modifier.align(Alignment.CenterEnd)
@@ -96,7 +125,6 @@ fun SharedTopBar(title: String) {
 
 @Composable
 fun SharedBottomNav(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
-
     val navItems = listOf(
         Triple(2, "Календарь", Icons.Outlined.CalendarToday),
         Triple(3, "Сектора", Icons.Outlined.Groups),
