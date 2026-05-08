@@ -6,7 +6,9 @@ import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.data.network.dto.SectorDto
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.domain.repository.SectorsRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -23,6 +25,8 @@ class SectorDetailsScreenModel(
 
     private val _state = MutableStateFlow<SectorDetailsState>(SectorDetailsState.Loading)
     val state = _state.asStateFlow()
+    private val _effect = MutableSharedFlow<String>()
+    val effect = _effect.asSharedFlow()
 
     fun loadSector(id: Int) {
         viewModelScope.launch {
@@ -41,17 +45,27 @@ class SectorDetailsScreenModel(
 
     fun joinSector(id: Int) {
         viewModelScope.launch {
-            repository.joinSector(id).onSuccess {
-                loadSector(id)
-            }
+            repository.joinSector(id)
+                .onSuccess {
+                    _effect.emit("Заявка успешно отправлена на рассмотрение")
+                    loadSector(id)
+                }
+                .onFailure {
+                    _effect.emit("Ошибка при отправке заявки")
+                }
         }
     }
 
     fun leaveSector(id: Int) {
         viewModelScope.launch {
-            repository.leaveSector(id).onSuccess {
-                loadSector(id)
-            }
+            repository.leaveSector(id)
+                .onSuccess {
+                    _effect.emit("Вы успешно покинули сектор")
+                    loadSector(id)
+                }
+                .onFailure {
+                    _effect.emit("Ошибка при выходе из сектора")
+                }
         }
     }
 }

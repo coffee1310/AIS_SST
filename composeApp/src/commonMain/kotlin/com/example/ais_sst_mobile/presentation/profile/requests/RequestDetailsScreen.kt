@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.presentation.components.AppBackground
 import com.example.ais_sst_mobile.presentation.components.CustomBackButton
+import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.example.ais_sst_mobile.presentation.profile.my_data.InfoRow
 import com.example.ais_sst_mobile.presentation.profile.my_data.SectionTitle
 import com.example.ais_sst_mobile.presentation.profile.my_data.formatDate
@@ -283,7 +284,10 @@ fun RequestDetailsScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 16.dp),
+                snackbar = { snackbarData ->
+                    CustomSnackbar(snackbarData = snackbarData)
+                }
             )
         }
     }

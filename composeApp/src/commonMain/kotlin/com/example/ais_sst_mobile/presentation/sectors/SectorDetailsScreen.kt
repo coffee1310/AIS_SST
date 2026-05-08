@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.navigation.SectorDetailsComponent
 import com.example.ais_sst_mobile.presentation.components.CustomButton
+import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.preat.peekaboo.image.picker.toImageBitmap
 import io.ktor.util.decodeBase64Bytes
 import org.koin.compose.getKoin
@@ -33,6 +34,13 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
     val koin = getKoin()
     val screenModel = remember { koin.get<SectorDetailsScreenModel>() }
     val state by screenModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        screenModel.effect.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     LaunchedEffect(component.sectorId) {
         screenModel.loadSector(component.sectorId)
@@ -85,7 +93,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                     }
                 }
 
-
+                Box(modifier = Modifier.fillMaxSize()) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -255,8 +263,17 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                             Spacer(modifier = Modifier.height(100.dp))
                         }
                     }
-
+                    SnackbarHost(
+                        hostState = snackbarHostState,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .navigationBarsPadding()
+                            .padding(bottom = 16.dp),
+                        snackbar = { snackbarData ->
+                            CustomSnackbar(snackbarData = snackbarData)
+                        }
+                    )
+                }
             }
         }
-
 }

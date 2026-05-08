@@ -29,8 +29,8 @@ import com.example.ais_sst_mobile.presentation.components.CustomBackButton
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.example.ais_sst_mobile.navigation.AccountRequestsComponent
+import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
-import com.example.ais_sst_mobile.presentation.components.RequestCard
 import org.koin.compose.getKoin
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -161,7 +161,10 @@ fun AccountRequestsScreen(onBackClick: () -> Unit,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 16.dp),
+                snackbar = { snackbarData ->
+                    CustomSnackbar(snackbarData = snackbarData)
+                }
             )
         }
 

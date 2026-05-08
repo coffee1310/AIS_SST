@@ -30,6 +30,7 @@ import kotlinx.datetime.toLocalDateTime
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.material.icons.filled.ContentCopy
+import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import kotlinx.coroutines.launch
 
 @Composable
@@ -212,7 +213,10 @@ fun MyDataScreen(onBackClick: () -> Unit) {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 16.dp),
+                snackbar = { snackbarData ->
+                    CustomSnackbar(snackbarData = snackbarData)
+                }
             )
         }
     }

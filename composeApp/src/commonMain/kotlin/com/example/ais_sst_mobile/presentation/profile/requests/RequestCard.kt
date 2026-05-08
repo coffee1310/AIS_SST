@@ -1,4 +1,4 @@
-package com.example.ais_sst_mobile.presentation.components
+package com.example.ais_sst_mobile.presentation.profile.requests
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
