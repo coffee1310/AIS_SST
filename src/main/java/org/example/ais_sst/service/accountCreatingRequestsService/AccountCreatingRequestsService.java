@@ -44,6 +44,7 @@ public class AccountCreatingRequestsService {
     private final AccountCreatingRequestsRepository accountCreatingRequestsRepository;
     private final RoleRepository roleRepository;
     private final AccountCreatingRequestSocialStatusRepository accountCreatingRequestsSocialStatusesRepository;
+    private final SectorParticipantRepository sectorParticipantRepository;
 
     // Мапперы
     private final AccountCreatingRequestMapper requestMapper;

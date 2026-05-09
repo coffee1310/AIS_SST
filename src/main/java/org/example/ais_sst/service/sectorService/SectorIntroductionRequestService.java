@@ -133,4 +133,40 @@ public class SectorIntroductionRequestService {
                 .toList();
 
     }
+
+    @Transactional
+    public List<SectorIntroductionRequestDTO> getRequestsListByCoordinatorWithStatus(
+            Long coordinatorId,
+            SectorIntroductionStatus status) {
+
+        log.info("Getting requests for coordinator id: {} with status: {}", coordinatorId, status);
+
+        // Проверяем, является ли пользователь координатором
+        List<SectorParticipant> coordinatorParticipants = sectorParticipantRepository
+                .findSectorsWhereUserIsCoordinator(coordinatorId);
+
+        if (coordinatorParticipants.isEmpty()) {
+            log.warn("User {} is not a coordinator in any sector", coordinatorId);
+            return new ArrayList<>();
+        }
+
+        List<SectorIntroductionRequest> requests;
+
+        if (status == null) {
+            // Если статус не указан, получаем все заявки
+            requests = sectorIntroductionRequestRepository
+                    .findRequestsByCoordinatorId(coordinatorId);
+        } else {
+            // Если статус указан, получаем заявки с фильтром
+            String statusValue = status.getDbValue();
+            requests = sectorIntroductionRequestRepository
+                    .findRequestsByCoordinatorIdAndStatus(coordinatorId, statusValue);
+        }
+
+        log.info("Found {} requests with status: {}", requests.size(), status);
+
+        return requests.stream()
+                .map(sectorIntroductionRequestMapper::toSectorIntroductionRequestDTO)
+                .toList();
+    }
 }

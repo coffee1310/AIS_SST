@@ -52,4 +52,9 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     Page<SectorParticipant> findActiveBySectorId(@Param("sectorId") Long sectorId, Pageable pageable);
 
     long countBySectorId(Long sectorId);
+
+    boolean existsByStudentIdAndSectorIdAndIsCoordinatorTrue(Long studentId, Long sectorId);
+
+    // Найти запись, где пользователь является координатором
+    Optional<SectorParticipant> findByStudentIdAndIsCoordinatorTrue(Long studentId);
 }

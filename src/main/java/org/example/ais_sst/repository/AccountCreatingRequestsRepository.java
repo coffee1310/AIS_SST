@@ -116,4 +116,6 @@ public interface AccountCreatingRequestsRepository extends JpaRepository<Account
             @Param("status") String status,
             @Param("groupId") Long groupId,
             @Param("specialityId") Long specialityId);
+
+
 }

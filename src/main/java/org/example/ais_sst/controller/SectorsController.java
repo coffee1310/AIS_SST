@@ -11,6 +11,7 @@ import org.example.ais_sst.dto.sector.SectorParticipantResponseDTO;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.Sector;
+import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
 import org.example.ais_sst.service.sectorService.SectorIntroductionRequestService;
 import org.example.ais_sst.service.sectorService.SectorService;
 import org.springframework.data.domain.Page;
@@ -129,6 +130,21 @@ public class SectorsController {
     public ResponseEntity<?> getSectorIntroductionRequests(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         List<SectorIntroductionRequestDTO> requestDTOList = sectorIntroductionRequestService
                 .getRequestsListByCoordinator(customUserDetails.getId());
+
+        return new ResponseEntity<>(requestDTOList, HttpStatus.OK);
+    }
+
+    @GetMapping("/introductions/filter")
+    @Operation(summary = "Получить заявки на вступление в сектор с фильтром по статусу")
+    public ResponseEntity<?> getSectorIntroductionRequestsWithStatus(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(required = false) SectorIntroductionStatus status) {
+
+        log.info("GET /api/sector/introductions/filter - Getting requests with status: {} for coordinator: {}",
+                status, customUserDetails.getId());
+
+        List<SectorIntroductionRequestDTO> requestDTOList = sectorIntroductionRequestService
+                .getRequestsListByCoordinatorWithStatus(customUserDetails.getId(), status);
 
         return new ResponseEntity<>(requestDTOList, HttpStatus.OK);
     }

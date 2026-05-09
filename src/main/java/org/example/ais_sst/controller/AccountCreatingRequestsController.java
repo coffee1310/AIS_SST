@@ -1,5 +1,6 @@
 package org.example.ais_sst.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,15 +10,18 @@ import org.example.ais_sst.dto.account_request.AccountCreatingRequestResponseDTO
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO;
 import org.example.ais_sst.dto.user.UserSummaryDTO;
 import org.example.ais_sst.entity.AccountCreatingRequest;
+import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.enums.AccountCreatingRequestStatus;
 import org.example.ais_sst.service.accountCreatingRequestsService.AccountCreatingRequestsService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
