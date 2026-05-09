@@ -30,7 +30,10 @@ import kotlinx.datetime.toLocalDateTime
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.ui.platform.LocalFocusManager
 import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,9 +43,11 @@ fun MyDataScreen(onBackClick: () -> Unit) {
     val state by screenModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     AppBackground {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().clearFocusOnTap(focusManager)
+            .clearFocusOnScroll(focusManager)) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
                     modifier = Modifier

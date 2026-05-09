@@ -19,6 +19,9 @@ import com.example.ais_sst_mobile.presentation.components.CustomBackButton
 import com.example.ais_sst_mobile.presentation.home.HomeScreen
 import com.example.ais_sst_mobile.presentation.profile.ProfileScreen
 import com.example.ais_sst_mobile.presentation.sectors.SectorsTab
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.ui.platform.LocalDensity
 
 @Composable
 fun MainScreen(component: MainComponent) {
@@ -58,13 +61,18 @@ fun MainScreen(component: MainComponent) {
         is MainComponent.Child.Profile -> 4
         else -> 4
     }
+    val isKeyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
     AppBackground {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
-            topBar = { SharedTopBar(title = title, showBackButton = showBackButton, onBackClick = onBackClick) },
-            bottomBar = { SharedBottomNav(selectedIndex, component::onTabSelected) }
+            topBar = { SharedTopBar(title = title, showBackButton = showBackButton, onBackClick = onBackClick)},
+            bottomBar = {
+                    if (!isKeyboardOpen) {
+                        SharedBottomNav(selectedIndex, component::onTabSelected)
+                    }
+            }
         ) { paddingValues ->
             Children(
                 stack = childStack,

@@ -42,6 +42,8 @@ import ais_sst_mobile.composeapp.generated.resources.Res
 import ais_sst_mobile.composeapp.generated.resources.logo_auth
 import androidx.compose.ui.text.style.TextAlign
 import com.example.ais_sst_mobile.navigation.LoginComponent
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 import org.koin.compose.getKoin
 
 @Composable
@@ -86,6 +88,8 @@ fun LoginScreen(component: LoginComponent) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .clearFocusOnTap(focusManager)
+                .clearFocusOnScroll(focusManager)
                 .imePadding()
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally

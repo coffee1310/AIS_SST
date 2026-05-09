@@ -19,10 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 
 @Composable
 fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
@@ -33,6 +36,7 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
     val requests by screenModel.requestsState.collectAsState()
     val isRequestsLoading by screenModel.isRequestsLoading.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         screenModel.loadParticipants(1)
@@ -56,6 +60,8 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .clearFocusOnTap(focusManager)
+                .clearFocusOnScroll(focusManager)
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(5.dp))

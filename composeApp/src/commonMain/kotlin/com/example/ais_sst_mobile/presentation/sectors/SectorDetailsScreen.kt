@@ -1,22 +1,19 @@
 package com.example.ais_sst_mobile.presentation.sectors
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,123 +43,138 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
         screenModel.loadSector(component.sectorId)
     }
 
-        when (val currentState = state) {
-            is SectorDetailsState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
-                }
+    when (val currentState = state) {
+        is SectorDetailsState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
             }
-            is SectorDetailsState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        currentState.message,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
+        }
+        is SectorDetailsState.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    currentState.message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelMedium
+                )
             }
-            is SectorDetailsState.Success -> {
-                val sector = currentState.sector
-                val activeRole = currentState.activeRole
+        }
+        is SectorDetailsState.Success -> {
+            val sector = currentState.sector
+            val activeRole = currentState.activeRole
 
-                val imageBitmap = remember(sector.photo) {
-                    try {
-                        sector.photo?.let { rawString ->
-                            var textToDecode = rawString.trim()
+            val imageBitmap = remember(sector.photo) {
+                try {
+                    sector.photo?.let { rawString ->
+                        var textToDecode = rawString.trim()
 
-                            if (textToDecode.startsWith("ZGF0Y")) {
-                                val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
-                                if (decodedText.startsWith("data:image")) {
-                                    textToDecode = decodedText
-                                }
+                        if (textToDecode.startsWith("ZGF0Y")) {
+                            val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
+                            if (decodedText.startsWith("data:image")) {
+                                textToDecode = decodedText
                             }
-
-                            if (textToDecode.contains("base64,")) {
-                                textToDecode = textToDecode.substringAfter("base64,").trim()
-                            }
-
-                            val bytes = textToDecode.decodeBase64Bytes()
-
-                            if (bytes.isNotEmpty()) {
-                                bytes.toImageBitmap()
-                            } else null
                         }
-                    } catch (e: Throwable) {
-                        e.printStackTrace()
-                        null
-                    }
-                }
 
-                Box(modifier = Modifier.fillMaxSize()) {
+                        if (textToDecode.contains("base64,")) {
+                            textToDecode = textToDecode.substringAfter("base64,").trim()
+                        }
+
+                        val bytes = textToDecode.decodeBase64Bytes()
+
+                        if (bytes.isNotEmpty()) {
+                            bytes.toImageBitmap()
+                        } else null
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    null
+                }
+            }
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(190.dp)
+                            .background(MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.2f))
+                    ) {
+                        if (imageBitmap != null) {
+                            Image(
+                                bitmap = imageBitmap,
+                                contentDescription = sector.title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(190.dp)
-                                .background(MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.2f))
-                        ) {
-                            if (imageBitmap != null) {
-                                Image(
-                                    bitmap = imageBitmap,
-                                    contentDescription = sector.title,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-                        }
+                        Text(
+                            text = sector.title,
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center
+                        )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = sector.title,
-                                style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = TextAlign.Center
-                            )
+                        Text(
+                            text = sector.description,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 15.sp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
+                            textAlign = TextAlign.Justify,
+                            lineHeight = 21.sp
+                        )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(40.dp))
 
-                            Text(
-                                text = sector.description,
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 15.sp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
-                                textAlign = TextAlign.Center,
-                                lineHeight = 24.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(40.dp))
-
-                            if (sector.coordinatorFullName != null) {
-                                Column(modifier = Modifier.fillMaxWidth()) {
+                        if (sector.coordinatorFullName != null) {
+                            Card(
+                                shape = MaterialTheme.shapes.large,
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
+                                ),
+                                border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
                                             imageVector = Icons.Outlined.PersonOutline,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.size(26.dp)
+                                            tint = MaterialTheme.colorScheme.secondary,
+                                            modifier = Modifier.size(24.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = "Координатор",
-                                            style = MaterialTheme.typography.displayMedium.copy(fontSize = 20.sp),
+                                            style = MaterialTheme.typography.displayMedium.copy(fontSize = 18.sp),
                                             color = MaterialTheme.colorScheme.secondary
                                         )
                                     }
 
                                     Spacer(modifier = Modifier.height(16.dp))
 
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
                                         val coordImage = remember(sector.coordinatorPhoto) {
                                             try {
                                                 sector.coordinatorPhoto?.let { rawString ->
@@ -190,6 +202,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                                 null
                                             }
                                         }
+
                                         Box(
                                             modifier = Modifier
                                                 .size(56.dp)
@@ -198,7 +211,12 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                             contentAlignment = Alignment.Center
                                         ) {
                                             if (coordImage != null) {
-                                                Image(bitmap = coordImage, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                                                Image(
+                                                    bitmap = coordImage,
+                                                    contentDescription = null,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
                                             } else {
                                                 Icon(Icons.Outlined.PersonOutline, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                                             }
@@ -212,7 +230,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                                 style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
-                                            Spacer(modifier = Modifier.width(48.dp))
+                                            Spacer(modifier = Modifier.height(4.dp))
                                             Text(
                                                 text = "Координатор сектора",
                                                 style = MaterialTheme.typography.labelSmall,
@@ -222,58 +240,59 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                     }
                                 }
                             }
+                        }
 
-                            Spacer(modifier = Modifier.height(45.dp))
+                        Spacer(modifier = Modifier.height(45.dp))
 
-                            if (activeRole == AppRole.ACTIVIST && !sector.isCoordinator) {
-                                val isApproved = sector.isParticipant || sector.requestStatus == "Одобрена"
-                                val isPending = sector.hasActiveRequest && (sector.requestStatus == "На рассмотрении" || sector.requestStatus == null)
+                        if (activeRole == AppRole.ACTIVIST && !sector.isCoordinator) {
+                            val isApproved = sector.isParticipant || sector.requestStatus == "Одобрена"
+                            val isPending = sector.hasActiveRequest && (sector.requestStatus == "На рассмотрении" || sector.requestStatus == null)
 
-                                if (isApproved) {
-                                    CustomButton(
-                                        text = "Выйти из сектора",
-                                        onClick = { screenModel.leaveSector(sector.id) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary
-                                        )
+                            if (isApproved) {
+                                CustomButton(
+                                    text = "Выйти из сектора",
+                                    onClick = { screenModel.leaveSector(sector.id) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     )
-                                } else if (isPending) {
-                                    val statusText = sector.requestStatus ?: "На рассмотрении"
-                                    CustomButton(
-                                        text = "Заявка: $statusText",
-                                        onClick = { },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        enabled = false,
-                                        colors = ButtonDefaults.buttonColors(
-                                            disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f),
-                                            disabledContentColor = MaterialTheme.colorScheme.onSurface
-                                        )
+                                )
+                            } else if (isPending) {
+                                val statusText = sector.requestStatus ?: "На рассмотрении"
+                                CustomButton(
+                                    text = "Заявка: $statusText",
+                                    onClick = { },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = false,
+                                    colors = ButtonDefaults.buttonColors(
+                                        disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f),
+                                        disabledContentColor = MaterialTheme.colorScheme.onSurface
                                     )
-                                } else {
-                                    CustomButton(
-                                        text = "Подать заявку",
-                                        onClick = { screenModel.joinSector(sector.id) },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
+                                )
+                            } else {
+                                CustomButton(
+                                    text = "Подать заявку",
+                                    onClick = { screenModel.joinSector(sector.id) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
+                        }
 
-                            Spacer(modifier = Modifier.height(100.dp))
-                        }
+                        Spacer(modifier = Modifier.height(100.dp))
                     }
-                    SnackbarHost(
-                        hostState = snackbarHostState,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .navigationBarsPadding()
-                            .padding(bottom = 16.dp),
-                        snackbar = { snackbarData ->
-                            CustomSnackbar(snackbarData = snackbarData)
-                        }
-                    )
                 }
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(bottom = 16.dp),
+                    snackbar = { snackbarData ->
+                        CustomSnackbar(snackbarData = snackbarData)
+                    }
+                )
             }
         }
+    }
 }

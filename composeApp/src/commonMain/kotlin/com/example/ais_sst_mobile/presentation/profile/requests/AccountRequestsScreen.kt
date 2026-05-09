@@ -31,6 +31,8 @@ import androidx.compose.foundation.verticalScroll
 import com.example.ais_sst_mobile.navigation.AccountRequestsComponent
 import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 import org.koin.compose.getKoin
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -198,6 +200,8 @@ fun RejectDialog(
             Column(
                 modifier = Modifier
                     .padding(24.dp)
+                    .clearFocusOnTap(focusManager)
+                    .clearFocusOnScroll(focusManager)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

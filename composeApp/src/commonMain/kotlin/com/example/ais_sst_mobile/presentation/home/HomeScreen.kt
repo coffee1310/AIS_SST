@@ -18,12 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.presentation.components.EventCard
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
+import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 import org.koin.compose.getKoin
 
 @Composable
@@ -48,8 +51,10 @@ fun ActivistHomeContent(screenModel: HomeScreenModel) {
     val selectedTab by screenModel.selectedTab.collectAsState()
     val upcomingEvents by screenModel.upcomingEvents.collectAsState()
     val availableEvents by screenModel.availableEvents.collectAsState()
+    val focusManager = LocalFocusManager.current
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().clearFocusOnTap(focusManager)
+        .clearFocusOnScroll(focusManager)) {
         Spacer(modifier = Modifier.height(5.dp))
 
         CustomTabRow(selectedTab = selectedTab, onTabSelected = { screenModel.selectTab(it) })

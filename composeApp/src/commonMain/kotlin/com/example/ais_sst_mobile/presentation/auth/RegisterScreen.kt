@@ -176,6 +176,8 @@ fun RegisterScreen(component: RegisterComponent) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .clearFocusOnTap(focusManager)
+                    .clearFocusOnScroll(focusManager)
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
