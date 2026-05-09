@@ -293,7 +293,49 @@ public class SectorService {
         log.info("User {} kicked from sector {} successfully", participantId, sectorId);
     }
 
-    // ToDo: сделать удаление чувака из сектора
+    @Transactional
+    public void leaveSector(Long sectorId, Long userId) {
+        log.info("User {} is leaving sector {}", userId, sectorId);
+
+        // Находим запись участника в секторе
+        SectorParticipant participant = sectorParticipantRepository
+                .findByStudentIdAndSectorId(userId, sectorId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Пользователь с id: %d не является участником сектора %d", userId, sectorId)));
+
+        // Проверяем, не является ли пользователь координатором
+        if (participant.getIsCoordinator()) {
+            throw new IllegalStateException(
+                    String.format("Координатор сектора %d не может выйти. Сначала снимите с него полномочия координатора", sectorId));
+        }
+
+        // Проверяем текущий статус - используем сравнение с enum
+        if (participant.getStatus() == SectorParticipantStatuses.Вышедший) {
+            throw new IllegalStateException(
+                    String.format("Пользователь с id: %d уже покинул сектор %d", userId, sectorId));
+        }
+
+        // Обновляем статус участника на "Вышедший"
+        participant.setStatus(SectorParticipantStatuses.Вышедший);
+        sectorParticipantRepository.save(participant);
+        log.info("User {} left sector {} with status 'Вышедший'", userId, sectorId);
+
+        // Обновляем статус заявок
+        List<SectorIntroductionRequest> approvedRequests = sectorIntroductionRequestRepository
+                .getSectorIntroductionRequestsBySector_IdAndStatus(sectorId, SectorIntroductionStatus.ОДОБРЕНА)
+                .stream()
+                .filter(req -> req.getUser().getId().equals(userId))
+                .toList();
+
+        for (SectorIntroductionRequest request : approvedRequests) {
+            request.setStatus(SectorIntroductionStatus.ВЫШЕДШИЙ);
+            sectorIntroductionRequestRepository.save(request);
+        }
+
+        log.info("User {} successfully left sector {}", userId, sectorId);
+    }
+
+        // ToDo: сделать удаление чувака из сектора
     // ToDo: сделать множество координторо
     // ToDo: сделать удаление и добавление координаторов
     // ToDO: сделать кик чувака из сектора

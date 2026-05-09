@@ -12,6 +12,7 @@ import org.example.ais_sst.entity.SectorIntroductionRequest;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
+import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
 import org.example.ais_sst.exception.*;
 import org.example.ais_sst.mapper.SectorIntroductionRequestMapper;
 import org.example.ais_sst.mapper.SectorMapper;
@@ -48,17 +49,42 @@ public class SectorIntroductionRequestService {
                 .orElseThrow(() -> new UserDoesNotExistException(
                         String.format("Пользователь с id: %d не найден", userId)));
 
-        if (sectorParticipantRepository.existsByStudentIdAndSectorId(userId, sectorId))
-            throw new UserIsAlreadyInThisSectorException(
-                    String.format("Пользователь с id: %d уже вступил в этот сектор", userId));
-
-        // Удалена проверка existsByCurrentCoordinator_IdAndId
-        // Координаторы теперь определяются через sector_participants.is_coordinator
-
         Sector sector = sectorRepository.findSectorById(sectorId)
                 .orElseThrow(() -> new SectorDoesNotExistException(
                         String.format("Сектор с таким id: %d не найден", sectorId)));
 
+        // Проверяем, есть ли уже запись в sector_participants
+        java.util.Optional<SectorParticipant> existingParticipant = sectorParticipantRepository
+                .findByStudentIdAndSectorId(userId, sectorId);
+
+        // Если пользователь уже является участником сектора
+        if (existingParticipant.isPresent()) {
+            SectorParticipant participant = existingParticipant.get();
+
+            // Если статус "Вышедший" - можно восстановить
+            if (participant.getStatus() == SectorParticipantStatuses.Вышедший) {
+                // Восстанавливаем участника
+                participant.setStatus(SectorParticipantStatuses.Активный);
+                sectorParticipantRepository.save(participant);
+
+                // Создаем заявку как одобренную
+                SectorIntroductionRequest request = SectorIntroductionRequest.builder()
+                        .user(user)
+                        .sector(sector)
+                        .status(SectorIntroductionStatus.ОЖИДАНИЕ)
+                        .build();
+                request = sectorIntroductionRequestRepository.save(request);
+
+                log.info("User {} was restored to sector {} (was 'Вышедший')", userId, sectorId);
+                return sectorIntroductionRequestMapper.toSectorIntroductionRequestDTO(request);
+            }
+
+            // Если пользователь активный участник
+            throw new UserIsAlreadyInThisSectorException(
+                    String.format("Пользователь с id: %d уже является активным участником сектора", userId));
+        }
+
+        // Если записи нет, создаем новую заявку
         SectorIntroductionRequest request = SectorIntroductionRequest.builder()
                 .user(user)
                 .sector(sector)
@@ -74,12 +100,35 @@ public class SectorIntroductionRequestService {
 
         SectorIntroductionRequest request = sectorIntroductionRequestRepository.findById(request_id)
                 .orElseThrow(() -> new SectorIntroductionRequestDoesNotExistException(
-                                String.format("Заявка на вступление в сектор с id: %d не найдена", request_id)));
+                        String.format("Заявка на вступление в сектор с id: %d не найдена", request_id)));
 
         if (request.getStatus() == SectorIntroductionStatus.ОТКЛОНЕНА)
             throw new SectorIntroductionRequestAlreadyProcessedException("Заявка уже обработана!");
 
-        SectorParticipant sectorParticipant = sectorParticipantService.createParticipant(request);
+        Long userId = request.getUser().getId();
+        Long sectorId = request.getSector().getId();
+
+        // Проверяем, существует ли уже участник
+        java.util.Optional<SectorParticipant> existingParticipant = sectorParticipantRepository
+                .findByStudentIdAndSectorId(userId, sectorId);
+
+        SectorParticipant sectorParticipant;
+
+        if (existingParticipant.isPresent() && existingParticipant.get().getStatus() == SectorParticipantStatuses.Вышедший) {
+            // Восстанавливаем существующего участника
+            sectorParticipant = existingParticipant.get();
+            sectorParticipant.setStatus(SectorParticipantStatuses.Активный);
+            sectorParticipant = sectorParticipantRepository.save(sectorParticipant);
+            log.info("User {} restored to sector {} (was 'Вышедший')", userId, sectorId);
+        } else if (existingParticipant.isEmpty()) {
+            // Создаем нового участника
+            sectorParticipant = sectorParticipantService.createParticipant(request);
+            log.info("New participant created for user {} in sector {}", userId, sectorId);
+        } else {
+            throw new UserIsAlreadyInThisSectorException(
+                    String.format("Пользователь с id: %d уже является активным участником сектора", userId));
+        }
+
         SectorParticipantDTO sectorParticipantDTO = sectorParticipantMapper.toSectorParticipantDTO(sectorParticipant);
 
         request.setStatus(SectorIntroductionStatus.ОДОБРЕНА);

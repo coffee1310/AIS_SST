@@ -5,7 +5,15 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum SectorParticipantStatuses {
 
-    Ожидание, Активный, Вышедший;
+    Ожидание("Ожидание"),
+    Активный("Активный"),
+    Вышедший("Вышедший");
+
+    private final String dbValue;
+
+    SectorParticipantStatuses(String dbValue) {
+        this.dbValue = dbValue;
+    }
 
     @JsonCreator
     public static SectorParticipantStatuses fromString(String value) {
@@ -19,6 +27,11 @@ public enum SectorParticipantStatuses {
         }
 
         throw new IllegalArgumentException("Unknown status: " + value);
+    }
+
+    @JsonValue
+    public String getDbValue() {
+        return dbValue;
     }
 
     @JsonValue

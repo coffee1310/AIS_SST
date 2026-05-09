@@ -195,4 +195,17 @@ public class SectorsController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{sectorId}/leave")
+    @Operation(summary = "Выйти из сектора (активист)")
+    public ResponseEntity<Void> leaveSector(
+            @PathVariable Long sectorId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        log.info("DELETE /api/sector/{}/leave - User {} is leaving sector", sectorId, userDetails.getId());
+
+        sectorService.leaveSector(sectorId, userDetails.getId());
+
+        return ResponseEntity.noContent().build();
+    }
 }

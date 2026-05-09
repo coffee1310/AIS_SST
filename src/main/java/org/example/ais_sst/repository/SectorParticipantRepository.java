@@ -57,4 +57,7 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
 
     // Найти запись, где пользователь является координатором
     Optional<SectorParticipant> findByStudentIdAndIsCoordinatorTrue(Long studentId);
+
+    @Query("SELECT sp FROM SectorParticipant sp WHERE sp.student.id = :studentId AND sp.sector.id = :sectorId")
+    Optional<SectorParticipant> findByStudentIdAndSectorId(@Param("studentId") Long studentId, @Param("sectorId") Long sectorId);
 }

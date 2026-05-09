@@ -12,34 +12,18 @@ public class SectorParticipantStatusesConverter implements AttributeConverter<Se
     @Override
     public String convertToDatabaseColumn(SectorParticipantStatuses attribute) {
         if (attribute == null) {
-            return "Ожидание";
+            return null;
         }
-        switch (attribute) {
-            case Ожидание:
-                return "Ожидание";
-            case Активный:
-                return "Активный";
-            case Вышедший:
-                return "Вышедший";
-            default:
-                return "Ожидание";
-        }
+        // Возвращаем строковое значение для БД
+        return attribute.getDbValue();
     }
 
     @Override
     public SectorParticipantStatuses convertToEntityAttribute(String dbData) {
         if (dbData == null) {
-            return SectorParticipantStatuses.Ожидание;
+            return null;
         }
-        switch (dbData) {
-            case "Ожидание":
-                return SectorParticipantStatuses.Ожидание;
-            case "Активный":
-                return SectorParticipantStatuses.Активный;
-            case "Вышел":
-                return SectorParticipantStatuses.Вышедший;
-            default:
-                return SectorParticipantStatuses.Ожидание;
-        }
+        // Преобразуем из строки БД в enum
+        return SectorParticipantStatuses.fromString(dbData);
     }
 }
