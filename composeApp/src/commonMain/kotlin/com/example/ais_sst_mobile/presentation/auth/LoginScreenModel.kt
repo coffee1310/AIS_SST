@@ -1,30 +1,51 @@
 package com.example.ais_sst_mobile.presentation.auth
 
+import io.ktor.serialization.JsonConvertException
+import kotlinx.serialization.SerializationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ais_sst_mobile.core.prefs.SessionManager
-import com.example.ais_sst_mobile.data.network.dto.AuthResponse
 import com.example.ais_sst_mobile.data.network.dto.LoginRequest
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.domain.repository.AuthRepository
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.plugins.ServerResponseException
+import io.ktor.utils.io.errors.IOException
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+data class LoginUiState(
+    val login: String = "",
+    val domain: String = "@edu.fa.ru",
+    val password: String = "",
+    val isPasswordVisible: Boolean = false,
+    val isDomainMenuExpanded: Boolean = false
+)
 
 class LoginScreenModel(
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
-    sealed class State {
-        object Initial : State()
-        object Loading : State()
-        data class Success(val user: AuthResponse) : State()
-        data class Error(val message: String) : State()
+    sealed class ScreenState {
+        object Initial : ScreenState()
+        object Loading : ScreenState()
+        data class Error(val message: String) : ScreenState()
     }
 
-    private val _state = MutableStateFlow<State>(State.Initial)
-    val state = _state.asStateFlow()
+    private val _uiState = MutableStateFlow(LoginUiState())
+    val uiState = _uiState.asStateFlow()
+
+    private val _screenState = MutableStateFlow<ScreenState>(ScreenState.Initial)
+    val screenState = _screenState.asStateFlow()
+
+    private val _effect = MutableSharedFlow<String>()
+    val effect = _effect.asSharedFlow()
 
     private var failedAttempts = 0
 
@@ -37,12 +58,54 @@ class LoginScreenModel(
     private val _captchaError = MutableStateFlow<String?>(null)
     val captchaError = _captchaError.asStateFlow()
 
+    fun updateLogin(newValue: String) {
+        val domain = _uiState.value.domain
+        if (domain == "@edu.fa.ru") {
+            if (newValue.length <= 6 && newValue.all { it.isDigit() }) {
+                _uiState.update { it.copy(login = newValue) }
+                resetState()
+            }
+        } else {
+            if (!newValue.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
+                _uiState.update { it.copy(login = newValue) }
+                resetState()
+            }
+        }
+    }
+
+    fun updatePassword(newValue: String) {
+        _uiState.update { it.copy(password = newValue) }
+        resetState()
+    }
+
+    fun selectDomain(newDomain: String) {
+        _uiState.update { currentState ->
+            var updatedLogin = currentState.login
+            if (newDomain == "@edu.fa.ru" && !updatedLogin.all { it.isDigit() }) {
+                updatedLogin = updatedLogin.filter { it.isDigit() }.take(6)
+            }
+            currentState.copy(
+                domain = newDomain,
+                login = updatedLogin,
+                isDomainMenuExpanded = false
+            )
+        }
+        resetState()
+    }
+
+    fun toggleDomainMenu(isExpanded: Boolean) {
+        _uiState.update { it.copy(isDomainMenuExpanded = isExpanded) }
+    }
+
+    fun togglePasswordVisibility() {
+        _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+    }
+
+
     fun refreshCaptcha(clearError: Boolean = true) {
         val chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"
         _currentCaptcha.value = (1..6).map { chars.random() }.joinToString("")
-        if (clearError) {
-            _captchaError.value = null
-        }
+        if (clearError) clearCaptchaError()
     }
 
     fun clearCaptchaError() {
@@ -59,30 +122,31 @@ class LoginScreenModel(
             _captchaError.value = "Неверный код"
             return
         }
-
         _showCaptchaDialog.value = false
         failedAttempts = 0
     }
 
-    fun login(loginId: String, domain: String, pass: String) {
+
+    fun login() {
+        val currentUiState = _uiState.value
+        val loginId = currentUiState.login
+        val domain = currentUiState.domain
+        val pass = currentUiState.password
+
         if (loginId.isBlank() || pass.isBlank()) {
-            _state.value = State.Error("Пожалуйста, заполните все поля")
+            _screenState.value = ScreenState.Error("Пожалуйста, заполните все поля")
             return
         }
 
-        if (loginId.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
-            _state.value = State.Error("Логин не должен содержать русские буквы")
+        if (domain == "@edu.fa.ru" && loginId.length != 6) {
+            _screenState.value = ScreenState.Error("Номер студенческого должен состоять из 6 цифр")
             return
         }
 
-        if (domain == "@edu.fa.ru" && (loginId.length != 6 || !loginId.all { it.isDigit() })) {
-            _state.value = State.Error("Номер студенческого должен состоять из 6 цифр")
-            return
-        }
-
-        val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}\$")
+        //val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\\\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}\$")
+        val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$")
         if (!passwordRegex.matches(pass)) {
-            _state.value = State.Error("Пароль: от 8 символов (буквы, цифры, спецсимволы)")
+            _screenState.value = ScreenState.Error("Пароль: от 8 символов (A-Z, a-z, цифры, спецсимволы)")
             return
         }
 
@@ -96,67 +160,67 @@ class LoginScreenModel(
     }
 
     private fun performLoginRequest(loginId: String, domain: String, pass: String) {
-        _state.value = State.Loading
+        _screenState.value = ScreenState.Loading
 
         viewModelScope.launch {
             try {
                 val email = "$loginId$domain"
                 val request = LoginRequest(email = email, password = pass)
 
-                val result = authRepository.login(request)
+                authRepository.login(request)
+                    .onSuccess { response ->
+                        failedAttempts = 0
 
-                result.onSuccess { response ->
-                    failedAttempts = 0
+                        sessionManager.saveAuthToken(response.token)
+                        sessionManager.saveRefreshToken(response.refreshToken)
+                        sessionManager.saveUserId(response.id)
 
-                    sessionManager.saveAuthToken(response.token)
-                    sessionManager.saveRefreshToken(response.refreshToken)
-                    sessionManager.saveUserId(response.id)
+                        val roleString = response.roles.firstOrNull()
+                        val actualRole = AppRole.fromServerName(roleString)
+                        sessionManager.saveRealRole(actualRole)
 
-                    val roleString = response.roles.firstOrNull()
-                    val actualRole = AppRole.fromServerName(roleString)
-                    sessionManager.saveRealRole(actualRole)
-
-                    _state.value = State.Success(response)
-                }.onFailure { exception ->
-                    failedAttempts++
-
-                    val errorString = exception.toString()
-                    val message = exception.message ?: ""
-
-                    val humanMessage = when {
-                        message.contains("Failed to connect") ||
-                                message.contains("Connection refused") ||
-                                message.contains("timeout") ->
-                            "Нет связи с сервером. Проверьте подключение интернета"
-
-                        message.contains("401") ||
-                                message.contains("403") ||
-                                message.contains("404") ||
-                                errorString.contains("SerializationException") ||
-                                errorString.contains("JsonConvertException") ||
-                                message.contains("Illegal input") ->
-                            "Неверный логин или пароль"
-
-                        else -> "Что-то пошло не так: $message"
+                        _screenState.value = ScreenState.Initial
+                        _effect.emit("SUCCESS")
                     }
+                    .onFailure { exception ->
+                        failedAttempts++
 
-                    _state.value = State.Error(humanMessage)
+                        val humanMessage = when (exception) {
+                            is IOException, is HttpRequestTimeoutException ->
+                                "Нет связи с сервером. Проверьте подключение к интернету"
 
-                    if (failedAttempts >= 3) {
-                        refreshCaptcha()
-                        _showCaptchaDialog.value = true
+                            is ClientRequestException -> {
+                                when (exception.response.status.value) {
+                                    400, 401, 403, 404 -> "Неверный логин или пароль"
+                                    else -> "Ошибка клиента: ${exception.response.status.value}"
+                                }
+                            }
+
+                            is JsonConvertException, is SerializationException ->
+                                "Неверный логин или пароль"
+
+                            is ServerResponseException ->
+                                "Сервер временно недоступен. Попробуйте позже"
+
+                            else -> "Что-то пошло не так. Попробуйте позже"
+                        }
+
+                        _screenState.value = ScreenState.Error(humanMessage)
+
+                        if (failedAttempts >= 3) {
+                            refreshCaptcha()
+                            _showCaptchaDialog.value = true
+                        }
                     }
-                }
-
             } catch (e: Exception) {
-                _state.value = State.Error("Внутренняя ошибка приложения")
+                _screenState.value = ScreenState.Error("Внутренняя ошибка приложения")
             }
         }
     }
 
     fun resetState() {
-        if (_state.value is State.Error) {
-            _state.value = State.Initial
+        if (_screenState.value is ScreenState.Error) {
+            _screenState.value = ScreenState.Initial
         }
     }
 }

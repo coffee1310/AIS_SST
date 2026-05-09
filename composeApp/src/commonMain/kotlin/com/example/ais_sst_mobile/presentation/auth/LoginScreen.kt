@@ -48,7 +48,9 @@ import org.koin.compose.getKoin
 fun LoginScreen(component: LoginComponent) {
     val koin = getKoin()
     val screenModel = remember { koin.get<LoginScreenModel>() }
-    val state by screenModel.state.collectAsState()
+
+    val uiState by screenModel.uiState.collectAsState()
+    val screenState by screenModel.screenState.collectAsState()
 
     val showCaptchaDialog by screenModel.showCaptchaDialog.collectAsState()
     val currentCaptcha by screenModel.currentCaptcha.collectAsState()
@@ -56,24 +58,17 @@ fun LoginScreen(component: LoginComponent) {
 
     val focusManager = LocalFocusManager.current
 
-    var login by rememberSaveable { mutableStateOf("") }
-    var selectedDomain by rememberSaveable { mutableStateOf("@edu.fa.ru") }
-    var isDomainMenuExpanded by remember { mutableStateOf(false) }
+    //val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\\\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}\$") }
+    val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$") }
 
-    var password by rememberSaveable { mutableStateOf("") }
-    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
+    val isLoginError = uiState.domain == "@edu.fa.ru" && uiState.login.isNotEmpty() && uiState.login.length != 6
+    val isPasswordError = uiState.password.isNotEmpty() && !passwordRegex.matches(uiState.password)
 
-    val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}\$") }
-
-    val isLoginError = selectedDomain == "@edu.fa.ru" && login.isNotEmpty() && login.length != 6
-    val isPasswordError = password.isNotEmpty() && !passwordRegex.matches(password)
-
-    LaunchedEffect(state) {
-        when (state) {
-            is LoginScreenModel.State.Success -> {
+    LaunchedEffect(Unit) {
+        screenModel.effect.collect { effect ->
+            if (effect == "SUCCESS") {
                 component.onLoginSuccess()
             }
-            else -> {}
         }
     }
 
@@ -111,25 +106,13 @@ fun LoginScreen(component: LoginComponent) {
 
             CustomTextField(
                 modifier = contentModifier,
-                value = login,
-                onValueChange = { newValue ->
-                    if (selectedDomain == "@edu.fa.ru") {
-                        if (newValue.length <= 6 && newValue.all { it.isDigit() }) {
-                            login = newValue
-                            screenModel.resetState()
-                        }
-                    } else {
-                        if (!newValue.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
-                            login = newValue
-                            screenModel.resetState()
-                        }
-                    }
-                },
-                placeholder = if (selectedDomain == "@edu.fa.ru") "Номер студбилета" else "Логин",
+                value = uiState.login,
+                onValueChange = { screenModel.updateLogin(it) },
+                placeholder = if (uiState.domain == "@edu.fa.ru") "Номер студбилета" else "Логин",
                 isError = isLoginError,
                 errorMessage = if (isLoginError) "Студбилет должен состоять из 6 цифр" else null,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = if (selectedDomain == "@edu.fa.ru") KeyboardType.Number else KeyboardType.Email,
+                    keyboardType = if (uiState.domain == "@edu.fa.ru") KeyboardType.Number else KeyboardType.Email,
                     imeAction = ImeAction.Next
                 ),
                 keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
@@ -138,39 +121,31 @@ fun LoginScreen(component: LoginComponent) {
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .clickable { isDomainMenuExpanded = true }
+                                .clickable { screenModel.toggleDomainMenu(true) }
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = selectedDomain,
+                                text = uiState.domain,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Icon(
-                                imageVector = if (isDomainMenuExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                imageVector = if (uiState.isDomainMenuExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Выбрать домен",
                                 tint = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.padding(start = 2.dp).size(20.dp)
                             )
                         }
                         DropdownMenu(
-                            expanded = isDomainMenuExpanded,
-                            onDismissRequest = { isDomainMenuExpanded = false },
+                            expanded = uiState.isDomainMenuExpanded,
+                            onDismissRequest = { screenModel.toggleDomainMenu(false) },
                             containerColor = MaterialTheme.colorScheme.background
                         ) {
                             listOf("@edu.fa.ru", "@fa.ru").forEach { domain ->
                                 DropdownMenuItem(
                                     text = { Text(domain, style = MaterialTheme.typography.labelMedium) },
-                                    onClick = {
-                                        selectedDomain = domain
-                                        isDomainMenuExpanded = false
-                                        screenModel.resetState()
-
-                                        if (domain == "@edu.fa.ru" && !login.all { it.isDigit() }) {
-                                            login = login.filter { it.isDigit() }.take(6)
-                                        }
-                                    }
+                                    onClick = { screenModel.selectDomain(domain) }
                                 )
                             }
                         }
@@ -182,25 +157,22 @@ fun LoginScreen(component: LoginComponent) {
 
             CustomTextField(
                 modifier = contentModifier,
-                value = password,
-                onValueChange = {
-                    password = it
-                    screenModel.resetState()
-                },
+                value = uiState.password,
+                onValueChange = { screenModel.updatePassword(it) },
                 placeholder = "Пароль",
                 isError = isPasswordError,
                 errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры, спецсимволы" else null,
-                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (uiState.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        screenModel.login(login, selectedDomain, password)
+                        screenModel.login()
                     }
                 ),
                 trailingIcon = {
-                    val image = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                    val image = if (uiState.isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    IconButton(onClick = { screenModel.togglePasswordVisibility() }) {
                         Icon(imageVector = image, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
                     }
                 }
@@ -221,17 +193,17 @@ fun LoginScreen(component: LoginComponent) {
 
             CustomButton(
                 text = "Войти",
-                isLoading = state is LoginScreenModel.State.Loading,
+                isLoading = screenState is LoginScreenModel.ScreenState.Loading,
                 onClick = {
                     focusManager.clearFocus()
-                    screenModel.login(login, selectedDomain, password)
+                    screenModel.login()
                 },
                 modifier = contentModifier
             )
 
-            if (state is LoginScreenModel.State.Error) {
+            if (screenState is LoginScreenModel.ScreenState.Error) {
                 Text(
-                    text = (state as LoginScreenModel.State.Error).message,
+                    text = (screenState as LoginScreenModel.ScreenState.Error).message,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = contentModifier.padding(top = 16.dp, bottom = 16.dp),
@@ -258,7 +230,6 @@ fun LoginScreen(component: LoginComponent) {
             }
 
             Spacer(modifier = Modifier.height(40.dp))
-
             Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
     }
@@ -275,12 +246,15 @@ fun CaptchaDialog(
     var captchaInputLocal by rememberSaveable { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
 
+    LaunchedEffect(captchaError) {
+        if (captchaError != null && captchaError != "Введите код") {
+            captchaInputLocal = ""
+        }
+    }
+
     Dialog(
         onDismissRequest = {  },
-        properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false
-        )
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
     ) {
         Surface(
             shape = MaterialTheme.shapes.large,

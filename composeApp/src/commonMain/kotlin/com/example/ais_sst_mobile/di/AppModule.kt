@@ -2,33 +2,23 @@ package com.example.ais_sst_mobile.di
 
 import com.example.ais_sst_mobile.core.network.createHttpClient
 import com.example.ais_sst_mobile.core.prefs.SessionManager
-import com.example.ais_sst_mobile.core.settings.createSettings
-import com.example.ais_sst_mobile.data.repository.AuthRepositoryImpl
-import com.example.ais_sst_mobile.data.repository.DictionaryRepositoryImpl
-import com.example.ais_sst_mobile.data.repository.SectorsRepositoryImpl
-import com.example.ais_sst_mobile.data.repository.UserRepositoryImpl
-import com.example.ais_sst_mobile.domain.repository.AuthRepository
-import com.example.ais_sst_mobile.domain.repository.DictionaryRepository
-import com.example.ais_sst_mobile.domain.repository.SectorsRepository
-import com.example.ais_sst_mobile.domain.repository.UserRepository
-import com.example.ais_sst_mobile.presentation.auth.LoginScreenModel
-import com.example.ais_sst_mobile.presentation.auth.RegisterScreenModel
-import com.example.ais_sst_mobile.presentation.home.HomeScreenModel
-import com.example.ais_sst_mobile.presentation.profile.ProfileScreenModel
-import com.example.ais_sst_mobile.presentation.profile.my_data.MyDataScreenModel
-import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreenModel
-import com.example.ais_sst_mobile.presentation.profile.requests.RequestDetailsScreenModel
-import com.example.ais_sst_mobile.presentation.sectors.SectorDetailsScreenModel
-import com.example.ais_sst_mobile.presentation.sectors.SectorsScreenModel
+// Удали импорт старого createSettings, если он был
+import com.example.ais_sst_mobile.data.repository.*
+import com.example.ais_sst_mobile.domain.repository.*
+import com.example.ais_sst_mobile.presentation.auth.*
+import com.example.ais_sst_mobile.presentation.home.*
+import com.example.ais_sst_mobile.presentation.profile.*
+import com.example.ais_sst_mobile.presentation.profile.my_data.*
+import com.example.ais_sst_mobile.presentation.profile.requests.*
+import com.example.ais_sst_mobile.presentation.sectors.*
 import org.koin.core.context.startKoin
+import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
-import com.russhwolf.settings.Settings
+import org.koin.core.module.Module
 
+expect fun platformModule(): Module
 val coreModule = module {
     single { createHttpClient(get()) }
-
-    single<Settings> { createSettings() }
-
     single { SessionManager(get()) }
 }
 
@@ -54,10 +44,11 @@ val appModule = module {
 
 private var isKoinInitialized = false
 
-fun initKoin() {
+fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
     if (!isKoinInitialized) {
         startKoin {
-            modules(coreModule, appModule)
+            appDeclaration()
+            modules(platformModule(), coreModule, appModule)
         }
         isKoinInitialized = true
     }

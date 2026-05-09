@@ -31,6 +31,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+            implementation("io.insert-koin:koin-android:3.5.3")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
