@@ -76,8 +76,6 @@ public class SectorIntroductionRequestService {
             // Если статус "Вышедший" - можно восстановить
             if (participant.getStatus() == SectorParticipantStatuses.Вышедший) {
                 // Восстанавливаем участника
-                participant.setStatus(SectorParticipantStatuses.Активный);
-                sectorParticipantRepository.save(participant);
 
                 // Создаем заявку как одобренную (или можно сразу вернуть успех без заявки)
                 SectorIntroductionRequest request = SectorIntroductionRequest.builder()
