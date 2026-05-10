@@ -63,8 +63,8 @@ class SectorsScreenModel(
                                         patronymic = user.patronymic,
                                         photo = user.photo,
                                         courseNumber = user.courseNumber,
-                                        specialityName = user.specialityName,
-                                        groupName = user.groupName
+                                        specialityName = user.specialityName ?: user.specialityTitle,
+                                        groupName = user.groupName ?: user.groupTitle
                                     )
                                 },
                                 onFailure = {
