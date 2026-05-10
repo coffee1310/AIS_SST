@@ -78,6 +78,8 @@ public class UserProfileInfoDTO {
 
     private String coordinatorSectorTitle; // Добавлено
 
+    private String shortSpecialityTitle;
+
     public void validate(Validator validator) {
         Set<ConstraintViolation<UserProfileInfoDTO>> violations = validator.validate(this);
         if (!violations.isEmpty()) {

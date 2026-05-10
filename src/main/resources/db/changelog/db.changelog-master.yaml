@@ -61,3 +61,5 @@ databaseChangeLog:
       file: db/changelog/changes/032-create-application-status-enum.yaml
   - include:
       file: db/changelog/changes/033-add-additional-email-to-account-requests..yaml
+  - include:
+      file: db/changelog/changes/034-add-short-title-to-specialities.yaml

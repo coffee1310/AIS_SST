@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: add_short_title_to_specialities
+      author: coffee13102006
+      changes:
+        - addColumn:
+            tableName: specialities
+            columns:
+              - column:
+                  name: short_title
+                  type: VARCHAR(8)
+                  constraints:
+                    nullable: true
+        - sql:
+            sql: "COMMENT ON COLUMN specialities.short_title IS 'Сокращенное название специальности (до 8 символов)'"

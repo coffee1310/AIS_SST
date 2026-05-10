@@ -83,6 +83,7 @@ public class UserService implements UserServiceImpl {
                 .coordinatorSector(coordinatorSectorTitle)  // Для обратной совместимости
                 .coordinatorSectorId(coordinatorSectorId)    // ID сектора
                 .coordinatorSectorTitle(coordinatorSectorTitle) // Название сектора
+                .shortSpecialityTitle(user.getSpeciality().getShortTitle())
                 .events_count(0)
                 .points_count(0)
                 .build();
@@ -126,47 +127,7 @@ public class UserService implements UserServiceImpl {
         return new PageImpl<>(users, pageable, total);
     }
 
-    // ==================== Вспомогательные конвертеры ====================
 
-    private Long convertToLong(Object value) {
-        if (value == null) return null;
-        if (value instanceof Number num) return num.longValue();
-        if (value instanceof BigInteger bi) return bi.longValue();
-        return Long.parseLong(value.toString());
-    }
-
-    private Short convertToShort(Object value) {
-        if (value == null) return null;
-        if (value instanceof Number num) return num.shortValue();
-        return Short.parseShort(value.toString());
-    }
-
-    private Integer convertToInteger(Object value) {
-        if (value == null) return null;
-        if (value instanceof Number num) return num.intValue();
-        return Integer.parseInt(value.toString());
-    }
-
-    private LocalDate convertToLocalDate(Object value) {
-        if (value == null) return null;
-
-        if (value instanceof LocalDate ld) return ld;
-        if (value instanceof Date sqlDate) return sqlDate.toLocalDate();           // java.sql.Date
-        if (value instanceof Timestamp ts) return ts.toLocalDateTime().toLocalDate();
-        if (value instanceof java.util.Date utilDate) {
-            return utilDate.toInstant()
-                    .atZone(java.time.ZoneId.systemDefault())
-                    .toLocalDate();
-        }
-
-        // Fallback
-        try {
-            return LocalDate.parse(value.toString().substring(0, 10)); // на случай строки
-        } catch (Exception e) {
-            log.warn("Не удалось преобразовать дату: {}", value);
-            return null;
-        }
-    }
 
     @Transactional
     public Page<UserResponseDTO> getUsersByRole(String role, int page, int size, String sortBy, String sortDirection) {
@@ -294,6 +255,7 @@ public class UserService implements UserServiceImpl {
                 .photo(photoBase64)
                 .coordinatorSectorId(coordinatorSectorId)
                 .coordinatorSectorTitle(coordinatorSectorTitle)
+                .specialityShortTitle(row[20] != null ? row[20].toString() : null)
                 .build();
     }
 }

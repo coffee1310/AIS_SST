@@ -31,6 +31,7 @@ public class UserResponseDTO {
     private String groupName;
     private Long specialityId;
     private String specialityName;
+    private String specialityShortTitle;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

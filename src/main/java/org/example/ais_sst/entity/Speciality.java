@@ -23,5 +23,7 @@ public class Speciality {
     @Column(name = "title", nullable = false, length = 64)
     private String title;
 
-
+    @Size(max = 8)
+    @Column(name = "short_title", length = 8)
+    private String shortTitle;
 }
