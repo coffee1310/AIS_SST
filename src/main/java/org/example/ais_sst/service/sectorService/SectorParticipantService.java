@@ -3,6 +3,7 @@ package org.example.ais_sst.service.sectorService;
 import lombok.RequiredArgsConstructor;
 import org.example.ais_sst.entity.SectorIntroductionRequest;
 import org.example.ais_sst.entity.SectorParticipant;
+import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
 import org.example.ais_sst.mapper.SectorParticipantMapper;
 import org.example.ais_sst.repository.SectorParticipantRepository;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ public class SectorParticipantService {
         SectorParticipant sectorParticipant = SectorParticipant.builder()
                 .sector(request.getSector())
                 .student(request.getUser())
+                .status(SectorParticipantStatuses.Активный)
                 .build();
 
         return sectorParticipantRepository.save(sectorParticipant);
