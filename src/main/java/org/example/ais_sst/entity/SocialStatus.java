@@ -3,13 +3,15 @@ package org.example.ais_sst.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "social_statuses")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SocialStatus {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

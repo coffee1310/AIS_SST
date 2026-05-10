@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: alter-specialities-title-length
+      author: coffee13102006
+      changes:
+        - modifyDataType:
+            catalogName: null
+            columnName: title
+            newDataType: VARCHAR(128)
+            schemaName: public
+            tableName: specialities

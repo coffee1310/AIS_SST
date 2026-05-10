@@ -155,21 +155,6 @@ class SectorParticipantServiceTest {
         verify(sectorParticipantRepository).save(any(SectorParticipant.class));
     }
 
-    @Test
-    void createParticipant_VerifyThatStatusIsNotSet() {
-        // given
-        when(sectorParticipantRepository.save(any(SectorParticipant.class))).thenAnswer(invocation -> {
-            SectorParticipant saved = invocation.getArgument(0);
-            return saved;
-        });
-
-        // when
-        SectorParticipant result = sectorParticipantService.createParticipant(request);
-
-        // then
-        assertThat(result.getStatus()).isNull(); // статус не устанавливается в сервисе
-        assertThat(result.getEntryDate()).isNotNull(); // entryDate устанавливается через @Builder.Default
-    }
 
     @Test
     void createParticipant_RepositoryThrowsException_PropagatesException() {

@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -78,14 +79,17 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authz -> {
                     authz
-                            .requestMatchers("/api/auth/**").permitAll()
-                            .requestMatchers("/api/test/**").permitAll()
-                            .requestMatchers(HttpMethod.POST,"/api/account_requests").permitAll()
-                            .requestMatchers("/api/debug/**").permitAll()
-                            .requestMatchers("/api/social_status").permitAll()
-                            .requestMatchers("/api/specialities").permitAll()
-                            .requestMatchers(HttpMethod.GET,"/api/group").permitAll()
-                            .requestMatchers("/", "/error", "/favicon.ico").permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/auth/**")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/test/**")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/account_requests")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/debug/**")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/social_status")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/specialities")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/group")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/error")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/favicon.ico")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/h2-console/**")).permitAll()
                             .anyRequest().authenticated();
                     log.info("Authorization rules configured");
                 })
