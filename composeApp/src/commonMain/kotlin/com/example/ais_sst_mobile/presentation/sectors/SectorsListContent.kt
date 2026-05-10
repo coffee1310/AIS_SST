@@ -20,6 +20,12 @@ fun SectorsListContent(
 ) {
     val state by screenModel.state.collectAsState()
 
+    LaunchedEffect(Unit) {
+        if (state is SectorsState.Loading || state is SectorsState.Error) {
+            screenModel.loadSectors()
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         when (val currentState = state) {
             is SectorsState.Loading -> {

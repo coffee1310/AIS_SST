@@ -68,6 +68,7 @@ class SectorsScreenModel(
                                     )
                                 },
                                 onFailure = {
+                                    it.printStackTrace()
                                     request
                                 }
                             )
@@ -109,10 +110,7 @@ class SectorsScreenModel(
                 }
         }
     }
-    init {
-        loadSectors()
-    }
-    private fun loadSectors() {
+    fun loadSectors() {
         viewModelScope.launch {
             _state.value = SectorsState.Loading
 

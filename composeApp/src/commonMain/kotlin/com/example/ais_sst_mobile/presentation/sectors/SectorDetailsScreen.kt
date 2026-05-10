@@ -226,7 +226,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
 
                                         Column {
                                             Text(
-                                                text = sector.coordinatorName + " " + sector.coordinatorSurname,
+                                                text = sector.coordinatorSurname + " " + sector.coordinatorName,
                                                 style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
