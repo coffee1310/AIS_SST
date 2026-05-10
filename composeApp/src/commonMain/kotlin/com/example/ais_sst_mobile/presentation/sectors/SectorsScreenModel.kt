@@ -47,7 +47,25 @@ class SectorsScreenModel(
     private var currentSectorId: Int? = null
     private val _isRequestsLoading = MutableStateFlow(true)
     val isRequestsLoading = _isRequestsLoading.asStateFlow()
+    private val _coordinatorSectorTitle = MutableStateFlow("Сектора Сст")
+    val coordinatorSectorTitle = _coordinatorSectorTitle.asStateFlow()
 
+    fun loadCoordinatorData() {
+        viewModelScope.launch {
+            userRepository.getUserProfile()
+                .onSuccess { user ->
+                    user.coordinatorSectorTitle?.let { title ->
+                        _coordinatorSectorTitle.value = title
+                    }
+                    user.coordinatorSectorId?.let { sectorId ->
+                        loadParticipants(sectorId)
+                    }
+                }
+                .onFailure {
+                    it.printStackTrace()
+                }
+        }
+    }
     fun loadRequests() {
         viewModelScope.launch {
             _isRequestsLoading.value = true

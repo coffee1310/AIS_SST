@@ -4,8 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,9 +21,28 @@ import com.example.ais_sst_mobile.presentation.sectors.SectorsTab
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.ui.platform.LocalDensity
+import com.example.ais_sst_mobile.core.prefs.SessionManager
+import com.example.ais_sst_mobile.domain.model.AppRole
+import com.example.ais_sst_mobile.domain.repository.UserRepository
+import org.koin.compose.getKoin
 
 @Composable
 fun MainScreen(component: MainComponent) {
+    val koin = getKoin()
+    val sessionManager = remember { koin.get<SessionManager>() }
+    val userRepository = remember { koin.get<UserRepository>() }
+
+    val activeRole by sessionManager.activeRoleFlow.collectAsState(initial = AppRole.ACTIVIST)
+    var coordinatorSectorTitle by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(activeRole) {
+        if (activeRole == AppRole.SECTOR_COORDINATOR) {
+            userRepository.getUserProfile().onSuccess { user ->
+                coordinatorSectorTitle = user.coordinatorSectorTitle ?: user.coordinatorSector
+            }
+        }
+    }
+
     val childStack by component.stack.subscribeAsState()
     val activeComponent = childStack.active.instance
 
@@ -41,7 +59,11 @@ fun MainScreen(component: MainComponent) {
             showBackButton = true
             onBackClick = { sectorsActive.component.onGoBack() }
         } else {
-            title = "Сектора ССТ"
+            title = if (activeRole == AppRole.SECTOR_COORDINATOR && coordinatorSectorTitle != null) {
+                coordinatorSectorTitle!!
+            } else {
+                "Сектора ССТ"
+            }
         }
     } else {
         title = when (activeComponent) {
@@ -69,9 +91,9 @@ fun MainScreen(component: MainComponent) {
             containerColor = Color.Transparent,
             topBar = { SharedTopBar(title = title, showBackButton = showBackButton, onBackClick = onBackClick)},
             bottomBar = {
-                    if (!isKeyboardOpen) {
-                        SharedBottomNav(selectedIndex, component::onTabSelected)
-                    }
+                if (!isKeyboardOpen) {
+                    SharedBottomNav(selectedIndex, component::onTabSelected)
+                }
             }
         ) { paddingValues ->
             Children(

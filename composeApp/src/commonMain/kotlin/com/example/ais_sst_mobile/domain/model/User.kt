@@ -19,5 +19,8 @@ data class User(
     val photo: String?,
     val roleTitle: String,
     val gender: String?,
-    val socialStatuses: List<String>?
+    val socialStatuses: List<String>?,
+    val coordinatorSectorId: Int? = null,
+    val coordinatorSectorTitle: String? = null,
+    val coordinatorSector: String? = null
 )

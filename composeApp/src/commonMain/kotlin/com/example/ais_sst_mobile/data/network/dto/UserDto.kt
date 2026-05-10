@@ -60,7 +60,9 @@ data class UserProfileDto(
             photo = photo,
             roleTitle = roleTitle?: "",
             gender = gender,
-            socialStatuses = socialStatuses
+            socialStatuses = socialStatuses,
+            coordinatorSectorId = this.coordinatorSectorId,
+            coordinatorSectorTitle = this.coordinatorSectorTitle ?: this.coordinatorSector
         )
     }
 }

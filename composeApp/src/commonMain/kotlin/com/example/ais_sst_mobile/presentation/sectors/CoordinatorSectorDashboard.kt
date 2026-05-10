@@ -39,7 +39,7 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
     val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
-        screenModel.loadParticipants(1)
+        screenModel.loadCoordinatorData()
         screenModel.loadRequests()
 
         screenModel.effect.collect { message ->
