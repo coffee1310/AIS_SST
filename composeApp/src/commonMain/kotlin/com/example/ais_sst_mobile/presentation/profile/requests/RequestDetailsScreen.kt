@@ -216,7 +216,7 @@ fun RequestDetailsScreen(
                                 }
                             )
 
-                            //InfoRow("Социальный статус", if (request.socialStatuses.isNullOrEmpty()) "Отсутствует" else request.socialStatuses.joinToString(", "))
+                            InfoRow("Социальный статус", if (request.socialStatuses.isNullOrEmpty()) "Отсутствует" else request.socialStatuses.joinToString(", "))
                             InfoRow("Пол", request.gender ?: "Не указан")
 
                             InfoRow(

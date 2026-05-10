@@ -89,7 +89,6 @@ fun LoginScreen(component: LoginComponent) {
             modifier = Modifier
                 .fillMaxSize()
                 .clearFocusOnTap(focusManager)
-                .clearFocusOnScroll(focusManager)
                 .imePadding()
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally

@@ -22,8 +22,7 @@ class SectorsRepositoryImpl(
         httpClient.get("sector").body<List<SectorDto>>()
     }
     override suspend fun getSectorById(id: Int): Result<SectorDto> = runCatching {
-        val sectors = httpClient.get("sector").body<List<SectorDto>>()
-        sectors.first { it.id == id }
+        httpClient.get("sector/$id").body<SectorDto>()
     }
 
     override suspend fun joinSector(id: Int): Result<Unit> = runCatching {

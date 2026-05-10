@@ -29,7 +29,8 @@ data class AccountRequestDto(
     val specialityId: Int?,
     val specialityName: String? = null,
     val photo: String? = null,
-    val vkLink: String? = null
+    val vkLink: String? = null,
+    val socialStatuses: List<String>? = null
 )
 @Serializable
 data class RejectRequestDto(

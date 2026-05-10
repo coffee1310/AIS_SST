@@ -226,15 +226,25 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
 
                                         Column {
                                             Text(
-                                                text = sector.coordinatorFullName,
+                                                text = sector.coordinatorName + " " + sector.coordinatorSurname,
                                                 style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
+
+                                            val groupText = if (sector.coordinatorCourseNumber != null && sector.coordinatorSpecialityTitle != null && sector.coordinatorGroupTitle != null) {
+                                                "студент группы ${sector.coordinatorCourseNumber}${sector.coordinatorSpecialityTitle}-${sector.coordinatorGroupTitle}"
+                                            } else if (sector.coordinatorGroupTitle != null) {
+                                                "студент группы ${sector.coordinatorGroupTitle}"
+                                            } else {
+                                                "координатор сектора"
+                                            }
+
                                             Text(
-                                                text = "Координатор сектора",
+                                                text = groupText,
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                maxLines = 2
                                             )
                                         }
                                     }

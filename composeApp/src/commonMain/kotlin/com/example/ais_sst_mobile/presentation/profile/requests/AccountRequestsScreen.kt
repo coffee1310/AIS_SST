@@ -45,6 +45,7 @@ fun AccountRequestsScreen(onBackClick: () -> Unit,
     val state by screenModel.state.collectAsState()
     var rejectingRequestId by remember { mutableStateOf<Int?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         screenModel.effect.collect { message ->
@@ -52,7 +53,9 @@ fun AccountRequestsScreen(onBackClick: () -> Unit,
         }
     }
     AppBackground {
-        Box(modifier = Modifier.fillMaxSize()){
+        Box(modifier = Modifier.fillMaxSize()
+            .clearFocusOnTap(focusManager)
+            .clearFocusOnScroll(focusManager)){
             rejectingRequestId?.let { id ->
                 RejectDialog(
                     onDismiss = { rejectingRequestId = null },
@@ -200,8 +203,6 @@ fun RejectDialog(
             Column(
                 modifier = Modifier
                     .padding(24.dp)
-                    .clearFocusOnTap(focusManager)
-                    .clearFocusOnScroll(focusManager)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
