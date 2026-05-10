@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum SectorIntroductionStatus {
-    ОЖИДАНИЕ("Ожидание"),
     НА_РАССМОТРЕНИИ("На рассмотрении"),
     ОДОБРЕНА("Одобрена"),
     ОТКЛОНЕНА("Отклонена"),

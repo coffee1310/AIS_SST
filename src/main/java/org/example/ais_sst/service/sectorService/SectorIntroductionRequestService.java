@@ -57,7 +57,7 @@ public class SectorIntroductionRequestService {
         // ПРОВЕРКА 1: Есть ли уже активная заявка (Ожидание или На рассмотрении)
         List<SectorIntroductionRequest> existingRequests = sectorIntroductionRequestRepository
                 .findByUserIdAndSectorIdAndStatusIn(userId, sectorId,
-                        List.of(SectorIntroductionStatus.ОЖИДАНИЕ, SectorIntroductionStatus.НА_РАССМОТРЕНИИ));
+                        List.of(SectorIntroductionStatus.НА_РАССМОТРЕНИИ));
 
         if (!existingRequests.isEmpty()) {
             throw new SectorIntroductionRequestAlreadyExistsException(
@@ -100,7 +100,7 @@ public class SectorIntroductionRequestService {
         SectorIntroductionRequest request = SectorIntroductionRequest.builder()
                 .user(user)
                 .sector(sector)
-                .status(SectorIntroductionStatus.ОЖИДАНИЕ) // Явно указываем статус
+                .status(SectorIntroductionStatus.НА_РАССМОТРЕНИИ) // Явно указываем статус
                 .build();
 
         request = sectorIntroductionRequestRepository.save(request);
@@ -168,7 +168,7 @@ public class SectorIntroductionRequestService {
         // ОТКЛОНЯЕМ все другие активные заявки этого пользователя в этот сектор
         List<SectorIntroductionRequest> otherRequests = sectorIntroductionRequestRepository
                 .findByUserIdAndSectorIdAndStatusIn(userId, sectorId,
-                        List.of(SectorIntroductionStatus.НА_РАССМОТРЕНИИ, SectorIntroductionStatus.ОЖИДАНИЕ));
+                        List.of(SectorIntroductionStatus.НА_РАССМОТРЕНИИ, SectorIntroductionStatus.НА_РАССМОТРЕНИИ));
 
         for (SectorIntroductionRequest otherRequest : otherRequests) {
             if (!otherRequest.getId().equals(request_id)) {
