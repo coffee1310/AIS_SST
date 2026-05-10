@@ -23,7 +23,17 @@ data class UserProfileDto(
     val photo: String? = null,
     val roleTitle: String,
     val gender: String? = null,
-    val socialStatuses: List<String>? = null
+    val socialStatuses: List<String>? = null,
+    val groupName: String? = null,
+    val specialityName: String? = null,
+    val role: String? = null,
+    val isActive: Boolean? = null,
+    val isBanned: Boolean? = null,
+    val studentIdNumber: Int? = null,
+    val coordinatorSectorId: Int? = null,
+    val coordinatorSectorTitle: String? = null,
+    val groupId: Int? = null,
+    val specialityId: Int? = null
 ) {
     fun toDomain(): User {
         return User(

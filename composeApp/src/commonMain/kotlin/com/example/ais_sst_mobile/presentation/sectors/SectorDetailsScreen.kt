@@ -255,8 +255,10 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                         Spacer(modifier = Modifier.height(45.dp))
 
                         if (activeRole == AppRole.ACTIVIST && !sector.isCoordinator) {
-                            val isApproved = sector.isParticipant || sector.requestStatus == "Одобрена"
-                            val isPending = sector.hasActiveRequest && (sector.requestStatus == "На рассмотрении" || sector.requestStatus == null)
+                            val isExited = sector.requestStatus == "Вышедший"
+
+                            val isApproved = !isExited && (sector.isParticipant || sector.requestStatus == "Одобрена")
+                            val isPending = !isExited && sector.hasActiveRequest && (sector.requestStatus == "На рассмотрении" || sector.requestStatus == null)
 
                             if (isApproved) {
                                 CustomButton(

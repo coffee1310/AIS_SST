@@ -1,6 +1,7 @@
 package com.example.ais_sst_mobile.domain.repository
 
 import com.example.ais_sst_mobile.data.network.dto.AccountRequestDto
+import com.example.ais_sst_mobile.data.network.dto.UserProfileDto
 import com.example.ais_sst_mobile.domain.model.User
 
 interface UserRepository {
@@ -9,4 +10,5 @@ interface UserRepository {
     suspend fun rejectAccountRequest(id: Int, reason: String): Result<Unit>
     suspend fun acceptAccountRequest(id: Int): Result<Unit>
     suspend fun getAccountRequestById(id: Int): Result<AccountRequestDto>
+    suspend fun getUserProfileById(id: Int): Result<UserProfileDto>
 }

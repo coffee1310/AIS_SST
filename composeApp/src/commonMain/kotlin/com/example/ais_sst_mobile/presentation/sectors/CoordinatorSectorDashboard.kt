@@ -48,9 +48,24 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
     }
 
     val filteredParticipants = participants.filter {
+        it.status == "Активный"
+    }.filter {
         it.studentSurname.contains(searchQuery, ignoreCase = true) ||
                 it.studentName.contains(searchQuery, ignoreCase = true)
-    }
+    }.sortedWith(
+        Comparator { p1, p2 ->
+            if (p1.isCoordinator && !p2.isCoordinator) return@Comparator -1
+            if (!p1.isCoordinator && p2.isCoordinator) return@Comparator 1
+
+            val surnameCompare = p1.studentSurname.compareTo(p2.studentSurname, ignoreCase = true)
+            if (surnameCompare != 0) {
+                surnameCompare
+            } else {
+                p1.studentName.compareTo(p2.studentName, ignoreCase = true)
+            }
+        }
+    )
+
     val filteredRequests = requests.filter {
         (it.surname ?: "").contains(searchQuery, ignoreCase = true) ||
                 (it.name ?: "").contains(searchQuery, ignoreCase = true)

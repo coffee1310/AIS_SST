@@ -11,6 +11,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.http.isSuccess
 import com.example.ais_sst_mobile.data.network.dto.SectorRequestDto
+import io.ktor.client.request.delete
 import io.ktor.client.request.put
 
 
@@ -22,7 +23,21 @@ class SectorsRepositoryImpl(
         httpClient.get("sector").body<List<SectorDto>>()
     }
     override suspend fun getSectorById(id: Int): Result<SectorDto> = runCatching {
-        httpClient.get("sector/$id").body<SectorDto>()
+        val details = httpClient.get("sector/$id").body<SectorDto>()
+        val allSectors = httpClient.get("sector").body<List<SectorDto>>()
+        val userStatus = allSectors.firstOrNull { it.id == id }
+
+        if (userStatus != null) {
+            details.copy(
+                isParticipant = userStatus.isParticipant,
+                isCoordinator = userStatus.isCoordinator,
+                hasActiveRequest = userStatus.hasActiveRequest,
+                requestStatus = userStatus.requestStatus,
+                participantCount = userStatus.participantCount
+            )
+        } else {
+            details
+        }
     }
 
     override suspend fun joinSector(id: Int): Result<Unit> = runCatching {
@@ -32,9 +47,11 @@ class SectorsRepositoryImpl(
             throw Exception("Не удалось отправить заявку")
         }
     }
-
     override suspend fun leaveSector(id: Int): Result<Unit> = runCatching {
-        // TODO: POST
+        val response = httpClient.delete("sector/$id/leave")
+        if (!response.status.isSuccess()) {
+            throw Exception("Ошибка при выходе из сектора: ${response.status.value}")
+        }
     }
     override suspend fun getSectorParticipants(sectorId: Int, page: Int): Result<ParticipantResponseDto> = runCatching {
         httpClient.get("sector/$sectorId/participants") {
@@ -45,7 +62,9 @@ class SectorsRepositoryImpl(
         }.body()
     }
     override suspend fun getSectorRequests(): Result<List<SectorRequestDto>> = runCatching {
-        httpClient.get("sector/introductions").body()
+        httpClient.get("sector/introductions/filter") {
+            parameter("status", "НА_РАССМОТРЕНИИ")
+        }.body()
     }
     override suspend fun acceptSectorRequest(requestId: Int): Result<String> = runCatching {
         val response: SectorRequestActionResponseDto = httpClient.put("sector/accept/$requestId").body()
