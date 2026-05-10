@@ -21,22 +21,32 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
         s.id,
         s.title,
         s.description,
-        CASE WHEN sp.id IS NOT NULL THEN true ELSE false END as is_participant,
+        CASE 
+            WHEN sp.id IS NOT NULL AND sp.status = 'Активный' 
+                 AND (sir.id IS NULL OR sir.status NOT IN ('На рассмотрении', 'Ожидание'))
+            THEN true 
+            ELSE false 
+        END as is_participant,
         CASE WHEN sir.id IS NOT NULL AND sir.status IN ('На рассмотрении', 'Ожидание') 
              THEN true ELSE false END as has_active_request,
         COALESCE(sp.is_coordinator, false) as is_coordinator,
         s.photo,
         sir.status as request_status,
-        (SELECT COUNT(*) FROM sector_participants sp2 WHERE sp2.sector_id = s.id) as participant_count,
+        (SELECT COUNT(*) FROM sector_participants sp2 WHERE sp2.sector_id = s.id AND sp2.status = 'Активный') as participant_count,
         -- Информация о координаторе
         coord.name as coordinator_name,
         coord.surname as coordinator_surname,
         coord.patronymic as coordinator_patronymic,
         coord.photo as coordinator_photo
     FROM sectors s
-    LEFT JOIN sector_participants sp ON sp.sector_id = s.id AND sp.student_id = :userId
-    LEFT JOIN sector_introduction_request sir ON sir.sector_id = s.id AND sir.user_id = :userId
-    LEFT JOIN sector_participants coord_participant ON coord_participant.sector_id = s.id AND coord_participant.is_coordinator = true
+    LEFT JOIN sector_participants sp ON sp.sector_id = s.id 
+        AND sp.student_id = :userId 
+    LEFT JOIN sector_introduction_request sir ON sir.sector_id = s.id 
+        AND sir.user_id = :userId 
+        AND sir.status IN ('На рассмотрении', 'Ожидание')
+    LEFT JOIN sector_participants coord_participant ON coord_participant.sector_id = s.id 
+        AND coord_participant.is_coordinator = true
+        AND coord_participant.status = 'Активный'
     LEFT JOIN users coord ON coord.id = coord_participant.student_id
     WHERE s.is_active = true
     ORDER BY is_participant DESC, has_active_request DESC, s.title ASC

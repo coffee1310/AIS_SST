@@ -44,4 +44,10 @@ public interface SectorIntroductionRequestRepository extends JpaRepository<Secto
     List<SectorIntroductionRequest> findRequestsByCoordinatorIdAndStatus(
             @Param("coordinatorId") Long coordinatorId,
             @Param("status") String status);
+
+    List<SectorIntroductionRequest> findByUserIdAndSectorIdAndStatusIn(
+            Long userId,
+            Long sectorId,
+            List<SectorIntroductionStatus> statuses
+    );
 }

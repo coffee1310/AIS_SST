@@ -23,6 +23,7 @@ import org.example.ais_sst.repository.SectorRepository;
 import org.example.ais_sst.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -108,31 +109,60 @@ public class SectorIntroductionRequestService {
         Long userId = request.getUser().getId();
         Long sectorId = request.getSector().getId();
 
-        // Проверяем, существует ли уже участник
+        // Проверяем, существует ли уже запись участника (ЛЮБАЯ, не только активная)
         java.util.Optional<SectorParticipant> existingParticipant = sectorParticipantRepository
                 .findByStudentIdAndSectorId(userId, sectorId);
 
         SectorParticipant sectorParticipant;
 
-        if (existingParticipant.isPresent() && existingParticipant.get().getStatus() == SectorParticipantStatuses.Вышедший) {
-            // Восстанавливаем существующего участника
-            sectorParticipant = existingParticipant.get();
-            sectorParticipant.setStatus(SectorParticipantStatuses.Активный);
-            sectorParticipant = sectorParticipantRepository.save(sectorParticipant);
-            log.info("User {} restored to sector {} (was 'Вышедший')", userId, sectorId);
-        } else if (existingParticipant.isEmpty()) {
+        if (existingParticipant.isPresent()) {
+            SectorParticipant participant = existingParticipant.get();
+
+            // Если участник уже активный
+            if (participant.getStatus() == SectorParticipantStatuses.Активный) {
+                throw new UserIsAlreadyInThisSectorException(
+                        String.format("Пользователь с id: %d уже является активным участником сектора", userId));
+            }
+
+            // Если участник не активный (Вышедший, Заблокирован и т.д.) - восстанавливаем
+            log.info("Restoring user {} to sector {} from status: {}",
+                    userId, sectorId, participant.getStatus());
+
+            participant.setStatus(SectorParticipantStatuses.Активный);
+            participant.setEntryDate(LocalDate.now()); // Обновляем дату вступления
+            // Сбрасываем координаторство, если нужно
+            if (participant.getIsCoordinator()) {
+                participant.setIsCoordinator(false);
+            }
+            sectorParticipant = sectorParticipantRepository.save(participant);
+            log.info("User {} restored to sector {} (previous status: {})",
+                    userId, sectorId, participant.getStatus());
+
+        } else {
             // Создаем нового участника
             sectorParticipant = sectorParticipantService.createParticipant(request);
             log.info("New participant created for user {} in sector {}", userId, sectorId);
-        } else {
-            throw new UserIsAlreadyInThisSectorException(
-                    String.format("Пользователь с id: %d уже является активным участником сектора", userId));
         }
 
         SectorParticipantDTO sectorParticipantDTO = sectorParticipantMapper.toSectorParticipantDTO(sectorParticipant);
 
+        // Обновляем статус заявки
         request.setStatus(SectorIntroductionStatus.ОДОБРЕНА);
         sectorIntroductionRequestRepository.save(request);
+
+        // ОТКЛОНЯЕМ все другие активные заявки этого пользователя в этот сектор
+        List<SectorIntroductionRequest> otherRequests = sectorIntroductionRequestRepository
+                .findByUserIdAndSectorIdAndStatusIn(userId, sectorId,
+                        List.of(SectorIntroductionStatus.НА_РАССМОТРЕНИИ, SectorIntroductionStatus.ОЖИДАНИЕ));
+
+        for (SectorIntroductionRequest otherRequest : otherRequests) {
+            if (!otherRequest.getId().equals(request_id)) {
+                otherRequest.setStatus(SectorIntroductionStatus.ОТКЛОНЕНА);
+                sectorIntroductionRequestRepository.save(otherRequest);
+                log.info("Rejected duplicate request {} for user {} in sector {}",
+                        otherRequest.getId(), userId, sectorId);
+            }
+        }
 
         return sectorIntroductionRequestMapper.toSummary(request);
     }
