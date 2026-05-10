@@ -83,7 +83,7 @@ public class SectorIntroductionRequestService {
                 SectorIntroductionRequest request = SectorIntroductionRequest.builder()
                         .user(user)
                         .sector(sector)
-                        .status(SectorIntroductionStatus.ОДОБРЕНА) // Сразу одобряем
+                        .status(SectorIntroductionStatus.НА_РАССМОТРЕНИИ) // Сразу одобряем
                         .build();
                 request = sectorIntroductionRequestRepository.save(request);
 
