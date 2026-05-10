@@ -47,4 +47,10 @@ class UserRepositoryImpl(
 
         response.content.firstOrNull() ?: throw Exception("Заявка не найдена")
     }
+    override suspend fun getUserProfileById(id: Int): Result<UserProfileDto> = runCatching {
+        val response = httpClient.get("users/all") {
+            parameter("id", id)
+        }.body<PageableResponse<UserProfileDto>>()
+        response.content.firstOrNull() ?: throw Exception("Пользователь не найден")
+    }
 }

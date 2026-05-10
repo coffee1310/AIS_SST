@@ -37,7 +37,7 @@ val appModule = module {
     factory { AccountRequestsScreenModel(get()) }
     factory { MyDataScreenModel(get()) }
     factory { RequestDetailsScreenModel(get()) }
-    factory { SectorsScreenModel(get(), get()) }
+    factory { SectorsScreenModel(get(), get(), get()) }
     factory { SectorDetailsScreenModel(get(), get()) }
 
 }

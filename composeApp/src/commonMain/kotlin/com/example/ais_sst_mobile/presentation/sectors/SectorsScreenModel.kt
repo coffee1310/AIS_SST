@@ -7,11 +7,14 @@ import com.example.ais_sst_mobile.data.network.dto.ParticipantDto
 import com.example.ais_sst_mobile.data.network.dto.SectorDto
 import com.example.ais_sst_mobile.data.network.dto.SectorRequestDto
 import com.example.ais_sst_mobile.domain.repository.SectorsRepository
+import com.example.ais_sst_mobile.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 sealed interface SectorsState {
     data object Loading : SectorsState
@@ -21,6 +24,7 @@ sealed interface SectorsState {
 
 class SectorsScreenModel(
     private val repository: SectorsRepository,
+    private val userRepository: UserRepository,
     sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -48,8 +52,29 @@ class SectorsScreenModel(
         viewModelScope.launch {
             _isRequestsLoading.value = true
             repository.getSectorRequests()
-                .onSuccess { requests ->
-                    _requestsState.value = requests.filter { it.status == "На рассмотрении" }
+                .onSuccess { rawRequests ->
+                    val enrichedRequests = rawRequests.map { request ->
+                        async {
+                            userRepository.getUserProfileById(request.user_id).fold(
+                                onSuccess = { user ->
+                                    request.copy(
+                                        name = user.name,
+                                        surname = user.surname,
+                                        patronymic = user.patronymic,
+                                        photo = user.photo,
+                                        courseNumber = user.courseNumber,
+                                        specialityName = user.specialityName,
+                                        groupName = user.groupName
+                                    )
+                                },
+                                onFailure = {
+                                    request
+                                }
+                            )
+                        }
+                    }.awaitAll()
+
+                    _requestsState.value = enrichedRequests
                     _isRequestsLoading.value = false
                 }
                 .onFailure {

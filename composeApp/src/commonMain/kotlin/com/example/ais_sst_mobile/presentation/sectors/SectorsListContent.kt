@@ -39,9 +39,9 @@ fun SectorsListContent(
             is SectorsState.Success -> {
                 val sortedSectors = currentState.sectors.sortedWith(
                     compareBy<SectorDto> { if (it.isCoordinator) 0 else 1 }
-                        .thenBy { if (it.isParticipant) 0 else 1 }
+                        .thenBy { if (!it.isParticipant || it.requestStatus == "Вышедший") 1 else 0 }
                         .thenBy {
-                            val isPending = it.hasActiveRequest && (it.requestStatus == "На рассмотрении" || it.requestStatus == null)
+                            val isPending = it.requestStatus != "Вышедший" && it.hasActiveRequest && (it.requestStatus == "На рассмотрении" || it.requestStatus == null)
                             if (isPending) 0 else 1
                         }
                         .thenBy { it.title }
