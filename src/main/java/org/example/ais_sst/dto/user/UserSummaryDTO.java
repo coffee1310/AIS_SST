@@ -2,7 +2,10 @@ package org.example.ais_sst.dto.user;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.example.ais_sst.annotation.ValidUserEmailExist;
 import org.example.ais_sst.annotation.ValidUserEmailFormat;
 import org.example.ais_sst.entity.enums.Gender;
@@ -10,6 +13,9 @@ import org.example.ais_sst.entity.enums.Gender;
 import java.time.LocalDate;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserSummaryDTO {
 
     private Long id;

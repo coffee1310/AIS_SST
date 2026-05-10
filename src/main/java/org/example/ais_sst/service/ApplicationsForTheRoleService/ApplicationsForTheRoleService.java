@@ -10,7 +10,7 @@ import org.example.ais_sst.entity.ApplicationsForTheRole;
 import org.example.ais_sst.entity.EventRole;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.example.ais_sst.entity.enums.RoleApplicationStatuses;
-import org.example.ais_sst.exception.ApplicationDoesNotExist;
+import org.example.ais_sst.exception.ApplicationDoesNotExistException;
 import org.example.ais_sst.exception.DuplicateApplicationException;
 import org.example.ais_sst.exception.EventRoleDoesNotFoundException;
 import org.example.ais_sst.exception.SectorParticipantNotFoundException;
@@ -19,9 +19,7 @@ import org.example.ais_sst.repository.EventRoleRepository;
 import org.example.ais_sst.repository.ApplicationsForTheRoleRepository;
 import org.example.ais_sst.repository.SectorParticipantRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,7 +87,7 @@ public class ApplicationsForTheRoleService {
         log.info("Getting application by id: {}", id);
 
         ApplicationsForTheRole application = roleApplicationRepository.findById(id)
-                .orElseThrow(() -> new ApplicationDoesNotExist("Заявка не найдена с id: " + id));
+                .orElseThrow(() -> new ApplicationDoesNotExistException("Заявка не найдена с id: " + id));
 
         return roleApplicationMapper.toResponseDto(application);
     }
@@ -102,7 +100,7 @@ public class ApplicationsForTheRoleService {
         log.info("Approving application: {}", id);
 
         ApplicationsForTheRole application = roleApplicationRepository.findById(id)
-                .orElseThrow(() -> new ApplicationDoesNotExist("Заявка не найдена с id: " + id));
+                .orElseThrow(() -> new ApplicationDoesNotExistException("Заявка не найдена с id: " + id));
 
         if (application.getStatus() != RoleApplicationStatuses.НА_РАССМОТРЕНИИ) {
             throw new IllegalStateException("Заявка уже обработана. Текущий статус: " + application.getStatus());
@@ -136,7 +134,7 @@ public class ApplicationsForTheRoleService {
         log.info("Rejecting application: {}", id);
 
         ApplicationsForTheRole application = roleApplicationRepository.findById(id)
-                .orElseThrow(() -> new ApplicationDoesNotExist("Заявка не найдена с id: " + id));
+                .orElseThrow(() -> new ApplicationDoesNotExistException("Заявка не найдена с id: " + id));
 
         if (application.getStatus() != RoleApplicationStatuses.НА_РАССМОТРЕНИИ) {
             throw new IllegalStateException("Заявка уже обработана. Текущий статус: " + application.getStatus());
