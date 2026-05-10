@@ -17,13 +17,10 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
 
     List<SectorParticipant> findByStudentId(Long studentId);
 
-    List<SectorParticipant> findBySectorId(Long sectorId);
 
     Optional<SectorParticipant> findBySectorIdAndStudentId(Long sectorId, Long studentId);
 
     Optional<SectorParticipant> findBySectorIdAndIsCoordinatorTrue(Long sectorId);
-
-    List<SectorParticipant> findAllBySectorIdAndIsCoordinatorTrue(Long sectorId);
 
     List<SectorParticipant> findAllByStudentIdAndIsCoordinatorTrue(Long userId);
 
@@ -37,11 +34,6 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     @Query("SELECT sp FROM SectorParticipant sp WHERE sp.student.id = :userId AND sp.isCoordinator = true")
     List<SectorParticipant> findSectorsWhereUserIsCoordinator(@Param("userId") Long userId);
 
-    boolean existsByStudentIdAndSectorId(Long studentId, Long sectorId);
-
-    boolean existsByStudentId(Long studentId);
-
-    boolean existsBySectorId(Long sectorId);
 
     // Получить всех участников сектора с пагинацией
     Page<SectorParticipant> findBySectorId(Long sectorId, Pageable pageable);
@@ -51,13 +43,13 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     @Query("SELECT sp FROM SectorParticipant sp WHERE sp.sector.id = :sectorId AND sp.status = 'Активный'")
     Page<SectorParticipant> findActiveBySectorId(@Param("sectorId") Long sectorId, Pageable pageable);
 
-    long countBySectorId(Long sectorId);
-
-    boolean existsByStudentIdAndSectorIdAndIsCoordinatorTrue(Long studentId, Long sectorId);
-
-    // Найти запись, где пользователь является координатором
-    Optional<SectorParticipant> findByStudentIdAndIsCoordinatorTrue(Long studentId);
 
     @Query("SELECT sp FROM SectorParticipant sp WHERE sp.student.id = :studentId AND sp.sector.id = :sectorId")
     Optional<SectorParticipant> findByStudentIdAndSectorId(@Param("studentId") Long studentId, @Param("sectorId") Long sectorId);
+
+    @Query("SELECT sp.sector.id, sp.sector.title FROM SectorParticipant sp " +
+            "WHERE sp.student.id = :userId AND sp.isCoordinator = true")
+    List<Object[]> findCoordinatorSectorInfoByUserId(@Param("userId") Long userId);
+
+
 }

@@ -74,6 +74,10 @@ public class UserProfileInfoDTO {
 
     private List<String> socialStatuses;  // Добавлено поле для социальных статусов
 
+    private Long coordinatorSectorId;      // Добавлено
+
+    private String coordinatorSectorTitle; // Добавлено
+
     public void validate(Validator validator) {
         Set<ConstraintViolation<UserProfileInfoDTO>> violations = validator.validate(this);
         if (!violations.isEmpty()) {

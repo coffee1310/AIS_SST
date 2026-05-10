@@ -22,7 +22,9 @@ public class UserResponseDTO {
     private String phoneNumber;
     private String vkLink;
     private String photo;
-    private String role;  // Название роли
+    private String role;
+    private Long coordinatorSectorId;      // Добавлено поле
+    private String coordinatorSectorTitle; // Добавлено поле
     private Boolean isActive;
     private Boolean isBanned;
     private Long groupId;

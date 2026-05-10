@@ -1,6 +1,7 @@
 package org.example.ais_sst.repository;
 
 import org.example.ais_sst.dto.user.UserProjection;
+import org.example.ais_sst.dto.user.UserProjectionDTO;
 import org.example.ais_sst.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+
     Optional<User> findByStudentEmail(String studentEmail);
     Optional<User> findByPhoneNumber(String phoneNumber);
     Optional<User> findUserById(Long id);
@@ -21,13 +23,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByStudentEmail(String studentEmail);
     boolean existsByPhoneNumber(String phoneNumber);
 
+    @Query("SELECT u FROM User u WHERE u.role.title = :role")
+    Page<User> findByRole(@Param("role") String role, Pageable pageable);
+
+    Page<User> findByRole_Title(String role, Pageable pageable);
+
+    // ==================== NATIVE QUERY ====================
     @Query(value = """
-        SELECT DISTINCT 
+        SELECT 
             u.id,
             u.name,
             u.surname,
             u.patronymic,
-            u.gender,
+            CAST(u.gender AS text) as gender,
             u.date_of_birth,
             u.course_number,
             u.student_id_number,
@@ -41,7 +49,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             g.id as group_id,
             g.title as group_title,
             s.id as speciality_id,
-            s.title as speciality_title
+            s.title as speciality_title,
+            u.photo
         FROM users u
         LEFT JOIN roles r ON r.id = u.role_id
         LEFT JOIN groups g ON g.id = u.group_id
@@ -101,15 +110,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("groupId") Long groupId,
             @Param("specialityId") Long specialityId,
             @Param("sectorId") Long sectorId);
-
-    @Query("SELECT u FROM User u WHERE u.role.title = :role")
-    Page<User> findByRole(@Param("role") String role, Pageable pageable);
-
-    @Query("SELECT DISTINCT u FROM User u " +
-            "LEFT JOIN FETCH u.role r " +
-            "LEFT JOIN FETCH u.group g " +
-            "LEFT JOIN FETCH u.speciality s")
-    Page<User> findAllWithFilters(Pageable pageable);
-
-    Page<User> findByRole_Title(String role, Pageable pageable);
 }
