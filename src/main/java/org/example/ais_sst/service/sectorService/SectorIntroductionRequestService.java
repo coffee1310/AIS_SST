@@ -54,7 +54,18 @@ public class SectorIntroductionRequestService {
                 .orElseThrow(() -> new SectorDoesNotExistException(
                         String.format("Сектор с таким id: %d не найден", sectorId)));
 
-        // Проверяем, есть ли уже запись в sector_participants
+        // ПРОВЕРКА 1: Есть ли уже активная заявка (Ожидание или На рассмотрении)
+        List<SectorIntroductionRequest> existingRequests = sectorIntroductionRequestRepository
+                .findByUserIdAndSectorIdAndStatusIn(userId, sectorId,
+                        List.of(SectorIntroductionStatus.ОЖИДАНИЕ, SectorIntroductionStatus.НА_РАССМОТРЕНИИ));
+
+        if (!existingRequests.isEmpty()) {
+            throw new SectorIntroductionRequestAlreadyExistsException(
+                    String.format("У вас уже есть активная заявка на вступление в сектор '%s'. Пожалуйста, дождитесь решения.",
+                            sector.getTitle()));
+        }
+
+        // ПРОВЕРКА 2: Есть ли уже запись в sector_participants
         java.util.Optional<SectorParticipant> existingParticipant = sectorParticipantRepository
                 .findByStudentIdAndSectorId(userId, sectorId);
 
@@ -68,11 +79,11 @@ public class SectorIntroductionRequestService {
                 participant.setStatus(SectorParticipantStatuses.Активный);
                 sectorParticipantRepository.save(participant);
 
-                // Создаем заявку как одобренную
+                // Создаем заявку как одобренную (или можно сразу вернуть успех без заявки)
                 SectorIntroductionRequest request = SectorIntroductionRequest.builder()
                         .user(user)
                         .sector(sector)
-                        .status(SectorIntroductionStatus.ОЖИДАНИЕ)
+                        .status(SectorIntroductionStatus.ОДОБРЕНА) // Сразу одобряем
                         .build();
                 request = sectorIntroductionRequestRepository.save(request);
 
@@ -89,9 +100,13 @@ public class SectorIntroductionRequestService {
         SectorIntroductionRequest request = SectorIntroductionRequest.builder()
                 .user(user)
                 .sector(sector)
+                .status(SectorIntroductionStatus.ОЖИДАНИЕ) // Явно указываем статус
                 .build();
 
         request = sectorIntroductionRequestRepository.save(request);
+
+        log.info("New sector introduction request created for user {} in sector {} with status: {}",
+                userId, sectorId, request.getStatus());
 
         return sectorIntroductionRequestMapper.toSectorIntroductionRequestDTO(request);
     }
