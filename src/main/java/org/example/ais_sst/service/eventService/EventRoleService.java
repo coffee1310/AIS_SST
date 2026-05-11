@@ -62,7 +62,7 @@ public class EventRoleService {
         log.info("Getting event role by id: {}", id);
 
         EventRole eventRole = eventRoleRepository.findById(id)
-                .orElseThrow(() -> new EventDoesNotExistException("Роль мероприятия не найдена"));
+                .orElseThrow(() -> new EventRoleDoesNotFoundException("Роль мероприятия не найдена"));
 
         return eventRoleMapper.toResponseDto(eventRole);
     }

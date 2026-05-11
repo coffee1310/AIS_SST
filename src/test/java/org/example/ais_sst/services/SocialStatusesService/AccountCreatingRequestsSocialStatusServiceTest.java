@@ -283,16 +283,22 @@ class AccountCreatingRequestsSocialStatusServiceTest {
     }
 
     @Test
-    void createAccountCreatingRequestSocialStatus_WithNullRequestId_ThrowsException() {
+    void createAccountCreatingRequestSocialStatus_WithNullSocialStatusesList_ThrowsSocialStatusDoesNotExistException() {
         // given
-        summaryDto.setId(null);
+        summaryDto.setSocial_statuses_id(null);
+
+        when(accountCreatingRequestsRepository.findAccountCreatingRequestById(1L))
+                .thenReturn(Optional.of(accountCreatingRequest));
 
         // when & then
         assertThatThrownBy(() -> accountCreatingRequestsSocialStatusService
                 .createAccountCreatingRequestSocialStatus(summaryDto))
-                .isInstanceOf(Exception.class);
+                .isInstanceOf(SocialStatusDoesNotExistException.class)
+                .hasMessageContaining("Список соц статусов не может быть null");
 
-        verify(accountCreatingRequestsRepository, never()).findAccountCreatingRequestById(any());
+        verify(accountCreatingRequestsRepository).findAccountCreatingRequestById(1L);
+        verify(socialStatusRepository, never()).findAllById(any());
+        verify(accountCreatingRequestSocialStatusRepository, never()).saveAll(any());
     }
 
     @Test

@@ -7,6 +7,7 @@ import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO
 import org.example.ais_sst.entity.AccountCreatingRequest;
 import org.example.ais_sst.entity.AccountCreatingRequestsSocialStatuses;
 import org.example.ais_sst.entity.SocialStatus;
+import org.example.ais_sst.exception.AccountCreatingRequestDoesNotExistException;
 import org.example.ais_sst.exception.SocialStatusDoesNotExistException;
 import org.example.ais_sst.repository.AccountCreatingRequestSocialStatusRepository;
 import org.example.ais_sst.repository.AccountCreatingRequestsRepository;
@@ -45,13 +46,25 @@ public class AccountCreatingRequestsSocialStatusService {
     public List<AccountCreatingRequestsSocialStatuses> createAccountCreatingRequestSocialStatus(
             AccountCreatingRequestsSummaryDTO dto) {
 
+        if (dto == null) {
+            throw new AccountCreatingRequestDoesNotExistException("DTO заявки не может быть null");
+        }
+
         Long requestId = dto.getId();
+        if (requestId == null) {
+            throw new AccountCreatingRequestDoesNotExistException("ID заявки не может быть null");
+        }
+
         AccountCreatingRequest request = accountCreatingRequestsRepository
                 .findAccountCreatingRequestById(requestId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format("Request with id: %d not found", requestId)));
 
         List<Long> socialStatusIds = dto.getSocial_statuses_id();
+
+        if (socialStatusIds == null) {
+            throw new SocialStatusDoesNotExistException("Список соц статусов не может быть null");
+        }
 
         List<SocialStatus> socialStatuses = socialStatusRepository.findAllById(socialStatusIds);
 
@@ -74,6 +87,5 @@ public class AccountCreatingRequestsSocialStatusService {
                 .collect(Collectors.toList());
 
         return accountCreatingRequestSocialStatusRepository.saveAll(entities);
-
     }
 }

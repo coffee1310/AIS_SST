@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -94,14 +95,37 @@ public class EventService {
             return;
         }
 
-        for (Long organizerId : organizerIds) {
+        // Убираем дубликаты и создателя
+        Set<Long> uniqueOrganizerIds = organizerIds.stream()
+                .filter(id -> !id.equals(event.getEventCreator().getId())) // Исключаем создателя
+                .distinct()
+                .collect(Collectors.toSet());
+
+        for (Long organizerId : uniqueOrganizerIds) {
             User organizer = findUserById(organizerId);
-            EventOrganizer eventOrganizer = EventOrganizer.builder()
-                    .event(event)
-                    .user(organizer)
-                    .build();
-            eventOrganizerRepository.save(eventOrganizer);
+
+            // Проверка прав организатора
+            if (!isAllowedOrganizerRole(organizer)) {
+                throw new UnauthorizedException(
+                        "Пользователь " + organizer.getStudentEmail() +
+                                " не может быть организатором мероприятия"
+                );
+            }
+
+            // Проверка на существующую связь
+            if (!eventOrganizerRepository.existsByEventIdAndUserId(event.getId(), organizerId)) {
+                EventOrganizer eventOrganizer = EventOrganizer.builder()
+                        .event(event)
+                        .user(organizer)
+                        .build();
+                eventOrganizerRepository.save(eventOrganizer);
+            }
         }
+    }
+
+    private boolean isAllowedOrganizerRole(User user) {
+        return ALLOWED_ROLES.contains(user.getRole().getTitle())
+                || "Activist".equals(user.getRole().getTitle());
     }
 
     @Transactional(readOnly = true)

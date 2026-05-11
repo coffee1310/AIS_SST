@@ -8,6 +8,7 @@ import org.example.ais_sst.entity.SocialStatus;
 import org.example.ais_sst.entity.SocialStatusStudent;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.exception.SocialStatusDoesNotExistException;
+import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.repository.SocialStatusRepository;
 import org.example.ais_sst.repository.SocialStatusStudentsRepository;
 import org.example.ais_sst.repository.UserRepository;
@@ -34,8 +35,8 @@ public class SocialStatusService {
     public List<SocialStatusStudent> createUserSocialStatuses(UserSocialStatusesDTO dto) {
         Long userId = dto.getUserId();
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format("User with id: %d not found", userId)));
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Пользователь с id: %d не существует", userId)));
 
         List<Long> socialStatusIds = dto.getSocial_statuses_id();
 
@@ -44,17 +45,22 @@ public class SocialStatusService {
             return List.of();
         }
 
-        List<SocialStatus> socialStatuses = socialStatusRepository.findAllById(socialStatusIds);
+        // Убираем дубликаты для проверки
+        List<Long> uniqueSocialStatusIds = socialStatusIds.stream()
+                .distinct()
+                .collect(Collectors.toList());
 
-        if (socialStatuses.size() != socialStatusIds.size()) {
+        List<SocialStatus> socialStatuses = socialStatusRepository.findAllById(uniqueSocialStatusIds);
+
+        if (socialStatuses.size() != uniqueSocialStatusIds.size()) {
             Set<Long> foundIds = socialStatuses.stream()
                     .map(SocialStatus::getId)
                     .collect(Collectors.toSet());
-            List<Long> missingIds = socialStatusIds.stream()
+            List<Long> missingIds = uniqueSocialStatusIds.stream()
                     .filter(id -> !foundIds.contains(id))
                     .collect(Collectors.toList());
             throw new SocialStatusDoesNotExistException(
-                    String.format("Social statuses with ids not found: %s", missingIds));
+                    String.format("Социальные статусы с ids не были найдены: %s", missingIds));
         }
 
         List<SocialStatusStudent> entities = socialStatuses.stream()

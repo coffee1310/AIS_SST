@@ -15,7 +15,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "event_roles")
+@Table(name = "event_roles",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_event_role_active",
+                        columnNames = {"event_id", "global_event_role_id"})
+        })
 public class EventRole {
 
     @Id
@@ -27,7 +31,7 @@ public class EventRole {
     private Event event;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "global_event_role_id")
+    @JoinColumn(name = "global_event_role_id", nullable = false)
     private GlobalEventRole globalEventRole;
 
     @Column(name = "capacity", nullable = false)
