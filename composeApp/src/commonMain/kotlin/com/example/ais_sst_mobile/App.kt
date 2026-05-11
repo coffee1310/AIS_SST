@@ -14,6 +14,7 @@ import com.example.ais_sst_mobile.navigation.RootComponent
 import com.example.ais_sst_mobile.presentation.auth.LoginScreen
 import com.example.ais_sst_mobile.presentation.auth.RegisterScreen
 import com.example.ais_sst_mobile.presentation.main.MainScreen
+import com.example.ais_sst_mobile.presentation.profile.activist.ActivistProfileScreen
 import com.example.ais_sst_mobile.presentation.profile.my_data.MyDataScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.RequestDetailsScreen
@@ -52,6 +53,10 @@ fun App(root: RootComponent) {
                     is RootComponent.Child.RequestDetails -> RequestDetailsScreen(
                         requestId = instance.component.requestId,
                         onBackClick = { instance.component.onGoBack() }
+                    )
+                    is RootComponent.Child.ActivistProfile -> ActivistProfileScreen(
+                        userId = instance.component.userId,
+                        onBackClick = instance.component.onGoBack
                     )
                 }
             }

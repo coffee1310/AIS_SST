@@ -10,7 +10,7 @@ sealed interface FullScreenRoute {
     data object AccountRequests : FullScreenRoute
     data object MyData : FullScreenRoute
     data class RequestDetails(val id: Int) : FullScreenRoute
-
+    data class ActivistProfile(val userId: Int) : FullScreenRoute
 }
 class LoginComponent(
     componentContext: ComponentContext,
@@ -28,7 +28,8 @@ class TasksComponent(componentContext: ComponentContext) : ComponentContext by c
 class CalendarComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 class SectorListComponent(
     componentContext: ComponentContext,
-    val onNavigateToDetails: (Int) -> Unit
+    val onNavigateToDetails: (Int) -> Unit,
+    val onNavigateToActivistProfile: (Int) -> Unit
 ) : ComponentContext by componentContext
 
 class SectorDetailsComponent(
@@ -59,7 +60,10 @@ class SectorsComponent(
             is Config.List -> Child.List(
                 SectorListComponent(
                     componentContext = context,
-                    onNavigateToDetails = { id -> navigation.pushNew(Config.Details(id)) }
+                    onNavigateToDetails = { id -> navigation.pushNew(Config.Details(id)) },
+                    onNavigateToActivistProfile = { userId ->
+                        onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
+                    }
                 )
             )
             is Config.Details -> Child.Details(
@@ -100,5 +104,10 @@ class MyDataComponent(
 class RequestDetailsComponent(
     componentContext: ComponentContext,
     val requestId: Int,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+class ActivistProfileComponent(
+    componentContext: ComponentContext,
+    val userId: Int,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

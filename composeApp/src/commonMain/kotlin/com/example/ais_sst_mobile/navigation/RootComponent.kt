@@ -24,6 +24,7 @@ interface RootComponent {
         class AccountRequests(val component: AccountRequestsComponent) : Child()
         class MyData(val component: MyDataComponent) : Child()
         class RequestDetails(val component: RequestDetailsComponent) : Child()
+        class ActivistProfile(val component: ActivistProfileComponent) : Child()
     }
 }
 
@@ -70,6 +71,7 @@ class DefaultRootComponent(
                             is FullScreenRoute.AccountRequests -> navigation.pushNew(Config.AccountRequests)
                             is FullScreenRoute.MyData -> navigation.pushNew(Config.MyData)
                             is FullScreenRoute.RequestDetails -> navigation.pushNew(Config.RequestDetails(route.id))
+                            is FullScreenRoute.ActivistProfile -> navigation.pushNew(Config.ActivistProfile(route.userId))
                         }
                     }
                 )
@@ -96,6 +98,13 @@ class DefaultRootComponent(
                     onGoBack = { navigation.pop() }
                 )
             )
+            is Config.ActivistProfile -> RootComponent.Child.ActivistProfile(
+                ActivistProfileComponent(
+                    componentContext = context,
+                    userId = config.userId,
+                    onGoBack = { navigation.pop() }
+                )
+            )
         }
 
     @Serializable
@@ -106,5 +115,6 @@ class DefaultRootComponent(
         @Serializable data object AccountRequests : Config
         @Serializable data object MyData : Config
         @Serializable data class RequestDetails(val id: Int) : Config
+        @Serializable data class ActivistProfile(val userId: Int) : Config
     }
 }

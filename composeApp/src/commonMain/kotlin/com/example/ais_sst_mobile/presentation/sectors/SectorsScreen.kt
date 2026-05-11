@@ -13,7 +13,7 @@ fun SectorsScreen(component: SectorListComponent) {
 
     when (activeRole) {
         AppRole.SECTOR_COORDINATOR -> {
-            CoordinatorSectorDashboard(screenModel)
+            CoordinatorSectorDashboard(screenModel, component)
         }
         else -> {
             SectorsListContent(screenModel, component, activeRole)

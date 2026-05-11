@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tune
@@ -14,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,13 +26,16 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ais_sst_mobile.navigation.SectorListComponent
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 
 @Composable
-fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
-    val participants by screenModel.participantsState.collectAsState()
+fun CoordinatorSectorDashboard(
+    screenModel: SectorsScreenModel,
+    component: SectorListComponent
+) {    val participants by screenModel.participantsState.collectAsState()
     val isParticipantsLoading by screenModel.isParticipantsLoading.collectAsState()
     val selectedTab by screenModel.selectedDashboardTab.collectAsState()
     val searchQuery by screenModel.searchQuery.collectAsState()
@@ -37,8 +43,12 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
     val isRequestsLoading by screenModel.isRequestsLoading.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
+    val savedTab = rememberSaveable { mutableStateOf(0) }
+    val participantsScrollState = rememberLazyListState()
+    val requestsScrollState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
+        screenModel.selectDashboardTab(savedTab.value)
         screenModel.loadCoordinatorData()
         screenModel.loadRequests()
 
@@ -83,7 +93,10 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
 
             CoordinatorTabs(
                 selectedTab = selectedTab,
-                onTabSelected = { screenModel.selectDashboardTab(it) },
+                onTabSelected = {
+                    savedTab.value = it
+                    screenModel.selectDashboardTab(it)
+                },
                 requestsCount = requests.size
             )
 
@@ -126,7 +139,7 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             if (selectedTab == 0) {
                 if (isParticipantsLoading) {
@@ -145,6 +158,7 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
                     )
 
                     LazyColumn(
+                        state = participantsScrollState,
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(bottom = 100.dp)
@@ -152,7 +166,10 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
                         items(filteredParticipants) { participant ->
                             ParticipantCard(
                                 participant = participant,
-                                onOptionsClick = { /* TODO: Меню действий */ }
+                                onOptionsClick = { /* TODO: Меню действий */ },
+                                modifier = Modifier.clickable {
+                                    component.onNavigateToActivistProfile(participant.studentId)
+                                }
                             )
                         }
                     }
@@ -175,6 +192,7 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
                     )
 
                     LazyColumn(
+                        state = requestsScrollState,
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(bottom = 100.dp)
@@ -183,7 +201,10 @@ fun CoordinatorSectorDashboard(screenModel: SectorsScreenModel) {
                             SectorRequestCard(
                                 request = request,
                                 onAccept = { screenModel.acceptRequest(request.id) },
-                                onReject = { screenModel.rejectRequest(request.id) }
+                                onReject = { screenModel.rejectRequest(request.id) },
+                                modifier = Modifier.clickable {
+                                    component.onNavigateToActivistProfile(request.user_id)
+                                }
                             )
                         }
                     }
