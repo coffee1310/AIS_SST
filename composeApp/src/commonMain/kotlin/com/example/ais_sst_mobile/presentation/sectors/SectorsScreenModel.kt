@@ -164,4 +164,17 @@ class SectorsScreenModel(
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
     }
+    fun kickParticipant(userId: Int) {
+        val sectorId = currentSectorId ?: return
+        viewModelScope.launch {
+            repository.kickParticipant(sectorId, userId)
+                .onSuccess {
+                    _effect.emit("Активист успешно исключен")
+                    loadParticipants(sectorId)
+                }
+                .onFailure {
+                    _effect.emit("Не удалось исключить активиста")
+                }
+        }
+    }
 }

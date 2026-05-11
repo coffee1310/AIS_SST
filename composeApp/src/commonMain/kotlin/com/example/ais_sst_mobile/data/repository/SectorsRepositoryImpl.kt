@@ -75,4 +75,10 @@ class SectorsRepositoryImpl(
         val response: SectorRequestActionResponseDto = httpClient.put("sector/reject/$requestId").body()
         response.message
     }
+    override suspend fun kickParticipant(sectorId: Int, userId: Int): Result<Unit> = runCatching {
+        val response = httpClient.delete("sector/$sectorId/kick/$userId")
+        if (!response.status.isSuccess()) {
+            throw Exception("Ошибка при исключении активиста: ${response.status.value}")
+        }
+    }
 }

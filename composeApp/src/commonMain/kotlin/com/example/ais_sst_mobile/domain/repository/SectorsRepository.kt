@@ -13,4 +13,5 @@ interface SectorsRepository {
     suspend fun getSectorRequests(): Result<List<SectorRequestDto>>
     suspend fun acceptSectorRequest(requestId: Int): Result<String>
     suspend fun rejectSectorRequest(requestId: Int): Result<String>
+    suspend fun kickParticipant(sectorId: Int, userId: Int): Result<Unit>
 }

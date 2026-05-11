@@ -1,5 +1,6 @@
 package com.example.ais_sst_mobile.presentation.sectors
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,24 +19,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.navigation.SectorListComponent
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
+import com.example.ais_sst_mobile.data.network.dto.ParticipantDto
 
 @Composable
 fun CoordinatorSectorDashboard(
     screenModel: SectorsScreenModel,
     component: SectorListComponent
-) {    val participants by screenModel.participantsState.collectAsState()
+) {
+    val participants by screenModel.participantsState.collectAsState()
     val isParticipantsLoading by screenModel.isParticipantsLoading.collectAsState()
     val selectedTab by screenModel.selectedDashboardTab.collectAsState()
     val searchQuery by screenModel.searchQuery.collectAsState()
@@ -79,6 +84,78 @@ fun CoordinatorSectorDashboard(
     val filteredRequests = requests.filter {
         (it.surname ?: "").contains(searchQuery, ignoreCase = true) ||
                 (it.name ?: "").contains(searchQuery, ignoreCase = true)
+    }
+
+    var participantMenuAnchor by remember { mutableStateOf<ParticipantDto?>(null) }
+    var participantToKick by remember { mutableStateOf<ParticipantDto?>(null) }
+
+    if (participantToKick != null) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { participantToKick = null },
+            properties = androidx.compose.ui.window.DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.background,
+                border = BorderStroke(0.3.dp, MaterialTheme.colorScheme.outline),
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Исключение из сектора",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Text(
+                        text = "Вы уверены, что хотите исключить ${participantToKick?.studentSurname} ${participantToKick?.studentName}?",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 15.sp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { participantToKick = null },
+                            modifier = Modifier.weight(1f).height(44.dp),
+                            shape = MaterialTheme.shapes.small,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                        ) {
+                            Text("Отмена", style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp))
+                        }
+
+                        Button(
+                            onClick = {
+                                screenModel.kickParticipant(participantToKick!!.studentId)
+                                participantToKick = null
+                            },
+                            modifier = Modifier.weight(1f).height(44.dp),
+                            shape = MaterialTheme.shapes.small,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                        ) {
+                            Text(
+                                "Исключить",
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -166,7 +243,7 @@ fun CoordinatorSectorDashboard(
                         items(filteredParticipants) { participant ->
                             ParticipantCard(
                                 participant = participant,
-                                onOptionsClick = { /* TODO: Меню действий */ },
+                                onKickClick = { participantToKick = participant },
                                 modifier = Modifier.clickable {
                                     component.onNavigateToActivistProfile(participant.studentId)
                                 }
@@ -222,7 +299,6 @@ fun CoordinatorSectorDashboard(
             }
         )
     }
-
 }
 
 @Composable
