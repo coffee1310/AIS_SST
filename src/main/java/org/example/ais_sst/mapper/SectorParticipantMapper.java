@@ -6,7 +6,9 @@ import org.example.ais_sst.dto.sector.SectorParticipantResponseDTO;
 import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.example.ais_sst.entity.User;
+import org.example.ais_sst.service.userService.UserPhotoService;
 import org.example.ais_sst.utils.ImageUtil;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -14,7 +16,6 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface SectorParticipantMapper {
 
-    // Из Entity в DTO
     @Mapping(source = "student.id", target = "student_id")
     @Mapping(source = "sector.id", target = "sector_id")
     SectorParticipantDTO toSectorParticipantDTO(SectorParticipant sectorParticipant);
@@ -41,25 +42,31 @@ public interface SectorParticipantMapper {
         return sector;
     }
 
+    // Метод с @Context для использования в сервисах
     @Mapping(target = "studentId", source = "student.id")
     @Mapping(target = "studentName", source = "student.name")
     @Mapping(target = "studentSurname", source = "student.surname")
     @Mapping(target = "studentPatronymic", source = "student.patronymic")
     @Mapping(target = "studentEmail", source = "student.studentEmail")
-    @Mapping(target = "studentPhoto", source = "student.photo", qualifiedByName = "encodePhoto")
+    @Mapping(target = "studentPhoto", expression = "java(getPhotoAsBase64(entity.getStudent().getPathToPhoto(), userPhotoService))")
     @Mapping(target = "studentCourseNumber", source = "student.courseNumber")
     @Mapping(target = "studentGroupTitle", source = "student.group.title")
     @Mapping(target = "studentSpecialityTitle", source = "student.speciality.title")
     @Mapping(target = "entryDate", source = "entryDate")
     @Mapping(target = "status", source = "status")
     @Mapping(target = "isCoordinator", source = "isCoordinator")
-    SectorParticipantResponseDTO toResponseDto(SectorParticipant entity);
+    SectorParticipantResponseDTO toResponseDto(SectorParticipant entity,
+                                               @Context UserPhotoService userPhotoService);
 
-    @Named("encodePhoto")
-    default String encodePhoto(byte[] photo) {
-        if (photo == null || photo.length == 0) {
+    // Метод без @Context для обратной совместимости (будет использовать null)
+    default SectorParticipantResponseDTO toResponseDto(SectorParticipant entity) {
+        return toResponseDto(entity, null);
+    }
+
+    default String getPhotoAsBase64(String photoPath, UserPhotoService userPhotoService) {
+        if (photoPath == null || photoPath.isEmpty() || userPhotoService == null) {
             return null;
         }
-        return ImageUtil.encodeToBase64(photo);
+        return userPhotoService.getPhotoAsBase64(photoPath);
     }
 }

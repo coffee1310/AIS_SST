@@ -125,8 +125,8 @@ public class AccountCreatingRequest {
     private String additionalEmail;
 
 
-    @Column(name = "photo")
-    private byte[] photo;
+    @Column(name = "path_to_photo", length = 512)
+    private String pathToPhoto;  // Заменяет поле photo
 
     @Column(name = "vk_link")
     private String vkLink;

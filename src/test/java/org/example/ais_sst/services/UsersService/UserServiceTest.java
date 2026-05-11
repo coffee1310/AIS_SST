@@ -10,6 +10,8 @@ import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.SectorParticipantRepository;
 import org.example.ais_sst.repository.SocialStatusStudentsRepository;
 import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.service.accountCreatingRequestsService.AccountRequestPhotoService;
+import org.example.ais_sst.service.userService.UserPhotoService;
 import org.example.ais_sst.service.userService.UserService;
 import org.example.ais_sst.utils.ImageUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +48,12 @@ class UserServiceTest {
 
     @Mock
     private SectorParticipantRepository sectorParticipantRepository;
+
+    @Mock
+    private AccountRequestPhotoService accountRequestPhotoService; // Добавлено
+
+    @Mock
+    private UserPhotoService userPhotoService;
 
     @InjectMocks
     private UserService userService;
@@ -99,7 +107,7 @@ class UserServiceTest {
                 .isBanned(false)
                 .vkLink("vk.com/ivan")
                 .additionalEmail("ivan.extra@test.com")
-                .photo(new byte[]{1, 2, 3})
+                .pathToPhoto("/uploads/users/1.png")
                 .build();
 
         sectorParticipant = SectorParticipant.builder()
@@ -129,8 +137,8 @@ class UserServiceTest {
         when(userRepository.findUserById(1L)).thenReturn(Optional.of(user));
         when(socialStatusStudentRepository.findSocialStatusTitlesByStudentId(1L))
                 .thenReturn(List.of("Студент", "Активист"));
+        when(userPhotoService.getPhotoAsBase64(any())).thenReturn(null); // Добавлено
 
-        // ИСПРАВЛЕНО: создаем список Object[] правильно
         List<Object[]> coordinatorInfo = new ArrayList<>();
         coordinatorInfo.add(new Object[]{1L, "Спортивный сектор"});
         when(sectorParticipantRepository.findCoordinatorSectorInfoByUserId(1L))
@@ -176,7 +184,7 @@ class UserServiceTest {
                 .surname("Петров")
                 .role(role)
                 .speciality(speciality)
-                .photo(null)
+                .pathToPhoto("/uploads/users/1.png")
                 .build();
 
         when(userRepository.findUserById(2L)).thenReturn(Optional.of(userWithoutPhoto));

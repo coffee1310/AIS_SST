@@ -9,6 +9,7 @@ import org.example.ais_sst.dto.user.UserProjectionDTO;
 import org.example.ais_sst.dto.user.UserResponseDTO;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.example.ais_sst.entity.User;
+import org.example.ais_sst.entity.enums.Gender;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.SectorParticipantRepository;
@@ -35,19 +36,19 @@ public class UserService implements UserServiceImpl {
     private final UserMapper userMapper;
     private final SocialStatusStudentsRepository socialStatusStudentRepository;
     private final SectorParticipantRepository sectorParticipantRepository;
+    private final UserPhotoService userPhotoService; // Добавлено
 
     @Override
     public UserProfileInfoDTO getUserBasicInfo(Long userId) {
         User user = userRepository.findUserById(userId)
                 .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
 
-        String photoBase64 = user.getPhoto() != null && user.getPhoto().length > 0
-                ? ImageUtil.encodeToBase64(user.getPhoto())
+        String photoBase64 = user.getPathToPhoto() != null && !user.getPathToPhoto().isEmpty()
+                ? userPhotoService.getPhotoAsBase64(user.getPathToPhoto())
                 : null;
 
         List<String> socialStatuses = socialStatusStudentRepository.findSocialStatusTitlesByStudentId(userId);
 
-        // ИСПРАВЛЕНИЕ: получаем список, а не Optional
         Long coordinatorSectorId = null;
         String coordinatorSectorTitle = null;
 
@@ -80,9 +81,9 @@ public class UserService implements UserServiceImpl {
                 .phoneNumber(user.getPhoneNumber())
                 .photo(photoBase64)
                 .socialStatuses(socialStatuses)
-                .coordinatorSector(coordinatorSectorTitle)  // Для обратной совместимости
-                .coordinatorSectorId(coordinatorSectorId)    // ID сектора
-                .coordinatorSectorTitle(coordinatorSectorTitle) // Название сектора
+                .coordinatorSector(coordinatorSectorTitle)
+                .coordinatorSectorId(coordinatorSectorId)
+                .coordinatorSectorTitle(coordinatorSectorTitle)
                 .shortSpecialityTitle(user.getSpeciality().getShortTitle())
                 .events_count(0)
                 .points_count(0)
@@ -123,7 +124,6 @@ public class UserService implements UserServiceImpl {
                 .map(row -> {
                     UserResponseDTO dto = mapRowToUserResponseDTO(row);
                     if (dto != null) {
-                        // Получаем социальные статусы для пользователя
                         List<String> socialStatuses = socialStatusStudentRepository
                                 .findSocialStatusTitlesByStudentId(dto.getId());
                         dto.setSocialStatuses(socialStatuses);
@@ -136,8 +136,6 @@ public class UserService implements UserServiceImpl {
         return new PageImpl<>(users, pageable, total);
     }
 
-
-
     @Transactional
     public Page<UserResponseDTO> getUsersByRole(String role, int page, int size, String sortBy, String sortDirection) {
         log.info("Getting users by role: {}, page={}, size={}", role, page, size);
@@ -149,11 +147,13 @@ public class UserService implements UserServiceImpl {
 
         return usersPage.map(user -> {
             UserResponseDTO dto = userMapper.toResponseDto(user);
-            if (user.getPhoto() != null && user.getPhoto().length > 0) {
-                dto.setPhoto(ImageUtil.encodeToBase64(user.getPhoto()));
+
+            // Конвертируем путь в Base64
+            if (user.getPathToPhoto() != null && !user.getPathToPhoto().isEmpty()) {
+                String photoBase64 = userPhotoService.getPhotoAsBase64(user.getPathToPhoto());
+                dto.setPhoto(photoBase64);
             }
 
-            // Исправление: получаем List, а не Optional
             List<Object[]> coordinatorInfoList = sectorParticipantRepository.findCoordinatorSectorInfoByUserId(user.getId());
             if (!coordinatorInfoList.isEmpty()) {
                 Object[] info = coordinatorInfoList.get(0);
@@ -182,17 +182,9 @@ public class UserService implements UserServiceImpl {
             return null;
         }
 
-        // Получаем фото как byte[]
-        byte[] photoBytes = null;
-        try {
-            photoBytes = (byte[]) row[19];
-        } catch (Exception e) {
-            log.error("Error parsing photo from row[19]: {}", row[19], e);
-        }
-
-        String photoBase64 = photoBytes != null && photoBytes.length > 0
-                ? ImageUtil.encodeToBase64(photoBytes)
-                : null;
+        // Получаем путь к фото из БД (индекс 19 - path_to_photo)
+        String photoPath = row.length > 19 && row[19] != null ? (String) row[19] : null;
+        String photoBase64 = userPhotoService.getPhotoAsBase64(photoPath);
 
         // Получаем информацию о секторе где пользователь координатор
         Long coordinatorSectorId = null;
@@ -213,8 +205,8 @@ public class UserService implements UserServiceImpl {
         if (row[4] != null) {
             if (row[4] instanceof String) {
                 gender = (String) row[4];
-            } else if (row[4] instanceof org.example.ais_sst.entity.enums.Gender) {
-                gender = ((org.example.ais_sst.entity.enums.Gender) row[4]).toValue();
+            } else if (row[4] instanceof Gender) {
+                gender = ((Gender) row[4]).toValue();
             } else {
                 gender = row[4].toString();
             }
@@ -244,7 +236,7 @@ public class UserService implements UserServiceImpl {
                 .coordinatorSectorId(coordinatorSectorId)
                 .coordinatorSectorTitle(coordinatorSectorTitle)
                 .specialityShortTitle(row.length > 20 && row[20] != null ? row[20].toString() : null)
-                .socialStatuses(null) // Будет заполнено позже в stream
+                .socialStatuses(null)
                 .build();
     }
 }

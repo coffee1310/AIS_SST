@@ -84,8 +84,8 @@ public class User {
     @Column(name = "vk_link", length = 256)
     private String vkLink;
 
-    @Column(name = "photo", columnDefinition = "bytea")
-    private byte[] photo;
+    @Column(name = "path_to_photo", length = 512)  // Новое поле
+    private String pathToPhoto;
 
     @Size(max = 256)
     @NotNull

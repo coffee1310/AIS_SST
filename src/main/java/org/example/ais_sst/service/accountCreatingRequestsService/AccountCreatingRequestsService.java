@@ -19,12 +19,14 @@ import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.socialStatusService.AccountCreatingRequestsSocialStatusService;
 import org.example.ais_sst.service.socialStatusService.SocialStatusService;
+import org.example.ais_sst.service.userService.UserPhotoService;
 import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -45,6 +47,8 @@ public class AccountCreatingRequestsService {
     private final RoleRepository roleRepository;
     private final AccountCreatingRequestSocialStatusRepository accountCreatingRequestsSocialStatusesRepository;
     private final SectorParticipantRepository sectorParticipantRepository;
+    private final AccountRequestPhotoService accountRequestPhotoService;
+    private final UserPhotoService userPhotoService;
 
     // Мапперы
     private final AccountCreatingRequestMapper requestMapper;
@@ -69,18 +73,27 @@ public class AccountCreatingRequestsService {
                 .orElseThrow(() -> new SpecialityDoesNotExistException(
                         String.format("Ошибка: Специальность с id: %s не существует", dto.getSpeciality_id())));
 
-        byte[] photoBytes = dto.getPhoto() != null && !dto.getPhoto().isEmpty()
-                ? ImageUtil.decodeFromBase64(dto.getPhoto())
-                : null;
-
+        // Создаем заявку через маппер
         AccountCreatingRequest accountCreatingRequest = requestMapper.toEntity(dto);
         accountCreatingRequest.setGroup(userGroup);
         accountCreatingRequest.setSpeciality(userSpeciality);
         accountCreatingRequest.setPassword(passwordEncoder.encode(dto.getPassword()));
         accountCreatingRequest.setStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ);
-        accountCreatingRequest.setPhoto(photoBytes);
+
+        // Сохраняем сначала без фото, чтобы получить ID
         AccountCreatingRequest savedRequest = accountCreatingRequestsRepository.save(accountCreatingRequest);
         log.info("Account request registered successfully with ID: {}", savedRequest.getId());
+
+        // Сохраняем фото с использованием ID заявки
+        try {
+            String photoPath = accountRequestPhotoService.savePhotoFromBase64(dto.getPhoto(), savedRequest.getId());
+            savedRequest.setPathToPhoto(photoPath);
+            savedRequest = accountCreatingRequestsRepository.save(savedRequest);
+            log.info("Photo saved for request: {}", savedRequest.getId());
+        } catch (IOException e) {
+            log.error("Failed to save photo for request: {}", savedRequest.getId(), e);
+            // Не выбрасываем исключение, чтобы заявка всё равно создалась
+        }
 
         dto.setId(savedRequest.getId());
         accountCreatingRequestsSocialStatusService.createAccountCreatingRequestSocialStatus(dto);
@@ -96,21 +109,19 @@ public class AccountCreatingRequestsService {
                 .orElseThrow(() -> new AccountCreatingRequestDoesNotExistException(
                         String.format("Заявка с id: %s не существует", id)));
 
-        // Проверяем, что заявка еще не обработана
         if (request.getStatus() != AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ) {
             throw new IllegalStateException(
                     String.format("Заявка с id: %s уже обработана. Текущий статус: %s", id, request.getStatus()));
         }
 
-        // Обновляем статус и причину отказа
         request.setStatus(AccountCreatingRequestStatus.ОТКЛОНЕНА);
         request.setReasonForRefusal(rejectDto.getRejectionReason());
 
         AccountCreatingRequest rejectedRequest = accountCreatingRequestsRepository.save(request);
         log.info("Account request with id: {} rejected. Reason: {}", id, rejectDto.getRejectionReason());
 
-        // Возвращаем DTO через маппер
-        return requestMapper.toResponseDto(rejectedRequest);
+        // Используем маппер с @Context для конвертации фото
+        return requestMapper.toResponseDto(rejectedRequest, accountRequestPhotoService);
     }
 
     public UserSummaryDTO acceptAccountRequest(Long id) {
@@ -146,10 +157,27 @@ public class AccountCreatingRequestsService {
                 .additionalEmail(request.getAdditionalEmail())
                 .build();
 
+        // Сохраняем пользователя сначала без фото
         User savedUser = userRepository.save(user);
         log.info("User created successfully from request ID: {}, User ID: {}", id, savedUser.getId());
 
-        // Копируем социальные статусы
+        // Копируем фото из заявки в пользователя
+        if (request.getPathToPhoto() != null && !request.getPathToPhoto().isEmpty()) {
+            try {
+                // Получаем фото заявки в Base64
+                String photoBase64 = accountRequestPhotoService.getPhotoAsBase64(request.getPathToPhoto());
+                if (photoBase64 != null && !photoBase64.isEmpty()) {
+                    // Сохраняем фото для пользователя
+                    String userPhotoPath = userPhotoService.savePhotoFromBase64(photoBase64, savedUser.getId());
+                    savedUser.setPathToPhoto(userPhotoPath);
+                    savedUser = userRepository.save(savedUser);
+                    log.info("Photo copied from request {} to user {}", id, savedUser.getId());
+                }
+            } catch (IOException e) {
+                log.error("Failed to copy photo from request {} to user {}", id, savedUser.getId(), e);
+            }
+        }
+
         List<Long> socialStatusIds = accountCreatingRequestsSocialStatusService.getSocialStatusIdsByRequestId(id);
 
         if (socialStatusIds != null && !socialStatusIds.isEmpty()) {
@@ -166,15 +194,13 @@ public class AccountCreatingRequestsService {
         accountCreatingRequestsRepository.save(request);
         log.info("Account request ID: {} approved", id);
 
-        // Возвращаем DTO через маппер
         return userMapper.toDto(savedUser);
     }
 
     public Page<AccountCreatingRequestResponseDTO> getRequests(Pageable pageable) {
         Page<AccountCreatingRequest> requests = accountCreatingRequestsRepository.findAll(pageable);
         return requests.map(request -> {
-            AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request);
-            // Добавляем социальные статусы
+            AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request, accountRequestPhotoService);
             List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
                     .findSocialStatusTitlesByRequestId(request.getId());
             dto.setSocialStatuses(socialStatuses);
@@ -188,21 +214,16 @@ public class AccountCreatingRequestsService {
                 .findByStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ, pageable);
 
         return requests.map(request -> {
-            AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request);
-            // Добавляем социальные статусы
+            AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request, accountRequestPhotoService);
             List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
                     .findSocialStatusTitlesByRequestId(request.getId());
             dto.setSocialStatuses(socialStatuses);
-            // Добавляем additionalEmail и vkLink
             dto.setAdditionalEmail(request.getAdditionalEmail());
             dto.setVkLink(request.getVkLink());
             return dto;
         });
     }
 
-    /**
-     * Универсальный метод получения заявок с фильтрами
-     */
     public Page<AccountCreatingRequestResponseDTO> getRequestsWithFilters(
             AccountCreatingRequestFilterDTO filter,
             int page,
@@ -213,8 +234,6 @@ public class AccountCreatingRequestsService {
         log.info("Getting account requests with filters: {}", filter);
 
         int offset = page * size;
-
-        // Исправлено: преобразуем enum в значение, которое хранится в БД
         String statusStr = convertStatusToDbValue(filter.getStatus());
         String genderStr = filter.getGender();
 
@@ -255,7 +274,6 @@ public class AccountCreatingRequestsService {
         List<AccountCreatingRequestResponseDTO> dtoList = results.stream()
                 .map(row -> {
                     AccountCreatingRequestResponseDTO dto = mapRowToAccountCreatingRequestResponseDTO(row);
-                    // Получаем ID заявки для поиска социальных статусов
                     Long requestId = ((Number) row[0]).longValue();
                     List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
                             .findSocialStatusTitlesByRequestId(requestId);
@@ -270,9 +288,6 @@ public class AccountCreatingRequestsService {
         return new PageImpl<>(dtoList, pageable, total);
     }
 
-    /**
-     * Конвертирует enum статус в значение для БД
-     */
     private String convertStatusToDbValue(AccountCreatingRequestStatus status) {
         if (status == null) {
             return null;
@@ -290,17 +305,14 @@ public class AccountCreatingRequestsService {
     }
 
     private AccountCreatingRequestResponseDTO mapRowToAccountCreatingRequestResponseDTO(Object[] row) {
-        // Получаем статус из БД (русская строка)
         String statusFromDb = (String) row[11];
-
-        // Преобразуем русскую строку в enum
         AccountCreatingRequestStatus status = convertDbValueToStatus(statusFromDb);
 
-        // Получаем фото как byte[]
-        byte[] photoBytes = (byte[]) row[18];
-        String photoBase64 = photoBytes != null && photoBytes.length > 0
-                ? ImageUtil.encodeToBase64(photoBytes)
-                : null;
+        // Получаем путь к фото из БД (индекс 18)
+        String photoPath = row.length > 18 && row[18] != null ? (String) row[18] : null;
+
+        // Конвертируем путь в Base64 через сервис
+        String photoBase64 = accountRequestPhotoService.getPhotoAsBase64(photoPath);
 
         return AccountCreatingRequestResponseDTO.builder()
                 .id(((Number) row[0]).longValue())
@@ -325,9 +337,6 @@ public class AccountCreatingRequestsService {
                 .build();
     }
 
-    /**
-     * Конвертирует значение из БД в enum статус
-     */
     private AccountCreatingRequestStatus convertDbValueToStatus(String dbValue) {
         if (dbValue == null) {
             return null;

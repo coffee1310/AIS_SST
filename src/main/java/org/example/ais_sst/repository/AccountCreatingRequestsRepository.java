@@ -40,7 +40,7 @@ public interface AccountCreatingRequestsRepository extends JpaRepository<Account
         g.title as group_title,
         s.id as speciality_id,
         s.title as speciality_title,
-        acr.photo   -- Добавлено поле photo
+        acr.path_to_photo   -- Добавлено поле photo
     FROM account_creating_requests acr
     LEFT JOIN groups g ON g.id = acr.group_id
     LEFT JOIN specialities s ON s.id = acr.speciality_id

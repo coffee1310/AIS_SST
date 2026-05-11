@@ -13,6 +13,7 @@ import org.example.ais_sst.mapper.AccountCreatingRequestMapper;
 import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.accountCreatingRequestsService.AccountCreatingRequestsService;
+import org.example.ais_sst.service.accountCreatingRequestsService.AccountRequestPhotoService;
 import org.example.ais_sst.service.socialStatusService.AccountCreatingRequestsSocialStatusService;
 import org.example.ais_sst.service.socialStatusService.SocialStatusService;
 import org.example.ais_sst.utils.ImageUtil;
@@ -74,6 +75,9 @@ class AccountCreatingRequestsServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private AccountRequestPhotoService accountRequestPhotoService; // Добавлено
 
     @InjectMocks
     private AccountCreatingRequestsService accountCreatingRequestsService;
@@ -254,7 +258,7 @@ class AccountCreatingRequestsServiceTest {
                 .thenReturn(Optional.of(accountCreatingRequest));
         when(accountCreatingRequestsRepository.save(any(AccountCreatingRequest.class)))
                 .thenReturn(accountCreatingRequest);
-        when(requestMapper.toResponseDto(any(AccountCreatingRequest.class)))
+        when(requestMapper.toResponseDto(any(AccountCreatingRequest.class), any(AccountRequestPhotoService.class)))
                 .thenReturn(AccountCreatingRequestResponseDTO.builder().id(1L).build());
 
         // when
@@ -332,7 +336,7 @@ class AccountCreatingRequestsServiceTest {
         Page<AccountCreatingRequest> requestPage = new PageImpl<>(List.of(accountCreatingRequest));
 
         when(accountCreatingRequestsRepository.findAll(pageable)).thenReturn(requestPage);
-        when(requestMapper.toResponseDto(any(AccountCreatingRequest.class)))
+        when(requestMapper.toResponseDto(any(AccountCreatingRequest.class), any(AccountRequestPhotoService.class)))
                 .thenReturn(AccountCreatingRequestResponseDTO.builder().id(1L).build());
         when(accountCreatingRequestsSocialStatusesRepository.findSocialStatusTitlesByRequestId(1L))
                 .thenReturn(List.of("Студент", "Активист"));
@@ -357,7 +361,7 @@ class AccountCreatingRequestsServiceTest {
 
         when(accountCreatingRequestsRepository.findByStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ, pageable))
                 .thenReturn(requestPage);
-        when(requestMapper.toResponseDto(any(AccountCreatingRequest.class)))
+        when(requestMapper.toResponseDto(any(AccountCreatingRequest.class), any(AccountRequestPhotoService.class)))
                 .thenReturn(AccountCreatingRequestResponseDTO.builder().id(1L).build());
         when(accountCreatingRequestsSocialStatusesRepository.findSocialStatusTitlesByRequestId(1L))
                 .thenReturn(List.of("Студент"));

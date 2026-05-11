@@ -50,7 +50,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             g.title as group_title,
             s.id as speciality_id,
             s.title as speciality_title,
-            u.photo,
+            u.path_to_photo,
             s.short_title
         FROM users u
         LEFT JOIN roles r ON r.id = u.role_id

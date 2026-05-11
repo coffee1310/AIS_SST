@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: replace_photo_with_path_in_account_creating_requests
+      author: coffee13102006
+      changes:
+        # Добавляем новое поле path_to_photo
+        - addColumn:
+            tableName: account_creating_requests
+            columns:
+              - column:
+                  name: path_to_photo
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: true
+
+        # Переносим существующие фото (если есть) - опционально
+        - sql:
+            sql: |
+              UPDATE account_creating_requests 
+              SET path_to_photo = CONCAT('account_creating_requests_avatars/', id) 
+              WHERE photo IS NOT NULL AND LENGTH(photo) > 0
+
+        # Удаляем старое поле photo
+        - dropColumn:
+            tableName: account_creating_requests
+            columnName: photo

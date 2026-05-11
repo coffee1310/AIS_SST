@@ -13,7 +13,6 @@ import java.util.Optional;
 public interface SectorRepository extends JpaRepository<Sector, Long> {
     boolean existsByTitle(String title);
 
-
     Optional<Sector> findSectorById(Long id);
 
     @Query(value = """
@@ -30,14 +29,13 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
         CASE WHEN sir.id IS NOT NULL AND sir.status IN ('На рассмотрении', 'Ожидание') 
              THEN true ELSE false END as has_active_request,
         COALESCE(sp.is_coordinator, false) as is_coordinator,
-        s.photo,
+        s.photo,  -- путь к фото сектора
         sir.status as request_status,
         (SELECT COUNT(*) FROM sector_participants sp2 WHERE sp2.sector_id = s.id AND sp2.status = 'Активный') as participant_count,
-        -- Информация о координаторе
         coord.name as coordinator_name,
         coord.surname as coordinator_surname,
         coord.patronymic as coordinator_patronymic,
-        coord.photo as coordinator_photo
+        coord.path_to_photo as coordinator_photo  -- изменено с coord.photo на coord.path_to_photo
     FROM sectors s
     LEFT JOIN sector_participants sp ON sp.sector_id = s.id 
         AND sp.student_id = :userId 
@@ -55,4 +53,3 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
 
     Sector getSectorById(Long id);
 }
-

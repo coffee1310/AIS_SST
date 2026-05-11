@@ -3,6 +3,8 @@ package org.example.ais_sst.mapper;
 import org.example.ais_sst.dto.events.EventOrganizerCreateDTO;
 import org.example.ais_sst.dto.events.EventOrganizerResponseDTO;
 import org.example.ais_sst.entity.EventOrganizer;
+import org.example.ais_sst.service.userService.UserPhotoService;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -16,9 +18,22 @@ public interface EventOrganizerMapper {
     @Mapping(target = "userSurname", source = "user.surname")
     @Mapping(target = "userPatronymic", source = "user.patronymic")
     @Mapping(target = "userEmail", source = "user.studentEmail")
-    @Mapping(target = "userPhoto", expression = "java(org.example.ais_sst.utils.ImageUtil.encodeToBase64(entity.getUser().getPhoto()))")
+    @Mapping(target = "userPhoto", expression = "java(getPhotoAsBase64(entity.getUser().getPathToPhoto(), userPhotoService))")
     @Mapping(target = "addedAt", source = "addedAt")
-    EventOrganizerResponseDTO toResponseDto(EventOrganizer entity);
+    EventOrganizerResponseDTO toResponseDto(EventOrganizer entity,
+                                            @Context UserPhotoService userPhotoService);
+
+    // Метод без @Context для обратной совместимости
+    default EventOrganizerResponseDTO toResponseDto(EventOrganizer entity) {
+        return toResponseDto(entity, null);
+    }
+
+    default String getPhotoAsBase64(String photoPath, UserPhotoService userPhotoService) {
+        if (photoPath == null || photoPath.isEmpty() || userPhotoService == null) {
+            return null;
+        }
+        return userPhotoService.getPhotoAsBase64(photoPath);
+    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "event", ignore = true)

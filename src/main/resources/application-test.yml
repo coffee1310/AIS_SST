@@ -11,3 +11,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+  upload:
+    dir: uploads/events
+    account-requests-dir: uploads/account_creating_requests_avatars
+    users-dir: uploads/users

@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: replace_photo_with_path_in_users
+      author: coffee13102006
+      changes:
+        # Добавляем новое поле path_to_photo
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: path_to_photo
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: true
+
+        # Удаляем старое поле photo
+        - dropColumn:
+            tableName: users
+            columnName: photo

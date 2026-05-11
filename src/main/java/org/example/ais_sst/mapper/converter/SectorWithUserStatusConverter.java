@@ -1,26 +1,32 @@
 package org.example.ais_sst.mapper.converter;
 
+import lombok.RequiredArgsConstructor;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
+import org.example.ais_sst.service.userService.UserPhotoService;
 import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class SectorWithUserStatusConverter {
 
-    public SectorWithUserStatusDTO fromNativeQuery(Object[] row) {
-        if (row == null || row.length < 13) {  // Теперь 13 полей
+    private final UserPhotoService userPhotoService;
+
+    // Основной метод с UserPhotoService
+    public SectorWithUserStatusDTO fromNativeQuery(Object[] row, UserPhotoService photoService) {
+        if (row == null || row.length < 13) {
             return null;
         }
 
-        // Фото сектора
-        byte[] sectorPhotoBytes = (byte[]) row[6];
-        String sectorPhotoBase64 = sectorPhotoBytes != null && sectorPhotoBytes.length > 0
-                ? ImageUtil.encodeToBase64(sectorPhotoBytes) : null;
+        // Фото сектора - теперь путь
+        String sectorPhotoPath = row[6] != null ? (String) row[6] : null;
+        String sectorPhotoBase64 = photoService != null && sectorPhotoPath != null
+                ? photoService.getPhotoAsBase64(sectorPhotoPath) : null;
 
-        // Фото координатора
-        byte[] coordinatorPhotoBytes = (byte[]) row[12];
-        String coordinatorPhotoBase64 = coordinatorPhotoBytes != null && coordinatorPhotoBytes.length > 0
-                ? ImageUtil.encodeToBase64(coordinatorPhotoBytes) : null;
+        // Фото координатора - теперь путь
+        String coordinatorPhotoPath = row[12] != null ? (String) row[12] : null;
+        String coordinatorPhotoBase64 = photoService != null && coordinatorPhotoPath != null
+                ? photoService.getPhotoAsBase64(coordinatorPhotoPath) : null;
 
         // Полное ФИО координатора
         String coordinatorName = (String) row[9];
@@ -51,5 +57,10 @@ public class SectorWithUserStatusConverter {
                 .coordinatorFullName(coordinatorFullName)
                 .coordinatorPhoto(coordinatorPhotoBase64)
                 .build();
+    }
+
+    // Метод без параметров для обратной совместимости
+    public SectorWithUserStatusDTO fromNativeQuery(Object[] row) {
+        return fromNativeQuery(row, userPhotoService);
     }
 }
