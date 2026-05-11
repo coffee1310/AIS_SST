@@ -87,8 +87,9 @@ fun RequestCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    val groupText = if (request.courseNumber != null && request.specialityName != null && request.groupName != null) {
-                        "Группа ${request.courseNumber}${request.specialityName}-${request.groupName}"
+                    val speciality = request.shortSpecialityTitle ?: request.specialityName
+                    val groupText = if (request.courseNumber != null && speciality != null && request.groupName != null) {
+                        "Группа ${request.courseNumber}${speciality}-${request.groupName}"
                     } else if (request.groupName != null) {
                         "Группа ${request.groupName}"
                     } else {

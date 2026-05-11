@@ -14,5 +14,6 @@ data class SectorRequestDto(
     val photo: String? = null,
     val courseNumber: Int? = null,
     val specialityName: String? = null,
-    val groupName: String? = null
+    val groupName: String? = null,
+    val shortSpecialityTitle: String? = null
 )

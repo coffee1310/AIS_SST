@@ -148,8 +148,9 @@ fun MyDataScreen(onBackClick: () -> Unit) {
 
                             Spacer(modifier = Modifier.height(6.dp))
 
+                            val speciality = user.shortSpecialityTitle ?: user.specialityTitle.take(4).uppercase()
                             Text(
-                                text = "Группа: ${user.courseNumber}${user.specialityTitle.take(4).uppercase()}-${user.groupTitle}",
+                                text = "Группа: ${user.courseNumber}${speciality}-${user.groupTitle}",
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 16.sp),
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             )

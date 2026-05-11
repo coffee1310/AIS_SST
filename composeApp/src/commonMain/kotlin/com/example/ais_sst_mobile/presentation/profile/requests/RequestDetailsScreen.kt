@@ -153,7 +153,7 @@ fun RequestDetailsScreen(
                             Spacer(modifier = Modifier.height(6.dp))
 
                             val groupText = request.groupName ?: "-"
-                            val specText = request.specialityName?.take(4)?.uppercase() ?: ""
+                            val specText = request.shortSpecialityTitle ?: request.specialityName?.take(4)?.uppercase() ?: ""
                             Text(
                                 text = "Группа: ${request.courseNumber ?: ""}$specText-$groupText",
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 16.sp),

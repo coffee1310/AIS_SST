@@ -22,5 +22,6 @@ data class SectorDto(
     val coordinatorPhoto: String? = null,
     val coordinatorCourseNumber: Int? = null,
     val coordinatorGroupTitle: String? = null,
-    val coordinatorSpecialityTitle: String? = null
+    val coordinatorSpecialityTitle: String? = null,
+    val shortSpecialityTitle: String? = null
 )

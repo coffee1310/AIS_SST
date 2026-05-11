@@ -22,5 +22,6 @@ data class User(
     val socialStatuses: List<String>?,
     val coordinatorSectorId: Int? = null,
     val coordinatorSectorTitle: String? = null,
+    val shortSpecialityTitle: String? = null,
     val coordinatorSector: String? = null
 )

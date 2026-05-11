@@ -37,6 +37,7 @@ data class UserProfileDto(
     val coordinatorSectorId: Int? = null,
     val coordinatorSectorTitle: String? = null,
     val shortSpecialityTitle: String? = null,
+    val specialityShortTitle: String? = null,
     val groupTitle: String? = null,
     val specialityTitle: String? = null
 ) {
@@ -52,6 +53,7 @@ data class UserProfileDto(
             dateOfBirth = dateOfBirth?: "",
             courseNumber = courseNumber?: 0,
             specialityTitle = specialityTitle?: "",
+            shortSpecialityTitle = shortSpecialityTitle?: "",
             groupTitle = groupTitle?: "",
             studentEmail = studentEmail?: "",
             additionalEmail = additionalEmail,
