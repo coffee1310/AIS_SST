@@ -120,7 +120,16 @@ public class UserService implements UserServiceImpl {
         );
 
         List<UserResponseDTO> users = results.stream()
-                .map(this::mapRowToUserResponseDTO)
+                .map(row -> {
+                    UserResponseDTO dto = mapRowToUserResponseDTO(row);
+                    if (dto != null) {
+                        // Получаем социальные статусы для пользователя
+                        List<String> socialStatuses = socialStatusStudentRepository
+                                .findSocialStatusTitlesByStudentId(dto.getId());
+                        dto.setSocialStatuses(socialStatuses);
+                    }
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
@@ -190,33 +199,12 @@ public class UserService implements UserServiceImpl {
         String coordinatorSectorTitle = null;
 
         try {
-            log.info("Looking for coordinator info for user ID: {}", userId);
-
-            // ДИАГНОСТИКА 1: Проверяем через findById
             Optional<SectorParticipant> coordinatorOpt = sectorParticipantRepository.findCoordinatorByUserId(userId);
             if (coordinatorOpt.isPresent()) {
                 SectorParticipant sp = coordinatorOpt.get();
-                log.info("Found via findCoordinatorByUserId - Sector ID: {}, Title: {}, isCoordinator: {}",
-                        sp.getSector().getId(),
-                        sp.getSector().getTitle(),
-                        sp.getIsCoordinator());
                 coordinatorSectorId = sp.getSector().getId();
                 coordinatorSectorTitle = sp.getSector().getTitle();
-            } else {
-                log.warn("No coordinator found via findCoordinatorByUserId for user: {}", userId);
-
-                // ДИАГНОСТИКА 2: Проверяем все записи пользователя
-                List<SectorParticipant> allParticipations = sectorParticipantRepository.findByStudentId(userId);
-                log.info("Total participations for user {}: {}", userId, allParticipations.size());
-                for (SectorParticipant sp : allParticipations) {
-                    log.info("Participation - Sector ID: {}, Title: {}, isCoordinator: {}, Status: {}",
-                            sp.getSector().getId(),
-                            sp.getSector().getTitle(),
-                            sp.getIsCoordinator(),
-                            sp.getStatus());
-                }
             }
-
         } catch (Exception e) {
             log.error("Error getting coordinator info for user: {}", userId, e);
         }
@@ -255,7 +243,8 @@ public class UserService implements UserServiceImpl {
                 .photo(photoBase64)
                 .coordinatorSectorId(coordinatorSectorId)
                 .coordinatorSectorTitle(coordinatorSectorTitle)
-                .specialityShortTitle(row[20] != null ? row[20].toString() : null)
+                .specialityShortTitle(row.length > 20 && row[20] != null ? row[20].toString() : null)
+                .socialStatuses(null) // Будет заполнено позже в stream
                 .build();
     }
 }

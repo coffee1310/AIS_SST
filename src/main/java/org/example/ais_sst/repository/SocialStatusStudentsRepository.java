@@ -12,4 +12,5 @@ public interface SocialStatusStudentsRepository extends JpaRepository<SocialStat
 
     @Query("SELECT sss.socialStatus.title FROM SocialStatusStudent sss WHERE sss.student.id = :studentId")
     List<String> findSocialStatusTitlesByStudentId(@Param("studentId") Long studentId);
+
 }

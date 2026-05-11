@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -32,6 +33,7 @@ public class UserResponseDTO {
     private Long specialityId;
     private String specialityName;
     private String specialityShortTitle;
+    private List<String> socialStatuses;  // Добавлено поле для социальных статусов
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
