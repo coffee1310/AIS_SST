@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 import org.example.ais_sst.annotation.ValidSectorName;
 import org.example.ais_sst.annotation.ValidUserId;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -29,14 +32,11 @@ public class SectorDTO {
 
     private String photo;
 
-    // Информация о координаторе
-    private Long coordinatorId;
-    private String coordinatorFullName;      // ФИО координатора
-    private String coordinatorName;
-    private String coordinatorSurname;
-    private String coordinatorPatronymic;
-    private String coordinatorPhoto;          // фото координатора (Base64)
-    private Short coordinatorCourseNumber;    // курс координатора
-    private String coordinatorGroupTitle;     // группа координатора
-    private String coordinatorSpecialityTitle; // специальность координатора
+    // Список ID координаторов
+    @Builder.Default
+    private List<Long> coordinatorIds = new ArrayList<>();
+
+    // Список с полной информацией о координаторах
+    @Builder.Default
+    private List<SectorParticipantResponseDTO> coordinators = new ArrayList<>();
 }

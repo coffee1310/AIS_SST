@@ -16,7 +16,6 @@ import org.example.ais_sst.mapper.SectorParticipantMapper;
 import org.example.ais_sst.mapper.converter.SectorWithUserStatusConverter;
 import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.userService.UserPhotoService;
-import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,9 @@ import javax.management.relation.RoleNotFoundException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,18 +43,18 @@ public class SectorService {
     private final SectorParticipantRepository sectorParticipantRepository;
     private final SectorIntroductionRequestRepository sectorIntroductionRequestRepository;
     private final RoleRepository roleRepository;
-    private final UserPhotoService userPhotoService;  // Добавлен
-    private final SectorPhotoService sectorPhotoService; // Добавлено
+    private final UserPhotoService userPhotoService;
+    private final SectorPhotoService sectorPhotoService;
 
     @Transactional
     public SectorDTO createSector(SectorDTO sectorDTO) throws RoleNotFoundException {
         log.info("Creating sector with title: {}", sectorDTO.getTitle());
 
-        // Конвертируем DTO в Entity (без фото)
-        Sector sector = sectorMapper.toEntity(sectorDTO);
-        Sector savedSector = sectorRepository.save(sector);
+        // 1. Создаем и сохраняем сектор
+        Sector savedSector = sectorRepository.save(sectorMapper.toEntity(sectorDTO));
+        log.info("Sector saved with id: {}", savedSector.getId());
 
-        // Сохраняем фото если есть
+        // 2. Сохраняем фото (если есть)
         if (sectorDTO.getPhoto() != null && !sectorDTO.getPhoto().isEmpty()) {
             try {
                 String photoPath = sectorPhotoService.savePhotoFromBase64(sectorDTO.getPhoto(), savedSector.getId());
@@ -65,11 +66,116 @@ public class SectorService {
             }
         }
 
-        // Конвертируем обратно в DTO с фото
-        SectorDTO result = sectorMapper.toSectorDTO(savedSector, sectorPhotoService);
-        log.info("Saved sector with id: {}", result.getId());
+        // 3. Добавляем координаторов (при создании сектора - автоматически создаем участников)
+        if (sectorDTO.getCoordinatorIds() != null && !sectorDTO.getCoordinatorIds().isEmpty()) {
+            for (Long coordinatorId : sectorDTO.getCoordinatorIds()) {
+                try {
+                    addCoordinatorOnCreate(savedSector.getId(), coordinatorId);
+                } catch (Exception e) {
+                    log.error("Failed to add coordinator {}: {}", coordinatorId, e.getMessage());
+                }
+            }
+        }
+
+        // 4. Получаем обновленный сектор
+        Sector refreshedSector = sectorRepository.findById(savedSector.getId()).orElse(savedSector);
+        SectorDTO result = sectorMapper.toSectorDTO(refreshedSector, sectorPhotoService);
+
+        // 5. Добавляем информацию о координаторах
+        List<SectorParticipant> coordinators = sectorParticipantRepository
+                .findBySectorIdAndIsCoordinatorTrue(refreshedSector.getId());
+
+        List<Long> coordinatorIds = coordinators.stream()
+                .map(participant -> participant.getStudent().getId())
+                .collect(Collectors.toList());
+        result.setCoordinatorIds(coordinatorIds);
+
+        List<SectorParticipantResponseDTO> coordinatorDTOs = coordinators.stream()
+                .map(coordinator -> sectorParticipantMapper.toResponseDto(coordinator, userPhotoService))
+                .collect(Collectors.toList());
+        result.setCoordinators(coordinatorDTOs);
+
+        log.info("Sector {} created with {} coordinator(s)", refreshedSector.getId(), coordinatorIds.size());
 
         return result;
+    }
+
+    /**
+     * Добавление координатора ПРИ СОЗДАНИИ сектора
+     * Автоматически создает участника, если его нет
+     */
+    private void addCoordinatorOnCreate(Long sectorId, Long userId) throws RoleNotFoundException {
+        log.debug("Adding coordinator {} to new sector {}", userId, sectorId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException("User not found: " + userId));
+
+        Sector sector = sectorRepository.findById(sectorId)
+                .orElseThrow(() -> new SectorDoesNotExistException("Sector not found: " + sectorId));
+
+        // При создании сектора - всегда создаем нового участника-координатора
+        SectorParticipant participant = SectorParticipant.builder()
+                .sector(sector)
+                .student(user)
+                .isCoordinator(true)
+                .status(SectorParticipantStatuses.Активный)
+                .entryDate(LocalDate.now())
+                .build();
+
+        sectorParticipantRepository.save(participant);
+        log.info("New participant-coordinator created with id: {}", participant.getId());
+
+        // Меняем роль пользователя
+        Role role = roleRepository.findByTitle("Sector_coordinator")
+                .orElseThrow(() -> new RoleNotFoundException("Роль координатор не найдена"));
+        user.setRole(role);
+        userRepository.save(user);
+
+        log.info("Coordinator {} successfully added to sector {}", userId, sectorId);
+    }
+
+    /**
+     * Добавление координатора в СУЩЕСТВУЮЩИЙ сектор
+     * Пользователь ДОЛЖЕН быть участником сектора
+     */
+    @Transactional
+    public void addCoordinator(Long sectorId, Long userId) throws RoleNotFoundException {
+        log.info("Adding coordinator to existing sector: sectorId={}, userId={}", sectorId, userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException("User not found: " + userId));
+
+        // Проверяем, является ли пользователь участником сектора
+        SectorParticipant participant = sectorParticipantRepository
+                .findBySectorIdAndStudentId(sectorId, userId)
+                .orElseThrow(() -> new UserDoesNotExistException(
+                        String.format("Пользователь с id: %d не является участником сектора %d. Сначала вступите в сектор.",
+                                userId, sectorId)));
+
+        // Проверяем, не является ли пользователь уже координатором
+        if (participant.getIsCoordinator()) {
+            throw new IllegalStateException(
+                    String.format("Пользователь с id: %d уже является координатором сектора %d", userId, sectorId));
+        }
+
+        // Проверяем статус участника
+        if (participant.getStatus() != SectorParticipantStatuses.Активный) {
+            throw new IllegalStateException(
+                    String.format("Пользователь с id: %d не является активным участником сектора %d. Статус: %s",
+                            userId, sectorId, participant.getStatus()));
+        }
+
+        // Назначаем координатором
+        participant.setIsCoordinator(true);
+        sectorParticipantRepository.save(participant);
+
+        // Меняем роль пользователя
+        Role role = roleRepository.findByTitle("Sector_coordinator")
+                .orElseThrow(() -> new RoleNotFoundException("Роль координатор не найдена"));
+        user.setRole(role);
+        userRepository.save(user);
+
+        log.info("User {} became coordinator of sector {}", userId, sectorId);
     }
 
     @Transactional()
@@ -81,7 +187,6 @@ public class SectorService {
 
         Page<SectorParticipant> participants = sectorParticipantRepository.findBySectorId(sectorId, pageable);
 
-        // Используем маппер с UserPhotoService
         return participants.map(participant -> sectorParticipantMapper.toResponseDto(participant, userPhotoService));
     }
 
@@ -89,14 +194,12 @@ public class SectorService {
     public SectorParticipantResponseDTO getSectorCoordinator(Long sectorId) {
         log.info("Getting coordinator for sector id: {}", sectorId);
 
-        SectorParticipant coordinator = sectorParticipantRepository.findBySectorIdAndIsCoordinatorTrue(sectorId)
+        return sectorParticipantRepository
+                .findBySectorIdAndIsCoordinatorTrue(sectorId)
+                .stream()
+                .findFirst()
+                .map(coordinator -> sectorParticipantMapper.toResponseDto(coordinator, userPhotoService))
                 .orElse(null);
-
-        if (coordinator == null) {
-            return null;
-        }
-
-        return sectorParticipantMapper.toResponseDto(coordinator, userPhotoService);
     }
 
     @Transactional
@@ -112,39 +215,21 @@ public class SectorService {
             sectorDTO.setPhoto(photoBase64);
         }
 
-            SectorParticipant coordinator = sectorParticipantRepository
-                .findBySectorIdAndIsCoordinatorTrue(id)
-                .orElse(null);
+        // Получаем всех координаторов сектора
+        List<SectorParticipant> coordinators = sectorParticipantRepository
+                .findBySectorIdAndIsCoordinatorTrue(id);
 
-        if (coordinator != null && coordinator.getStudent() != null) {
-            User coordinatorUser = coordinator.getStudent();
-            sectorDTO.setCoordinatorId(coordinatorUser.getId());
-            sectorDTO.setCoordinatorName(coordinatorUser.getName());
-            sectorDTO.setCoordinatorSurname(coordinatorUser.getSurname());
-            sectorDTO.setCoordinatorPatronymic(coordinatorUser.getPatronymic());
+        List<Long> coordinatorIds = coordinators.stream()
+                .map(c -> c.getStudent().getId())
+                .collect(Collectors.toList());
+        sectorDTO.setCoordinatorIds(coordinatorIds);
 
-            String fullName = coordinatorUser.getSurname() + " " + coordinatorUser.getName();
-            if (coordinatorUser.getPatronymic() != null && !coordinatorUser.getPatronymic().isEmpty()) {
-                fullName += " " + coordinatorUser.getPatronymic();
-            }
-            sectorDTO.setCoordinatorFullName(fullName);
+        List<SectorParticipantResponseDTO> coordinatorDTOs = coordinators.stream()
+                .map(coordinator -> sectorParticipantMapper.toResponseDto(coordinator, userPhotoService))
+                .collect(Collectors.toList());
+        sectorDTO.setCoordinators(coordinatorDTOs);
 
-            // Фото координатора - используем pathToPhoto
-            if (coordinatorUser.getPathToPhoto() != null && !coordinatorUser.getPathToPhoto().isEmpty()) {
-                String photoBase64 = userPhotoService.getPhotoAsBase64(coordinatorUser.getPathToPhoto());
-                sectorDTO.setCoordinatorPhoto(photoBase64);
-            }
-
-            sectorDTO.setCoordinatorCourseNumber(coordinatorUser.getCourseNumber());
-
-            if (coordinatorUser.getGroup() != null) {
-                sectorDTO.setCoordinatorGroupTitle(coordinatorUser.getGroup().getTitle());
-            }
-
-            if (coordinatorUser.getSpeciality() != null) {
-                sectorDTO.setCoordinatorSpecialityTitle(coordinatorUser.getSpeciality().getTitle());
-            }
-        }
+        log.info("Sector {} has {} coordinator(s)", id, coordinatorDTOs.size());
 
         return sectorDTO;
     }
@@ -166,32 +251,37 @@ public class SectorService {
             return new ArrayList<>();
         }
 
-        // Передаем userPhotoService в конвертер
-        return results.stream()
-                .map(row -> sectorWithUserStatusConverter.fromNativeQuery(row, userPhotoService))
-                .collect(Collectors.toList());
+        // Убираем дубликаты по ID сектора
+        Map<Long, SectorWithUserStatusDTO> sectorMap = new LinkedHashMap<>();
+
+        for (Object[] row : results) {
+            Long sectorId = ((Number) row[0]).longValue();
+
+            if (!sectorMap.containsKey(sectorId)) {
+                SectorWithUserStatusDTO sector = sectorWithUserStatusConverter.fromNativeQuery(row, userPhotoService);
+                sectorMap.put(sectorId, sector);
+            }
+        }
+
+        List<SectorWithUserStatusDTO> sectors = new ArrayList<>(sectorMap.values());
+
+        // Для каждого сектора загружаем список всех координаторов
+        for (SectorWithUserStatusDTO sector : sectors) {
+            List<SectorParticipant> coordinators = sectorParticipantRepository
+                    .findBySectorIdAndIsCoordinatorTrue(sector.getId());
+
+            List<SectorParticipantResponseDTO> coordinatorDTOs = coordinators.stream()
+                    .map(coordinator -> sectorParticipantMapper.toResponseDto(coordinator, userPhotoService))
+                    .collect(Collectors.toList());
+
+            sector.setCoordinators(coordinatorDTOs);
+        }
+
+        log.info("Found {} unique sectors for user {}", sectors.size(), userId);
+
+        return sectors;
+
     }
-
-    @Transactional
-    public void addCoordinator(Long sectorId, Long userId) throws RoleNotFoundException {
-        User user = userRepository.findUserById(userId)
-                .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id: %d не найден", userId)));
-
-        Role role = roleRepository.findByTitle("Sector_coordinator")
-                .orElseThrow(() -> new RoleNotFoundException("Роль координатор не найдена"));
-
-        user.setRole(role);
-        userRepository.save(user);
-
-        SectorParticipant participant = sectorParticipantRepository
-                .findBySectorIdAndStudentId(sectorId, userId)
-                .orElseThrow(() -> new UserDoesNotExistException(
-                        String.format("Пользователь с id: %d не является участником сектора %d", userId, sectorId)));
-
-        participant.setIsCoordinator(true);
-        sectorParticipantRepository.save(participant);
-    }
-
     @Transactional
     public void removeCoordinatorFromSector(Long sectorId, Long userId) throws RoleNotFoundException {
         log.info("Removing coordinator from sector: sectorId={}, userId={}", sectorId, userId);
@@ -217,7 +307,7 @@ public class SectorService {
         log.info("User {} is coordinator in {} other sectors", userId, coordinatorEntries.size());
 
         if (coordinatorEntries.isEmpty()) {
-            User user = userRepository.findUserById(userId)
+            User user = userRepository.findById(userId)
                     .orElseThrow(() -> new UserDoesNotExistException(
                             String.format("Пользователь с id: %d не найден", userId)));
 
@@ -235,7 +325,7 @@ public class SectorService {
     public void kickParticipantFromSector(Long sectorId, Long coordinatorId, Long participantId) throws RoleNotFoundException {
         log.info("Kicking participant {} from sector {} by coordinator {}", participantId, sectorId, coordinatorId);
 
-        User coordinator = userRepository.findUserById(coordinatorId)
+        User coordinator = userRepository.findById(coordinatorId)
                 .orElseThrow(() -> new UserDoesNotExistException(
                         String.format("Координатор с id: %d не найден", coordinatorId)));
 
@@ -250,7 +340,7 @@ public class SectorService {
                             coordinatorId, sectorId));
         }
 
-        User participant = userRepository.findUserById(participantId)
+        User participant = userRepository.findById(participantId)
                 .orElseThrow(() -> new UserDoesNotExistException(
                         String.format("Участник с id: %d не найден", participantId)));
 

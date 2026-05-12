@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.ais_sst.entity.Sector;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -21,9 +23,5 @@ public class SectorWithUserStatusDTO {
     private Integer participantCount;
     private String photo;  // Base64 строка
 
-    private String coordinatorName;
-    private String coordinatorSurname;
-    private String coordinatorPatronymic;
-    private String coordinatorFullName;  // Полное ФИО
-    private String coordinatorPhoto;
+    List<SectorParticipantResponseDTO> coordinators;
 }
