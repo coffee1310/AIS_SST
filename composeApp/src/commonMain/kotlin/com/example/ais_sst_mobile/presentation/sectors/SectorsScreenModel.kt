@@ -66,10 +66,14 @@ class SectorsScreenModel(
                 }
         }
     }
-    fun loadRequests() {
+    fun loadRequests(sectorId: Int? = null) {
         viewModelScope.launch {
             _isRequestsLoading.value = true
-            repository.getSectorRequests()
+
+            // Если ID передали явно (от куратора) — берем его. Иначе берем ID сектора координатора.
+            val targetSectorId = sectorId ?: currentSectorId
+
+            repository.getSectorRequests(targetSectorId)
                 .onSuccess { rawRequests ->
                     val enrichedRequests = rawRequests.map { request ->
                         async {

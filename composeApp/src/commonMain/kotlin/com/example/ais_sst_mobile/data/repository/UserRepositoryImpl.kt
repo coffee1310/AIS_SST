@@ -14,6 +14,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import com.example.ais_sst_mobile.data.network.dto.UserPageResponseDto
+
 
 class UserRepositoryImpl(
     private val httpClient: HttpClient
@@ -52,5 +54,14 @@ class UserRepositoryImpl(
             parameter("id", id)
         }.body<PageableResponse<UserProfileDto>>()
         response.content.firstOrNull() ?: throw Exception("Пользователь не найден")
+    }
+    override suspend fun getActivists(page: Int, size: Int): Result<UserPageResponseDto> = runCatching {
+        httpClient.get("users/all") {
+            parameter("page", page)
+            parameter("size", size)
+            parameter("sortBy", "surname")
+            parameter("sortDirection", "ASC")
+            parameter("role", "Activist")
+        }.body()
     }
 }

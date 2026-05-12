@@ -25,6 +25,8 @@ interface RootComponent {
         class MyData(val component: MyDataComponent) : Child()
         class RequestDetails(val component: RequestDetailsComponent) : Child()
         class ActivistProfile(val component: ActivistProfileComponent) : Child()
+        class CreateSector(val component: CreateSectorComponent) : Child()
+
     }
 }
 
@@ -72,6 +74,7 @@ class DefaultRootComponent(
                             is FullScreenRoute.MyData -> navigation.pushNew(Config.MyData)
                             is FullScreenRoute.RequestDetails -> navigation.pushNew(Config.RequestDetails(route.id))
                             is FullScreenRoute.ActivistProfile -> navigation.pushNew(Config.ActivistProfile(route.userId))
+                            is FullScreenRoute.CreateSector -> navigation.pushNew(Config.CreateSector)
                         }
                     }
                 )
@@ -105,6 +108,12 @@ class DefaultRootComponent(
                     onGoBack = { navigation.pop() }
                 )
             )
+            is Config.CreateSector -> RootComponent.Child.CreateSector(
+                CreateSectorComponent(
+                    componentContext = context,
+                    onGoBack = { navigation.pop() }
+                )
+            )
         }
 
     @Serializable
@@ -116,5 +125,6 @@ class DefaultRootComponent(
         @Serializable data object MyData : Config
         @Serializable data class RequestDetails(val id: Int) : Config
         @Serializable data class ActivistProfile(val userId: Int) : Config
+        @Serializable data object CreateSector : Config
     }
 }

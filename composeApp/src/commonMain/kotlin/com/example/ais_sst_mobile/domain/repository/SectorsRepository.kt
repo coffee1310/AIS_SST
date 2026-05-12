@@ -10,7 +10,7 @@ interface SectorsRepository {
     suspend fun joinSector(id: Int): Result<Unit>
     suspend fun leaveSector(id: Int): Result<Unit>
     suspend fun getSectorParticipants(sectorId: Int, page: Int = 0): Result<ParticipantResponseDto>
-    suspend fun getSectorRequests(): Result<List<SectorRequestDto>>
+    suspend fun getSectorRequests(sectorId: Int? = null): Result<List<SectorRequestDto>>
     suspend fun acceptSectorRequest(requestId: Int): Result<String>
     suspend fun rejectSectorRequest(requestId: Int): Result<String>
     suspend fun kickParticipant(sectorId: Int, userId: Int): Result<Unit>

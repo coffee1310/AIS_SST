@@ -47,6 +47,9 @@ fun SectorsTab(component: SectorsComponent) {
             is SectorsComponent.Child.Details -> SectorDetailsScreen(
                 component = instance.component
             )
+            is SectorsComponent.Child.Participants -> SectorParticipantsScreen(
+                component = instance.component
+            )
         }
     }
 }

@@ -18,6 +18,7 @@ import com.example.ais_sst_mobile.presentation.profile.activist.ActivistProfileS
 import com.example.ais_sst_mobile.presentation.profile.my_data.MyDataScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.RequestDetailsScreen
+import com.example.ais_sst_mobile.presentation.sectors.create.CreateSectorScreen
 import com.example.ais_sst_mobile.theme.AppTheme
 
 @OptIn(ExperimentalDecomposeApi::class)
@@ -57,6 +58,9 @@ fun App(root: RootComponent) {
                     is RootComponent.Child.ActivistProfile -> ActivistProfileScreen(
                         userId = instance.component.userId,
                         onBackClick = instance.component.onGoBack
+                    )
+                    is RootComponent.Child.CreateSector -> CreateSectorScreen(
+                        component = instance.component
                     )
                 }
             }

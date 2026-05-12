@@ -5,6 +5,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
 @Serializable
+data class UserPageResponseDto(
+    val content: List<UserProfileDto>,
+    val totalElements: Int,
+    val totalPages: Int
+)
+
+@Serializable
 data class UserProfileDto(
     val id: Int,
     val name: String,
@@ -41,6 +48,16 @@ data class UserProfileDto(
     val groupTitle: String? = null,
     val specialityTitle: String? = null
 ) {
+    val fullName: String
+        get() = buildString {
+            append(surname)
+            append(" ")
+            append(name)
+            if (!patronymic.isNullOrBlank()) {
+                append(" ")
+                append(patronymic)
+            }
+        }.trim()
     fun toDomain(): User {
         return User(
             id = id,

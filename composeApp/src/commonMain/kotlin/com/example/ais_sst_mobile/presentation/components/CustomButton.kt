@@ -36,7 +36,7 @@ fun CustomButton(
         enabled = enabled && !isLoading,
         colors = colors,
         modifier = modifier
-            .height(56.dp)
+            .height(52.dp)
             .border(
                 border = BorderStroke(
                     width = 0.3.dp,

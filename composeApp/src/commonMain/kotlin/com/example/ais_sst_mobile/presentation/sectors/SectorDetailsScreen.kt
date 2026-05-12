@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
             }
         }
+
         is SectorDetailsState.Error -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -58,6 +60,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                 )
             }
         }
+
         is SectorDetailsState.Success -> {
             val sector = currentState.sector
             val activeRole = currentState.activeRole
@@ -140,111 +143,129 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
 
                         Spacer(modifier = Modifier.height(40.dp))
 
-                        if (sector.coordinatorFullName != null) {
-                            Card(
-                                shape = MaterialTheme.shapes.large,
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)
-                                ),
-                                border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
-                                modifier = Modifier.fillMaxWidth()
+                        Card(
+                            shape = MaterialTheme.shapes.large,
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                    alpha = 0.15f
+                                )
+                            ),
+                            border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
                             ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.PersonOutline,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Координатор",
+                                        style = MaterialTheme.typography.displayMedium.copy(
+                                            fontSize = 18.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Outlined.PersonOutline,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.secondary,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "Координатор",
-                                            style = MaterialTheme.typography.displayMedium.copy(fontSize = 18.sp),
-                                            color = MaterialTheme.colorScheme.secondary
-                                        )
+                                    val coordImage = remember(sector.coordinatorPhoto) {
+                                        try {
+                                            sector.coordinatorPhoto?.let { rawString ->
+                                                var textToDecode = rawString.trim()
+                                                if (textToDecode.startsWith("ZGF0Y")) {
+                                                    val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
+                                                    if (decodedText.startsWith("data:image")) textToDecode = decodedText
+                                                }
+                                                if (textToDecode.contains("base64,")) {
+                                                    textToDecode = textToDecode.substringAfter("base64,").trim()
+                                                }
+                                                val bytes = textToDecode.decodeBase64Bytes()
+                                                if (bytes.isNotEmpty()) bytes.toImageBitmap() else null
+                                            }
+                                        } catch (e: Throwable) {
+                                            null
+                                        }
                                     }
 
-                                    Spacer(modifier = Modifier.height(16.dp))
-
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth()
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
+                                            ),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        val coordImage = remember(sector.coordinatorPhoto) {
-                                            try {
-                                                sector.coordinatorPhoto?.let { rawString ->
-                                                    var textToDecode = rawString.trim()
-
-                                                    if (textToDecode.startsWith("ZGF0Y")) {
-                                                        val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
-                                                        if (decodedText.startsWith("data:image")) {
-                                                            textToDecode = decodedText
-                                                        }
-                                                    }
-
-                                                    if (textToDecode.contains("base64,")) {
-                                                        textToDecode = textToDecode.substringAfter("base64,").trim()
-                                                    }
-
-                                                    val bytes = textToDecode.decodeBase64Bytes()
-
-                                                    if (bytes.isNotEmpty()) {
-                                                        bytes.toImageBitmap()
-                                                    } else null
-                                                }
-                                            } catch (e: Throwable) {
-                                                e.printStackTrace()
-                                                null
-                                            }
+                                        if (coordImage != null) {
+                                            Image(
+                                                bitmap = coordImage,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            Icon(
+                                                Icons.Outlined.PersonOutline,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurface
+                                            )
                                         }
+                                    }
 
-                                        Box(
-                                            modifier = Modifier
-                                                .size(56.dp)
-                                                .clip(CircleShape)
-                                                .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            if (coordImage != null) {
-                                                Image(
-                                                    bitmap = coordImage,
-                                                    contentDescription = null,
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier.fillMaxSize()
-                                                )
-                                            } else {
-                                                Icon(Icons.Outlined.PersonOutline, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-                                            }
-                                        }
+                                    Spacer(modifier = Modifier.width(16.dp))
 
-                                        Spacer(modifier = Modifier.width(16.dp))
-
-                                        Column {
+                                    Column {
+                                        if (sector.coordinatorFullName != null) {
+                                            val fullName = listOfNotNull(sector.coordinatorSurname, sector.coordinatorName).joinToString(" ")
                                             Text(
-                                                text = sector.coordinatorSurname + " " + sector.coordinatorName,
+                                                text = fullName,
                                                 style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
 
-                                            val groupText = if (sector.coordinatorCourseNumber != null && sector.coordinatorSpecialityTitle != null && sector.coordinatorGroupTitle != null) {
-                                                "студент группы ${sector.coordinatorCourseNumber}${sector.coordinatorSpecialityTitle}-${sector.coordinatorGroupTitle}"
-                                            } else if (sector.coordinatorGroupTitle != null) {
-                                                "студент группы ${sector.coordinatorGroupTitle}"
-                                            } else {
-                                                "координатор сектора"
-                                            }
+                                            //val speciality = sector.coordinatorShortSpecialityTitle ?: sector.coordinatorSpecialityTitle
+//                                            val groupText =
+//                                                if (sector.coordinatorCourseNumber != null && speciality != null && sector.coordinatorGroupTitle != null) {
+//                                                    "студент группы ${sector.coordinatorCourseNumber}${speciality}-${sector.coordinatorGroupTitle}"
+//                                                } else if (sector.coordinatorGroupTitle != null) {
+//                                                    "студент группы ${sector.coordinatorGroupTitle}"
+//                                                } else {
+//                                                    "координатор сектора"
+//                                                }
+                                            val groupText =
+                                                if (sector.coordinatorCourseNumber != null && sector.coordinatorSpecialityTitle != null && sector.coordinatorGroupTitle != null) {
+                                                    "студент группы ${sector.coordinatorCourseNumber}${sector.coordinatorSpecialityTitle}-${sector.coordinatorGroupTitle}"
+                                                } else if (sector.coordinatorGroupTitle != null) {
+                                                    "студент группы ${sector.coordinatorGroupTitle}"
+                                                } else {
+                                                    "координатор сектора"
+                                                }
 
                                             Text(
                                                 text = groupText,
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                                 maxLines = 2
+                                            )
+                                        } else {
+                                            Text(
+                                                text = "Координатор не указан",
+                                                style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                             )
                                         }
                                     }
@@ -257,8 +278,10 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                         if (activeRole == AppRole.ACTIVIST && !sector.isCoordinator) {
                             val isExited = sector.requestStatus == "Вышедший"
 
-                            val isApproved = !isExited && (sector.isParticipant || sector.requestStatus == "Одобрена")
-                            val isPending = !isExited && sector.hasActiveRequest && (sector.requestStatus == "На рассмотрении" || sector.requestStatus == null)
+                            val isApproved =
+                                !isExited && (sector.isParticipant || sector.requestStatus == "Одобрена")
+                            val isPending =
+                                !isExited && sector.hasActiveRequest && (sector.requestStatus == "На рассмотрении" || sector.requestStatus == null)
 
                             if (isApproved) {
                                 CustomButton(
@@ -278,7 +301,9 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                     modifier = Modifier.fillMaxWidth(),
                                     enabled = false,
                                     colors = ButtonDefaults.buttonColors(
-                                        disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f),
+                                        disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                            alpha = 0.3f
+                                        ),
                                         disabledContentColor = MaterialTheme.colorScheme.onSurface
                                     )
                                 )
@@ -291,19 +316,53 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                             }
                         }
 
+                        val isCuratorOrChairman = activeRole == AppRole.CURATOR || activeRole == AppRole.CHAIRMAN
+                        val isDeputy = activeRole == AppRole.DEPUTY_CHAIRMAN
+                        val isSecretary = activeRole == AppRole.SECRETARY
+
+                        if (isCuratorOrChairman || isDeputy || isSecretary) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                if (isCuratorOrChairman || isDeputy) {
+                                    CustomButton(
+                                        text = "Просмотр участников сектора",
+                                        onClick = { component.onNavigateToParticipants(sector.id) },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    CustomButton(
+                                        text = "Редактировать информацию",
+                                        onClick = { /* TODO */ },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+
+                                if (isCuratorOrChairman || isDeputy || isSecretary) {
+                                    CustomButton(
+                                        text = "Выгрузка отчета",
+                                        onClick = { /* TODO */ },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+
+                                if (isCuratorOrChairman) {
+                                    CustomButton(
+                                        text = "Удалить сектор",
+                                        onClick = { /* TODO */ },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color.Transparent,
+                                            contentColor = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(100.dp))
                     }
                 }
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .navigationBarsPadding()
-                        .padding(bottom = 16.dp),
-                    snackbar = { snackbarData ->
-                        CustomSnackbar(snackbarData = snackbarData)
-                    }
-                )
             }
         }
     }

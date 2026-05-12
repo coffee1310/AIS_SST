@@ -11,6 +11,7 @@ sealed interface FullScreenRoute {
     data object MyData : FullScreenRoute
     data class RequestDetails(val id: Int) : FullScreenRoute
     data class ActivistProfile(val userId: Int) : FullScreenRoute
+    data object CreateSector : FullScreenRoute
 }
 class LoginComponent(
     componentContext: ComponentContext,
@@ -29,15 +30,23 @@ class CalendarComponent(componentContext: ComponentContext) : ComponentContext b
 class SectorListComponent(
     componentContext: ComponentContext,
     val onNavigateToDetails: (Int) -> Unit,
-    val onNavigateToActivistProfile: (Int) -> Unit
+    val onNavigateToActivistProfile: (Int) -> Unit,
+    val onNavigateToCreateSector: () -> Unit
 ) : ComponentContext by componentContext
 
 class SectorDetailsComponent(
     componentContext: ComponentContext,
     val sectorId: Int,
-    val onGoBack: () -> Unit
+    val onGoBack: () -> Unit,
+    val onNavigateToParticipants: (Int) -> Unit
 ) : ComponentContext by componentContext
 
+class SectorParticipantsComponent(
+    componentContext: ComponentContext,
+    val sectorId: Int,
+    val onGoBack: () -> Unit,
+    val onNavigateToActivistProfile: (Int) -> Unit
+) : ComponentContext by componentContext
 class SectorsComponent(
     componentContext: ComponentContext,
     val onNavigateToFullScreen: (FullScreenRoute) -> Unit
@@ -63,6 +72,9 @@ class SectorsComponent(
                     onNavigateToDetails = { id -> navigation.pushNew(Config.Details(id)) },
                     onNavigateToActivistProfile = { userId ->
                         onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
+                    },
+                    onNavigateToCreateSector = {
+                        onNavigateToFullScreen(FullScreenRoute.CreateSector)
                     }
                 )
             )
@@ -70,7 +82,18 @@ class SectorsComponent(
                 SectorDetailsComponent(
                     componentContext = context,
                     sectorId = config.id,
-                    onGoBack = { navigation.pop() }
+                    onGoBack = { navigation.pop() },
+                    onNavigateToParticipants = { id -> navigation.pushNew(Config.Participants(id)) }
+                )
+            )
+            is Config.Participants -> Child.Participants(
+                SectorParticipantsComponent(
+                    componentContext = context,
+                    sectorId = config.sectorId,
+                    onGoBack = { navigation.pop() },
+                    onNavigateToActivistProfile = { userId ->
+                        onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
+                    }
                 )
             )
         }
@@ -78,12 +101,14 @@ class SectorsComponent(
     sealed class Child {
         class List(val component: SectorListComponent) : Child()
         class Details(val component: SectorDetailsComponent) : Child()
+        class Participants(val component: SectorParticipantsComponent) : Child()
     }
 
     @Serializable
     private sealed interface Config {
         @Serializable data object List : Config
         @Serializable data class Details(val id: Int) : Config
+        @Serializable data class Participants(val sectorId: Int) : Config
     }
 }
 class ProfileComponent(
@@ -109,5 +134,9 @@ class RequestDetailsComponent(
 class ActivistProfileComponent(
     componentContext: ComponentContext,
     val userId: Int,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+class CreateSectorComponent(
+    componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

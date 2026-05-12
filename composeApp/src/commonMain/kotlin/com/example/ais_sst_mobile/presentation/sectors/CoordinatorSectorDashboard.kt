@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -34,6 +35,7 @@ import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 import com.example.ais_sst_mobile.data.network.dto.ParticipantDto
+import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 
 @Composable
 fun CoordinatorSectorDashboard(
@@ -288,6 +290,27 @@ fun CoordinatorSectorDashboard(
                 }
             }
         }
+
+        if (selectedTab == 0) {
+            Box(
+                modifier = Modifier
+                    .padding(end = 16.dp, bottom = 16.dp)
+                    .size(62.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondary)
+                    .clickable { /* TODO: Выгрузка отчета */ }
+                    .align(Alignment.BottomEnd),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Description,
+                    contentDescription = "Выгрузка отчета",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
+
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
@@ -295,7 +318,7 @@ fun CoordinatorSectorDashboard(
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp),
             snackbar = { snackbarData ->
-                com.example.ais_sst_mobile.presentation.components.CustomSnackbar(snackbarData = snackbarData)
+                CustomSnackbar(snackbarData = snackbarData)
             }
         )
     }
