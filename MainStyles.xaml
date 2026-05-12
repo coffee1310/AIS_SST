@@ -16,9 +16,52 @@
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#2A283C"/>
-                        </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="Opacity" To="0.6" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="GhostButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#7A7886"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" Background="Transparent">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="Opacity" To="0.6" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="border" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -218,7 +261,7 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="30"/>
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="15,0,0,0" VerticalAlignment="Center">
+                                        <StackPanel x:Name="NormalModePanel" Grid.Column="0" Orientation="Horizontal" Margin="15,0,0,0" VerticalAlignment="Center">
                                             <TextBlock x:Name="Star" Text="*" Foreground="#02B3BA" Margin="0,0,5,0" Visibility="Collapsed"/>
                                             <ContentPresenter x:Name="DisplayText" 
                                                               Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}" 
@@ -240,10 +283,23 @@
                                             <Setter TargetName="DisplayText" Property="Visibility" Value="Collapsed"/>
                                             <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsEditable, RelativeSource={RelativeSource AncestorType=ComboBox}}" Value="True">
+                                            <Setter TargetName="NormalModePanel" Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
+
+                        <Grid x:Name="EditableModePanel" Visibility="Collapsed">
+                            <TextBox x:Name="PART_EditableTextBox" Padding="0" Margin="15,0,30,0" Style="{x:Null}" Background="Transparent" Foreground="White" BorderThickness="0" FontFamily="Montserrat Thin" FontSize="14" VerticalAlignment="Center" CaretBrush="White"/>
+
+                            <StackPanel x:Name="EditableWatermark" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,30,0" IsHitTestVisible="False" Visibility="Collapsed">
+                                <TextBlock x:Name="EditableStar" Text="*" Foreground="#02B3BA" Margin="0,0,5,0" Visibility="Collapsed"/>
+                                <TextBlock Text="{TemplateBinding Uid}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14"/>
+                            </StackPanel>
+                        </Grid>
+
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" PopupAnimation="Slide">
                             <Border Background="#12101C" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="8" MinWidth="{TemplateBinding ActualWidth}" Margin="0,5,0,0" MaxHeight="250">
                                 <ScrollViewer>
@@ -252,6 +308,23 @@
                             </Border>
                         </Popup>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="EditableModePanel" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="Tag" Value="Required">
+                            <Setter TargetName="EditableStar" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsEditable, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                <Condition Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value=""/>
+                                <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Self}}" Value="False"/>
+                                <Condition Binding="{Binding IsDropDownOpen, RelativeSource={RelativeSource Self}}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="EditableWatermark" Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

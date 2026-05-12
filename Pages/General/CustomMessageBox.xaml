@@ -14,7 +14,6 @@
         <Grid Margin="25">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <!-- Меняем * на Auto, чтобы строка растягивалась по высоте текста -->
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -26,16 +25,21 @@
                            FontFamily="Digital Pixel" FontSize="14" VerticalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Добавляем отступ снизу (Margin="0,0,0,20"), чтобы текст не прилипал к кнопке -->
             <TextBlock Grid.Row="1" x:Name="txtMessage" Text="Ваше сообщение здесь..." 
                        Foreground="#D1CDEF" FontFamily="Montserrat Thin" FontSize="16" 
-                       TextWrapping="Wrap" VerticalAlignment="Top" Margin="0,0,0,20"/>
+                       TextWrapping="Wrap" VerticalAlignment="Top" Margin="0,0,0,25"/>
 
-            <Button Grid.Row="2" Content="ОК" Width="120" Height="40" 
-                    HorizontalAlignment="Right" Cursor="Hand"
-                    Style="{StaticResource AuthModernButtonStyle}"
-                    FontFamily="Digital Pixel" FontSize="10"
-                    Click="Ok_Click"/>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="btnCancel" Content="НЕТ" Width="100" Height="40" Margin="0,0,15,0" 
+                        Style="{StaticResource GhostButtonStyle}"
+                        FontFamily="Digital Pixel" FontSize="12"
+                        Click="Cancel_Click" Visibility="Collapsed"/>
+
+                <Button x:Name="btnOk" Content="ОК" Width="120" Height="40" 
+                        Cursor="Hand" Style="{StaticResource AuthModernButtonStyle}"
+                        FontFamily="Digital Pixel" FontSize="10"
+                        Click="Ok_Click"/>
+            </StackPanel>
         </Grid>
     </Border>
 </Window>

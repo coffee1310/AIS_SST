@@ -447,6 +447,11 @@ namespace Diplom_Stud.Pages.Coordinator
         public string title { get; set; }
         public string description { get; set; }
         public string photo { get; set; }
+
+        public override string ToString()
+        {
+            return title;
+        }
     }
 
     public class IntroductionDto

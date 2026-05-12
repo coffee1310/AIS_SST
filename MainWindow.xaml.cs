@@ -405,6 +405,13 @@ namespace Diplom_Stud
 
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
+            bool isConfirmed = CustomMessageBox.Show("Вы действительно хотите выйти из аккаунта?", "Подтверждение", CustomMessageBox.MessageType.Question, true);
+
+            if (!isConfirmed)
+            {
+                return;
+            }
+
             NavProfile.IsChecked = false;
             NavHome.IsChecked = false;
             NavEvents.IsChecked = false;
