@@ -44,6 +44,28 @@ pipeline {
             }
         }
 
+        stage('Prepare Directories on VPS') {
+            agent { label 'built-in' }
+            steps {
+                echo 'Creating upload directories on VPS...'
+                script {
+                    sh """
+                        # Создаем директории для загрузки файлов на хосте
+                        mkdir -p ${COMPOSE_PATH}/uploads/sectors
+                        mkdir -p ${COMPOSE_PATH}/uploads/events
+                        mkdir -p ${COMPOSE_PATH}/uploads/users
+                        mkdir -p ${COMPOSE_PATH}/uploads/account_creating_requests_avatars
+
+                        # Устанавливаем права
+                        chmod -R 777 ${COMPOSE_PATH}/uploads
+
+                        echo "Upload directories created successfully"
+                        ls -la ${COMPOSE_PATH}/uploads/
+                    """
+                }
+            }
+        }
+
         stage('Deploy on VPS') {
             agent { label 'built-in' }
             steps {
