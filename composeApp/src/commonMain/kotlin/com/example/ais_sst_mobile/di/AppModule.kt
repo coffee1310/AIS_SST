@@ -42,7 +42,7 @@ val appModule = module {
     factory { SectorsScreenModel(get(), get(), get()) }
     factory { SectorDetailsScreenModel(get(), get()) }
     factory { ActivistProfileScreenModel(get(), get()) }
-    factory { CreateSectorScreenModel(get()) }
+    factory { CreateSectorScreenModel(get(), get()) }
 
 }
 

@@ -13,7 +13,11 @@ import io.ktor.http.isSuccess
 import com.example.ais_sst_mobile.data.network.dto.SectorRequestDto
 import io.ktor.client.request.delete
 import io.ktor.client.request.put
-
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import com.example.ais_sst_mobile.data.network.dto.CreateSectorRequestDto
 
 class SectorsRepositoryImpl(
     private val httpClient: HttpClient
@@ -83,5 +87,11 @@ class SectorsRepositoryImpl(
         if (!response.status.isSuccess()) {
             throw Exception("Ошибка при исключении активиста: ${response.status.value}")
         }
+    }
+    override suspend fun createSector(request: CreateSectorRequestDto): Result<Unit> = runCatching {
+        httpClient.post("sector") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
     }
 }

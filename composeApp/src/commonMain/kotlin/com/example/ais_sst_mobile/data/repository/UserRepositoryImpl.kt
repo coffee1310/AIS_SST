@@ -55,13 +55,16 @@ class UserRepositoryImpl(
         }.body<PageableResponse<UserProfileDto>>()
         response.content.firstOrNull() ?: throw Exception("Пользователь не найден")
     }
-    override suspend fun getActivists(page: Int, size: Int): Result<UserPageResponseDto> = runCatching {
+    override suspend fun getActivists(page: Int, size: Int, searchQuery: String): Result<UserPageResponseDto> = runCatching {
         httpClient.get("users/all") {
             parameter("page", page)
             parameter("size", size)
             parameter("sortBy", "surname")
             parameter("sortDirection", "ASC")
             parameter("role", "Activist")
+            if (searchQuery.isNotBlank()) {
+                parameter("search", searchQuery)
+            }
         }.body()
     }
 }

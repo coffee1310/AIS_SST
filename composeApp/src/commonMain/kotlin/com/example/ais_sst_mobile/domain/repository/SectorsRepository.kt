@@ -1,5 +1,6 @@
 package com.example.ais_sst_mobile.domain.repository
 
+import com.example.ais_sst_mobile.data.network.dto.CreateSectorRequestDto
 import com.example.ais_sst_mobile.data.network.dto.ParticipantResponseDto
 import com.example.ais_sst_mobile.data.network.dto.SectorDto
 import com.example.ais_sst_mobile.data.network.dto.SectorRequestDto
@@ -14,4 +15,5 @@ interface SectorsRepository {
     suspend fun acceptSectorRequest(requestId: Int): Result<String>
     suspend fun rejectSectorRequest(requestId: Int): Result<String>
     suspend fun kickParticipant(sectorId: Int, userId: Int): Result<Unit>
+    suspend fun createSector(request: CreateSectorRequestDto): Result<Unit>
 }
