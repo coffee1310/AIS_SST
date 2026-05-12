@@ -13,6 +13,7 @@ import org.example.ais_sst.mapper.SectorMapper;
 import org.example.ais_sst.mapper.SectorParticipantMapper;
 import org.example.ais_sst.mapper.converter.SectorWithUserStatusConverter;
 import org.example.ais_sst.repository.*;
+import org.example.ais_sst.service.sectorService.SectorPhotoService;
 import org.example.ais_sst.service.sectorService.SectorService;
 import org.example.ais_sst.utils.ImageUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +66,9 @@ class SectorServiceTest {
 
     @Mock
     private RoleRepository roleRepository;
+
+    @Mock
+    private SectorPhotoService sectorPhotoService;
 
     @InjectMocks
     private SectorService sectorService;
@@ -160,7 +164,7 @@ class SectorServiceTest {
         // given
         when(sectorMapper.toEntity(sectorDTO)).thenReturn(sector);
         when(sectorRepository.save(any(Sector.class))).thenReturn(sector);
-        when(sectorMapper.toSectorDTO(any(Sector.class))).thenReturn(sectorDTO);
+        when(sectorMapper.toSectorDTO(any(Sector.class), any(SectorPhotoService.class))).thenReturn(sectorDTO);
 
         // when
         SectorDTO result = sectorService.createSector(sectorDTO);
@@ -177,7 +181,7 @@ class SectorServiceTest {
     void getSectorById_Success() {
         // given
         when(sectorRepository.findSectorById(1L)).thenReturn(Optional.of(sector));
-        when(sectorMapper.toSectorDTO(sector)).thenReturn(sectorDTO);
+        when(sectorMapper.toSectorDTO(sector, sectorPhotoService)).thenReturn(sectorDTO);
         when(sectorParticipantRepository.findBySectorIdAndIsCoordinatorTrue(1L))
                 .thenReturn(Optional.of(coordinatorParticipant));
 

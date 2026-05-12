@@ -31,6 +31,6 @@ public class Sector {
     @Builder.Default
     private Boolean isActive = true;
 
-    @Column(name = "photo")
-    private byte[] photo;
+    @Column(name = "path_to_photo", length = 512)
+    private String pathToPhoto;  // Вместо photo
 }

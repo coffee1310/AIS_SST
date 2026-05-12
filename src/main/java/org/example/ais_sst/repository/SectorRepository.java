@@ -29,13 +29,13 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
         CASE WHEN sir.id IS NOT NULL AND sir.status IN ('На рассмотрении', 'Ожидание') 
              THEN true ELSE false END as has_active_request,
         COALESCE(sp.is_coordinator, false) as is_coordinator,
-        s.photo,  -- путь к фото сектора
+        s.path_to_photo,  -- Изменено с s.photo на s.path_to_photo
         sir.status as request_status,
         (SELECT COUNT(*) FROM sector_participants sp2 WHERE sp2.sector_id = s.id AND sp2.status = 'Активный') as participant_count,
         coord.name as coordinator_name,
         coord.surname as coordinator_surname,
         coord.patronymic as coordinator_patronymic,
-        coord.path_to_photo as coordinator_photo  -- изменено с coord.photo на coord.path_to_photo
+        coord.path_to_photo as coordinator_photo
     FROM sectors s
     LEFT JOIN sector_participants sp ON sp.sector_id = s.id 
         AND sp.student_id = :userId 

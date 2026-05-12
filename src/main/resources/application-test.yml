@@ -15,3 +15,4 @@ spring:
     dir: uploads/events
     account-requests-dir: uploads/account_creating_requests_avatars
     users-dir: uploads/users
+    sectors-dir: uploads/sectors  # Добавлено

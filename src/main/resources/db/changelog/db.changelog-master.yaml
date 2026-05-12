@@ -69,3 +69,5 @@ databaseChangeLog:
       file: db/changelog/changes/036-replace-photo-with-path-in-account-creating-requests.yaml
   - include:
       file: db/changelog/changes/037-replace_photo_with_path_in_users.yaml
+  - include:
+      file: db/changelog/changes/038-replace-photo-with-path-in-sectors.yaml

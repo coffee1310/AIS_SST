@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-replace-photo-with-path-in-sectors
+      author: coffee13102006
+      changes:
+        # Добавляем новое поле path_to_photo
+        - addColumn:
+            tableName: sectors
+            columns:
+              - column:
+                  name: path_to_photo
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: true
+
+        # Комментарий к полю
+        - sql:
+            sql: |
+              COMMENT ON COLUMN sectors.path_to_photo IS 'Путь к фото сектора в файловой системе'
+
+        # Удаляем старое поле photo
+        - dropColumn:
+            tableName: sectors
+            columnName: photo

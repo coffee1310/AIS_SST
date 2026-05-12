@@ -18,15 +18,34 @@ public class SectorWithUserStatusConverter {
             return null;
         }
 
-        // Фото сектора - теперь путь
-        String sectorPhotoPath = row[6] != null ? (String) row[6] : null;
-        String sectorPhotoBase64 = photoService != null && sectorPhotoPath != null
-                ? photoService.getPhotoAsBase64(sectorPhotoPath) : null;
+        // Фото сектора - теперь byte[] (старое поле) или String (новое поле)
+        // Нужно определить тип
+        String sectorPhotoBase64 = null;
+        Object sectorPhotoObj = row[6];
+        if (sectorPhotoObj != null) {
+            if (sectorPhotoObj instanceof byte[]) {
+                // Старый формат - байты
+                byte[] sectorPhotoBytes = (byte[]) sectorPhotoObj;
+                sectorPhotoBase64 = sectorPhotoBytes.length > 0 ? ImageUtil.encodeToBase64(sectorPhotoBytes) : null;
+            } else if (sectorPhotoObj instanceof String) {
+                // Новый формат - путь к файлу
+                String sectorPhotoPath = (String) sectorPhotoObj;
+                sectorPhotoBase64 = photoService != null ? photoService.getPhotoAsBase64(sectorPhotoPath) : null;
+            }
+        }
 
-        // Фото координатора - теперь путь
-        String coordinatorPhotoPath = row[12] != null ? (String) row[12] : null;
-        String coordinatorPhotoBase64 = photoService != null && coordinatorPhotoPath != null
-                ? photoService.getPhotoAsBase64(coordinatorPhotoPath) : null;
+        // Фото координатора - аналогично
+        String coordinatorPhotoBase64 = null;
+        Object coordinatorPhotoObj = row[12];
+        if (coordinatorPhotoObj != null) {
+            if (coordinatorPhotoObj instanceof byte[]) {
+                byte[] coordinatorPhotoBytes = (byte[]) coordinatorPhotoObj;
+                coordinatorPhotoBase64 = coordinatorPhotoBytes.length > 0 ? ImageUtil.encodeToBase64(coordinatorPhotoBytes) : null;
+            } else if (coordinatorPhotoObj instanceof String) {
+                String coordinatorPhotoPath = (String) coordinatorPhotoObj;
+                coordinatorPhotoBase64 = photoService != null ? photoService.getPhotoAsBase64(coordinatorPhotoPath) : null;
+            }
+        }
 
         // Полное ФИО координатора
         String coordinatorName = (String) row[9];

@@ -22,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.management.relation.RoleNotFoundException;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,17 +43,31 @@ public class SectorService {
     private final SectorIntroductionRequestRepository sectorIntroductionRequestRepository;
     private final RoleRepository roleRepository;
     private final UserPhotoService userPhotoService;  // Добавлен
+    private final SectorPhotoService sectorPhotoService; // Добавлено
 
     @Transactional
     public SectorDTO createSector(SectorDTO sectorDTO) throws RoleNotFoundException {
         log.info("Creating sector with title: {}", sectorDTO.getTitle());
 
-        Sector sector = sectorRepository.save(sectorMapper.toEntity(sectorDTO));
+        Sector sector = sectorMapper.toEntity(sectorDTO);
+        Sector savedSector = sectorRepository.save(sector);
 
-        sectorDTO = sectorMapper.toSectorDTO(sector);
-        log.info("Saved sector with id: {}", sectorDTO.getId());
+        // Сохраняем фото если есть
+        if (sectorDTO.getPhoto() != null && !sectorDTO.getPhoto().isEmpty()) {
+            try {
+                String photoPath = sectorPhotoService.savePhotoFromBase64(sectorDTO.getPhoto(), savedSector.getId());
+                savedSector.setPathToPhoto(photoPath);
+                savedSector = sectorRepository.save(savedSector);
+                log.info("Photo saved for sector: {}", savedSector.getId());
+            } catch (IOException e) {
+                log.error("Failed to save photo for sector: {}", savedSector.getId(), e);
+            }
+        }
 
-        return sectorDTO;
+        SectorDTO result = sectorMapper.toSectorDTO(savedSector, sectorPhotoService);
+        log.info("Saved sector with id: {}", result.getId());
+
+        return result;
     }
 
     @Transactional()
@@ -87,9 +102,15 @@ public class SectorService {
         Sector sector = sectorRepository.findSectorById(id)
                 .orElseThrow(() -> new SectorDoesNotExistException("Такой сектор не существует"));
 
-        SectorDTO sectorDTO = sectorMapper.toSectorDTO(sector);
+        SectorDTO sectorDTO = sectorMapper.toSectorDTO(sector, sectorPhotoService);
 
-        SectorParticipant coordinator = sectorParticipantRepository
+        // Получаем фото сектора
+        if (sector.getPathToPhoto() != null && !sector.getPathToPhoto().isEmpty()) {
+            String photoBase64 = sectorPhotoService.getPhotoAsBase64(sector.getPathToPhoto());
+            sectorDTO.setPhoto(photoBase64);
+        }
+
+            SectorParticipant coordinator = sectorParticipantRepository
                 .findBySectorIdAndIsCoordinatorTrue(id)
                 .orElse(null);
 
