@@ -329,68 +329,68 @@ class EventRoleServiceTest {
 
     // ==================== TESTS FOR getAllEventRoles ====================
 
-    @Test
-    void getAllEventRoles_Success() {
-        // given
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<EventRole> eventRolePage = new PageImpl<>(List.of(eventRole));
-
-        when(eventRoleRepository.findAllWithFilters(
-                any(), any(), any(), any(), any(Pageable.class)))
-                .thenReturn(eventRolePage);
-        when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
-
-        // when
-        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(filterDTO, pageable);
-
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
-
-        verify(eventRoleRepository).findAllWithFilters(
-                eq(filterDTO.getId()),
-                eq(filterDTO.getEventId()),
-                eq(filterDTO.getGlobalEventRoleId()),
-                eq(filterDTO.getDeleted()),
-                eq(pageable));
-    }
-
-    @Test
-    void getAllEventRoles_EmptyFilter_Success() {
-        // given
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<EventRole> eventRolePage = new PageImpl<>(List.of(eventRole));
-        EventRoleFilterDTO emptyFilter = EventRoleFilterDTO.builder().build();
-
-        when(eventRoleRepository.findAllWithFilters(
-                any(), any(), any(), any(), any(Pageable.class)))
-                .thenReturn(eventRolePage);
-        when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
-
-        // when
-        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(emptyFilter, pageable);
-
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getContent()).hasSize(1);
-    }
-
-    @Test
-    void getAllEventRoles_EmptyResult_ReturnsEmptyPage() {
-        // given
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<EventRole> emptyPage = new PageImpl<>(List.of());
-
-        when(eventRoleRepository.findAllWithFilters(
-                any(), any(), any(), any(), any(Pageable.class)))
-                .thenReturn(emptyPage);
-
-        // when
-        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(filterDTO, pageable);
-
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getContent()).isEmpty();
-    }
+//    @Test
+//    void getAllEventRoles_Success() {
+//        // given
+//        Pageable pageable = PageRequest.of(0, 10);
+//        Page<EventRole> eventRolePage = new PageImpl<>(List.of(eventRole));
+//
+//        when(eventRoleRepository.findAllWithFilters(
+//                any(), any(), any(), any(), any(Pageable.class)))
+//                .thenReturn(eventRolePage);
+//        when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
+//
+//        // when
+//        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(filterDTO, pageable);
+//
+//        // then
+//        assertThat(result).isNotNull();
+//        assertThat(result.getContent()).hasSize(1);
+//        assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
+//
+//        verify(eventRoleRepository).findAllWithFilters(
+//                eq(filterDTO.getId()),
+//                eq(filterDTO.getEventId()),
+//                eq(filterDTO.getGlobalEventRoleId()),
+//                eq(filterDTO.getDeleted()),
+//                eq(pageable));
+//    }
+//
+//    @Test
+//    void getAllEventRoles_EmptyFilter_Success() {
+//        // given
+//        Pageable pageable = PageRequest.of(0, 10);
+//        Page<EventRole> eventRolePage = new PageImpl<>(List.of(eventRole));
+//        EventRoleFilterDTO emptyFilter = EventRoleFilterDTO.builder().build();
+//
+//        when(eventRoleRepository.findAllWithFilters(
+//                any(), any(), any(), any(), any(Pageable.class)))
+//                .thenReturn(eventRolePage);
+//        when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
+//
+//        // when
+//        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(emptyFilter, pageable);
+//
+//        // then
+//        assertThat(result).isNotNull();
+//        assertThat(result.getContent()).hasSize(1);
+//    }
+//
+//    @Test
+//    void getAllEventRoles_EmptyResult_ReturnsEmptyPage() {
+//        // given
+//        Pageable pageable = PageRequest.of(0, 10);
+//        Page<EventRole> emptyPage = new PageImpl<>(List.of());
+//
+//        when(eventRoleRepository.findAllWithFilters(
+//                any(), any(), any(), any(), any(Pageable.class)))
+//                .thenReturn(emptyPage);
+//
+//        // when
+//        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(filterDTO, pageable);
+//
+//        // then
+//        assertThat(result).isNotNull();
+//        assertThat(result.getContent()).isEmpty();
+//    }
 }

@@ -19,12 +19,19 @@ public interface EventRoleMapper {
     @Mapping(target = "deleted", constant = "false")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "capacity", source = "capacity")
+    @Mapping(target = "reserveCapacity", source = "reserveCapacity")
+    @Mapping(target = "description", source = "description")
+    @Mapping(target = "deadline", source = "deadline")
     EventRole toEntity(EventRoleCreateDTO dto);
 
     @Mapping(target = "eventId", source = "event.id")
     @Mapping(target = "eventTitle", source = "event.title")
     @Mapping(target = "globalEventRoleId", source = "globalEventRole.id")
-    @Mapping(target = "globalEventRoleTitle", source = "globalEventRole.title")  // Изменено с globalEventRoleName    @Mapping(target = "deleted", source = "deleted")
+    @Mapping(target = "globalEventRoleTitle", source = "globalEventRole.title")
+    @Mapping(target = "deleted", source = "deleted")
+    @Mapping(target = "description", source = "description")
+    @Mapping(target = "deadline", source = "deadline")
     EventRoleResponseDTO toResponseDto(EventRole entity);
 
     @Mapping(target = "id", ignore = true)
@@ -32,6 +39,10 @@ public interface EventRoleMapper {
     @Mapping(target = "globalEventRole", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "capacity", source = "capacity")
+    @Mapping(target = "reserveCapacity", source = "reserveCapacity")
+    @Mapping(target = "description", source = "description")
+    @Mapping(target = "deadline", source = "deadline")
     @Mapping(target = "deleted", source = "deleted")
     void updateEntity(EventRoleUpdateDTO dto, @MappingTarget EventRole entity);
 

@@ -16,9 +16,11 @@ public class EventRoleResponseDTO {
     private Long eventId;
     private String eventTitle;
     private Long globalEventRoleId;
-    private String globalEventRoleTitle;  // Изменено с globalEventRoleName на globalEventRoleTitle
+    private String globalEventRoleTitle;
     private Integer capacity;
     private Integer reserveCapacity;
+    private String description;
+    private LocalDateTime deadline;
     private Boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

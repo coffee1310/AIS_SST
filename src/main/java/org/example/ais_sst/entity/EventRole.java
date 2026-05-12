@@ -52,4 +52,10 @@ public class EventRole {
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     private Boolean deleted = false;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "deadline", nullable = false)
+    private LocalDateTime deadline;
 }

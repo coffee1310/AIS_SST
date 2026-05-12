@@ -1,0 +1,50 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-add-deadline-and-description-to-event-roles
+      author: coffee13102006
+      changes:
+        # Добавляем поле description
+        - addColumn:
+            tableName: event_roles
+            columns:
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+
+        # Добавляем поле deadline как nullable сначала
+        - addColumn:
+            tableName: event_roles
+            columns:
+              - column:
+                  name: deadline
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+
+        # Добавляем комментарии к полям
+        - sql:
+            sql: |
+              COMMENT ON COLUMN event_roles.description IS 'Описание роли мероприятия';
+              COMMENT ON COLUMN event_roles.deadline IS 'Дедлайн подачи заявок на роль';
+
+        # Заполняем существующие записи значением по умолчанию (текущее время + 30 дней)
+        - sql:
+            dbms: postgresql
+            sql: |
+              UPDATE event_roles SET deadline = NOW() + INTERVAL '30 days' WHERE deadline IS NULL;
+
+        # Делаем поле deadline NOT NULL
+        - addNotNullConstraint:
+            tableName: event_roles
+            columnName: deadline
+            columnDataType: TIMESTAMP
+
+        # Добавляем индекс для deadline для быстрой фильтрации
+        - createIndex:
+            tableName: event_roles
+            indexName: idx_event_roles_deadline
+            columns:
+              - column:
+                  name: deadline
