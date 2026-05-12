@@ -29,10 +29,6 @@ services:
       - 'SPRING_DATASOURCE_USERNAME=coffee13102006'
       - 'SPRING_DATASOURCE_PASSWORD=nata155630'
       - 'SERVER_PORT=8080'  # ← ДОБАВИТЬ: порт внутри контейнера
-      - APP_UPLOAD_DIR=/app/uploads/events
-      - APP_ACCOUNT_REQUESTS_DIR=/app/uploads/account_creating_requests_avatars
-      - APP_USERS_DIR=/app/uploads/users
-      - APP_SECTORS_DIR=/app/uploads/sectors
     depends_on:
       postgres:
         condition: service_healthy
