@@ -154,3 +154,5 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Diplom_Stud.exe
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Diplom_Stud.pdb
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RegistrationRequests.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RegistrationRequests.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RequestDetailsWindow.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RequestDetailsWindow.g.cs

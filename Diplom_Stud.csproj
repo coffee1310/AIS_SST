@@ -169,6 +169,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\Curator\RequestDetailsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Pages\General\Auth.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -230,6 +234,9 @@
     </Compile>
     <Compile Include="Pages\Curator\RegistrationRequests.xaml.cs">
       <DependentUpon>RegistrationRequests.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Curator\RequestDetailsWindow.xaml.cs">
+      <DependentUpon>RequestDetailsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\General\Auth.xaml.cs">
       <DependentUpon>Auth.xaml</DependentUpon>

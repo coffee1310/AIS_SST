@@ -1,9 +1,10 @@
 ﻿using Diplom_Stud.Components;
 using Diplom_Stud.Pages.Activist;
-using Microsoft.Toolkit.Uwp.Notifications; // Подключаем библиотеку уведомлений
+using Microsoft.Toolkit.Uwp.Notifications;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -42,8 +43,19 @@ namespace Diplom_Stud.Pages.General
             e.Handled = !e.Text.All(char.IsDigit);
         }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            string savedRefreshToken = App.LoadSession();
+            if (!string.IsNullOrEmpty(savedRefreshToken))
+            {
+                bool success = await RefreshSessionAsync(savedRefreshToken);
+                if (success)
+                {
+                    NavigateToUserProfile();
+                    return;
+                }
+            }
+
             DoubleAnimation fadeInAnimation = new DoubleAnimation
             {
                 From = 0.0,
@@ -57,6 +69,54 @@ namespace Diplom_Stud.Pages.General
             _slideTimer.Interval = TimeSpan.FromSeconds(5);
             _slideTimer.Tick += SlideTimer_Tick;
             _slideTimer.Start();
+        }
+
+        private async Task<bool> RefreshSessionAsync(string refreshToken)
+        {
+            try
+            {
+                var requestData = new { refreshToken = refreshToken };
+                string jsonData = JsonSerializer.Serialize(requestData);
+                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await _httpClient.PostAsync("/api/auth/refresh", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var authResponse = JsonSerializer.Deserialize<AuthResponse>(responseBody, options);
+
+                    if (authResponse != null && !string.IsNullOrEmpty(authResponse.token))
+                    {
+                        App.AuthToken = authResponse.token;
+                        App.RefreshToken = authResponse.refreshToken;
+
+                        App.SaveSession(authResponse.refreshToken);
+
+                        App.CurrentUser = new UserData
+                        {
+                            Id = authResponse.id,
+                            Email = authResponse.email,
+                            Name = authResponse.name,
+                            Surname = authResponse.surname,
+                            Roles = authResponse.roles,
+                            Token = authResponse.token,
+                            TokenType = authResponse.type
+                        };
+
+                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authResponse.type, authResponse.token);
+                        return true;
+                    }
+                }
+
+                App.ClearSession();
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
@@ -146,15 +206,8 @@ namespace Diplom_Stud.Pages.General
             pbPassword.Focus();
         }
 
-        private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            UpdatePasswordPlaceholder();
-        }
-
-        private void PasswordBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            UpdatePasswordPlaceholder();
-        }
+        private void PasswordBox_GotFocus(object sender, RoutedEventArgs e) => UpdatePasswordPlaceholder();
+        private void PasswordBox_LostFocus(object sender, RoutedEventArgs e) => UpdatePasswordPlaceholder();
 
         private void UpdatePasswordPlaceholder()
         {
@@ -165,7 +218,6 @@ namespace Diplom_Stud.Pages.General
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-
             tbLoginError.Visibility = Visibility.Collapsed;
             tbPasswordError.Visibility = Visibility.Collapsed;
 
@@ -204,7 +256,6 @@ namespace Diplom_Stud.Pages.General
                 bool success = await AuthenticateUser(fullEmail, password);
                 if (success)
                 {
-
                     NavigateToUserProfile();
                 }
                 else
@@ -244,11 +295,16 @@ namespace Diplom_Stud.Pages.General
                 if (response.IsSuccessStatusCode)
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    var authResponse = JsonSerializer.Deserialize<AuthResponse>(responseBody);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var authResponse = JsonSerializer.Deserialize<AuthResponse>(responseBody, options);
 
                     if (authResponse != null && !string.IsNullOrEmpty(authResponse.token))
                     {
                         App.AuthToken = authResponse.token;
+                        App.RefreshToken = authResponse.refreshToken;
+
+                        App.SaveSession(authResponse.refreshToken);
+
                         App.CurrentUser = new UserData
                         {
                             Id = authResponse.id,
@@ -284,6 +340,7 @@ namespace Diplom_Stud.Pages.General
     public class AuthResponse
     {
         public string token { get; set; }
+        public string refreshToken { get; set; } 
         public string type { get; set; }
         public int id { get; set; }
         public string email { get; set; }

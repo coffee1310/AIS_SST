@@ -421,7 +421,10 @@ namespace Diplom_Stud
             NavRegistrationRequestsBadge.Visibility = Visibility.Collapsed;
 
             App.AuthToken = null;
+            App.RefreshToken = null;
             App.CurrentUserProfile = null;
+
+            App.ClearSession();
 
             MainFrame.Navigate(new Pages.General.Auth());
 
