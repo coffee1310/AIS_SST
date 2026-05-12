@@ -10,7 +10,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-@Mapper(componentModel = "spring", builder = @Builder(disableBuilder = true))
+@Mapper(componentModel = "spring")
 public interface SectorMapper {
 
     @Mapping(target = "photo", expression = "java(getPhotoAsBase64(entity.getPathToPhoto(), sectorPhotoService))")

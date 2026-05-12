@@ -49,6 +49,7 @@ public class SectorService {
     public SectorDTO createSector(SectorDTO sectorDTO) throws RoleNotFoundException {
         log.info("Creating sector with title: {}", sectorDTO.getTitle());
 
+        // Конвертируем DTO в Entity (без фото)
         Sector sector = sectorMapper.toEntity(sectorDTO);
         Sector savedSector = sectorRepository.save(sector);
 
@@ -64,6 +65,7 @@ public class SectorService {
             }
         }
 
+        // Конвертируем обратно в DTO с фото
         SectorDTO result = sectorMapper.toSectorDTO(savedSector, sectorPhotoService);
         log.info("Saved sector with id: {}", result.getId());
 
