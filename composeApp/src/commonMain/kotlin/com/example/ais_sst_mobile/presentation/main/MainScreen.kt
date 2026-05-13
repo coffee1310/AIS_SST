@@ -63,9 +63,7 @@ fun MainScreen(component: MainComponent) {
                 onBackClick = { sectorsActive.component.onGoBack() }
             }
             is SectorsComponent.Child.Participants -> {
-                // Если хочешь точное название сектора, его нужно будет прокинуть в SectorParticipantsComponent (как sectorId).
-                // Пока ставим дефолтное:
-                title = "Управление сектором"
+                title = sectorsActive.component.sectorTitle
                 showBackButton = true
                 onBackClick = { sectorsActive.component.onGoBack() }
             }
@@ -141,7 +139,7 @@ fun SharedTopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier.width(48.dp),
+            modifier = Modifier.width(40.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             if (showBackButton && onBackClick != null) {
@@ -160,11 +158,12 @@ fun SharedTopBar(
         )
 
         Box(
-            modifier = Modifier.width(48.dp),
+            modifier = Modifier.width(40.dp),
             contentAlignment = Alignment.CenterEnd
         ) {
             IconButton(
-                onClick = { /* TODO: Уведомления */ }
+                onClick = { /* TODO: Уведомления */ },
+                modifier = Modifier.offset(x = 8.dp)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Notifications,

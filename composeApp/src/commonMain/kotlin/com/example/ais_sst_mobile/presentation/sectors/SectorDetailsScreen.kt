@@ -336,7 +336,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                 if (isCuratorOrChairman || isDeputy) {
                                     CustomButton(
                                         text = "Участники сектора",
-                                        onClick = { component.onNavigateToParticipants(sector.id) },
+                                        onClick = { component.onNavigateToParticipants(sector.id, sector.title) },
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }

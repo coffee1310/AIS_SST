@@ -164,7 +164,6 @@ fun SectorParticipantsScreen(
         }
     }
 
-    AppBackground {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -308,4 +307,3 @@ fun SectorParticipantsScreen(
             )
         }
     }
-}

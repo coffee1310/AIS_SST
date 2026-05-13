@@ -38,12 +38,13 @@ class SectorDetailsComponent(
     componentContext: ComponentContext,
     val sectorId: Int,
     val onGoBack: () -> Unit,
-    val onNavigateToParticipants: (Int) -> Unit
+    val onNavigateToParticipants: (Int, String) -> Unit
 ) : ComponentContext by componentContext
 
 class SectorParticipantsComponent(
     componentContext: ComponentContext,
     val sectorId: Int,
+    val sectorTitle: String,
     val onGoBack: () -> Unit,
     val onNavigateToActivistProfile: (Int) -> Unit
 ) : ComponentContext by componentContext
@@ -83,13 +84,16 @@ class SectorsComponent(
                     componentContext = context,
                     sectorId = config.id,
                     onGoBack = { navigation.pop() },
-                    onNavigateToParticipants = { id -> navigation.pushNew(Config.Participants(id)) }
+                    onNavigateToParticipants = { id, title ->
+                        navigation.pushNew(Config.Participants(id, title))
+                    }
                 )
             )
             is Config.Participants -> Child.Participants(
                 SectorParticipantsComponent(
                     componentContext = context,
                     sectorId = config.sectorId,
+                    sectorTitle = config.sectorTitle,
                     onGoBack = { navigation.pop() },
                     onNavigateToActivistProfile = { userId ->
                         onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
@@ -108,7 +112,7 @@ class SectorsComponent(
     private sealed interface Config {
         @Serializable data object List : Config
         @Serializable data class Details(val id: Int) : Config
-        @Serializable data class Participants(val sectorId: Int) : Config
+        @Serializable data class Participants(val sectorId: Int, val sectorTitle: String) : Config
     }
 }
 class ProfileComponent(
