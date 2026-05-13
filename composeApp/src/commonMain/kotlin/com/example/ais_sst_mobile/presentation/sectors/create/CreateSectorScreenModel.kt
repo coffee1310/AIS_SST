@@ -73,27 +73,27 @@ class CreateSectorScreenModel(
             return
         }
         if (_selectedCoordinators.value.isEmpty()) {
-            viewModelScope.launch { _effect.send(CreateSectorEffect.ShowError("Обязательно выберите координатора!")) }
+            viewModelScope.launch { _effect.send(CreateSectorEffect.ShowError("Обязательно выберите хотя бы одного координатора!")) }
             return
         }
         viewModelScope.launch {
             _isLoading.value = true
 
-            val coordinatorId = _selectedCoordinators.value.firstOrNull()?.id
+            val coordinatorIdsList = _selectedCoordinators.value.map { it.id }
 
             val photoString = _sectorPhotoBase64.value?.let { "data:image/jpeg;base64,$it" }
 
             val request = CreateSectorRequestDto(
                 title = title,
                 description = description,
-                currentCoordinator_id = coordinatorId,
+                coordinatorIds = coordinatorIdsList,
                 photo = photoString
             )
 
             sectorRepository.createSector(request)
                 .onSuccess {
                     _isLoading.value = false
-                    _effect.send(CreateSectorEffect.NavigateBack) // Успех! Уходим назад
+                    _effect.send(CreateSectorEffect.NavigateBack)
                 }
                 .onFailure { error ->
                     _isLoading.value = false

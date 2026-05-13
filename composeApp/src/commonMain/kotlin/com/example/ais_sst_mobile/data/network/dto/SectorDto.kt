@@ -10,18 +10,26 @@ data class SectorDto(
     val isParticipant: Boolean = false,
     val isCoordinator: Boolean = false,
     val hasActiveRequest: Boolean = false,
-    val participantCount: Int = 0,
     val requestStatus: String? = null,
+    val participantCount: Int = 0,
     val photo: String? = null,
-    val isActive: Boolean? = null,
-    val coordinatorId: Int? = null,
-    val coordinatorName: String? = null,
-    val coordinatorSurname: String? = null,
-    val coordinatorPatronymic: String? = null,
-    val coordinatorFullName: String? = null,
-    val coordinatorPhoto: String? = null,
-    val coordinatorCourseNumber: Int? = null,
-    val coordinatorGroupTitle: String? = null,
-    val coordinatorSpecialityTitle: String? = null,
-    val shortSpecialityTitle: String? = null
+
+    val coordinators: List<CoordinatorDto> = emptyList()
+)
+
+@Serializable
+data class CoordinatorDto(
+    val id: Int,
+    val studentId: Int,
+    val studentName: String,
+    val studentSurname: String,
+    val studentPatronymic: String? = null,
+    val studentEmail: String? = null,
+    val studentPhoto: String? = null,
+    val studentCourseNumber: Int? = null,
+    val studentGroupTitle: String? = null,
+    val studentSpecialityTitle: String? = null,
+    val entryDate: String? = null,
+    val status: String? = null,
+    val isCoordinator: Boolean = false
 )

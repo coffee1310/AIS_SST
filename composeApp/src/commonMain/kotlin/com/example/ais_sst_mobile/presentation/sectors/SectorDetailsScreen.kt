@@ -167,106 +167,114 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Координатор",
-                                        style = MaterialTheme.typography.displayMedium.copy(
-                                            fontSize = 18.sp
-                                        ),
+                                        text = if (sector.coordinators.size > 1) "Координаторы" else "Координатор",
+                                        style = MaterialTheme.typography.displayMedium.copy(fontSize = 18.sp),
                                         color = MaterialTheme.colorScheme.secondary
                                     )
                                 }
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    val coordImage = remember(sector.coordinatorPhoto) {
-                                        try {
-                                            sector.coordinatorPhoto?.let { rawString ->
-                                                var textToDecode = rawString.trim()
-                                                if (textToDecode.startsWith("ZGF0Y")) {
-                                                    val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
-                                                    if (decodedText.startsWith("data:image")) textToDecode = decodedText
-                                                }
-                                                if (textToDecode.contains("base64,")) {
-                                                    textToDecode = textToDecode.substringAfter("base64,").trim()
-                                                }
-                                                val bytes = textToDecode.decodeBase64Bytes()
-                                                if (bytes.isNotEmpty()) bytes.toImageBitmap() else null
-                                            }
-                                        } catch (e: Throwable) {
-                                            null
-                                        }
-                                    }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (coordImage != null) {
-                                            Image(
-                                                bitmap = coordImage,
-                                                contentDescription = null,
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        } else {
+                                if (sector.coordinators.isEmpty()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(CircleShape)
+                                                .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
                                             Icon(
                                                 Icons.Outlined.PersonOutline,
                                                 contentDescription = null,
                                                 tint = MaterialTheme.colorScheme.onSurface
                                             )
                                         }
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Text(
+                                            text = "Координаторы не указаны",
+                                            style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                        )
                                     }
+                                } else {
+                                    sector.coordinators.forEachIndexed { index, coordinator ->
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            val coordImage = remember(coordinator.studentPhoto) {
+                                                try {
+                                                    coordinator.studentPhoto?.let { rawString ->
+                                                        var textToDecode = rawString.trim()
+                                                        if (textToDecode.startsWith("ZGF0Y")) {
+                                                            val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
+                                                            if (decodedText.startsWith("data:image")) textToDecode = decodedText
+                                                        }
+                                                        if (textToDecode.contains("base64,")) {
+                                                            textToDecode = textToDecode.substringAfter("base64,").trim()
+                                                        }
+                                                        val bytes = textToDecode.decodeBase64Bytes()
+                                                        if (bytes.isNotEmpty()) bytes.toImageBitmap() else null
+                                                    }
+                                                } catch (e: Throwable) {
+                                                    null
+                                                }
+                                            }
 
-                                    Spacer(modifier = Modifier.width(16.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(56.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (coordImage != null) {
+                                                    Image(
+                                                        bitmap = coordImage,
+                                                        contentDescription = null,
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier.fillMaxSize()
+                                                    )
+                                                } else {
+                                                    Icon(
+                                                        Icons.Outlined.PersonOutline,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                }
+                                            }
 
-                                    Column {
-                                        if (sector.coordinatorFullName != null) {
-                                            val fullName = listOfNotNull(sector.coordinatorSurname, sector.coordinatorName).joinToString(" ")
-                                            Text(
-                                                text = fullName,
-                                                style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Spacer(modifier = Modifier.width(16.dp))
 
-                                            //val speciality = sector.coordinatorShortSpecialityTitle ?: sector.coordinatorSpecialityTitle
-//                                            val groupText =
-//                                                if (sector.coordinatorCourseNumber != null && speciality != null && sector.coordinatorGroupTitle != null) {
-//                                                    "студент группы ${sector.coordinatorCourseNumber}${speciality}-${sector.coordinatorGroupTitle}"
-//                                                } else if (sector.coordinatorGroupTitle != null) {
-//                                                    "студент группы ${sector.coordinatorGroupTitle}"
-//                                                } else {
-//                                                    "координатор сектора"
-//                                                }
-                                            val groupText =
-                                                if (sector.coordinatorCourseNumber != null && sector.coordinatorSpecialityTitle != null && sector.coordinatorGroupTitle != null) {
-                                                    "студент группы ${sector.coordinatorCourseNumber}${sector.coordinatorSpecialityTitle}-${sector.coordinatorGroupTitle}"
-                                                } else if (sector.coordinatorGroupTitle != null) {
-                                                    "студент группы ${sector.coordinatorGroupTitle}"
+                                            Column {
+                                                val fullName = listOfNotNull(coordinator.studentSurname, coordinator.studentName).joinToString(" ")
+                                                Text(
+                                                    text = fullName,
+                                                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+
+                                                val groupText = if (coordinator.studentCourseNumber != null && coordinator.studentSpecialityTitle != null && coordinator.studentGroupTitle != null) {
+                                                    "студент группы ${coordinator.studentCourseNumber}${coordinator.studentSpecialityTitle}-${coordinator.studentGroupTitle}"
+                                                } else if (coordinator.studentGroupTitle != null) {
+                                                    "студент группы ${coordinator.studentGroupTitle}"
                                                 } else {
                                                     "координатор сектора"
                                                 }
 
-                                            Text(
-                                                text = groupText,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                                maxLines = 2
-                                            )
-                                        } else {
-                                            Text(
-                                                text = "Координатор не указан",
-                                                style = MaterialTheme.typography.displayMedium.copy(fontSize = 16.sp),
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                            )
+                                                Text(
+                                                    text = groupText,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                    maxLines = 2
+                                                )
+                                            }
+                                        }
+
+                                        if (index < sector.coordinators.lastIndex) {
+                                            Spacer(modifier = Modifier.height(16.dp))
                                         }
                                     }
                                 }
@@ -327,13 +335,8 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                             ) {
                                 if (isCuratorOrChairman || isDeputy) {
                                     CustomButton(
-                                        text = "Просмотр участников сектора",
+                                        text = "Участники сектора",
                                         onClick = { component.onNavigateToParticipants(sector.id) },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                    CustomButton(
-                                        text = "Редактировать информацию",
-                                        onClick = { /* TODO */ },
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
@@ -341,6 +344,14 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                 if (isCuratorOrChairman || isDeputy || isSecretary) {
                                     CustomButton(
                                         text = "Выгрузка отчета",
+                                        onClick = { /* TODO */ },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+
+                                if (isCuratorOrChairman || isDeputy) {
+                                    CustomButton(
+                                        text = "Редактировать данные",
                                         onClick = { /* TODO */ },
                                         modifier = Modifier.fillMaxWidth()
                                     )

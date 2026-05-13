@@ -35,6 +35,8 @@ import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 import com.example.ais_sst_mobile.data.network.dto.ParticipantDto
 import com.example.ais_sst_mobile.navigation.SectorParticipantsComponent
+import com.example.ais_sst_mobile.presentation.components.AppBackground
+import com.example.ais_sst_mobile.presentation.components.CustomBackButton
 import org.koin.compose.getKoin
 
 @Composable
@@ -59,10 +61,7 @@ fun SectorParticipantsScreen(
     LaunchedEffect(component.sectorId) {
         screenModel.selectDashboardTab(savedTab.value)
         screenModel.loadParticipants(component.sectorId)
-
-        // Примечание: Если на бэкенде loadRequests() тоже требует sectorId для кураторов,
-        // тебе нужно будет обновить метод во ViewModel: screenModel.loadRequests(component.sectorId)
-        screenModel.loadRequests()
+        screenModel.loadRequests(component.sectorId)
 
         screenModel.effect.collect { message ->
             snackbarHostState.showSnackbar(message)
@@ -165,7 +164,7 @@ fun SectorParticipantsScreen(
         }
     }
 
-    com.example.ais_sst_mobile.presentation.components.AppBackground {
+    AppBackground {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -173,25 +172,6 @@ fun SectorParticipantsScreen(
                     .clearFocusOnTap(focusManager)
                     .clearFocusOnScroll(focusManager)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                        .padding(horizontal = 16.dp)
-                        .height(56.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    com.example.ais_sst_mobile.presentation.components.CustomBackButton(onClick = component.onGoBack)
-                    Text(
-                        text = "Управление сектором",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.width(40.dp))
-                }
-
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Spacer(modifier = Modifier.height(5.dp))
 

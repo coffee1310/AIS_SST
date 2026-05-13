@@ -186,7 +186,7 @@ fun ProfileMenuRow(icon: ImageVector, title: String, onClick: () -> Unit) {
 fun LogoutButton(onLogoutClick: () -> Unit) {
     Button(
         onClick = onLogoutClick,
-        modifier = Modifier.fillMaxWidth(0.9f).height(50.dp).border(width = 0.3.dp, color = MaterialTheme.colorScheme.onPrimary, shape = MaterialTheme.shapes.large),
+        modifier = Modifier.fillMaxWidth().height(50.dp).border(width = 0.3.dp, color = MaterialTheme.colorScheme.onPrimary, shape = MaterialTheme.shapes.large),
         shape = MaterialTheme.shapes.large,
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {

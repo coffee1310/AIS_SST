@@ -61,8 +61,8 @@ class SectorsRepositoryImpl(
         httpClient.get("sector/$sectorId/participants") {
             parameter("page", page)
             parameter("size", 20)
-            parameter("sortBy", "surname")
-            parameter("sortDirection", "ASC")
+            parameter("sortBy", "entryDate")
+            parameter("sortDirection", "DESC")
         }.body()
     }
     override suspend fun getSectorRequests(sectorId: Int? ): Result<List<SectorRequestDto>> = runCatching {

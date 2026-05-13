@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 data class CreateSectorRequestDto(
     val title: String,
     val description: String,
-    val currentCoordinator_id: Int?,
+    val coordinatorIds: List<Int>,
     val photo: String?
 )

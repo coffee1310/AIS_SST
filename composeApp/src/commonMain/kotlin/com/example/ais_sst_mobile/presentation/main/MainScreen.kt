@@ -21,6 +21,8 @@ import com.example.ais_sst_mobile.presentation.sectors.SectorsTab
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.domain.repository.UserRepository
@@ -54,15 +56,25 @@ fun MainScreen(component: MainComponent) {
         val sectorsStack by activeComponent.component.stack.subscribeAsState()
         val sectorsActive = sectorsStack.active.instance
 
-        if (sectorsActive is SectorsComponent.Child.Details) {
-            title = "Данные сектора"
-            showBackButton = true
-            onBackClick = { sectorsActive.component.onGoBack() }
-        } else {
-            title = if (activeRole == AppRole.SECTOR_COORDINATOR && coordinatorSectorTitle != null) {
-                coordinatorSectorTitle!!
-            } else {
-                "Сектора ССТ"
+        when (sectorsActive) {
+            is SectorsComponent.Child.Details -> {
+                title = "Данные сектора"
+                showBackButton = true
+                onBackClick = { sectorsActive.component.onGoBack() }
+            }
+            is SectorsComponent.Child.Participants -> {
+                // Если хочешь точное название сектора, его нужно будет прокинуть в SectorParticipantsComponent (как sectorId).
+                // Пока ставим дефолтное:
+                title = "Управление сектором"
+                showBackButton = true
+                onBackClick = { sectorsActive.component.onGoBack() }
+            }
+            else -> {
+                title = if (activeRole == AppRole.SECTOR_COORDINATOR && coordinatorSectorTitle != null) {
+                    coordinatorSectorTitle!!
+                } else {
+                    "Сектора ССТ"
+                }
             }
         }
     } else {
@@ -120,35 +132,46 @@ fun SharedTopBar(
     showBackButton: Boolean = false,
     onBackClick: (() -> Unit)? = null
 ) {
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
             .height(56.dp)
             .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.Center
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        if (showBackButton && onBackClick != null) {
-            CustomBackButton(
-                onClick = onBackClick,
-                modifier = Modifier.align(Alignment.CenterStart)
-            )
+        Box(
+            modifier = Modifier.width(48.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            if (showBackButton && onBackClick != null) {
+                CustomBackButton(onClick = onBackClick)
+            }
         }
 
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
         )
-        IconButton(
-            onClick = { /* TODO: Уведомления */ },
-            modifier = Modifier.align(Alignment.CenterEnd)
+
+        Box(
+            modifier = Modifier.width(48.dp),
+            contentAlignment = Alignment.CenterEnd
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Notifications,
-                contentDescription = "Уведомления",
-                tint = MaterialTheme.colorScheme.outline
-            )
+            IconButton(
+                onClick = { /* TODO: Уведомления */ }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Уведомления",
+                    tint = MaterialTheme.colorScheme.outline
+                )
+            }
         }
     }
 }
