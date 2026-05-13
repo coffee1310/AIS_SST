@@ -165,6 +165,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\Curator\CoordinatorHome.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Pages\Curator\RegistrationRequests.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -231,6 +235,9 @@
     </Compile>
     <Compile Include="Pages\Coordinator\CreateEvent.xaml.cs">
       <DependentUpon>CreateEvent.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Curator\CoordinatorHome.xaml.cs">
+      <DependentUpon>CoordinatorHome.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Curator\RegistrationRequests.xaml.cs">
       <DependentUpon>RegistrationRequests.xaml</DependentUpon>

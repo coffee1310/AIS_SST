@@ -36,8 +36,29 @@
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock x:Name="NameTextBlock" Text="Загрузка..." Foreground="White" FontWeight="Bold" Margin="0,0,0,10" FontFamily="Digital Pixel" FontSize="26"/>
                         <StackPanel Orientation="Horizontal">
-                            <!-- ИСПРАВЛЕНИЕ: Добавлено имя RoleTextBlock -->
-                            <TextBlock x:Name="RoleTextBlock" Text="Загрузка роли..." Foreground="White" FontSize="13" Margin="0,0,40,0"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,40,0">
+                                <ToggleButton x:Name="btnRoleSwitch" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="RoleSwitch_Click">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="RoleTextBlock" Text="Загрузка роли..." Foreground="White" FontSize="13"/>
+                                        <Path x:Name="RoleArrow" Data="M0,0 L4,4 L8,0" Stroke="White" StrokeThickness="1.5" VerticalAlignment="Center" Margin="5,2,0,0" Visibility="Collapsed"/>
+                                    </StackPanel>
+                                </ToggleButton>
+                                <Popup x:Name="RolePopup" PlacementTarget="{Binding ElementName=btnRoleSwitch}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                                    <Border Background="#1C1B29" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="8" Padding="5" Margin="0,5,0,0" MinWidth="150">
+                                        <StackPanel>
+                                            <Button Content="Координатор" Style="{StaticResource GhostButtonStyle}" Foreground="White" Click="SetCoordinatorRole_Click" HorizontalAlignment="Left" Margin="5"/>
+                                            <Button Content="Активист" Style="{StaticResource GhostButtonStyle}" Foreground="#7A7886" Click="SetActivistRole_Click" HorizontalAlignment="Left" Margin="5"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+                            </StackPanel>
+
                             <TextBlock x:Name="GroupTextBlock" Text="Группа: Загрузка..." Foreground="White" FontSize="13"/>
                         </StackPanel>
                     </StackPanel>
@@ -112,14 +133,12 @@
                                 <TextBlock x:Name="StudentEmailTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap"/>
                             </Grid>
 
-                            <!-- ИСПРАВЛЕНИЕ: Добавлен блок социальных статусов -->
                             <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <!-- VerticalAlignment="Top" чтобы заголовок не уезжал вниз, если статусов много -->
                                 <TextBlock Grid.Column="0" Text="Социальный статус:" Foreground="White" Margin="0,0,15,0" VerticalAlignment="Top"/>
                                 <TextBlock x:Name="SocialStatusesTextBlock" Grid.Column="1" Text="Загрузка..." Foreground="White" HorizontalAlignment="Right" TextAlignment="Right" TextWrapping="Wrap" LineHeight="20"/>
                             </Grid>

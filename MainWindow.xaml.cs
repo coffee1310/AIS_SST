@@ -248,7 +248,7 @@ namespace Diplom_Stud
             {
                 NavProfile.IsChecked = true;
             }
-            else if (e.Content is Pages.Activist.Home)
+            else if (e.Content is Pages.Activist.Home || e.Content is Pages.Coordinator.CoordinatorHome) 
             {
                 NavHome.IsChecked = true;
             }
@@ -292,9 +292,22 @@ namespace Diplom_Stud
 
         private void MenuHome_Click(object sender, RoutedEventArgs e)
         {
-            if (!(MainFrame.Content is Pages.Activist.Home))
+            var data = App.CurrentUserProfile;
+            if (data == null) return;
+
+            if (data.roleTitle == "Coordinator" || data.roleTitle == "Sector_coordinator" || data.roleTitle == "Admin")
             {
-                MainFrame.Navigate(new Pages.Activist.Home());
+                if (!(MainFrame.Content is Pages.Coordinator.CoordinatorHome))
+                {
+                    MainFrame.Navigate(new Pages.Coordinator.CoordinatorHome());
+                }
+            }
+            else 
+            {
+                if (!(MainFrame.Content is Pages.Activist.Home))
+                {
+                    MainFrame.Navigate(new Pages.Activist.Home());
+                }
             }
         }
 

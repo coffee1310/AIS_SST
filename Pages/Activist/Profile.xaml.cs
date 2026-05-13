@@ -102,12 +102,23 @@ namespace Diplom_Stud.Pages.Activist
             {
                 NameTextBlock.Text = $"{data.surname} {data.name} {data.patronymic}".Trim();
 
-                // Формирование названия роли
-                RoleTextBlock.Text = GetRoleDisplayName(data.roleTitle, data.coordinatorSector);
+                bool isCoordinator = data.roleTitle == "Coordinator" || data.roleTitle == "Sector_coordinator" || data.roleTitle == "Admin";
 
-                // Формирование аббревиатуры группы
+                if (isCoordinator)
+                {
+                    RoleArrow.Visibility = Visibility.Visible;
+                    btnRoleSwitch.IsHitTestVisible = true;
+                    RoleTextBlock.Text = App.IsActivistMode ? "Активист студсовета" : GetRoleDisplayName(data.roleTitle, data.coordinatorSector);
+                }
+                else
+                {
+                    RoleArrow.Visibility = Visibility.Collapsed;
+                    btnRoleSwitch.IsHitTestVisible = false;
+                    RoleTextBlock.Text = GetRoleDisplayName(data.roleTitle, data.coordinatorSector);
+                }
+
                 string course = data.courseNumber?.ToString() ?? "";
-                string specAcronym = GetSpecialityAcronym(data.specialityTitle);
+                string specAcronym = data.shortSpecialityTitle ?? "";
                 string group = data.groupTitle ?? "";
 
                 if (!string.IsNullOrEmpty(group))
@@ -138,16 +149,13 @@ namespace Diplom_Stud.Pages.Activist
                 GenderTextBlock.Text = !string.IsNullOrEmpty(data.gender) ? data.gender : "Не указан";
                 StudentEmailTextBlock.Text = data.studentEmail ?? "Не указана";
 
-                // Форматирование телефона
                 PhoneTextBlock.Text = FormatPhoneNumber(data.phoneNumber);
 
                 AdditionalEmailTextBlock.Text = data.additionalEmail ?? "Не указана";
                 VkLinkTextBlock.Text = data.vkLink ?? "Не указана";
 
-                // Вывод социальных статусов в столбик
                 if (data.socialStatuses != null && data.socialStatuses.Count > 0)
                 {
-                    // string.Join("\n", ...) склеит все элементы списка, поставив перенос строки между ними
                     SocialStatusesTextBlock.Text = string.Join("\n", data.socialStatuses);
                 }
                 else
@@ -170,30 +178,24 @@ namespace Diplom_Stud.Pages.Activist
             }
         }
 
-        // --- Метод для форматирования телефона по маске +7 (***) ***-**-** ---
         private string FormatPhoneNumber(string phone)
         {
             if (string.IsNullOrWhiteSpace(phone)) return "Не указан";
 
-            // Оставляем только цифры
             var digits = new string(phone.Where(char.IsDigit).ToArray());
 
-            // Если номер начинается с 7 или 8 и длина 11 символов
             if (digits.Length == 11 && (digits.StartsWith("7") || digits.StartsWith("8")))
             {
                 return $"+7 ({digits.Substring(1, 3)}) {digits.Substring(4, 3)}-{digits.Substring(7, 2)}-{digits.Substring(9, 2)}";
             }
-            // На случай, если бэкенд возвращает 10 цифр (без кода страны)
             else if (digits.Length == 10)
             {
                 return $"+7 ({digits.Substring(0, 3)}) {digits.Substring(3, 3)}-{digits.Substring(6, 2)}-{digits.Substring(8, 2)}";
             }
 
-            // Если формат неизвестен, возвращаем как есть, чтобы ничего не сломать
             return phone;
         }
 
-        // --- Метод для перевода роли в красивый текст ---
         private string GetRoleDisplayName(string role, string sector)
         {
             if (role == "Sector_coordinator" || role == "Coordinator")
@@ -214,26 +216,7 @@ namespace Diplom_Stud.Pages.Activist
                 return "Администратор";
             }
 
-            // Если роль не распознана, выводим её как есть (или заглушку)
             return !string.IsNullOrEmpty(role) ? role : "Студент";
-        }
-
-        private string GetSpecialityAcronym(string title)
-        {
-            if (string.IsNullOrWhiteSpace(title)) return "";
-
-            var words = title.Split(new[] { ' ', '-' }, StringSplitOptions.RemoveEmptyEntries);
-            string acronym = "";
-
-            foreach (var word in words)
-            {
-                if (word.Length > 0 && char.IsLetter(word[0]))
-                {
-                    acronym += char.ToUpper(word[0]);
-                }
-            }
-
-            return acronym;
         }
 
         private BitmapImage GetImageFromBase64(string base64String)
@@ -297,6 +280,37 @@ namespace Diplom_Stud.Pages.Activist
         {
             NavigationService?.Navigate(new PointsHistory());
         }
+
+        private void RoleSwitch_Click(object sender, RoutedEventArgs e)
+        {
+            RolePopup.IsOpen = true;
+        }
+
+        private void SetCoordinatorRole_Click(object sender, RoutedEventArgs e)
+        {
+            RolePopup.IsOpen = false;
+            App.IsActivistMode = false; 
+            UpdateUIWithUserData();
+
+            if (Window.GetWindow(this) is MainWindow mainWindow)
+            {
+                mainWindow.UpdateUserMenu();
+                NavigationService?.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorHome());
+            }
+        }
+
+        private void SetActivistRole_Click(object sender, RoutedEventArgs e)
+        {
+            RolePopup.IsOpen = false;
+            App.IsActivistMode = true;
+            UpdateUIWithUserData();
+
+            if (Window.GetWindow(this) is MainWindow mainWindow)
+            {
+                mainWindow.UpdateUserMenu();
+                NavigationService?.Navigate(new Diplom_Stud.Pages.Activist.Home());
+            }
+        }
     }
 
     public class UserProfileData
@@ -311,6 +325,7 @@ namespace Diplom_Stud.Pages.Activist
         public string dateOfBirth { get; set; }
         public int? courseNumber { get; set; }
         public string specialityTitle { get; set; }
+        public string shortSpecialityTitle { get; set; } 
         public string groupTitle { get; set; }
         public string studentEmail { get; set; }
         public string additionalEmail { get; set; }
