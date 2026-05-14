@@ -415,4 +415,120 @@ public class SectorService {
 
         log.info("User {} successfully left sector {}", userId, sectorId);
     }
+
+    @Transactional
+    public SectorDTO updateSector(Long sectorId, SectorDTO sectorDTO) throws RoleNotFoundException {
+        log.info("Updating sector with id: {}", sectorId);
+
+        // 1. Находим существующий сектор
+        Sector existingSector = sectorRepository.findById(sectorId)
+                .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + sectorId + " не существует"));
+
+        // 2. Обновляем основные поля
+        if (sectorDTO.getTitle() != null) {
+            existingSector.setTitle(sectorDTO.getTitle());
+        }
+        if (sectorDTO.getDescription() != null) {
+            existingSector.setDescription(sectorDTO.getDescription());
+        }
+        if (sectorDTO.getIsActive() != null) {
+            existingSector.setIsActive(sectorDTO.getIsActive());
+        }
+
+        // 3. Обновляем фото (если передано новое)
+        if (sectorDTO.getPhoto() != null && !sectorDTO.getPhoto().isEmpty()) {
+            try {
+                // Удаляем старое фото, если оно есть
+                if (existingSector.getPathToPhoto() != null && !existingSector.getPathToPhoto().isEmpty()) {
+                    sectorPhotoService.deletePhoto(existingSector.getPathToPhoto());
+                    log.info("Old photo deleted for sector: {}", sectorId);
+                }
+
+                // Сохраняем новое фото
+                String photoPath = sectorPhotoService.savePhotoFromBase64(sectorDTO.getPhoto(), sectorId);
+                existingSector.setPathToPhoto(photoPath);
+                log.info("New photo saved for sector: {}", sectorId);
+            } catch (IOException e) {
+                log.error("Failed to save photo for sector: {}", sectorId, e);
+                throw new RuntimeException("Ошибка при сохранении фото сектора", e);
+            }
+        }
+
+        // 4. Сохраняем обновленный сектор
+        Sector updatedSector = sectorRepository.save(existingSector);
+        log.info("Sector updated with id: {}", updatedSector.getId());
+
+        // 5. Обновляем координаторов (если передан новый список)
+        if (sectorDTO.getCoordinatorIds() != null) {
+            updateCoordinators(sectorId, sectorDTO.getCoordinatorIds());
+        }
+
+        // 6. Получаем обновленный DTO
+        SectorDTO result = sectorMapper.toSectorDTO(updatedSector, sectorPhotoService);
+
+        // 7. Добавляем фото в DTO
+        if (updatedSector.getPathToPhoto() != null && !updatedSector.getPathToPhoto().isEmpty()) {
+            String photoBase64 = sectorPhotoService.getPhotoAsBase64(updatedSector.getPathToPhoto());
+            result.setPhoto(photoBase64);
+        }
+
+        // 8. Добавляем информацию о координаторах
+        List<SectorParticipant> coordinators = sectorParticipantRepository
+                .findBySectorIdAndIsCoordinatorTrue(sectorId);
+
+        List<Long> coordinatorIds = coordinators.stream()
+                .map(participant -> participant.getStudent().getId())
+                .collect(Collectors.toList());
+        result.setCoordinatorIds(coordinatorIds);
+
+        List<SectorParticipantResponseDTO> coordinatorDTOs = coordinators.stream()
+                .map(coordinator -> sectorParticipantMapper.toResponseDto(coordinator, userPhotoService))
+                .collect(Collectors.toList());
+        result.setCoordinators(coordinatorDTOs);
+
+        log.info("Sector {} updated with {} coordinator(s)", sectorId, coordinatorIds.size());
+
+        return result;
+    }
+
+    /**
+     * Обновление списка координаторов сектора
+     */
+    @Transactional
+    private void updateCoordinators(Long sectorId, List<Long> newCoordinatorIds) throws RoleNotFoundException {
+        log.info("Updating coordinators for sector {}: new coordinators: {}", sectorId, newCoordinatorIds);
+
+        // 1. Получаем текущих координаторов
+        List<SectorParticipant> currentCoordinators = sectorParticipantRepository
+                .findBySectorIdAndIsCoordinatorTrue(sectorId);
+
+        List<Long> currentCoordinatorIds = currentCoordinators.stream()
+                .map(c -> c.getStudent().getId())
+                .collect(Collectors.toList());
+
+        // 2. Определяем, кого нужно удалить из координаторов
+        List<Long> toRemove = currentCoordinatorIds.stream()
+                .filter(id -> !newCoordinatorIds.contains(id))
+                .collect(Collectors.toList());
+
+        // 3. Определяем, кого нужно добавить в координаторы
+        List<Long> toAdd = newCoordinatorIds.stream()
+                .filter(id -> !currentCoordinatorIds.contains(id))
+                .collect(Collectors.toList());
+
+        // 4. Удаляем координаторов
+        for (Long userId : toRemove) {
+            removeCoordinatorFromSector(sectorId, userId);
+            log.info("Coordinator {} removed from sector {}", userId, sectorId);
+        }
+
+        // 5. Добавляем новых координаторов
+        for (Long userId : toAdd) {
+            addCoordinator(sectorId, userId);
+            log.info("Coordinator {} added to sector {}", userId, sectorId);
+        }
+
+        log.info("Coordinators updated for sector {}: removed {}, added {}",
+                sectorId, toRemove.size(), toAdd.size());
+    }
 }

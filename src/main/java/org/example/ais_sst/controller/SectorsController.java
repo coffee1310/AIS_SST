@@ -193,4 +193,17 @@ public class SectorsController extends BaseController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Обновить сектор")
+    public ResponseEntity<SectorDTO> updateSector(
+            @PathVariable Long id,
+            @Valid @RequestBody SectorDTO sectorDTO) throws RoleNotFoundException {
+
+        logInfo("/api/sector/{}", "Updating sector", id);
+
+        SectorDTO updatedSector = sectorService.updateSector(id, sectorDTO);
+
+        return ResponseEntity.ok(updatedSector);
+    }
 }
