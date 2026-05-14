@@ -1,6 +1,5 @@
 ﻿using Diplom_Stud.Components;
 using Diplom_Stud.Pages.Activist;
-using Microsoft.Toolkit.Uwp.Notifications;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -85,7 +84,9 @@ namespace Diplom_Stud.Pages.General
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var authResponse = JsonSerializer.Deserialize<AuthResponse>(responseBody, options);
+
+                    var apiResponse = JsonSerializer.Deserialize<LoginApiResponse>(responseBody, options);
+                    var authResponse = apiResponse?.data;
 
                     if (authResponse != null && !string.IsNullOrEmpty(authResponse.token))
                     {
@@ -296,7 +297,9 @@ namespace Diplom_Stud.Pages.General
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var authResponse = JsonSerializer.Deserialize<AuthResponse>(responseBody, options);
+
+                    var apiResponse = JsonSerializer.Deserialize<LoginApiResponse>(responseBody, options);
+                    var authResponse = apiResponse?.data;
 
                     if (authResponse != null && !string.IsNullOrEmpty(authResponse.token))
                     {
@@ -337,10 +340,16 @@ namespace Diplom_Stud.Pages.General
         }
     }
 
+    public class LoginApiResponse
+    {
+        public AuthResponse data { get; set; }
+        public string message { get; set; }
+    }
+
     public class AuthResponse
     {
         public string token { get; set; }
-        public string refreshToken { get; set; } 
+        public string refreshToken { get; set; }
         public string type { get; set; }
         public int id { get; set; }
         public string email { get; set; }

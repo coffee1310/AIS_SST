@@ -22,9 +22,13 @@ namespace Diplom_Stud.Pages.Activist
     {
         private static readonly HttpClient _httpClient = new HttpClient();
 
-        public Profile()
+        private int? _viewUserId;
+        private bool IsViewMode => _viewUserId.HasValue;
+
+        public Profile(int? userId = null)
         {
             InitializeComponent();
+            _viewUserId = userId;
 
             if (_httpClient.BaseAddress == null)
             {
@@ -51,27 +55,78 @@ namespace Diplom_Stud.Pages.Activist
                     return;
                 }
 
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                HttpResponseMessage response = await _httpClient.GetAsync("/api/users/me");
+                HttpResponseMessage response;
+
+                if (IsViewMode)
+                {
+                    response = await _httpClient.GetAsync($"/api/users/all?id={_viewUserId.Value}");
+                }
+                else
+                {
+                    response = await _httpClient.GetAsync("/api/users/me");
+                }
 
                 if (response.IsSuccessStatusCode)
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
-
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var userData = JsonSerializer.Deserialize<UserProfileData>(responseBody, options);
 
-                    if (userData != null)
+                    UserProfileData dataToDisplay = null;
+
+                    if (IsViewMode)
                     {
-                        App.CurrentUserProfile = userData;
-                        UpdateUIWithUserData();
-
-                        if (Window.GetWindow(this) is MainWindow mainWindow)
+                        var pageData = JsonSerializer.Deserialize<UserPageResponse>(responseBody, options);
+                        if (pageData?.content != null && pageData.content.Count > 0)
                         {
-                            mainWindow.UpdateUserMenu();
+                            var item = pageData.content[0];
+                            dataToDisplay = new UserProfileData
+                            {
+                                id = item.id,
+                                name = item.name,
+                                surname = item.surname,
+                                patronymic = item.patronymic,
+                                events_count = item.events_count,
+                                points_count = item.points_count,
+                                rank = item.rank,
+                                dateOfBirth = item.dateOfBirth,
+                                courseNumber = item.courseNumber,
+                                specialityTitle = item.specialityName,
+                                shortSpecialityTitle = item.specialityShortTitle,
+                                groupTitle = item.groupName,
+                                studentEmail = item.studentEmail,
+                                additionalEmail = item.additionalEmail,
+                                phoneNumber = item.phoneNumber,
+                                vkLink = item.vkLink,
+                                photo = item.photo,
+                                roleTitle = item.role,
+                                gender = item.gender,
+                                coordinatorSector = item.coordinatorSectorTitle,
+                                socialStatuses = item.socialStatuses
+                            };
                         }
+                    }
+                    else
+                    {
+                        dataToDisplay = JsonSerializer.Deserialize<UserProfileData>(responseBody, options);
+                        if (dataToDisplay != null)
+                        {
+                            App.CurrentUserProfile = dataToDisplay;
+                            if (Window.GetWindow(this) is MainWindow mainWindow)
+                            {
+                                mainWindow.UpdateUserMenu();
+                            }
+                        }
+                    }
+
+                    if (dataToDisplay != null)
+                    {
+                        UpdateUIWithUserData(dataToDisplay);
+                    }
+                    else
+                    {
+                        CustomMessageBox.Show("Пользователь не найден.", "Ошибка", CustomMessageBox.MessageType.Error);
                     }
                 }
                 else
@@ -83,38 +138,47 @@ namespace Diplom_Stud.Pages.Activist
                     }
                     else
                     {
-                        CustomMessageBox.Show($"Ошибка загрузки данных профиля: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
+                        CustomMessageBox.Show($"Ошибка загрузки данных: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Произошла ошибка при загрузке профиля: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                CustomMessageBox.Show($"Произошла ошибка: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
         }
 
-        private void UpdateUIWithUserData()
+        private void UpdateUIWithUserData(UserProfileData data)
         {
-            var data = App.CurrentUserProfile;
-            if (data == null) return;
-
             try
             {
                 NameTextBlock.Text = $"{data.surname} {data.name} {data.patronymic}".Trim();
 
-                bool isCoordinator = data.roleTitle == "Coordinator" || data.roleTitle == "Sector_coordinator" || data.roleTitle == "Admin";
+                if (IsViewMode)
+                {
+                    BackButton.Visibility = Visibility.Visible;
+                    ActionButtonsGrid.Visibility = Visibility.Collapsed; 
+                    PortfolioUploadPanel.Visibility = Visibility.Collapsed;
 
-                if (isCoordinator)
-                {
-                    RoleArrow.Visibility = Visibility.Visible;
-                    btnRoleSwitch.IsHitTestVisible = true;
-                    RoleTextBlock.Text = App.IsActivistMode ? "Активист студсовета" : GetRoleDisplayName(data.roleTitle, data.coordinatorSector);
-                }
-                else
-                {
                     RoleArrow.Visibility = Visibility.Collapsed;
                     btnRoleSwitch.IsHitTestVisible = false;
                     RoleTextBlock.Text = GetRoleDisplayName(data.roleTitle, data.coordinatorSector);
+                }
+                else
+                {
+                    bool isCoordinator = data.roleTitle == "Coordinator" || data.roleTitle == "Sector_coordinator" || data.roleTitle == "Admin";
+                    if (isCoordinator)
+                    {
+                        RoleArrow.Visibility = Visibility.Visible;
+                        btnRoleSwitch.IsHitTestVisible = true;
+                        RoleTextBlock.Text = App.IsActivistMode ? "Активист студсовета" : GetRoleDisplayName(data.roleTitle, data.coordinatorSector);
+                    }
+                    else
+                    {
+                        RoleArrow.Visibility = Visibility.Collapsed;
+                        btnRoleSwitch.IsHitTestVisible = false;
+                        RoleTextBlock.Text = GetRoleDisplayName(data.roleTitle, data.coordinatorSector);
+                    }
                 }
 
                 string course = data.courseNumber?.ToString() ?? "";
@@ -171,6 +235,25 @@ namespace Diplom_Stud.Pages.Activist
                         ProfilePhoto.Fill = new ImageBrush(bmp) { Stretch = Stretch.UniformToFill };
                     }
                 }
+
+                var userSectors = new List<string>();
+
+                if (!string.IsNullOrEmpty(data.coordinatorSector))
+                {
+                    userSectors.Add($"{data.coordinatorSector} (Координатор)");
+                }
+
+                if (userSectors.Count > 0)
+                {
+                    UserSectorsList.ItemsSource = userSectors;
+                    NoSectorsText.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    UserSectorsList.ItemsSource = null;
+                    NoSectorsText.Visibility = Visibility.Visible;
+                }
+
             }
             catch (Exception ex)
             {
@@ -289,8 +372,8 @@ namespace Diplom_Stud.Pages.Activist
         private void SetCoordinatorRole_Click(object sender, RoutedEventArgs e)
         {
             RolePopup.IsOpen = false;
-            App.IsActivistMode = false; 
-            UpdateUIWithUserData();
+            App.IsActivistMode = false;
+            UpdateUIWithUserData(App.CurrentUserProfile);
 
             if (Window.GetWindow(this) is MainWindow mainWindow)
             {
@@ -303,12 +386,20 @@ namespace Diplom_Stud.Pages.Activist
         {
             RolePopup.IsOpen = false;
             App.IsActivistMode = true;
-            UpdateUIWithUserData();
+            UpdateUIWithUserData(App.CurrentUserProfile);
 
             if (Window.GetWindow(this) is MainWindow mainWindow)
             {
                 mainWindow.UpdateUserMenu();
                 NavigationService?.Navigate(new Diplom_Stud.Pages.Activist.Home());
+            }
+        }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (NavigationService.CanGoBack)
+            {
+                NavigationService.GoBack();
             }
         }
     }
@@ -325,7 +416,7 @@ namespace Diplom_Stud.Pages.Activist
         public string dateOfBirth { get; set; }
         public int? courseNumber { get; set; }
         public string specialityTitle { get; set; }
-        public string shortSpecialityTitle { get; set; } 
+        public string shortSpecialityTitle { get; set; }
         public string groupTitle { get; set; }
         public string studentEmail { get; set; }
         public string additionalEmail { get; set; }
@@ -335,6 +426,38 @@ namespace Diplom_Stud.Pages.Activist
         public string roleTitle { get; set; }
         public string gender { get; set; }
         public string coordinatorSector { get; set; }
+        public int? coordinatorSectorId { get; set; }
+        public string coordinatorSectorTitle { get; set; }
+        public List<string> socialStatuses { get; set; }
+    }
+
+    public class UserPageResponse
+    {
+        public List<UserAllItemDto> content { get; set; }
+    }
+
+    public class UserAllItemDto
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public string surname { get; set; }
+        public string patronymic { get; set; }
+        public int events_count { get; set; }
+        public int points_count { get; set; }
+        public int rank { get; set; }
+        public string dateOfBirth { get; set; }
+        public int? courseNumber { get; set; }
+        public string groupName { get; set; }
+        public string specialityName { get; set; }
+        public string specialityShortTitle { get; set; }
+        public string studentEmail { get; set; }
+        public string additionalEmail { get; set; }
+        public string phoneNumber { get; set; }
+        public string vkLink { get; set; }
+        public string photo { get; set; }
+        public string role { get; set; }
+        public string gender { get; set; }
+        public string coordinatorSectorTitle { get; set; }
         public List<string> socialStatuses { get; set; }
     }
 }

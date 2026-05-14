@@ -76,7 +76,7 @@
                         <ItemsControl x:Name="ParticipantsListControl">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="20">
+                                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="20" Cursor="Hand" Tag="{Binding Id}" MouseLeftButtonUp="ParticipantCard_Click">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -121,7 +121,7 @@
                         <ItemsControl x:Name="RequestsListControl">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="20">
+                                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="20" Cursor="Hand" Tag="{Binding Id}" MouseLeftButtonUp="ParticipantCard_Click">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>

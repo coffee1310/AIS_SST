@@ -6,7 +6,7 @@
       xmlns:local="clr-namespace:Diplom_Stud.Pages.Activist"
       mc:Ignorable="d" 
       Title="Profile Page" UseLayoutRounding="True" SnapsToDevicePixels="True" 
-      d:DesignHeight="1211" d:DesignWidth="1111"
+      d:DesignHeight="1300" d:DesignWidth="1111"
       Loaded="Page_Loaded">
 
     <Grid Background="Transparent">
@@ -18,9 +18,13 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="0,0,0,40">
+                <Button x:Name="BackButton" Content="&lt; Назад" Style="{StaticResource GhostButtonStyle}" Foreground="#A084FB" FontFamily="Montserrat" FontSize="14" HorizontalAlignment="Left" Margin="0,0,0,20" Visibility="Collapsed" Click="BackButton_Click"/>
+
+                <Grid Grid.Row="1" Margin="0,0,0,40">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
@@ -64,7 +68,7 @@
                     </StackPanel>
                 </Grid>
 
-                <UniformGrid Grid.Row="1" Columns="3" Margin="0,0,0,20">
+                <UniformGrid Grid.Row="2" Columns="3" Margin="0,0,0,20">
                     <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,10,0" Padding="10,15">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="Всего мероприятий:" Foreground="#02B3BA" FontSize="12" Margin="0,0,0,5" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
@@ -87,12 +91,12 @@
                     </Border>
                 </UniformGrid>
 
-                <Grid Grid.Row="2" Margin="0,0,0,30">
+                <Grid x:Name="ActionButtonsGrid" Grid.Row="3" Margin="0,0,0,30">
                     <Button Content="Редактировать" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Left" Width="180" FontFamily="Digital Pixel" FontSize="12"/>
                     <Button Content="История баллов" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" Width="182" Click="Button_Click" FontFamily="Digital Pixel" FontSize="12"/>
                 </Grid>
 
-                <Grid Grid.Row="3" Margin="0,0,0,20">
+                <Grid Grid.Row="4" Margin="0,0,0,20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.2*"/>
                         <ColumnDefinition Width="20"/>
@@ -183,31 +187,35 @@
                     </Border>
                 </Grid>
 
-                <Border Grid.Row="4" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                <Border Grid.Row="5" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
                     <StackPanel>
                         <TextBlock Text="Портфолио" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18"/>
                         <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
-                        <TextBlock Text="Загрузить документы" Foreground="White" Margin="0,0,0,15" FontFamily="Digital Pixel" FontSize="14"/>
-                        <Grid Margin="0,0,0,15" Cursor="Hand">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Path Grid.Column="0" Data="M3,2 L10,2 L14,6 L14,16 C14,17 13,18 12,18 L3,18 C2,18 1,17 1,16 L1,4 C1,3 2,2 3,2 Z M9,2 L9,7 L14,7" Stroke="#02B3BA" StrokeThickness="1.5" Fill="Transparent" Width="14" Height="18" Stretch="Uniform" Margin="0,0,15,0"/>
-                            <TextBlock Grid.Column="1" Text="Загрузить" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
-                        </Grid>
-                        <Grid Margin="0,0,0,25" Cursor="Hand">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Path Grid.Column="0" Data="M3,2 L10,2 L14,6 L14,16 C14,17 13,18 12,18 L3,18 C2,18 1,17 1,16 L1,4 C1,3 2,2 3,2 Z M9,2 L9,7 L14,7" Stroke="#02B3BA" StrokeThickness="1.5" Fill="Transparent" Width="14" Height="18" Stretch="Uniform" Margin="0,0,15,0"/>
-                            <TextBlock Grid.Column="1" Text="Загрузить PDF" Foreground="White" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
-                        </Grid>
+
+                        <StackPanel x:Name="PortfolioUploadPanel">
+                            <TextBlock Text="Загрузить документы" Foreground="White" Margin="0,0,0,15" FontFamily="Digital Pixel" FontSize="14"/>
+                            <Grid Margin="0,0,0,15" Cursor="Hand">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Path Grid.Column="0" Data="M3,2 L10,2 L14,6 L14,16 C14,17 13,18 12,18 L3,18 C2,18 1,17 1,16 L1,4 C1,3 2,2 3,2 Z M9,2 L9,7 L14,7" Stroke="#02B3BA" StrokeThickness="1.5" Fill="Transparent" Width="14" Height="18" Stretch="Uniform" Margin="0,0,15,0"/>
+                                <TextBlock Grid.Column="1" Text="Загрузить" Foreground="White" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,25" Cursor="Hand">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Path Grid.Column="0" Data="M3,2 L10,2 L14,6 L14,16 C14,17 13,18 12,18 L3,18 C2,18 1,17 1,16 L1,4 C1,3 2,2 3,2 Z M9,2 L9,7 L14,7" Stroke="#02B3BA" StrokeThickness="1.5" Fill="Transparent" Width="14" Height="18" Stretch="Uniform" Margin="0,0,15,0"/>
+                                <TextBlock Grid.Column="1" Text="Загрузить PDF" Foreground="White" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+
                         <TextBlock Text="Просмотр и выгрузка" Foreground="White" Margin="0,0,0,15" FontFamily="Digital Pixel" FontSize="14"/>
                         <Grid Margin="0,0,0,15" Cursor="Hand">
                             <Grid.ColumnDefinitions>
@@ -231,6 +239,28 @@
                         </Grid>
                     </StackPanel>
                 </Border>
+
+                <Border x:Name="UserSectorsGrid" Grid.Row="6" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="Состоит в секторах" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18"/>
+                        <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
+
+                        <ItemsControl x:Name="UserSectorsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Path Data="M8,0 C3.5,0 0,3.5 0,8 C0,13.5 8,16 8,16 C8,16 16,13.5 16,8 C16,3.5 12.5,0 8,0 Z M8,11 A3,3 0 1,1 8,5 A3,3 0 0,1 8,11 Z" 
+                                              Fill="#02B3BA" Stretch="Uniform" Width="12" Height="12" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding}" Foreground="White" FontSize="14" FontFamily="Montserrat" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock x:Name="NoSectorsText" Text="Не состоит ни в одном секторе" Foreground="#7A7886" FontSize="13" FontFamily="Montserrat Thin" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+
             </Grid>
         </ScrollViewer>
     </Grid>

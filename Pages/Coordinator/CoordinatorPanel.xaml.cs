@@ -1,4 +1,5 @@
 ﻿using Diplom_Stud.Components;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,6 +12,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -20,6 +22,8 @@ namespace Diplom_Stud.Pages.Coordinator
     {
         private static readonly HttpClient _httpClient = new HttpClient();
         private int _sectorId;
+        private SectorDto _currentLoadedSector;
+        private string _newBase64Image = null;
 
         public CoordinatorPanel(int sectorId)
         {
@@ -38,7 +42,7 @@ namespace Diplom_Stud.Pages.Coordinator
         {
             if (_sectorId == 0)
             {
-                CustomMessageBox.Show("Внимание: Передан ID сектора = 0. Скорее всего, сектор не найден в MainWindow.", "Дебаг", CustomMessageBox.MessageType.Error);
+                CustomMessageBox.Show("Внимание: Передан ID сектора = 0. Скорее всего, сектор не найден в профиле.", "Дебаг", CustomMessageBox.MessageType.Error);
             }
 
             await CheckPendingRequestsAsync();
@@ -85,15 +89,21 @@ namespace Diplom_Stud.Pages.Coordinator
                     string responseBody = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     var sectors = JsonSerializer.Deserialize<List<SectorDto>>(responseBody, options);
-                    var sector = sectors?.FirstOrDefault(s => s.id == _sectorId);
+                    _currentLoadedSector = sectors?.FirstOrDefault(s => s.id == _sectorId);
 
-                    if (sector != null)
+                    if (_currentLoadedSector != null)
                     {
-                        EditDescriptionBox.Text = sector.description;
-                        if (!string.IsNullOrEmpty(sector.photo))
+                        EditDescriptionBox.Text = _currentLoadedSector.description;
+                        if (!string.IsNullOrEmpty(_currentLoadedSector.photo))
                         {
-                            BitmapImage bmp = GetImageFromBase64(sector.photo);
+                            BitmapImage bmp = GetImageFromBase64(_currentLoadedSector.photo);
                             if (bmp != null) EditSectorImage.ImageSource = bmp;
+                            _newBase64Image = _currentLoadedSector.photo;
+                        }
+                        else
+                        {
+                            EditSectorImage.ImageSource = new BitmapImage(new Uri("pack://application:,,,/Resources/sector.png"));
+                            _newBase64Image = null;
                         }
                     }
                 }
@@ -115,46 +125,46 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                string url = $"/api/users/all?page=0&size=50&sortBy=id&sortDirection=ASC&sectorId={_sectorId}";
+                string url = $"/api/sector/{_sectorId}/participants?page=0&size=1000&sortBy=entryDate&sortDirection=DESC";
                 HttpResponseMessage response = await _httpClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var pageData = JsonSerializer.Deserialize<PageResponse<UserListDto>>(responseBody, options);
+                    var pageData = JsonSerializer.Deserialize<PageResponse<ParticipantDto>>(responseBody, options);
 
                     var participants = new List<ParticipantViewModel>();
 
                     if (pageData?.content != null)
                     {
-                        foreach (var user in pageData.content)
+                        foreach (var p in pageData.content)
                         {
-                            bool isCoordinator = user.role != null && user.role.IndexOf("coordinator", StringComparison.OrdinalIgnoreCase) >= 0;
-                            string fullName = $"{user.surname} {user.name} {user.patronymic}".Trim();
+                            if (p.status != "Активный") continue;
 
-                            if (isCoordinator) fullName += " (Координатор)";
+                            string fullName = $"{p.studentSurname} {p.studentName} {p.studentPatronymic}".Trim();
+                            if (p.isCoordinator) fullName += " (Координатор)";
 
                             if (!string.IsNullOrEmpty(searchQuery))
                             {
                                 bool matchName = fullName.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0;
-                                bool matchGroup = user.groupName != null && user.groupName.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0;
+                                bool matchGroup = p.studentGroupTitle != null && p.studentGroupTitle.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0;
 
                                 if (!matchName && !matchGroup) continue;
                             }
 
-                            string course = user.courseNumber?.ToString() ?? "";
-                            string specAcronym = GetSpecialityAcronym(user.specialityName);
-                            string group = user.groupName ?? "";
+                            string course = p.studentCourseNumber?.ToString() ?? "";
+                            string specAcronym = GetSpecialityAcronym(p.studentSpecialityTitle);
+                            string group = p.studentGroupTitle ?? "";
                             string groupDisplay = !string.IsNullOrEmpty(group) ? $"{course}{specAcronym}-{group}" : "Нет";
 
                             participants.Add(new ParticipantViewModel
                             {
-                                Id = user.id,
+                                Id = p.studentId, 
                                 FullName = fullName,
-                                IsCoordinator = isCoordinator,
-                                GroupAndEmail = $"Группа: {groupDisplay} | {user.studentEmail}",
-                                Avatar = GetImageFromBase64(user.photo) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
+                                IsCoordinator = p.isCoordinator,
+                                GroupAndEmail = $"Группа: {groupDisplay} | {p.studentEmail}",
+                                Avatar = GetImageFromBase64(p.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
                             });
                         }
                     }
@@ -181,7 +191,8 @@ namespace Diplom_Stud.Pages.Coordinator
             try
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-                HttpResponseMessage response = await _httpClient.GetAsync("/api/sector/introductions");
+
+                HttpResponseMessage response = await _httpClient.GetAsync("/api/sector/introductions/filter?status=НА_РАССМОТРЕНИИ");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -189,10 +200,9 @@ namespace Diplom_Stud.Pages.Coordinator
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     var allRequests = JsonSerializer.Deserialize<List<IntroductionDto>>(responseBody, options);
 
-                    var activeRequests = allRequests?.Where(r => r.sector_id == _sectorId && r.status == "На рассмотрении").ToList();
+                    var activeRequests = allRequests?.Where(r => r.sector_id == _sectorId).ToList();
                     var requestsViewModels = new List<ParticipantViewModel>();
 
-                    // --- ИСПРАВЛЕНИЕ: СИНХРОНИЗАЦИЯ ПОДСВЕТКИ ---
                     bool hasActive = activeRequests != null && activeRequests.Count > 0;
 
                     BadgeRequests.Visibility = hasActive ? Visibility.Visible : Visibility.Collapsed;
@@ -200,7 +210,6 @@ namespace Diplom_Stud.Pages.Coordinator
                     {
                         mainWindow.SetSectorNotification(hasActive);
                     }
-                    // ---------------------------------------------
 
                     if (hasActive)
                     {
@@ -266,7 +275,7 @@ namespace Diplom_Stud.Pages.Coordinator
             try
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-                HttpResponseMessage response = await _httpClient.GetAsync("/api/sector/introductions");
+                HttpResponseMessage response = await _httpClient.GetAsync("/api/sector/introductions/filter?status=НА_РАССМОТРЕНИИ");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -274,7 +283,7 @@ namespace Diplom_Stud.Pages.Coordinator
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     var allRequests = JsonSerializer.Deserialize<List<IntroductionDto>>(responseBody, options);
 
-                    bool hasActive = allRequests?.Any(r => r.sector_id == _sectorId && r.status == "На рассмотрении") == true;
+                    bool hasActive = allRequests?.Any(r => r.sector_id == _sectorId) == true;
 
                     BadgeRequests.Visibility = hasActive ? Visibility.Visible : Visibility.Collapsed;
                     if (Window.GetWindow(this) is MainWindow mainWindow)
@@ -357,14 +366,137 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
-        private void UploadImage_Click(object sender, RoutedEventArgs e)
+        private void ParticipantCard_Click(object sender, MouseButtonEventArgs e)
         {
-            CustomMessageBox.Show("Здесь будет логика загрузки картинки", "Инфо", CustomMessageBox.MessageType.Success);
+            if (sender is Border border && border.Tag is int userId)
+            {
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.Profile(userId));
+            }
         }
 
-        private void SaveSector_Click(object sender, RoutedEventArgs e)
+        private void UploadImage_Click(object sender, RoutedEventArgs e)
         {
-            CustomMessageBox.Show("Изменения успешно сохранены", "Успех", CustomMessageBox.MessageType.Success);
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg|All files (*.*)|*.*";
+            openFileDialog.Title = "Выберите обложку сектора";
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    byte[] compressedBytes = CompressAndResizeImage(openFileDialog.FileName);
+                    long maxImageSizeBytes = 2 * 1024 * 1024;
+
+                    if (compressedBytes.Length > maxImageSizeBytes)
+                    {
+                        CustomMessageBox.Show("Файл слишком большой даже после сжатия. Выберите фото размером до 2 МБ.", "Ошибка", CustomMessageBox.MessageType.Error);
+                    }
+                    else
+                    {
+                        using (var ms = new MemoryStream(compressedBytes))
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.StreamSource = ms;
+                            bitmap.EndInit();
+                            bitmap.Freeze();
+                            EditSectorImage.ImageSource = bitmap;
+                        }
+
+                        _newBase64Image = $"data:image/jpeg;base64,{Convert.ToBase64String(compressedBytes)}";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CustomMessageBox.Show($"Ошибка при обработке фотографии: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+        }
+
+        private byte[] CompressAndResizeImage(string filePath)
+        {
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                BitmapDecoder decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                BitmapSource original = decoder.Frames[0];
+
+                double maxWidth = 800;
+                double maxHeight = 800;
+                BitmapSource finalImage = original;
+
+                if (original.PixelWidth > maxWidth || original.PixelHeight > maxHeight)
+                {
+                    double ratioX = maxWidth / original.PixelWidth;
+                    double ratioY = maxHeight / original.PixelHeight;
+                    double ratio = Math.Min(ratioX, ratioY);
+
+                    TransformedBitmap resized = new TransformedBitmap(original, new ScaleTransform(ratio, ratio));
+                    finalImage = resized;
+                }
+
+                JpegBitmapEncoder encoder = new JpegBitmapEncoder();
+                encoder.QualityLevel = 80;
+                encoder.Frames.Add(BitmapFrame.Create(finalImage));
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    encoder.Save(ms);
+                    return ms.ToArray();
+                }
+            }
+        }
+
+        private async void SaveSector_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentLoadedSector == null) return;
+
+            string newDescription = EditDescriptionBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(newDescription))
+            {
+                CustomMessageBox.Show("Описание сектора не может быть пустым.", "Ошибка валидации", CustomMessageBox.MessageType.Error);
+                return;
+            }
+
+            LoadingOverlay.Visibility = Visibility.Visible;
+
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                var updatePayload = new
+                {
+                    description = newDescription,
+                    photo = _newBase64Image ?? ""
+                };
+
+                string jsonPayload = JsonSerializer.Serialize(updatePayload);
+                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await _httpClient.PutAsync($"/api/sector/{_sectorId}", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    CustomMessageBox.Show("Изменения успешно сохранены!", "Успех", CustomMessageBox.MessageType.Success);
+
+                    _currentLoadedSector.description = newDescription;
+                    _currentLoadedSector.photo = _newBase64Image ?? "";
+                }
+                else
+                {
+                    string err = await response.Content.ReadAsStringAsync();
+                    CustomMessageBox.Show($"Ошибка сохранения: {response.StatusCode}\n{err}", "Ошибка сервера", CustomMessageBox.MessageType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Произошла ошибка при отправке запроса: {ex.Message}", "Сбой", CustomMessageBox.MessageType.Error);
+            }
+            finally
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
         }
 
         private string GetSpecialityAcronym(string title)
@@ -460,6 +592,22 @@ namespace Diplom_Stud.Pages.Coordinator
         public int sector_id { get; set; }
         public int user_id { get; set; }
         public string status { get; set; }
+    }
+
+    public class ParticipantDto
+    {
+        public int id { get; set; }
+        public int studentId { get; set; }
+        public string studentName { get; set; }
+        public string studentSurname { get; set; }
+        public string studentPatronymic { get; set; }
+        public string studentEmail { get; set; }
+        public string studentPhoto { get; set; }
+        public int? studentCourseNumber { get; set; }
+        public string studentGroupTitle { get; set; }
+        public string studentSpecialityTitle { get; set; }
+        public string status { get; set; }
+        public bool isCoordinator { get; set; }
     }
 
     public class UserListDto

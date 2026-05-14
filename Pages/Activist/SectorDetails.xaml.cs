@@ -3,7 +3,6 @@ using Diplom_Stud.Pages.General;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -53,7 +52,6 @@ namespace Diplom_Stud.Pages.Activist
 
         private async Task LoadSectorDataAsync()
         {
-            // Показываем экран загрузки
             LoadingOverlay.Visibility = Visibility.Visible;
 
             try
@@ -97,7 +95,6 @@ namespace Diplom_Stud.Pages.Activist
             }
             finally
             {
-                // Обязательно скрываем загрузку в конце
                 LoadingOverlay.Visibility = Visibility.Collapsed;
             }
         }
@@ -107,31 +104,49 @@ namespace Diplom_Stud.Pages.Activist
             SectorTitle.Text = _currentSector.title;
             SectorDescription.Text = _currentSector.description;
 
-            CoordinatorName.Text = !string.IsNullOrEmpty(_currentSector.coordinatorFullName)
-                ? _currentSector.coordinatorFullName
-                : "Не назначен";
-
             if (!string.IsNullOrEmpty(_currentSector.photo))
             {
                 BitmapImage bmp = GetImageFromBase64(_currentSector.photo);
                 if (bmp != null) SectorImage.ImageSource = bmp;
             }
 
-            if (!string.IsNullOrEmpty(_currentSector.coordinatorPhoto))
+            if (_currentSector.coordinators != null && _currentSector.coordinators.Count > 0)
             {
-                BitmapImage bmp = GetImageFromBase64(_currentSector.coordinatorPhoto);
-                if (bmp != null)
+                NoCoordinatorsText.Visibility = Visibility.Collapsed;
+                CoordinatorsListControl.Visibility = Visibility.Visible;
+
+                var coordList = new List<CoordinatorViewModel>();
+
+                foreach (var c in _currentSector.coordinators)
                 {
-                    CoordinatorPhotoBrush.ImageSource = bmp;
+                    string fullName = $"{c.studentSurname} {c.studentName} {c.studentPatronymic}".Trim();
+
+                    string course = c.studentCourseNumber?.ToString() ?? "";
+                    string specAcronym = GetSpecialityAcronym(c.studentSpecialityTitle);
+                    string group = c.studentGroupTitle ?? "";
+                    string groupDisplay = !string.IsNullOrEmpty(group) ? $"Группа: {course}{specAcronym}-{group}" : "Группа не указана";
+
+                    ImageSource avatar = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"));
+                    if (!string.IsNullOrEmpty(c.studentPhoto))
+                    {
+                        var bmp = GetImageFromBase64(c.studentPhoto);
+                        if (bmp != null) avatar = bmp;
+                    }
+
+                    coordList.Add(new CoordinatorViewModel
+                    {
+                        FullName = fullName,
+                        GroupInfo = groupDisplay,
+                        Avatar = avatar
+                    });
                 }
-                else
-                {
-                    CoordinatorPhotoBrush.ImageSource = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"));
-                }
+
+                CoordinatorsListControl.ItemsSource = coordList;
             }
             else
             {
-                CoordinatorPhotoBrush.ImageSource = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"));
+                NoCoordinatorsText.Visibility = Visibility.Visible;
+                CoordinatorsListControl.Visibility = Visibility.Collapsed;
             }
 
             if (_currentSector.isCoordinator)
@@ -160,6 +175,18 @@ namespace Diplom_Stud.Pages.Activist
                 ActionBtn.IsEnabled = true;
                 ActionBtn.Opacity = 1.0;
             }
+        }
+
+        private string GetSpecialityAcronym(string title)
+        {
+            if (string.IsNullOrWhiteSpace(title)) return "";
+            var words = title.Split(new[] { ' ', '-' }, StringSplitOptions.RemoveEmptyEntries);
+            string acronym = "";
+            foreach (var word in words)
+            {
+                if (word.Length > 0 && char.IsLetter(word[0])) acronym += char.ToUpper(word[0]);
+            }
+            return acronym;
         }
 
         private BitmapImage GetImageFromBase64(string base64String)
@@ -200,7 +227,7 @@ namespace Diplom_Stud.Pages.Activist
 
                 if (imageBytes != null)
                 {
-                    using (var ms = new MemoryStream(imageBytes))
+                    using (var ms = new System.IO.MemoryStream(imageBytes))
                     {
                         var bitmap = new BitmapImage();
                         bitmap.BeginInit();
@@ -216,7 +243,6 @@ namespace Diplom_Stud.Pages.Activist
             {
                 Debug.WriteLine($"Ошибка обработки фото: {ex.Message}");
             }
-
             return null;
         }
 
@@ -269,5 +295,12 @@ namespace Diplom_Stud.Pages.Activist
                 ActionBtn.IsEnabled = true;
             }
         }
+    }
+
+    public class CoordinatorViewModel
+    {
+        public string FullName { get; set; }
+        public string GroupInfo { get; set; }
+        public ImageSource Avatar { get; set; }
     }
 }

@@ -103,17 +103,14 @@ namespace Diplom_Stud.Pages.Activist
                                 vm.ButtonStyle = FindResource("SectorActiveButtonStyle") as Style;
                             }
 
-                            // --- ОБНОВЛЕННАЯ ЛОГИКА ЗАГРУЗКИ ФОТО СЕКТОРА ---
-                            // Сначала ставим заглушку по умолчанию
                             vm.Image = new BitmapImage(new Uri("pack://application:,,,/Resources/sector.png"));
 
-                            // Если фото пришло, пробуем его "умно" декодировать
                             if (!string.IsNullOrEmpty(sector.photo))
                             {
                                 BitmapImage bmp = GetImageFromBase64(sector.photo);
                                 if (bmp != null)
                                 {
-                                    vm.Image = bmp; // Если получилось декодировать, ставим реальное фото
+                                    vm.Image = bmp;
                                 }
                             }
 
@@ -134,7 +131,6 @@ namespace Diplom_Stud.Pages.Activist
             }
         }
 
-        // --- УМНЫЙ ДЕКОДЕР BASE64 ---
         private BitmapImage GetImageFromBase64(string base64String)
         {
             try
@@ -144,13 +140,11 @@ namespace Diplom_Stud.Pages.Activist
 
                 try
                 {
-                    // Пробуем раскодировать первый слой
                     byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
                     string textInside = Encoding.UTF8.GetString(decodedFirstLevel);
 
                     if (textInside.StartsWith("data:image"))
                     {
-                        // Если внутри оказался текст с префиксом data:image
                         int commaIndex = textInside.IndexOf(',');
                         if (commaIndex >= 0)
                         {
@@ -160,14 +154,11 @@ namespace Diplom_Stud.Pages.Activist
                     }
                     else
                     {
-                        // Если это были обычные байты (одинарная кодировка)
                         imageBytes = decodedFirstLevel;
                     }
                 }
                 catch
                 {
-                    // Если первый слой не раскодировался как двойной base64, 
-                    // возможно строка изначально имела префикс data:image/jpeg;base64,...
                     int commaIndex = cleanStr.IndexOf(',');
                     if (commaIndex >= 0)
                     {
@@ -217,11 +208,25 @@ namespace Diplom_Stud.Pages.Activist
         public string requestStatus { get; set; }
         public int participantCount { get; set; }
         public string photo { get; set; }
-        public string coordinatorName { get; set; }
-        public string coordinatorSurname { get; set; }
-        public string coordinatorPatronymic { get; set; }
-        public string coordinatorFullName { get; set; }
-        public string coordinatorPhoto { get; set; }
+
+        public List<CoordinatorDto> coordinators { get; set; }
+    }
+
+    public class CoordinatorDto
+    {
+        public int id { get; set; }
+        public int studentId { get; set; }
+        public string studentName { get; set; }
+        public string studentSurname { get; set; }
+        public string studentPatronymic { get; set; }
+        public string studentEmail { get; set; }
+        public string studentPhoto { get; set; }
+        public int? studentCourseNumber { get; set; }
+        public string studentGroupTitle { get; set; }
+        public string studentSpecialityTitle { get; set; }
+        public string entryDate { get; set; }
+        public string status { get; set; }
+        public bool isCoordinator { get; set; }
     }
 
     public class SectorViewModel

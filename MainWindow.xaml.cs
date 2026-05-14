@@ -68,7 +68,11 @@ namespace Diplom_Stud
                 }
             }
 
-            if (data.roleTitle == "Sector_coordinator" || data.roleTitle == "Coordinator")
+
+            bool isActuallyCoordinator = data.roleTitle == "Sector_coordinator" || data.roleTitle == "Coordinator";
+            bool showCoordinatorMenu = isActuallyCoordinator && !App.IsActivistMode;
+
+            if (showCoordinatorMenu)
             {
                 NavSectorsText.Text = "Мой сектор";
                 _ = CheckSectorNotificationsAsync();
@@ -79,7 +83,10 @@ namespace Diplom_Stud
                 NavSectorsBadge.Visibility = Visibility.Collapsed;
             }
 
-            if (data.roleTitle == "Curator" || data.roleTitle == "Admin" || data.roleTitle == "Admin_curator")
+            bool isGlobalAdmin = data.roleTitle == "Curator" || data.roleTitle == "Admin" || data.roleTitle == "Admin_curator";
+            bool showAdminMenu = isGlobalAdmin && !App.IsActivistMode;
+
+            if (showAdminMenu)
             {
                 NavRegistrationRequests.Visibility = Visibility.Visible;
                 _ = CheckRegistrationRequestsNotificationsAsync();
@@ -94,7 +101,7 @@ namespace Diplom_Stud
         public async Task CheckSectorNotificationsAsync()
         {
             var data = App.CurrentUserProfile;
-            if (data == null || (data.roleTitle != "Sector_coordinator" && data.roleTitle != "Coordinator"))
+            if (data == null || App.IsActivistMode || (data.roleTitle != "Sector_coordinator" && data.roleTitle != "Coordinator"))
             {
                 SetSectorNotification(false);
                 return;
@@ -104,27 +111,15 @@ namespace Diplom_Stud
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                HttpResponseMessage sectorResp = await _httpClient.GetAsync("/api/sector");
-                if (sectorResp.IsSuccessStatusCode)
+                HttpResponseMessage reqResp = await _httpClient.GetAsync("/api/sector/introductions/filter?status=НА_РАССМОТРЕНИИ");
+                if (reqResp.IsSuccessStatusCode)
                 {
-                    string sectorBody = await sectorResp.Content.ReadAsStringAsync();
+                    string reqBody = await reqResp.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var sectors = JsonSerializer.Deserialize<List<Pages.Coordinator.SectorDto>>(sectorBody, options);
-                    var mySector = sectors?.FirstOrDefault(s => s.title == data.coordinatorSector);
+                    var allRequests = JsonSerializer.Deserialize<List<Pages.Coordinator.IntroductionDto>>(reqBody, options);
 
-                    if (mySector != null)
-                    {
-                        HttpResponseMessage reqResp = await _httpClient.GetAsync("/api/sector/introductions");
-                        if (reqResp.IsSuccessStatusCode)
-                        {
-                            string reqBody = await reqResp.Content.ReadAsStringAsync();
-                            var allRequests = JsonSerializer.Deserialize<List<Pages.Coordinator.IntroductionDto>>(reqBody, options);
-
-                            bool hasActive = allRequests?.Any(r => r.sector_id == mySector.id && r.status == "На рассмотрении") == true;
-
-                            SetSectorNotification(hasActive);
-                        }
-                    }
+                    bool hasActive = allRequests?.Any(r => r.sector_id == data.coordinatorSectorId) == true;
+                    SetSectorNotification(hasActive);
                 }
             }
             catch { }
@@ -141,7 +136,7 @@ namespace Diplom_Stud
         public async Task CheckRegistrationRequestsNotificationsAsync()
         {
             var data = App.CurrentUserProfile;
-            if (data == null || (data.roleTitle != "Curator" && data.roleTitle != "Admin" && data.roleTitle != "Admin_curator"))
+            if (data == null || App.IsActivistMode || (data.roleTitle != "Curator" && data.roleTitle != "Admin" && data.roleTitle != "Admin_curator"))
             {
                 SetRegistrationRequestNotification(false);
                 return;
@@ -248,7 +243,7 @@ namespace Diplom_Stud
             {
                 NavProfile.IsChecked = true;
             }
-            else if (e.Content is Pages.Activist.Home || e.Content is Pages.Coordinator.CoordinatorHome) 
+            else if (e.Content is Pages.Activist.Home || e.Content is Pages.Coordinator.CoordinatorHome)
             {
                 NavHome.IsChecked = true;
             }
@@ -295,14 +290,16 @@ namespace Diplom_Stud
             var data = App.CurrentUserProfile;
             if (data == null) return;
 
-            if (data.roleTitle == "Coordinator" || data.roleTitle == "Sector_coordinator" || data.roleTitle == "Admin")
+            bool isCoordinator = data.roleTitle == "Coordinator" || data.roleTitle == "Sector_coordinator" || data.roleTitle == "Admin";
+
+            if (isCoordinator && !App.IsActivistMode)
             {
                 if (!(MainFrame.Content is Pages.Coordinator.CoordinatorHome))
                 {
                     MainFrame.Navigate(new Pages.Coordinator.CoordinatorHome());
                 }
             }
-            else 
+            else
             {
                 if (!(MainFrame.Content is Pages.Activist.Home))
                 {
@@ -319,52 +316,29 @@ namespace Diplom_Stud
             }
         }
 
-        private async void MenuSectors_Click(object sender, RoutedEventArgs e)
+        private void MenuSectors_Click(object sender, RoutedEventArgs e)
         {
             var data = App.CurrentUserProfile;
             if (data == null) return;
 
-            if (data.roleTitle == "Sector_coordinator" || data.roleTitle == "Coordinator")
+            bool isCoordinator = data.roleTitle == "Sector_coordinator" || data.roleTitle == "Coordinator";
+
+            if (isCoordinator && !App.IsActivistMode)
             {
-                try
+                int sectorId = data.coordinatorSectorId ?? 0;
+
+                if (sectorId > 0)
                 {
-                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-
-                    HttpResponseMessage response = await _httpClient.GetAsync("/api/sector");
-
-                    if (response.IsSuccessStatusCode)
+                    if (!(MainFrame.Content is Pages.Coordinator.CoordinatorPanel currentPanel) || currentPanel.Tag?.ToString() != sectorId.ToString())
                     {
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                        var sectors = JsonSerializer.Deserialize<List<Diplom_Stud.Pages.Coordinator.SectorDto>>(responseBody, options);
-
-                        var mySector = sectors?.FirstOrDefault(s => s.title == data.coordinatorSector);
-
-                        if (mySector != null)
-                        {
-                            if (!(MainFrame.Content is Pages.Coordinator.CoordinatorPanel currentPanel) || currentPanel.Tag?.ToString() != mySector.id.ToString())
-                            {
-                                var panel = new Pages.Coordinator.CoordinatorPanel(mySector.id);
-                                panel.Tag = mySector.id;
-                                MainFrame.Navigate(panel);
-                            }
-                        }
-                        else
-                        {
-                            if (!(MainFrame.Content is Pages.Activist.Sectors))
-                            {
-                                MainFrame.Navigate(new Pages.Activist.Sectors());
-                            }
-                        }
-                    }
-                    else
-                    {
-                        CustomMessageBox.Show($"Ошибка при загрузке списка секторов: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
+                        var panel = new Pages.Coordinator.CoordinatorPanel(sectorId);
+                        panel.Tag = sectorId;
+                        MainFrame.Navigate(panel);
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    CustomMessageBox.Show($"Сетевая ошибка: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    CustomMessageBox.Show("Сектор не найден в вашем профиле.", "Ошибка", CustomMessageBox.MessageType.Error);
                 }
             }
             else
@@ -443,6 +417,7 @@ namespace Diplom_Stud
             App.AuthToken = null;
             App.RefreshToken = null;
             App.CurrentUserProfile = null;
+            App.IsActivistMode = false; 
 
             App.ClearSession();
 

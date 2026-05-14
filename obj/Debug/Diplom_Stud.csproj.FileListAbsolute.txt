@@ -156,5 +156,5 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RegistrationRequests
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RegistrationRequests.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RequestDetailsWindow.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RequestDetailsWindow.g.cs
-C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\CoordinatorHome.g.cs
-C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\CoordinatorHome.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorHome.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorHome.baml
