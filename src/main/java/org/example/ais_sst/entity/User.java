@@ -6,10 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.example.ais_sst.entity.enums.Gender;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.*;
 
 import java.sql.Types;
 import java.time.LocalDate;
@@ -21,6 +18,7 @@ import java.time.LocalDate;
 @Table(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
+@SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE id = ?")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -109,4 +107,8 @@ public class User {
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "account_creating_request_id")
     private AccountCreatingRequest accountCreatingRequest;
+
+    @Column(name = "is_deleted")
+    @Builder.Default
+    private Boolean isDeleted = false;
 }

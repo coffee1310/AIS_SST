@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/AIS_SST_TEST
+    username: coffee13102006
+    password: nata155630
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    drop-first: true
+
+  # ВАЖНО: Явно включаем Spring Security для тестов
+  security:
+    enabled: true  # Добавьте эту строку
+
+# Или если вы используете WebSecurityConfigurerAdapter, то просто уберите любые настройки отключения
+
+logging:
+  level:
+    org.springframework.security: DEBUG  # Измените на DEBUG для отладки
+    org.example.ais_sst: DEBUG
+    org.hibernate.SQL: DEBUG
+    liquibase: INFO

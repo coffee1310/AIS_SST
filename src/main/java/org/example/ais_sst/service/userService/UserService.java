@@ -22,9 +22,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigInteger;
 import java.sql.Date;           // ← важно
 import java.sql.Timestamp;      // ← важно
+import java.text.Collator;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -92,6 +92,8 @@ public class UserService implements UserServiceImpl {
 
     @Transactional
     public Page<UserResponseDTO> getAllUsers(int page, int size, String sortBy, String sortDirection, UserFilterDTO filter) {
+        page = Math.max(0, page);
+        size = Math.min(100, Math.max(1, size));
         log.info("Getting users with pagination: page={}, size={}", page, size);
 
         int offset = page * size;
@@ -124,13 +126,33 @@ public class UserService implements UserServiceImpl {
                 .map(row -> {
                     UserResponseDTO dto = mapRowToUserResponseDTO(row);
                     if (dto != null) {
+                        // Заполняем социальные статусы!
                         List<String> socialStatuses = socialStatusStudentRepository
                                 .findSocialStatusTitlesByStudentId(dto.getId());
                         dto.setSocialStatuses(socialStatuses);
                     }
                     return dto;
                 })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+
+        // Сортировка в Java
+        Comparator<UserResponseDTO> comparator = Comparator.comparing(
+                user -> {
+                    switch(sortBy) {
+                        case "name": return user.getName();
+                        case "surname": return user.getSurname();
+                        default: return user.getId().toString();
+                    }
+                },
+                Collator.getInstance(new Locale("ru"))
+        );
+
+        if ("DESC".equalsIgnoreCase(sortDirection)) {
+            comparator = comparator.reversed();
+        }
+
+        users.sort(comparator);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
         return new PageImpl<>(users, pageable, total);
@@ -138,6 +160,8 @@ public class UserService implements UserServiceImpl {
 
     @Transactional
     public Page<UserResponseDTO> getUsersByRole(String role, int page, int size, String sortBy, String sortDirection) {
+        page = Math.max(0, page);
+        size = Math.min(100, Math.max(1, size));
         log.info("Getting users by role: {}, page={}, size={}", role, page, size);
 
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);

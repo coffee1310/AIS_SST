@@ -6,6 +6,7 @@ import org.example.ais_sst.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,7 +31,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // ==================== NATIVE QUERY ====================
     @Query(value = """
-        SELECT 
+        SELECT
             u.id,
             u.name,
             u.surname,
@@ -68,7 +69,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
         AND (CAST(:groupId AS bigint) IS NULL OR u.group_id = CAST(:groupId AS bigint))
         AND (CAST(:specialityId AS bigint) IS NULL OR u.speciality_id = CAST(:specialityId AS bigint))
         AND (CAST(:sectorId AS bigint) IS NULL OR sp.sector_id = CAST(:sectorId AS bigint))
-        ORDER BY u.id
+        AND (u.is_deleted = false)
+        GROUP BY u.id, u.name, u.surname, u.patronymic, u.gender, u.date_of_birth,\s
+             u.course_number, u.student_id_number, u.student_email, u.additional_email,
+             u.phone_number, u.vk_link, u.is_active, u.is_banned, r.title, g.id,\s
+             g.title, s.id, s.title, u.path_to_photo, s.short_title
+        ORDER BY u.name COLLATE "ru-RU-x-icu"
         OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
         """, nativeQuery = true)
     List<Object[]> findAllWithFiltersNative(
@@ -111,4 +117,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("groupId") Long groupId,
             @Param("specialityId") Long specialityId,
             @Param("sectorId") Long sectorId);
+
+    @Modifying
+    @Query("UPDATE User u SET u.isDeleted = true")
+    void softDeleteAll();
 }
