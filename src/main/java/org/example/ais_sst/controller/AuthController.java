@@ -10,10 +10,7 @@ import org.example.ais_sst.entity.enums.Gender;
 import org.example.ais_sst.exception.GroupDoesNotExistException;
 import org.example.ais_sst.exception.SpecialityDoesNotExistException;
 import org.example.ais_sst.exception.TokenRefreshException;
-import org.example.ais_sst.repository.GroupRepository;
-import org.example.ais_sst.repository.RoleRepository;
-import org.example.ais_sst.repository.SpecialityRepository;
-import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.repository.*;
 import org.example.ais_sst.security.jwt.JwtUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +43,7 @@ public class AuthController extends BaseController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
+    private final SocialStatusStudentsRepository socialStatusStudentRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -189,11 +187,19 @@ public class AuthController extends BaseController {
             user.setCourseNumber(userSummaryDTO.getCourseNumber());
             user.setGroup(userGroup);
             user.setSpeciality(userSpeciality);
+            user.setVkLink(userSummaryDTO.getVkLink());
+            user.setAdditionalEmail(userSummaryDTO.getAdditionalEmail());
             user.setRole(userRole);
             user.setIsActive(true);
             user.setIsBanned(false);
 
             User savedUser = userRepository.save(user);
+
+            // Save social statuses if present
+            if (userSummaryDTO.getSocial_statuses() != null && !userSummaryDTO.getSocial_statuses().isEmpty()) {
+                saveSocialStatuses(savedUser, userSummaryDTO.getSocial_statuses());
+            }
+
             logInfo("/api/auth/register", "User registered successfully with ID: {}", savedUser.getId());
 
             return createSuccessResponse("Пользователь успешно зарегистрирован!", null);
@@ -202,5 +208,21 @@ public class AuthController extends BaseController {
             logError("/api/auth/register", "Registration failed: {}", e.getMessage());
             return ResponseEntity.badRequest().body("Ошибка при регистрации: " + e.getMessage());
         }
+    }
+
+    // Helper method to save social statuses
+    private void saveSocialStatuses(User user, List<Long> socialStatusIds) {
+        for (Long statusId : socialStatusIds) {
+            SocialStatus socialStatus = socialStatusStudentRepository.findById(statusId)
+                    .orElseThrow(() -> new RuntimeException("Социальный статус с id " + statusId + " не найден")).getSocialStatus();
+
+            SocialStatusStudent socialStatusStudent = SocialStatusStudent.builder()
+                    .student(user)
+                    .socialStatus(socialStatus)
+                    .build();
+
+            socialStatusStudentRepository.save(socialStatusStudent);
+        }
+        logInfo("/api/auth/register", "Saved {} social statuses for user ID: {}", socialStatusIds.size(), user.getId());
     }
 }

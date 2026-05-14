@@ -11,6 +11,7 @@ import org.example.ais_sst.annotation.ValidUserEmailFormat;
 import org.example.ais_sst.entity.enums.Gender;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -64,7 +65,7 @@ public class UserSummaryDTO {
     @Size(max = 256)
     private String vkLink;
 
-    private byte[] photo;
+    private String photo;
 
     @Size(max = 256)
     @NotNull
@@ -78,4 +79,6 @@ public class UserSummaryDTO {
     private Boolean isBanned;
 
     private Long accountCreatingRequest_id;
+
+    private List<Long> social_statuses;
 }
