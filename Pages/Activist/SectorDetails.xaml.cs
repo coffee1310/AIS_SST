@@ -21,7 +21,7 @@ namespace Diplom_Stud.Pages.Activist
     {
         private static readonly HttpClient _httpClient = new HttpClient();
         private int _sectorId;
-        private SectorDto _currentSector;
+        private SectorDto _currentSector; 
 
         public SectorDetails(int sectorId)
         {
@@ -254,9 +254,11 @@ namespace Diplom_Stud.Pages.Activist
 
             try
             {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
                 if (_currentSector.isParticipant)
                 {
-                    HttpResponseMessage response = await _httpClient.DeleteAsync($"/api/sector/{_sectorId}");
+                    HttpResponseMessage response = await _httpClient.DeleteAsync($"/api/sector/{_sectorId}/leave");
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -265,7 +267,8 @@ namespace Diplom_Stud.Pages.Activist
                     }
                     else
                     {
-                        CustomMessageBox.Show("Ошибка при выходе из сектора.", "Ошибка", CustomMessageBox.MessageType.Error);
+                        string err = await response.Content.ReadAsStringAsync();
+                        CustomMessageBox.Show($"Ошибка при выходе из сектора: {response.StatusCode}\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
                     }
                 }
                 else if (!_currentSector.isParticipant && !_currentSector.hasActiveRequest)
@@ -282,7 +285,8 @@ namespace Diplom_Stud.Pages.Activist
                     }
                     else
                     {
-                        CustomMessageBox.Show("Ошибка при отправке заявки.", "Ошибка", CustomMessageBox.MessageType.Error);
+                        string err = await response.Content.ReadAsStringAsync();
+                        CustomMessageBox.Show($"Ошибка при отправке заявки: {response.StatusCode}\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
                     }
                 }
             }
@@ -295,6 +299,37 @@ namespace Diplom_Stud.Pages.Activist
                 ActionBtn.IsEnabled = true;
             }
         }
+    }
+
+    public class SectorDto
+    {
+        public int id { get; set; }
+        public string title { get; set; }
+        public string description { get; set; }
+        public bool isParticipant { get; set; }
+        public bool isCoordinator { get; set; }
+        public bool hasActiveRequest { get; set; }
+        public string requestStatus { get; set; }
+        public int participantCount { get; set; }
+        public string photo { get; set; }
+        public List<CoordinatorDto> coordinators { get; set; }
+    }
+
+    public class CoordinatorDto
+    {
+        public int id { get; set; }
+        public int studentId { get; set; }
+        public string studentName { get; set; }
+        public string studentSurname { get; set; }
+        public string studentPatronymic { get; set; }
+        public string studentEmail { get; set; }
+        public string studentPhoto { get; set; }
+        public int? studentCourseNumber { get; set; }
+        public string studentGroupTitle { get; set; }
+        public string studentSpecialityTitle { get; set; }
+        public string entryDate { get; set; }
+        public string status { get; set; }
+        public bool isCoordinator { get; set; }
     }
 
     public class CoordinatorViewModel

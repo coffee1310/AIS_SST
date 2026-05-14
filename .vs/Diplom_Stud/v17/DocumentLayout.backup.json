@@ -3,20 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\danii\\source\\repos\\AIS_SST\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\coordinatorpanel.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\coordinatorpanel.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\sectordetails.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\sectordetails.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\coordinatorpanel.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\coordinatorpanel.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\profile.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\profile.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\profile.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\profile.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\sectors.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\sectors.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 240,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -47,51 +39,27 @@
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "CoordinatorPanel.xaml",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorPanel.xaml",
-              "RelativeDocumentMoniker": "Pages\\Coordinator\\CoordinatorPanel.xaml",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorPanel.xaml*",
-              "RelativeToolTip": "Pages\\Coordinator\\CoordinatorPanel.xaml*",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-05-14T21:54:36.116Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "Profile.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Profile.xaml.cs",
-              "RelativeDocumentMoniker": "Pages\\Activist\\Profile.xaml.cs",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Profile.xaml.cs",
-              "RelativeToolTip": "Pages\\Activist\\Profile.xaml.cs",
-              "ViewState": "AgIAAMIBAAAAAAAAAAAAAK0BAAA6AAAAAAAAAA==",
+              "Title": "Sectors.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Sectors.xaml.cs",
+              "RelativeDocumentMoniker": "Pages\\Activist\\Sectors.xaml.cs",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Sectors.xaml.cs*",
+              "RelativeToolTip": "Pages\\Activist\\Sectors.xaml.cs*",
+              "ViewState": "AgIAAMcAAAAAAAAAAAAIwEYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-14T21:35:40.868Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Profile.xaml",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Profile.xaml",
-              "RelativeDocumentMoniker": "Pages\\Activist\\Profile.xaml",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Profile.xaml*",
-              "RelativeToolTip": "Pages\\Activist\\Profile.xaml*",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-05-14T21:35:32.072Z",
+              "WhenOpened": "2026-05-14T22:20:57.389Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "CoordinatorPanel.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorPanel.xaml.cs",
-              "RelativeDocumentMoniker": "Pages\\Coordinator\\CoordinatorPanel.xaml.cs",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorPanel.xaml.cs*",
-              "RelativeToolTip": "Pages\\Coordinator\\CoordinatorPanel.xaml.cs*",
-              "ViewState": "AgIAALcBAAAAAAAAAAAqwMEBAAA2AAAAAAAAAA==",
+              "Title": "SectorDetails.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\SectorDetails.xaml.cs",
+              "RelativeDocumentMoniker": "Pages\\Activist\\SectorDetails.xaml.cs",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\SectorDetails.xaml.cs*",
+              "RelativeToolTip": "Pages\\Activist\\SectorDetails.xaml.cs*",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAUwBcAAAAqAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-14T21:26:39.178Z",
+              "WhenOpened": "2026-05-14T22:18:25.753Z",
               "EditorCaption": ""
             }
           ]

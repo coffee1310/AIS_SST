@@ -1,4 +1,5 @@
 ﻿using Diplom_Stud.Components;
+using Diplom_Stud.Pages.Coordinator;
 using Diplom_Stud.Pages.General;
 using System;
 using System.Collections.Generic;
@@ -67,6 +68,7 @@ namespace Diplom_Stud.Pages.Activist
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
                     var sectors = JsonSerializer.Deserialize<List<SectorDto>>(responseBody, options);
 
                     if (sectors != null)
@@ -195,38 +197,6 @@ namespace Diplom_Stud.Pages.Activist
                 this.NavigationService.Navigate(new SectorDetails(sectorId));
             }
         }
-    }
-
-    public class SectorDto
-    {
-        public int id { get; set; }
-        public string title { get; set; }
-        public string description { get; set; }
-        public bool isParticipant { get; set; }
-        public bool isCoordinator { get; set; }
-        public bool hasActiveRequest { get; set; }
-        public string requestStatus { get; set; }
-        public int participantCount { get; set; }
-        public string photo { get; set; }
-
-        public List<CoordinatorDto> coordinators { get; set; }
-    }
-
-    public class CoordinatorDto
-    {
-        public int id { get; set; }
-        public int studentId { get; set; }
-        public string studentName { get; set; }
-        public string studentSurname { get; set; }
-        public string studentPatronymic { get; set; }
-        public string studentEmail { get; set; }
-        public string studentPhoto { get; set; }
-        public int? studentCourseNumber { get; set; }
-        public string studentGroupTitle { get; set; }
-        public string studentSpecialityTitle { get; set; }
-        public string entryDate { get; set; }
-        public string status { get; set; }
-        public bool isCoordinator { get; set; }
     }
 
     public class SectorViewModel
