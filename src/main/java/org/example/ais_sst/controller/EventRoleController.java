@@ -11,11 +11,12 @@ import org.example.ais_sst.dto.event_roles.EventRoleResponseDTO;
 import org.example.ais_sst.dto.event_roles.EventRoleUpdateDTO;
 import org.example.ais_sst.service.eventService.EventRoleService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import org.example.ais_sst.controller.base.BaseController;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -23,14 +24,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/event-roles")
 @RequiredArgsConstructor
 @Tag(name = "Event Roles", description = "Управление ролями мероприятий")
-public class EventRoleController {
+public class EventRoleController extends BaseController {
 
     private final EventRoleService eventRoleService;
 
     @PostMapping
     @Operation(summary = "Создать роль мероприятия")
     public ResponseEntity<EventRoleResponseDTO> createEventRole(@Valid @RequestBody EventRoleCreateDTO dto) {
-        log.info("POST /api/event-roles - Creating event role");
+        logInfo("/api/event-roles", "Creating event role");
         EventRoleResponseDTO response = eventRoleService.createEventRole(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -38,7 +39,7 @@ public class EventRoleController {
     @GetMapping("/{id}")
     @Operation(summary = "Получить роль мероприятия по ID")
     public ResponseEntity<EventRoleResponseDTO> getEventRoleById(@PathVariable Long id) {
-        log.info("GET /api/event-roles/{} - Getting event role by id", id);
+        logInfo("/api/event-roles/{}", "Getting event role by id", id);
         EventRoleResponseDTO response = eventRoleService.getEventRoleById(id);
         return ResponseEntity.ok(response);
     }
@@ -48,7 +49,7 @@ public class EventRoleController {
     public ResponseEntity<EventRoleResponseDTO> updateEventRole(
             @PathVariable Long id,
             @Valid @RequestBody EventRoleUpdateDTO dto) {
-        log.info("PUT /api/event-roles/{} - Updating event role", id);
+        logInfo("/api/event-roles/{}", "Updating event role", id);
         EventRoleResponseDTO response = eventRoleService.updateEventRole(id, dto);
         return ResponseEntity.ok(response);
     }
@@ -56,7 +57,7 @@ public class EventRoleController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить роль мероприятия (мягкое удаление)")
     public ResponseEntity<Void> deleteEventRole(@PathVariable Long id) {
-        log.info("DELETE /api/event-roles/{} - Soft deleting event role", id);
+        logInfo("/api/event-roles/{}", "Soft deleting event role", id);
         eventRoleService.deleteEventRole(id);
         return ResponseEntity.noContent().build();
     }
@@ -64,7 +65,7 @@ public class EventRoleController {
     @DeleteMapping("/{id}/hard")
     @Operation(summary = "Полностью удалить роль мероприятия")
     public ResponseEntity<Void> hardDeleteEventRole(@PathVariable Long id) {
-        log.info("DELETE /api/event-roles/{}/hard - Hard deleting event role", id);
+        logInfo("/api/event-roles/{}/hard", "Hard deleting event role", id);
         eventRoleService.hardDeleteEventRole(id);
         return ResponseEntity.noContent().build();
     }
@@ -81,9 +82,7 @@ public class EventRoleController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String sortDirection) {
 
-        log.info("GET /api/event-roles - Getting event roles with filters");
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        logInfo("/api/event-roles", "Getting event roles with filters");
 
         EventRoleFilterDTO filter = EventRoleFilterDTO.builder()
                 .id(id)
@@ -92,7 +91,9 @@ public class EventRoleController {
                 .deleted(isDeleted)
                 .build();
 
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
         Page<EventRoleResponseDTO> eventRoles = eventRoleService.getAllEventRoles(filter, pageable);
+
         return ResponseEntity.ok(eventRoles);
     }
 }

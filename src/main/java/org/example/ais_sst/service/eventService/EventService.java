@@ -3,6 +3,7 @@ package org.example.ais_sst.service.eventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.events.EventCreateDTO;
+import org.example.ais_sst.dto.events.EventFilterDTO;
 import org.example.ais_sst.dto.events.EventResponseDTO;
 import org.example.ais_sst.dto.events.EventUpdateDTO;
 import org.example.ais_sst.entity.Event;
@@ -16,13 +17,20 @@ import org.example.ais_sst.mapper.EventMapper;
 import org.example.ais_sst.repository.EventOrganizerRepository;
 import org.example.ais_sst.repository.EventRepository;
 import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.specification.EventSpecification;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -295,22 +303,54 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public Page<EventResponseDTO> getEventsWithFilters(
-            String title,
-            String venue,
-            LocalDate dateFrom,
-            LocalDate dateTo,
-            Boolean isPublic,
-            Boolean isDraft,
-            Boolean isCompleted,
-            Boolean isActive,
-            Long creatorId,
-            Pageable pageable) {
+    public Page<EventResponseDTO> getEventsWithFilters(EventFilterDTO filter, Pageable pageable) {
+        log.info("Getting events with filters from DTO");
 
-        log.info("Getting events with filters");
+        // Используем Specification вместо native query
+        Specification<Event> spec = EventSpecification.withFilter(filter);
 
-        return eventRepository.findAllWithFilters(
-                        title, venue, dateFrom, dateTo, isPublic, isDraft, isCompleted, isActive, creatorId, pageable)
-                .map(eventMapper::toResponseDto);
+        Page<Event> eventPage = eventRepository.findAll(spec, pageable);
+
+        return eventPage.map(eventMapper::toResponseDto);
+    }
+
+    private List<Event> sortEvents(List<Event> events, Sort sort) {
+        if (sort == null || !sort.iterator().hasNext()) {
+            return events;
+        }
+
+        Comparator<Event> comparator = null;
+        for (Sort.Order order : sort) {
+            Comparator<Event> propertyComparator = getComparatorForProperty(order.getProperty(), order.isAscending());
+            if (comparator == null) {
+                comparator = propertyComparator;
+            } else {
+                comparator = comparator.thenComparing(propertyComparator);
+            }
+        }
+
+        events.sort(comparator);
+        return events;
+    }
+
+    private Comparator<Event> getComparatorForProperty(String property, boolean ascending) {
+        Comparator<Event> comparator;
+        switch (property) {
+            case "id":
+                comparator = Comparator.comparing(Event::getId);
+                break;
+            case "title":
+                comparator = Comparator.comparing(Event::getTitle, Comparator.nullsLast(String::compareTo));
+                break;
+            case "dateOfEvent":
+                comparator = Comparator.comparing(Event::getDateOfEvent, Comparator.nullsLast(LocalDate::compareTo));
+                break;
+            case "createdAt":
+                comparator = Comparator.comparing(Event::getCreatedAt, Comparator.nullsLast(LocalDateTime::compareTo));
+                break;
+            default:
+                comparator = Comparator.comparing(Event::getId);
+        }
+        return ascending ? comparator : comparator.reversed();
     }
 }

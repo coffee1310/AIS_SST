@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationFilterDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationRejectDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationResponseDTO;
@@ -30,7 +31,7 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/role-applications")
 @RequiredArgsConstructor
 @Tag(name = "Role Applications", description = "Управление заявками на роли")
-public class ApplicationsForTheRoleController {
+public class ApplicationsForTheRoleController extends BaseController {
 
     private final ApplicationsForTheRoleService roleApplicationService;
 
@@ -40,7 +41,7 @@ public class ApplicationsForTheRoleController {
             @PathVariable Long eventRoleId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        log.info("POST /api/role-applications/{} - Creating application", eventRoleId);
+        logInfo("/api/role-applications/{}", "Creating application", eventRoleId);
         RoleApplicationResponseDTO response = roleApplicationService.createApplication(eventRoleId, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -48,7 +49,7 @@ public class ApplicationsForTheRoleController {
     @GetMapping("/{id}")
     @Operation(summary = "Получить заявку по ID")
     public ResponseEntity<RoleApplicationResponseDTO> getApplicationById(@PathVariable Long id) {
-        log.info("GET /api/role-applications/{} - Getting application", id);
+        logInfo("/api/role-applications/{}", "Getting application", id);
         RoleApplicationResponseDTO response = roleApplicationService.getApplicationById(id);
         return ResponseEntity.ok(response);
     }
@@ -56,7 +57,7 @@ public class ApplicationsForTheRoleController {
     @PutMapping("/{id}/approve")
     @Operation(summary = "Одобрить заявку")
     public ResponseEntity<RoleApplicationResponseDTO> approveApplication(@PathVariable Long id) {
-        log.info("PUT /api/role-applications/{}/approve - Approving application", id);
+        logInfo("/api/role-applications/{}/approve", "Approving application", id);
         RoleApplicationResponseDTO response = roleApplicationService.approveApplication(id);
         return ResponseEntity.ok(response);
     }
@@ -67,7 +68,7 @@ public class ApplicationsForTheRoleController {
             @PathVariable Long id,
             @Valid @RequestBody RoleApplicationRejectDTO rejectDto) {
 
-        log.info("PUT /api/role-applications/{}/reject - Rejecting application", id);
+        logInfo("/api/role-applications/{}/reject", "Rejecting application", id);
         RoleApplicationResponseDTO response = roleApplicationService.rejectApplication(id, rejectDto);
         return ResponseEntity.ok(response);
     }
@@ -88,9 +89,7 @@ public class ApplicationsForTheRoleController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection) {
 
-        log.info("GET /api/role-applications - Getting applications with filters");
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        logInfo("/api/role-applications", "Getting applications with filters");
 
         RoleApplicationFilterDTO filter = RoleApplicationFilterDTO.builder()
                 .id(id)
@@ -103,7 +102,9 @@ public class ApplicationsForTheRoleController {
                 .dateTo(dateTo)
                 .build();
 
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
         Page<RoleApplicationResponseDTO> applications = roleApplicationService.getAllApplications(filter, pageable);
+
         return ResponseEntity.ok(applications);
     }
 
@@ -116,10 +117,11 @@ public class ApplicationsForTheRoleController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection) {
 
-        log.info("GET /api/role-applications/my - Getting my applications");
+        logInfo("/api/role-applications/my", "Getting my applications");
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
         Page<RoleApplicationResponseDTO> applications = roleApplicationService.getMyApplications(userDetails.getId(), pageable);
+
         return ResponseEntity.ok(applications);
     }
 }

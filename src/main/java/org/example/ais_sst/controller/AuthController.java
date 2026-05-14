@@ -1,5 +1,6 @@
 package org.example.ais_sst.controller;
 
+import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.request.LoginRequest;
 import org.example.ais_sst.dto.request.RefreshTokenRequest;
 import org.example.ais_sst.dto.response.JwtResponse;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController extends BaseController {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -48,7 +49,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        log.info("Login attempt for email: {}", loginRequest.getEmail());
+        logInfo("/api/auth/login", "Login attempt for email: {}", loginRequest.getEmail());
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
@@ -61,62 +62,60 @@ public class AuthController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        log.info("User logged in successfully: {}", loginRequest.getEmail());
+        logInfo("/api/auth/login", "User logged in successfully: {}", loginRequest.getEmail());
 
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
 
-        // ИСПРАВЛЕНО: Убран вызов несуществующего метода refreshToken()
-        return ResponseEntity.ok(new JwtResponse(
+        JwtResponse jwtResponse = new JwtResponse(
                 jwt,
-                refreshToken.getToken(),  // Просто передаем строку токена
+                refreshToken.getToken(),
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getName(),
                 userDetails.getSurname(),
-                roles));
+                roles);
+
+        return createSuccessResponse("Login successful", jwtResponse);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        log.info("Refresh token request");
+        logInfo("/api/auth/refresh", "Refresh token request");
 
         String requestRefreshToken = request.getRefreshToken();
 
-        // Используем Optional правильно
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshToken -> refreshTokenService.verifyExpiration(refreshToken))
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    // Генерируем новый access token
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
                             user.getStudentEmail(), user.getPassword());
                     String accessToken = jwtUtils.generateJwtToken(authentication);
 
-                    // Обновляем refresh token
                     RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getId());
 
                     List<String> roles = user.getRole() != null
                             ? List.of(user.getRole().getTitle())
                             : List.of("USER");
 
-                    return ResponseEntity.ok(new JwtResponse(
+                    JwtResponse jwtResponse = new JwtResponse(
                             accessToken,
                             newRefreshToken.getToken(),
                             user.getId(),
                             user.getStudentEmail(),
                             user.getName(),
                             user.getSurname(),
-                            roles));
+                            roles);
+
+                    return createSuccessResponse("Token refreshed successfully", jwtResponse);
                 })
                 .orElseThrow(() -> new TokenRefreshException(requestRefreshToken, "Refresh token not found"));
-
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser(@RequestHeader("Authorization") String authorizationHeader) {
-        log.info("Logout request");
+        logInfo("/api/auth/logout", "Logout request");
 
-        // Извлекаем refresh token из заголовка
         String token = null;
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             token = authorizationHeader.substring(7);
@@ -126,12 +125,12 @@ public class AuthController {
             refreshTokenService.revokeRefreshToken(token);
         }
 
-        return ResponseEntity.ok("Logout successful");
+        return createSuccessResponse("Logout successful", null);
     }
 
     @PostMapping("/logout/all")
     public ResponseEntity<?> logoutAllDevices() {
-        log.info("Logout from all devices request");
+        logInfo("/api/auth/logout/all", "Logout from all devices request");
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -139,36 +138,44 @@ public class AuthController {
             refreshTokenService.revokeAllUserTokens(userDetails.getId());
         }
 
-        return ResponseEntity.ok("Logged out from all devices");
+        return createSuccessResponse("Logged out from all devices", null);
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserSummaryDTO userSummaryDTO) {
-        // Ваш существующий код регистрации
-        log.info("Registration attempt for email: {}", userSummaryDTO.getStudentEmail());
+        logInfo("/api/auth/register", "Registration attempt for email: {}", userSummaryDTO.getStudentEmail());
 
+        // Check if email already exists
         if (userRepository.existsByStudentEmail(userSummaryDTO.getStudentEmail())) {
-            log.warn("Registration failed - email already exists: {}", userSummaryDTO.getStudentEmail());
+            logWarn("/api/auth/register", "Registration failed - email already exists: {}",
+                    userSummaryDTO.getStudentEmail());
             return ResponseEntity.badRequest().body("Ошибка: Email уже используется!");
         }
 
+        // Check if phone already exists
         if (userRepository.existsByPhoneNumber(userSummaryDTO.getPhoneNumber())) {
-            log.warn("Registration failed - phone already exists: {}", userSummaryDTO.getPhoneNumber());
+            logWarn("/api/auth/register", "Registration failed - phone already exists: {}",
+                    userSummaryDTO.getPhoneNumber());
             return ResponseEntity.badRequest().body("Ошибка: Телефон уже используется!");
         }
 
         try {
+            // Get user role
             Role userRole = roleRepository.findByTitle("Activist")
                     .orElseThrow(() -> new RuntimeException("Ошибка: Роль Activist не найдена в БД!"));
 
+            // Get user group
             Group userGroup = groupRepository.findGroupById(userSummaryDTO.getGroup_id())
                     .orElseThrow(() -> new GroupDoesNotExistException(
                             String.format("Ошибка: Группа с id: %s не существует", userSummaryDTO.getGroup_id())));
 
+            // Get user speciality
             Speciality userSpeciality = specialityRepository.findSpecialityById(userSummaryDTO.getSpeciality_id())
                     .orElseThrow(() -> new SpecialityDoesNotExistException(
-                            String.format("Ошибка: Специальность с id: %s не существует", userSummaryDTO.getSpeciality_id())));
+                            String.format("Ошибка: Специальность с id: %s не существует",
+                                    userSummaryDTO.getSpeciality_id())));
 
+            // Create new user
             User user = new User();
             user.setName(userSummaryDTO.getName());
             user.setSurname(userSummaryDTO.getSurname());
@@ -187,12 +194,12 @@ public class AuthController {
             user.setIsBanned(false);
 
             User savedUser = userRepository.save(user);
-            log.info("User registered successfully with ID: {}", savedUser.getId());
+            logInfo("/api/auth/register", "User registered successfully with ID: {}", savedUser.getId());
 
-            return ResponseEntity.ok("Пользователь успешно зарегистрирован!");
+            return createSuccessResponse("Пользователь успешно зарегистрирован!", null);
 
         } catch (Exception e) {
-            log.error("Registration failed: ", e);
+            logError("/api/auth/register", "Registration failed: {}", e.getMessage());
             return ResponseEntity.badRequest().body("Ошибка при регистрации: " + e.getMessage());
         }
     }

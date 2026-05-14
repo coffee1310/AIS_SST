@@ -47,7 +47,7 @@ class SocialStatusControllerTest {
         socialStatusList = Arrays.asList(socialStatus1, socialStatus2);
     }
 
-    // ==================== TESTS FOR getSocial_statuses ====================
+    // ==================== TESTS FOR getSocialStatuses ====================
 
     @Test
     void getSocialStatuses_Success() {
@@ -55,7 +55,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(socialStatusList);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response).isNotNull();
@@ -80,7 +80,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(Collections.emptyList());
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response).isNotNull();
@@ -100,7 +100,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(null);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response).isNotNull();
@@ -117,7 +117,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(singleStatusList);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response).isNotNull();
@@ -144,7 +144,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(multipleStatuses);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response).isNotNull();
@@ -167,7 +167,7 @@ class SocialStatusControllerTest {
 
         // when & then
         org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> {
-            socialStatusController.getSocial_statuses();
+            socialStatusController.getSocialStatuses();
         });
 
         verify(socialStatusService).getSocialStatuses();
@@ -179,7 +179,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(socialStatusList);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -192,7 +192,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(socialStatusList);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response.getBody()).isInstanceOf(List.class);
@@ -208,8 +208,8 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(socialStatusList);
 
         // when
-        ResponseEntity<?> firstCall = socialStatusController.getSocial_statuses();
-        ResponseEntity<?> secondCall = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> firstCall = socialStatusController.getSocialStatuses();
+        ResponseEntity<?> secondCall = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(firstCall.getBody()).isEqualTo(secondCall.getBody());
@@ -225,7 +225,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(socialStatusList);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
@@ -248,7 +248,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(statuses);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response).isNotNull();
@@ -268,7 +268,7 @@ class SocialStatusControllerTest {
         when(socialStatusService.getSocialStatuses()).thenReturn(statusesWithNull);
 
         // when
-        ResponseEntity<?> response = socialStatusController.getSocial_statuses();
+        ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
         assertThat(response).isNotNull();

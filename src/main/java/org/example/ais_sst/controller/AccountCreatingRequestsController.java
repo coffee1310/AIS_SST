@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestFilterDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestRejectDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestResponseDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO;
+import org.example.ais_sst.dto.common.PageRequestDTO;
 import org.example.ais_sst.dto.user.UserSummaryDTO;
 import org.example.ais_sst.entity.AccountCreatingRequest;
 import org.example.ais_sst.entity.CustomUserDetails;
@@ -27,11 +29,10 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.Map;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/account_requests")
 @RequiredArgsConstructor
-public class AccountCreatingRequestsController {
+public class AccountCreatingRequestsController extends BaseController {
 
     private final AccountCreatingRequestsService accountCreatingRequestsService;
 
@@ -46,37 +47,22 @@ public class AccountCreatingRequestsController {
             @PathVariable Long id,
             @Valid @RequestBody AccountCreatingRequestRejectDTO rejectDto) {
 
-        AccountCreatingRequestResponseDTO rejectedRequest = accountCreatingRequestsService.rejectAccountRequest(id, rejectDto);
+        AccountCreatingRequestResponseDTO rejectedRequest =
+                accountCreatingRequestsService.rejectAccountRequest(id, rejectDto);
 
-        return ResponseEntity.ok()
-                .body(Map.of(
-                        "message", "Заявка отклонена",
-                        "request", rejectedRequest
-                ));
+        return createSuccessResponse("Заявка отклонена", rejectedRequest);
     }
 
     @PutMapping("/accept/{id}")
     public ResponseEntity<?> acceptAccountRequest(@PathVariable Long id) {
         UserSummaryDTO createdUser = accountCreatingRequestsService.acceptAccountRequest(id);
-
-        return ResponseEntity.ok()
-                .body(Map.of(
-                        "message", "Заявка принята. Пользователь создан.",
-                        "user", createdUser
-                ));
+        return createSuccessResponse("Заявка принята. Пользователь создан.", createdUser);
     }
 
     @GetMapping
     public Page<AccountCreatingRequestResponseDTO> getRequests(
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         return accountCreatingRequestsService.getRequests(pageable);
-    }
-
-    @GetMapping("/pending")
-    public Page<AccountCreatingRequestResponseDTO> getPendingRequests(
-            @PageableDefault(size = 20, direction = Sort.Direction.DESC) Pageable pageable) {
-        log.info("GET /api/account_requests/pending - Getting pending requests");
-        return accountCreatingRequestsService.getPendingRequests(pageable);
     }
 
     @GetMapping("/filter")
@@ -101,28 +87,28 @@ public class AccountCreatingRequestsController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection) {
 
-        log.info("GET /api/account_requests/filter - Getting requests with filters");
+        logInfo("/api/account_requests/filter", "Getting requests with filters");
 
         AccountCreatingRequestFilterDTO filter = AccountCreatingRequestFilterDTO.builder()
-                .id(id)
-                .name(name)
-                .surname(surname)
-                .patronymic(patronymic)
-                .gender(gender)  // Добавлен gender
-                .dateFrom(dateFrom)
-                .dateTo(dateTo)
-                .studentEmail(studentEmail)
-                .phoneNumber(phoneNumber)
-                .studentIdNumber(studentIdNumber)
-                .courseNumber(courseNumber)
-                .status(status)
-                .groupId(groupId)
-                .specialityId(specialityId)
-                .hasPhoto(hasPhoto)
-                .build();
+                .id(id).name(name).surname(surname).patronymic(patronymic)
+                .gender(gender).dateFrom(dateFrom).dateTo(dateTo)
+                .studentEmail(studentEmail).phoneNumber(phoneNumber)
+                .studentIdNumber(studentIdNumber).courseNumber(courseNumber)
+                .status(status).groupId(groupId).specialityId(specialityId)
+                .hasPhoto(hasPhoto).build();
 
-        return accountCreatingRequestsService.getRequestsWithFilters(filter, page, size, sortBy, sortDirection);
+        // Используем метод для сервисов с параметрами (не Pageable)
+        return getFilteredPageWithParams(
+                accountCreatingRequestsService::getRequestsWithFilters,
+                filter,
+                page, size, sortBy, sortDirection
+        );
     }
 
-    // ToDo: добавить createdAt
+    @GetMapping("/pending")
+    public Page<AccountCreatingRequestResponseDTO> getPendingRequests(
+            @PageableDefault(size = 20, direction = Sort.Direction.DESC) Pageable pageable) {
+        logInfo("/api/account_requests/pending", "Getting pending requests");
+        return accountCreatingRequestsService.getPendingRequests(pageable);
+    }
 }

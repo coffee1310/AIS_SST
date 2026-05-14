@@ -2,6 +2,7 @@ package org.example.ais_sst.mock.controllers;
 
 import org.example.ais_sst.controller.EventController;
 import org.example.ais_sst.dto.events.EventCreateDTO;
+import org.example.ais_sst.dto.events.EventFilterDTO;
 import org.example.ais_sst.dto.events.EventResponseDTO;
 import org.example.ais_sst.dto.events.EventUpdateDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
@@ -43,8 +44,6 @@ class EventControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Убираем when(userDetails.getId()).thenReturn(1L); - это лишний stubbing
-
         createDTO = EventCreateDTO.builder()
                 .title("Конференция")
                 .description("Описание конференции")
@@ -134,14 +133,33 @@ class EventControllerTest {
     void getEvents_Success() {
         // given
         when(userDetails.getId()).thenReturn(1L);
-        when(eventService.getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+        when(eventService.getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class)))
                 .thenReturn(responsePage);
 
-        // when
+        // when - Добавлен параметр id (null) в начало
         ResponseEntity<Page<EventResponseDTO>> response = eventController.getEvents(
-                "Конференция", "Зал", LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
-                true, false, false, true, null, 0, 10, userDetails);
+                null,                    // id
+                "Конференция",           // title
+                "Зал",                   // venue
+                "Описание",              // description
+                "https://example.com",   // referenceToPosition
+                LocalDate.of(2024, 1, 1), // dateFrom
+                LocalDate.of(2024, 12, 31), // dateTo
+                LocalTime.of(9, 0),      // startTimeFrom
+                LocalTime.of(20, 0),     // startTimeTo
+                LocalTime.of(9, 0),      // endTimeFrom
+                LocalTime.of(20, 0),     // endTimeTo
+                true,                    // isPublic
+                false,                   // isDraft
+                false,                   // isCompleted
+                true,                    // isActive
+                null,                    // creatorId
+                0,                       // page
+                10,                      // size
+                "id",                    // sortBy
+                "DESC",                  // sortDirection
+                userDetails              // userDetails
+        );
 
         // then
         assertThat(response).isNotNull();
@@ -149,64 +167,155 @@ class EventControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getContent()).hasSize(1);
 
-        verify(eventService).getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), eq(1L), any(Pageable.class));
+        verify(eventService).getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class));
     }
 
     @Test
     void getEvents_WithCreatorId_OverridesUserDetails() {
         // given
-        when(eventService.getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+        when(eventService.getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class)))
                 .thenReturn(responsePage);
 
-        // when
+        // when - Добавлен параметр id (null) в начало
         ResponseEntity<Page<EventResponseDTO>> response = eventController.getEvents(
-                null, null, null, null, null, null, null, null, 5L, 0, 10, userDetails);
+                null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, 5L, 0, 10, "id", "DESC", userDetails);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        verify(eventService).getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class));
+        verify(userDetails, never()).getId();
+    }
+
+    @Test
+    void getEvents_WithIdFilter() {
+        // given
+        when(eventService.getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class)))
+                .thenReturn(responsePage);
+
+        // when - Передаем конкретный id
+        ResponseEntity<Page<EventResponseDTO>> response = eventController.getEvents(
+                5L,                      // id
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, 0, 10, "id", "DESC", userDetails);
 
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         verify(eventService).getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), eq(5L), any(Pageable.class));
+                argThat(filter -> filter.getId() != null && filter.getId() == 5L),
+                any(Pageable.class));
     }
 
     @Test
     void getEvents_WithoutUserDetails_SetsCreatorIdToNull() {
         // given
-        when(eventService.getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+        when(eventService.getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class)))
                 .thenReturn(responsePage);
 
-        // when
+        // when - Добавлен параметр id (null) в начало
         ResponseEntity<Page<EventResponseDTO>> response = eventController.getEvents(
-                null, null, null, null, null, null, null, null, null, 0, 10, null);
+                null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, 0, 10, "id", "DESC", null);
 
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        verify(eventService).getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), isNull(), any(Pageable.class));
+        verify(eventService).getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class));
     }
 
     @Test
     void getEvents_WithDefaultPagination() {
         // given
         when(userDetails.getId()).thenReturn(1L);
-        when(eventService.getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+        when(eventService.getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class)))
                 .thenReturn(responsePage);
 
-        // when
+        // when - Добавлен параметр id (null) в начало
         eventController.getEvents(
-                null, null, null, null, null, null, null, null, null, 0, 10, userDetails);
+                null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, 0, 10, "id", "DESC", userDetails);
 
         // then
         verify(eventService).getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), any(),
-                eq(PageRequest.of(0, 10)));
+                argThat(filter -> filter != null),
+                argThat(pageable -> pageable.getPageNumber() == 0 &&
+                        pageable.getPageSize() == 10 &&
+                        pageable.getSort().getOrderFor("id") != null));
+    }
+
+    @Test
+    void getEvents_WithCustomSorting() {
+        // given
+        when(userDetails.getId()).thenReturn(1L);
+        when(eventService.getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class)))
+                .thenReturn(responsePage);
+
+        // when - Добавлен параметр id (null) в начало
+        eventController.getEvents(
+                null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, 2, 25, "title", "ASC", userDetails);
+
+        // then
+        verify(eventService).getEventsWithFilters(
+                any(EventFilterDTO.class),
+                argThat(pageable -> pageable.getPageNumber() == 2 &&
+                        pageable.getPageSize() == 25 &&
+                        pageable.getSort().getOrderFor("title") != null &&
+                        pageable.getSort().getOrderFor("title").isAscending()));
+    }
+
+    @Test
+    void getEvents_WithAllFilters() {
+        // given
+        when(userDetails.getId()).thenReturn(1L);
+        when(eventService.getEventsWithFilters(any(EventFilterDTO.class), any(Pageable.class)))
+                .thenReturn(responsePage);
+
+        // when - Добавлен параметр id (null) в начало
+        eventController.getEvents(
+                null,                    // id
+                "Test Title",           // title
+                "Test Venue",           // venue
+                "Test Description",     // description
+                "https://test.com",     // referenceToPosition
+                LocalDate.of(2024, 1, 1),  // dateFrom
+                LocalDate.of(2024, 12, 31), // dateTo
+                LocalTime.of(10, 0),    // startTimeFrom
+                LocalTime.of(18, 0),    // startTimeTo
+                LocalTime.of(10, 0),    // endTimeFrom
+                LocalTime.of(18, 0),    // endTimeTo
+                true,                   // isPublic
+                false,                  // isDraft
+                false,                  // isCompleted
+                true,                   // isActive
+                10L,                    // creatorId
+                0, 20, "dateOfEvent", "ASC", userDetails);
+
+        // then
+        verify(eventService).getEventsWithFilters(
+                argThat(filter ->
+                        "Test Title".equals(filter.getTitle()) &&
+                                "Test Venue".equals(filter.getVenue()) &&
+                                "Test Description".equals(filter.getDescription()) &&
+                                "https://test.com".equals(filter.getReferenceToPosition()) &&
+                                filter.getDateFrom().equals(LocalDate.of(2024, 1, 1)) &&
+                                filter.getDateTo().equals(LocalDate.of(2024, 12, 31)) &&
+                                filter.getStartTimeFrom().equals(LocalTime.of(10, 0)) &&
+                                filter.getStartTimeTo().equals(LocalTime.of(18, 0)) &&
+                                filter.getEndTimeFrom().equals(LocalTime.of(10, 0)) &&
+                                filter.getEndTimeTo().equals(LocalTime.of(18, 0)) &&
+                                filter.getIsPublic() == true &&
+                                filter.getIsDraft() == false &&
+                                filter.getIsCompleted() == false &&
+                                filter.getIsActive() == true &&
+                                filter.getCreatorId().equals(10L)
+                ),
+                any(Pageable.class));
     }
 
     // ==================== TESTS FOR getMyEvents ====================
@@ -218,7 +327,8 @@ class EventControllerTest {
         when(eventService.getEventsByCreator(eq(1L), any(Pageable.class))).thenReturn(responsePage);
 
         // when
-        ResponseEntity<Page<EventResponseDTO>> response = eventController.getMyEvents(userDetails, 0, 10, "id", "DESC");
+        ResponseEntity<Page<EventResponseDTO>> response = eventController.getMyEvents(
+                userDetails, 0, 10, "id", "DESC");
 
         // then
         assertThat(response).isNotNull();
@@ -236,13 +346,14 @@ class EventControllerTest {
         when(eventService.getEventsByCreator(eq(1L), any(Pageable.class))).thenReturn(responsePage);
 
         // when
-        ResponseEntity<Page<EventResponseDTO>> response = eventController.getMyEvents(userDetails, 2, 20, "title", "ASC");
+        ResponseEntity<Page<EventResponseDTO>> response = eventController.getMyEvents(
+                userDetails, 2, 20, "title", "ASC");
 
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        verify(eventService).getEventsByCreator(eq(1L), any(Pageable.class));
+        verify(eventService).getEventsByCreator(eq(1L), eq(PageRequest.of(2, 20, Sort.by("title").ascending())));
     }
 
     @Test
@@ -346,44 +457,5 @@ class EventControllerTest {
         assertThat(response.getBody()).isEqualTo(responseDTO);
 
         verify(eventService).completeEvent(eq(1L), eq(1L));
-    }
-
-    // ==================== EDGE CASES ====================
-
-    @Test
-    void getEvents_WithAllFilters_GeneratesCorrectPageable() {
-        // given
-        when(eventService.getEventsWithFilters(
-                any(), any(), any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
-                .thenReturn(responsePage);
-
-        // when
-        eventController.getEvents(
-                "Test", "Venue",
-                LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
-                true, false, true, true, 10L, 5, 25, userDetails);
-
-        // then
-        verify(eventService).getEventsWithFilters(
-                eq("Test"), eq("Venue"),
-                eq(LocalDate.of(2024, 1, 1)), eq(LocalDate.of(2024, 12, 31)),
-                eq(true), eq(false), eq(true), eq(true), eq(10L),
-                eq(PageRequest.of(5, 25)));
-    }
-
-    @Test
-    void getMyEvents_WithAscendingSorting_UsesCorrectSort() {
-        // given
-        when(userDetails.getId()).thenReturn(1L);
-        when(eventService.getEventsByCreator(eq(1L), any(Pageable.class))).thenReturn(responsePage);
-
-        // when
-        eventController.getMyEvents(userDetails, 0, 10, "title", "ASC");
-
-        // then
-        verify(eventService).getEventsByCreator(eq(1L), argThat(pageable ->
-                pageable.getSort().getOrderFor("title") != null &&
-                        pageable.getSort().getOrderFor("title").isAscending()
-        ));
     }
 }

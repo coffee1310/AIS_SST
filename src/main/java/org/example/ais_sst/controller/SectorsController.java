@@ -10,30 +10,28 @@ import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.dto.sector.SectorParticipantResponseDTO;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
-import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
 import org.example.ais_sst.service.sectorService.SectorIntroductionRequestService;
 import org.example.ais_sst.service.sectorService.SectorService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.relation.RoleNotFoundException;
 import java.util.List;
-import java.util.Map;
+
+import org.example.ais_sst.controller.base.BaseController;
+import org.springframework.web.bind.annotation.*;
+
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/sector")
-public class SectorsController {
+public class SectorsController extends BaseController {
 
     private final SectorService sectorService;
     private final SectorIntroductionRequestService sectorIntroductionRequestService;
@@ -50,7 +48,6 @@ public class SectorsController {
         return new ResponseEntity<>(sectors, HttpStatus.OK);
     }
 
-
     @GetMapping("/{id}")
     @Operation(summary = "Получить сектор по ID")
     public ResponseEntity<SectorDTO> getSectorById(@PathVariable Long id) {
@@ -58,9 +55,6 @@ public class SectorsController {
         return ResponseEntity.ok(sector);
     }
 
-    /**
-     * Получить участников сектора по ID сектора
-     */
     @GetMapping("/{id}/participants")
     @Operation(summary = "Получить участников сектора")
     public ResponseEntity<Page<SectorParticipantResponseDTO>> getSectorParticipants(
@@ -70,21 +64,18 @@ public class SectorsController {
             @RequestParam(defaultValue = "entryDate") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection) {
 
-        log.info("GET /api/sectors/{}/participants - Getting participants", id);
+        logInfo("/api/sectors/{}/participants", "Getting participants", id);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
         Page<SectorParticipantResponseDTO> participants = sectorService.getSectorParticipants(id, pageable);
 
         return ResponseEntity.ok(participants);
     }
 
-    /**
-     * Получить координатора сектора
-     */
     @GetMapping("/{id}/coordinator")
     @Operation(summary = "Получить координатора сектора")
     public ResponseEntity<SectorParticipantResponseDTO> getSectorCoordinator(@PathVariable Long id) {
-        log.info("GET /api/sectors/{}/coordinator - Getting coordinator", id);
+        logInfo("/api/sectors/{}/coordinator", "Getting coordinator", id);
 
         SectorParticipantResponseDTO coordinator = sectorService.getSectorCoordinator(id);
 
@@ -96,8 +87,9 @@ public class SectorsController {
     }
 
     @PostMapping("/{sector_id}")
-    public ResponseEntity<?> createSectorIntroductionRequest(@AuthenticationPrincipal CustomUserDetails customUserDetails,
-                                                             @PathVariable Long sector_id) {
+    public ResponseEntity<?> createSectorIntroductionRequest(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long sector_id) {
 
         SectorIntroductionRequestDTO requestDTO = sectorIntroductionRequestService.createRequest(customUserDetails.getId(), sector_id);
         return new ResponseEntity<>(requestDTO, HttpStatus.CREATED);
@@ -105,25 +97,16 @@ public class SectorsController {
 
     @PutMapping("/accept/{id}")
     public ResponseEntity<?> acceptSectorIntroductionRequest(@PathVariable Long id) {
-
         SectorIntroductionRequestDTOSummary requestDTOSummary = sectorIntroductionRequestService.acceptRequest(id);
 
-        return ResponseEntity.ok()
-                .body(Map.of(
-                        "message", "Заявка принята. Член сектора создан.",
-                        "request", requestDTOSummary
-                ));
+        return createSuccessResponse("Заявка принята. Член сектора создан.", requestDTOSummary);
     }
 
-    @PutMapping ("/reject/{id}")
+    @PutMapping("/reject/{id}")
     public ResponseEntity<?> rejectSectorIntroductionRequest(@PathVariable Long id) {
         SectorIntroductionRequestDTOSummary requestDTOSummary = sectorIntroductionRequestService.rejectRequest(id);
 
-        return ResponseEntity.ok()
-                .body(Map.of(
-                        "message", "Заявка принята. Член сектора создан.",
-                        "request", requestDTOSummary
-                ));
+        return createSuccessResponse("Заявка отклонена.", requestDTOSummary);
     }
 
     @GetMapping("/introductions")
@@ -140,7 +123,7 @@ public class SectorsController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestParam(required = false) SectorIntroductionStatus status) {
 
-        log.info("GET /api/sector/introductions/filter - Getting requests with status: {} for coordinator: {}",
+        logInfo("/api/sector/introductions/filter", "Getting requests with status: {} for coordinator: {}",
                 status, customUserDetails.getId());
 
         List<SectorIntroductionRequestDTO> requestDTOList = sectorIntroductionRequestService
@@ -150,9 +133,12 @@ public class SectorsController {
     }
 
     @PostMapping("/appoint_coordinator/{sector_id}")
-    public ResponseEntity<?> appointACoordinator(@PathVariable Long sector_id, @RequestParam Long user_id) throws RoleNotFoundException {
+    public ResponseEntity<?> appointACoordinator(
+            @PathVariable Long sector_id,
+            @RequestParam Long user_id) throws RoleNotFoundException {
+
         sectorService.addCoordinator(sector_id, user_id);
-        return new ResponseEntity<>("Координтор был добавлен", HttpStatus.ACCEPTED);
+        return createSuccessResponse("Координатор был добавлен", null);
     }
 
     @DeleteMapping("/{sectorId}/coordinator/{userId}")
@@ -160,21 +146,20 @@ public class SectorsController {
             @PathVariable Long sectorId,
             @PathVariable Long userId) throws RoleNotFoundException {
 
-        log.info("DELETE /api/sector/{}/coordinator/{} - Removing coordinator from sector", sectorId, userId);
+        logInfo("/api/sector/{}/coordinator/{}", "Removing coordinator from sector", sectorId, userId);
 
         sectorService.removeCoordinatorFromSector(sectorId, userId);
 
         return ResponseEntity.noContent().build();
     }
 
-    // Удаление координатора из текущего сектора (без передачи userId)
     @DeleteMapping("/{sectorId}/coordinator")
     public ResponseEntity<Void> removeCurrentCoordinatorFromSector(
             @PathVariable Long sectorId,
             @AuthenticationPrincipal CustomUserDetails userDetails) throws RoleNotFoundException {
 
         Long userId = userDetails.getId();
-        log.info("DELETE /api/sector/{}/coordinator - Removing current user as coordinator from sector", sectorId);
+        logInfo("/api/sector/{}/coordinator", "Removing current user as coordinator from sector", sectorId);
 
         sectorService.removeCoordinatorFromSector(sectorId, userId);
 
@@ -188,7 +173,7 @@ public class SectorsController {
             @AuthenticationPrincipal CustomUserDetails userDetails) throws RoleNotFoundException {
 
         Long coordinatorId = userDetails.getId();
-        log.info("DELETE /api/sector/{}/kick/{} - Coordinator {} kicking participant {} from sector",
+        logInfo("/api/sector/{}/kick/{}", "Coordinator {} kicking participant {} from sector",
                 sectorId, participantId, coordinatorId, participantId);
 
         sectorService.kickParticipantFromSector(sectorId, coordinatorId, participantId);
@@ -202,7 +187,7 @@ public class SectorsController {
             @PathVariable Long sectorId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        log.info("DELETE /api/sector/{}/leave - User {} is leaving sector", sectorId, userDetails.getId());
+        logInfo("/api/sector/{}/leave", "User {} is leaving sector", sectorId, userDetails.getId());
 
         sectorService.leaveSector(sectorId, userDetails.getId());
 

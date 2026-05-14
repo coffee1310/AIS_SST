@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.user.UserFilterDTO;
 import org.example.ais_sst.dto.user.UserResponseDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController  extends BaseController {
 
     private final UserService userService;
 
@@ -48,52 +49,26 @@ public class UserController {
 
     @GetMapping("/all")
     public ResponseEntity<Page<UserResponseDTO>> getAllUsers(
-            @Parameter(description = "ID пользователя")
             @RequestParam(required = false) Long id,
-
-            @Parameter(description = "Номер страницы (начиная с 0)")
             @RequestParam(defaultValue = "0") int page,
-
-            @Parameter(description = "Размер страницы")
             @RequestParam(defaultValue = "10") int size,
-
-            @Parameter(description = "Поле для сортировки")
             @RequestParam(defaultValue = "id") String sortBy,
-
-            @Parameter(description = "Направление сортировки (ASC/DESC)")
             @RequestParam(defaultValue = "ASC") String sortDirection,
-
-            @Parameter(description = "Фильтр по роли")
             @RequestParam(required = false) String role,
-
-            @Parameter(description = "Поиск по имени, фамилии или email")
             @RequestParam(required = false) String search,
-
-            @Parameter(description = "Фильтр по активности")
             @RequestParam(required = false) Boolean isActive,
-
-            @Parameter(description = "Фильтр по бану")
             @RequestParam(required = false) Boolean isBanned,
-
-            @Parameter(description = "Фильтр по группе")
             @RequestParam(required = false) Long groupId,
-
-            @Parameter(description = "Фильтр по специальности")
             @RequestParam(required = false) Long specialityId,
             @RequestParam(required = false) Long sectorId) {
 
-        log.info("GET /api/users/all - Getting users with filters");
+        logInfo("/api/users/all", "Getting users with filters");
 
         UserFilterDTO filter = UserFilterDTO.builder()
-                .id(id)
-                .role(role)
-                .search(search)
-                .isActive(isActive)
-                .isBanned(isBanned)
-                .groupId(groupId)
-                .specialityId(specialityId)
-                .sectorId(sectorId)  // Добавьте эту строку
-                .build();
+                .id(id).role(role).search(search)
+                .isActive(isActive).isBanned(isBanned)
+                .groupId(groupId).specialityId(specialityId)
+                .sectorId(sectorId).build();
 
         Page<UserResponseDTO> users = userService.getAllUsers(page, size, sortBy, sortDirection, filter);
         return ResponseEntity.ok(users);

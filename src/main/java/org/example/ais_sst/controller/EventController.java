@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.events.EventCreateDTO;
+import org.example.ais_sst.dto.events.EventFilterDTO;
 import org.example.ais_sst.dto.events.EventResponseDTO;
 import org.example.ais_sst.dto.events.EventUpdateDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
@@ -21,13 +23,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
 @Tag(name = "Events", description = "Управление мероприятиями")
-public class EventController {
+public class EventController extends BaseController {
 
     private final EventService eventService;
 
@@ -51,35 +54,64 @@ public class EventController {
     }
 
     @GetMapping
-    @Operation(summary = "Универсальный поиск мероприятий с фильтрами")
     public ResponseEntity<Page<EventResponseDTO>> getEvents(
+            @RequestParam(required = false) Long id,
             @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
             @RequestParam(required = false) String venue,
+            @RequestParam(required = false) String referenceToPosition,
+
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTimeFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTimeTo,
+
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTimeFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTimeTo,
+
             @RequestParam(required = false) Boolean isPublic,
             @RequestParam(required = false) Boolean isDraft,
             @RequestParam(required = false) Boolean isCompleted,
             @RequestParam(required = false) Boolean isActive,
-            @RequestParam(required = false) Long creatorId,
+
+            @RequestParam(required = false) Long creatorId,   // ← теперь просто параметр, без подстановки
+
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection,
+
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        log.info("GET /api/events - Getting events with filters");
+        logInfo("/api/events", "Getting events with filters");
 
-        // Временно без сортировки
-        Pageable pageable = PageRequest.of(page, size);
+        EventFilterDTO filter = EventFilterDTO.builder()
+                .id(id)
+                .title(title)
+                .description(description)
+                .venue(venue)
+                .referenceToPosition(referenceToPosition)
+                .dateFrom(dateFrom)
+                .dateTo(dateTo)
+                .startTimeFrom(startTimeFrom)
+                .startTimeTo(startTimeTo)
+                .endTimeFrom(endTimeFrom)
+                .endTimeTo(endTimeTo)
+                .isPublic(isPublic)
+                .isDraft(isDraft)
+                .isCompleted(isCompleted)
+                .isActive(isActive)
+                .creatorId(creatorId)                    // ← теперь null, если параметр не передан
+                .build();
 
-        Long filterCreatorId = creatorId != null ? creatorId : (userDetails != null ? userDetails.getId() : null);
-
-        Page<EventResponseDTO> events = eventService.getEventsWithFilters(
-                title, venue, dateFrom, dateTo, isPublic, isDraft, isCompleted, isActive, filterCreatorId, pageable);
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Page<EventResponseDTO> events = eventService.getEventsWithFilters(filter, pageable);
 
         return ResponseEntity.ok(events);
     }
 
-    @GetMapping("/creator/me")
+        @GetMapping("/creator/me")
     @Operation(summary = "Получить мероприятия, созданные текущим пользователем")
     public ResponseEntity<Page<EventResponseDTO>> getMyEvents(
             @AuthenticationPrincipal CustomUserDetails userDetails,
