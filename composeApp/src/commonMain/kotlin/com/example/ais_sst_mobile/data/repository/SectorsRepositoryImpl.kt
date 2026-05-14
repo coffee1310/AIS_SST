@@ -18,6 +18,8 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import com.example.ais_sst_mobile.data.network.dto.CreateSectorRequestDto
+import io.ktor.client.statement.bodyAsText
+
 
 class SectorsRepositoryImpl(
     private val httpClient: HttpClient
@@ -93,5 +95,25 @@ class SectorsRepositoryImpl(
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
+    }
+    override suspend fun removeCoordinator(sectorId: Int, userId: Int): Result<Unit> = runCatching {
+        val response = httpClient.delete("sector/$sectorId/coordinator/$userId")
+        if (!response.status.isSuccess()) {
+            throw Exception("Ошибка при удалении координатора: ${response.status.value}")
+        }
+    }
+    override suspend fun appointCoordinator(sectorId: Int, userId: Int): Result<Unit> = runCatching {
+        val response = httpClient.post("sector/appoint_coordinator/$sectorId") {
+            parameter("user_id", userId)
+        }
+        if (!response.status.isSuccess()) {
+            val errorBody = response.bodyAsText()
+            val errorMessage = if (errorBody.contains("\"message\"")) {
+                errorBody.substringAfter("\"message\":\"").substringBefore("\"")
+            } else {
+                "Ошибка при назначении координатора: ${response.status.value}"
+            }
+            throw Exception(errorMessage)
+        }
     }
 }

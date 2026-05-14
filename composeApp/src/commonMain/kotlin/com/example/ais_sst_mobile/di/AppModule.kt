@@ -9,6 +9,7 @@ import com.example.ais_sst_mobile.presentation.auth.*
 import com.example.ais_sst_mobile.presentation.home.*
 import com.example.ais_sst_mobile.presentation.profile.*
 import com.example.ais_sst_mobile.presentation.profile.activist.ActivistProfileScreenModel
+import com.example.ais_sst_mobile.presentation.profile.board.BoardScreenModel
 import com.example.ais_sst_mobile.presentation.profile.my_data.*
 import com.example.ais_sst_mobile.presentation.profile.requests.*
 import com.example.ais_sst_mobile.presentation.sectors.*
@@ -43,6 +44,7 @@ val appModule = module {
     factory { SectorDetailsScreenModel(get(), get()) }
     factory { ActivistProfileScreenModel(get(), get()) }
     factory { CreateSectorScreenModel(get(), get()) }
+    factory { BoardScreenModel(get(), get(), get()) }
 
 }
 

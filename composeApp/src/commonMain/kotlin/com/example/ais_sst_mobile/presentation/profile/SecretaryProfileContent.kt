@@ -46,9 +46,6 @@ fun SecretaryProfileContent(component: ProfileComponent, screenModel: ProfileScr
                 ProfileHeader(user, activeRole, realRole) { screenModel.setRole(it) }
                 Spacer(modifier = Modifier.height(22.dp))
 
-                ProfileStatsCard(user)
-                Spacer(modifier = Modifier.height(28.dp))
-
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = {
                         component.onNavigateToFullScreen(FullScreenRoute.MyData)})
@@ -57,7 +54,9 @@ fun SecretaryProfileContent(component: ProfileComponent, screenModel: ProfileScr
                     ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Заявки на вступление", onClick = {
                         component.onNavigateToFullScreen(FullScreenRoute.AccountRequests)})
                     ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Документы", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.Group, title = "Правление студсовета", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Group, title = "Правление студсовета", onClick = {
+                        component.onNavigateToFullScreen(FullScreenRoute.Board)
+                    })
                     ProfileMenuRow(icon = Icons.Outlined.NotificationAdd, title = "Создание уведомлений", onClick = { })
 
                     Spacer(modifier = Modifier.height(8.dp))

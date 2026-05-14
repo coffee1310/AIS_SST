@@ -13,4 +13,5 @@ interface UserRepository {
     suspend fun getAccountRequestById(id: Int): Result<AccountRequestDto>
     suspend fun getUserProfileById(id: Int): Result<UserProfileDto>
     suspend fun getActivists(page: Int = 0, size: Int = 16, searchQuery: String = ""): Result<UserPageResponseDto>
+    suspend fun getUsersByRole(role: String): Result<List<UserProfileDto>>
 }

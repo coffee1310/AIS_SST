@@ -15,6 +15,7 @@ import com.example.ais_sst_mobile.presentation.auth.LoginScreen
 import com.example.ais_sst_mobile.presentation.auth.RegisterScreen
 import com.example.ais_sst_mobile.presentation.main.MainScreen
 import com.example.ais_sst_mobile.presentation.profile.activist.ActivistProfileScreen
+import com.example.ais_sst_mobile.presentation.profile.board.BoardScreen
 import com.example.ais_sst_mobile.presentation.profile.my_data.MyDataScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.RequestDetailsScreen
@@ -60,6 +61,9 @@ fun App(root: RootComponent) {
                         onBackClick = instance.component.onGoBack
                     )
                     is RootComponent.Child.CreateSector -> CreateSectorScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.Board -> BoardScreen(
                         component = instance.component
                     )
                 }

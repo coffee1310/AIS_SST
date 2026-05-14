@@ -16,4 +16,6 @@ interface SectorsRepository {
     suspend fun rejectSectorRequest(requestId: Int): Result<String>
     suspend fun kickParticipant(sectorId: Int, userId: Int): Result<Unit>
     suspend fun createSector(request: CreateSectorRequestDto): Result<Unit>
+    suspend fun removeCoordinator(sectorId: Int, userId: Int): Result<Unit>
+    suspend fun appointCoordinator(sectorId: Int, userId: Int): Result<Unit>
 }

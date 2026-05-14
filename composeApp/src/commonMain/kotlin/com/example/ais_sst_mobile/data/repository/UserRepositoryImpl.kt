@@ -67,4 +67,14 @@ class UserRepositoryImpl(
             }
         }.body()
     }
+    override suspend fun getUsersByRole(role: String): Result<List<UserProfileDto>> = runCatching {
+        val response = httpClient.get("users/all") {
+            parameter("page", 0)
+            parameter("size", 50)
+            parameter("sortBy", "id")
+            parameter("sortDirection", "ASC")
+            parameter("role", role)
+        }.body<PageableResponse<UserProfileDto>>()
+        response.content
+    }
 }

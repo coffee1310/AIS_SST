@@ -12,6 +12,7 @@ sealed interface FullScreenRoute {
     data class RequestDetails(val id: Int) : FullScreenRoute
     data class ActivistProfile(val userId: Int) : FullScreenRoute
     data object CreateSector : FullScreenRoute
+    data object Board : FullScreenRoute
 }
 class LoginComponent(
     componentContext: ComponentContext,
@@ -141,6 +142,10 @@ class ActivistProfileComponent(
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
 class CreateSectorComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+class BoardComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
