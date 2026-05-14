@@ -35,7 +35,7 @@
 		<lombok.version>1.18.44</lombok.version>
 		<maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
 		<org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-		<docker-java.version>3.7.0</docker-java.version> <!-- 👈 Обновил с 3.4.0 до 3.7.0 -->	</properties>
+		<docker-java.version>3.7.0</docker-java.version> 	</properties>
 
 	<!-- Dependencies -->
 	<dependencies>
