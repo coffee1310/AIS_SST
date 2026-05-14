@@ -1,6 +1,7 @@
 package org.example.ais_sst.repository;
 
 import org.example.ais_sst.entity.SectorParticipant;
+import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,4 +49,11 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     void setCoordinatorFlag(@Param("sectorId") Long sectorId, @Param("userId") Long userId);
 
     boolean existsBySectorIdAndStudentId(Long sectorId, Long studentId);
+
+    @Query("SELECT sp.sector.title FROM SectorParticipant sp WHERE sp.student.id = :userId AND sp.status = :status")
+    List<String> findSectorTitlesByUserIdAndStatus(@Param("userId") Long userId, @Param("status") SectorParticipantStatuses status);
+
+    // НОВЫЙ МЕТОД: получить все секторы с деталями
+    @Query("SELECT sp.sector.id, sp.sector.title, sp.status, sp.isCoordinator FROM SectorParticipant sp WHERE sp.student.id = :userId AND sp.status = :status")
+    List<Object[]> findSectorDetailsByUserIdAndStatus(@Param("userId") Long userId, @Param("status") SectorParticipantStatuses status);
 }

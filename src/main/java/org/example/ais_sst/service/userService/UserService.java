@@ -10,6 +10,7 @@ import org.example.ais_sst.dto.user.UserResponseDTO;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.entity.enums.Gender;
+import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.SectorParticipantRepository;
@@ -47,8 +48,10 @@ public class UserService implements UserServiceImpl {
                 ? userPhotoService.getPhotoAsBase64(user.getPathToPhoto())
                 : null;
 
+        // Получаем социальные статусы
         List<String> socialStatuses = socialStatusStudentRepository.findSocialStatusTitlesByStudentId(userId);
 
+        // Получаем информацию о секторе где пользователь координатор
         Long coordinatorSectorId = null;
         String coordinatorSectorTitle = null;
 
@@ -62,6 +65,12 @@ public class UserService implements UserServiceImpl {
                 coordinatorSectorTitle = (String) info[1];
             }
         }
+
+        // НОВОЕ: получаем список секторов, в которых состоит пользователь (активные участники)
+        List<String> userSectors = sectorParticipantRepository.findSectorTitlesByUserIdAndStatus(
+                userId, SectorParticipantStatuses.Активный);
+
+        log.info("User {} is member of {} sectors: {}", userId, userSectors.size(), userSectors);
 
         return UserProfileInfoDTO.builder()
                 .id(userId)
@@ -87,6 +96,7 @@ public class UserService implements UserServiceImpl {
                 .shortSpecialityTitle(user.getSpeciality().getShortTitle())
                 .events_count(0)
                 .points_count(0)
+                .userSectors(userSectors)  // НОВОЕ поле
                 .build();
     }
 

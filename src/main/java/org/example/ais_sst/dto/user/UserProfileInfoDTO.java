@@ -49,7 +49,6 @@ public class UserProfileInfoDTO {
     @Max(4)
     private Short courseNumber;
 
-
     private String specialityTitle;
 
     private String groupTitle;
@@ -70,15 +69,18 @@ public class UserProfileInfoDTO {
 
     private String roleTitle;
 
-    private String coordinatorSector;  // Добавлено поле для сектора координатора
+    private String coordinatorSector;
 
-    private List<String> socialStatuses;  // Добавлено поле для социальных статусов
+    private List<String> socialStatuses;
 
-    private Long coordinatorSectorId;      // Добавлено
+    private Long coordinatorSectorId;
 
-    private String coordinatorSectorTitle; // Добавлено
+    private String coordinatorSectorTitle;
 
     private String shortSpecialityTitle;
+
+    // НОВОЕ ПОЛЕ: список секторов, в которых состоит пользователь
+    private List<String> userSectors;  // Список названий секторов
 
     public void validate(Validator validator) {
         Set<ConstraintViolation<UserProfileInfoDTO>> violations = validator.validate(this);
