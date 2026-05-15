@@ -8,6 +8,7 @@ import org.example.ais_sst.dto.request.SectorIntroductionRequestDTO;
 import org.example.ais_sst.dto.request.SectorIntroductionRequestDTOSummary;
 import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.dto.sector.SectorParticipantResponseDTO;
+import org.example.ais_sst.dto.sector.SectorUpdateDTO;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
@@ -195,15 +196,13 @@ public class SectorsController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Обновить сектор")
     public ResponseEntity<SectorDTO> updateSector(
             @PathVariable Long id,
-            @Valid @RequestBody SectorDTO sectorDTO) throws RoleNotFoundException {
+            @Valid @RequestBody SectorUpdateDTO updateDTO) throws RoleNotFoundException {
 
-        logInfo("/api/sector/{}", "Updating sector", id);
-
-        SectorDTO updatedSector = sectorService.updateSector(id, sectorDTO);
-
+        // Проверяем, что id из URL совпадает с id в DTO
+        updateDTO.setId(id);
+        SectorDTO updatedSector = sectorService.updateSector(updateDTO);
         return ResponseEntity.ok(updatedSector);
     }
 }

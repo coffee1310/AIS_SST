@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.dto.sector.SectorParticipantResponseDTO;
+import org.example.ais_sst.dto.sector.SectorUpdateDTO;
 import org.example.ais_sst.dto.sector.SectorWithUserStatusDTO;
 import org.example.ais_sst.entity.*;
 import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
@@ -417,39 +418,36 @@ public class SectorService {
     }
 
     @Transactional
-    public SectorDTO updateSector(Long sectorId, SectorDTO sectorDTO) throws RoleNotFoundException {
-        log.info("Updating sector with id: {}", sectorId);
+    public SectorDTO updateSector(SectorUpdateDTO updateDTO) throws RoleNotFoundException {
+        log.info("Updating sector with id: {}", updateDTO.getId());
 
         // 1. Находим существующий сектор
-        Sector existingSector = sectorRepository.findById(sectorId)
-                .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + sectorId + " не существует"));
+        Sector existingSector = sectorRepository.findById(updateDTO.getId())
+                .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + updateDTO.getId() + " не существует"));
 
         // 2. Обновляем основные поля
-        if (sectorDTO.getTitle() != null) {
-            existingSector.setTitle(sectorDTO.getTitle());
+        if (updateDTO.getTitle() != null) {
+            existingSector.setTitle(updateDTO.getTitle());
         }
-        if (sectorDTO.getDescription() != null) {
-            existingSector.setDescription(sectorDTO.getDescription());
+        if (updateDTO.getDescription() != null) {
+            existingSector.setDescription(updateDTO.getDescription());
         }
-        if (sectorDTO.getIsActive() != null) {
-            existingSector.setIsActive(sectorDTO.getIsActive());
+        if (updateDTO.getIsActive() != null) {
+            existingSector.setIsActive(updateDTO.getIsActive());
         }
 
         // 3. Обновляем фото (если передано новое)
-        if (sectorDTO.getPhoto() != null && !sectorDTO.getPhoto().isEmpty()) {
+        if (updateDTO.getPhoto() != null && !updateDTO.getPhoto().isEmpty()) {
             try {
-                // Удаляем старое фото, если оно есть
                 if (existingSector.getPathToPhoto() != null && !existingSector.getPathToPhoto().isEmpty()) {
                     sectorPhotoService.deletePhoto(existingSector.getPathToPhoto());
-                    log.info("Old photo deleted for sector: {}", sectorId);
+                    log.info("Old photo deleted for sector: {}", updateDTO.getId());
                 }
-
-                // Сохраняем новое фото
-                String photoPath = sectorPhotoService.savePhotoFromBase64(sectorDTO.getPhoto(), sectorId);
+                String photoPath = sectorPhotoService.savePhotoFromBase64(updateDTO.getPhoto(), updateDTO.getId());
                 existingSector.setPathToPhoto(photoPath);
-                log.info("New photo saved for sector: {}", sectorId);
+                log.info("New photo saved for sector: {}", updateDTO.getId());
             } catch (IOException e) {
-                log.error("Failed to save photo for sector: {}", sectorId, e);
+                log.error("Failed to save photo for sector: {}", updateDTO.getId(), e);
                 throw new RuntimeException("Ошибка при сохранении фото сектора", e);
             }
         }
@@ -459,8 +457,8 @@ public class SectorService {
         log.info("Sector updated with id: {}", updatedSector.getId());
 
         // 5. Обновляем координаторов (если передан новый список)
-        if (sectorDTO.getCoordinatorIds() != null) {
-            updateCoordinators(sectorId, sectorDTO.getCoordinatorIds());
+        if (updateDTO.getCoordinatorIds() != null) {
+            updateCoordinators(updateDTO.getId(), updateDTO.getCoordinatorIds());
         }
 
         // 6. Получаем обновленный DTO
@@ -474,7 +472,7 @@ public class SectorService {
 
         // 8. Добавляем информацию о координаторах
         List<SectorParticipant> coordinators = sectorParticipantRepository
-                .findBySectorIdAndIsCoordinatorTrue(sectorId);
+                .findBySectorIdAndIsCoordinatorTrue(updateDTO.getId());
 
         List<Long> coordinatorIds = coordinators.stream()
                 .map(participant -> participant.getStudent().getId())
@@ -486,16 +484,13 @@ public class SectorService {
                 .collect(Collectors.toList());
         result.setCoordinators(coordinatorDTOs);
 
-        log.info("Sector {} updated with {} coordinator(s)", sectorId, coordinatorIds.size());
+        log.info("Sector {} updated with {} coordinator(s)", updateDTO.getId(), coordinatorIds.size());
 
         return result;
     }
 
-    /**
-     * Обновление списка координаторов сектора
-     */
     @Transactional
-    private void updateCoordinators(Long sectorId, List<Long> newCoordinatorIds) throws RoleNotFoundException {
+    public void updateCoordinators(Long sectorId, List<Long> newCoordinatorIds) throws RoleNotFoundException {
         log.info("Updating coordinators for sector {}: new coordinators: {}", sectorId, newCoordinatorIds);
 
         // 1. Получаем текущих координаторов

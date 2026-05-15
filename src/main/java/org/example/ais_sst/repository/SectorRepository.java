@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.net.http.HttpHeaders;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,4 +45,6 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     List<Object[]> findSectorsWithUserStatus(@Param("userId") Long userId);
 
     Sector getSectorById(Long id);
+
+    Optional<Sector> findByTitle(String title);
 }

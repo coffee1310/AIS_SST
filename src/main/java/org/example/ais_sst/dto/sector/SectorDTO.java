@@ -16,13 +16,13 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ValidSectorName  // Аннотация на уровне класса
 public class SectorDTO {
 
     private Long id;
 
     @Size(max = 128)
     @NotNull
-    @ValidSectorName
     private String title;
 
     private String description;

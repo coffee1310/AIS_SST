@@ -21,6 +21,7 @@ import org.example.ais_sst.repository.SectorIntroductionRequestRepository;
 import org.example.ais_sst.repository.SectorParticipantRepository;
 import org.example.ais_sst.repository.SectorRepository;
 import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.service.base.BaseEntityService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -30,235 +31,179 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SectorIntroductionRequestService {
+public class SectorIntroductionRequestService extends BaseEntityService {
 
-    private final SectorIntroductionRequestMapper sectorIntroductionRequestMapper;
-    private final SectorIntroductionRequestRepository sectorIntroductionRequestRepository;
-
+    private final SectorIntroductionRequestMapper mapper;
+    private final SectorIntroductionRequestRepository repository;
     private final UserRepository userRepository;
     private final SectorRepository sectorRepository;
-    private final SectorParticipantRepository sectorParticipantRepository;
-
-    private final SectorParticipantMapper sectorParticipantMapper;
-    private final SectorParticipantService sectorParticipantService;
-
-    private final SectorMapper sectorMapper;
+    private final SectorParticipantRepository participantRepository;
+    private final SectorParticipantService participantService;
 
     @Transactional
     public SectorIntroductionRequestDTO createRequest(Long userId, Long sectorId) {
-        User user = userRepository.findUserById(userId)
-                .orElseThrow(() -> new UserDoesNotExistException(
-                        String.format("Пользователь с id: %d не найден", userId)));
+        return executeWithLogging(() -> {
+            User user = findEntityOrThrow(userId, userRepository::findUserById,
+                    () -> new UserDoesNotExistException("Пользователь не найден"), "User");
 
-        Sector sector = sectorRepository.findSectorById(sectorId)
-                .orElseThrow(() -> new SectorDoesNotExistException(
-                        String.format("Сектор с таким id: %d не найден", sectorId)));
+            Sector sector = findEntityOrThrow(sectorId, sectorRepository::findSectorById,
+                    () -> new SectorDoesNotExistException("Сектор не найден"), "Sector");
 
-        // ПРОВЕРКА 1: Есть ли уже активная заявка (Ожидание или На рассмотрении)
-        List<SectorIntroductionRequest> existingRequests = sectorIntroductionRequestRepository
-                .findByUserIdAndSectorIdAndStatusIn(userId, sectorId,
-                        List.of(SectorIntroductionStatus.НА_РАССМОТРЕНИИ));
+            // Проверка на активную заявку
+            validateState(
+                    repository.findByUserIdAndSectorIdAndStatusIn(userId, sectorId,
+                            List.of(SectorIntroductionStatus.НА_РАССМОТРЕНИИ)).isEmpty(),
+                    () -> new SectorIntroductionRequestAlreadyExistsException(
+                            "У вас уже есть активная заявка на вступление в этот сектор"),
+                    "User already has active request"
+            );
 
-        if (!existingRequests.isEmpty()) {
-            throw new SectorIntroductionRequestAlreadyExistsException(
-                    String.format("У вас уже есть активная заявка на вступление в сектор '%s'. Пожалуйста, дождитесь решения.",
-                            sector.getTitle()));
+            // Проверка на существующего участника
+            return participantRepository.findByStudentIdAndSectorId(userId, sectorId)
+                    .map(participant -> handleExistingParticipant(user, sector, participant))
+                    .orElseGet(() -> createNewRequest(user, sector));
+
+        }, "createRequest", userId, sectorId);
+    }
+
+    private SectorIntroductionRequestDTO handleExistingParticipant(User user, Sector sector, SectorParticipant participant) {
+        if (participant.getStatus() == SectorParticipantStatuses.Активный) {
+            throw new UserIsAlreadyInThisSectorException("Вы уже являетесь участником этого сектора");
         }
 
-        // ПРОВЕРКА 2: Есть ли уже запись в sector_participants
-        java.util.Optional<SectorParticipant> existingParticipant = sectorParticipantRepository
-                .findByStudentIdAndSectorId(userId, sectorId);
+        // Восстанавливаем участника
+        participant.setStatus(SectorParticipantStatuses.Активный);
+        participant.setEntryDate(LocalDate.now());
+        participantRepository.save(participant);
 
-        // Если пользователь уже является участником сектора
-        if (existingParticipant.isPresent()) {
-            SectorParticipant participant = existingParticipant.get();
+        return createNewRequest(user, sector);
+    }
 
-            // Если статус "Вышедший" - можно восстановить
-            if (participant.getStatus() == SectorParticipantStatuses.Вышедший) {
-                // Восстанавливаем участника
-
-                // Создаем заявку как одобренную (или можно сразу вернуть успех без заявки)
-                SectorIntroductionRequest request = SectorIntroductionRequest.builder()
-                        .user(user)
-                        .sector(sector)
-                        .status(SectorIntroductionStatus.НА_РАССМОТРЕНИИ) // Сразу одобряем
-                        .build();
-                request = sectorIntroductionRequestRepository.save(request);
-
-                log.info("User {} was restored to sector {} (was 'Вышедший')", userId, sectorId);
-                return sectorIntroductionRequestMapper.toSectorIntroductionRequestDTO(request);
-            }
-
-            // Если пользователь активный участник
-            throw new UserIsAlreadyInThisSectorException(
-                    String.format("Пользователь с id: %d уже является активным участником сектора", userId));
-        }
-
-        // Если записи нет, создаем новую заявку
+    private SectorIntroductionRequestDTO createNewRequest(User user, Sector sector) {
         SectorIntroductionRequest request = SectorIntroductionRequest.builder()
                 .user(user)
                 .sector(sector)
-                .status(SectorIntroductionStatus.НА_РАССМОТРЕНИИ) // Явно указываем статус
+                .status(SectorIntroductionStatus.НА_РАССМОТРЕНИИ)
                 .build();
 
-        request = sectorIntroductionRequestRepository.save(request);
-
-        log.info("New sector introduction request created for user {} in sector {} with status: {}",
-                userId, sectorId, request.getStatus());
-
-        return sectorIntroductionRequestMapper.toSectorIntroductionRequestDTO(request);
+        return mapper.toSectorIntroductionRequestDTO(repository.save(request));
     }
 
     @Transactional
-    public SectorIntroductionRequestDTOSummary acceptRequest(Long request_id) {
+    public SectorIntroductionRequestDTOSummary acceptRequest(Long requestId) {
+        return executeWithLogging(() -> {
+            SectorIntroductionRequest request = findEntityOrThrow(requestId, repository::findById,
+                    () -> new SectorIntroductionRequestDoesNotExistException("Заявка не найдена"), "Request");
 
-        SectorIntroductionRequest request = sectorIntroductionRequestRepository.findById(request_id)
-                .orElseThrow(() -> new SectorIntroductionRequestDoesNotExistException(
-                        String.format("Заявка на вступление в сектор с id: %d не найдена", request_id)));
+            validateState(request.getStatus() != SectorIntroductionStatus.ОТКЛОНЕНА,
+                    () -> new SectorIntroductionRequestAlreadyProcessedException("Заявка уже обработана"),
+                    "Request already rejected");
 
-        if (request.getStatus() == SectorIntroductionStatus.ОТКЛОНЕНА)
-            throw new SectorIntroductionRequestAlreadyProcessedException("Заявка уже обработана!");
+            Long userId = request.getUser().getId();
+            Long sectorId = request.getSector().getId();
 
-        Long userId = request.getUser().getId();
-        Long sectorId = request.getSector().getId();
+            // Обработка участника
+            SectorParticipant participant = participantRepository
+                    .findByStudentIdAndSectorId(userId, sectorId)
+                    .map(this::restoreParticipant)
+                    .orElseGet(() -> participantService.createParticipant(request));
 
-        // Проверяем, существует ли уже запись участника (ЛЮБАЯ, не только активная)
-        java.util.Optional<SectorParticipant> existingParticipant = sectorParticipantRepository
-                .findByStudentIdAndSectorId(userId, sectorId);
+            // Обновляем статус заявки
+            request.setStatus(SectorIntroductionStatus.ОДОБРЕНА);
+            repository.save(request);
 
-        SectorParticipant sectorParticipant;
+            // Отклоняем другие активные заявки
+            rejectOtherRequests(requestId, userId, sectorId);
 
-        if (existingParticipant.isPresent()) {
-            SectorParticipant participant = existingParticipant.get();
+            return mapper.toSummary(request);
 
-            // Если участник уже активный
-            if (participant.getStatus() == SectorParticipantStatuses.Активный) {
-                throw new UserIsAlreadyInThisSectorException(
-                        String.format("Пользователь с id: %d уже является активным участником сектора", userId));
-            }
+        }, "acceptRequest", requestId);
+    }
 
-            // Если участник не активный (Вышедший, Заблокирован и т.д.) - восстанавливаем
-            log.info("Restoring user {} to sector {} from status: {}",
-                    userId, sectorId, participant.getStatus());
+    private SectorParticipant restoreParticipant(SectorParticipant participant) {
+        participant.setStatus(SectorParticipantStatuses.Активный);
+        participant.setEntryDate(LocalDate.now());
+        participant.setIsCoordinator(false);
+        return participantRepository.save(participant);
+    }
 
-            participant.setStatus(SectorParticipantStatuses.Активный);
-            participant.setEntryDate(LocalDate.now()); // Обновляем дату вступления
-            // Сбрасываем координаторство, если нужно
-            if (participant.getIsCoordinator()) {
-                participant.setIsCoordinator(false);
-            }
-            sectorParticipant = sectorParticipantRepository.save(participant);
-            log.info("User {} restored to sector {} (previous status: {})",
-                    userId, sectorId, participant.getStatus());
-
-        } else {
-            // Создаем нового участника
-            sectorParticipant = sectorParticipantService.createParticipant(request);
-            log.info("New participant created for user {} in sector {}", userId, sectorId);
-        }
-
-        SectorParticipantDTO sectorParticipantDTO = sectorParticipantMapper.toSectorParticipantDTO(sectorParticipant);
-
-        // Обновляем статус заявки
-        request.setStatus(SectorIntroductionStatus.ОДОБРЕНА);
-        sectorIntroductionRequestRepository.save(request);
-
-        // ОТКЛОНЯЕМ все другие активные заявки этого пользователя в этот сектор
-        List<SectorIntroductionRequest> otherRequests = sectorIntroductionRequestRepository
+    private void rejectOtherRequests(Long currentRequestId, Long userId, Long sectorId) {
+        List<SectorIntroductionRequest> otherRequests = repository
                 .findByUserIdAndSectorIdAndStatusIn(userId, sectorId,
-                        List.of(SectorIntroductionStatus.НА_РАССМОТРЕНИИ, SectorIntroductionStatus.НА_РАССМОТРЕНИИ));
+                        List.of(SectorIntroductionStatus.НА_РАССМОТРЕНИИ));
 
-        for (SectorIntroductionRequest otherRequest : otherRequests) {
-            if (!otherRequest.getId().equals(request_id)) {
-                otherRequest.setStatus(SectorIntroductionStatus.ОТКЛОНЕНА);
-                sectorIntroductionRequestRepository.save(otherRequest);
-                log.info("Rejected duplicate request {} for user {} in sector {}",
-                        otherRequest.getId(), userId, sectorId);
-            }
-        }
-
-        return sectorIntroductionRequestMapper.toSummary(request);
+        otherRequests.stream()
+                .filter(req -> !req.getId().equals(currentRequestId))
+                .forEach(req -> {
+                    req.setStatus(SectorIntroductionStatus.ОТКЛОНЕНА);
+                    repository.save(req);
+                    log.info("Rejected duplicate request {}", req.getId());
+                });
     }
 
     @Transactional
-    public SectorIntroductionRequestDTOSummary rejectRequest(Long request_id) {
+    public SectorIntroductionRequestDTOSummary rejectRequest(Long requestId) {
+        return executeWithLogging(() -> {
+            SectorIntroductionRequest request = findEntityOrThrow(requestId, repository::findById,
+                    () -> new SectorIntroductionRequestDoesNotExistException("Заявка не найдена"), "Request");
 
-        SectorIntroductionRequest request = sectorIntroductionRequestRepository.findById(request_id)
-                .orElseThrow(() -> new SectorIntroductionRequestDoesNotExistException(
-                        String.format("Заявка на вступление в сектор с id: %d не найдена", request_id)));
+            validateState(request.getStatus() != SectorIntroductionStatus.ОДОБРЕНА,
+                    () -> new SectorIntroductionRequestAlreadyProcessedException("Заявка уже обработана"),
+                    "Request already approved");
 
-        if (request.getStatus() == SectorIntroductionStatus.ОДОБРЕНА)
-            throw new SectorIntroductionRequestAlreadyProcessedException("Заявка уже обработана!");
+            request.setStatus(SectorIntroductionStatus.ОТКЛОНЕНА);
+            repository.save(request);
 
-        request.setStatus(SectorIntroductionStatus.ОТКЛОНЕНА);
-        sectorIntroductionRequestRepository.save(request);
+            return mapper.toSummary(request);
 
-        return sectorIntroductionRequestMapper.toSummary(request);
+        }, "rejectRequest", requestId);
     }
 
     @Transactional
     public List<SectorIntroductionRequestDTO> getRequestsListByCoordinator(Long coordinatorId) {
-        log.info("Getting requests for coordinator id: {}", coordinatorId);
+        return executeWithLogging(() -> {
+            List<SectorParticipant> coordinatorParticipants = participantRepository
+                    .findSectorsWhereUserIsCoordinator(coordinatorId);
 
-        // Используем правильный метод из репозитория
-        List<SectorParticipant> coordinatorParticipants = sectorParticipantRepository
-                .findSectorsWhereUserIsCoordinator(coordinatorId);
+            if (coordinatorParticipants.isEmpty()) {
+                log.warn("User {} is not a coordinator in any sector", coordinatorId);
+                return new ArrayList<>();
+            }
 
-        log.info("Found {} sectors where user is coordinator", coordinatorParticipants.size());
+            return coordinatorParticipants.stream()
+                    .flatMap(participant -> repository
+                            .getSectorIntroductionRequestsBySector_Id(participant.getSector().getId())
+                            .stream())
+                    .map(mapper::toSectorIntroductionRequestDTO)
+                    .toList();
 
-        if (coordinatorParticipants.isEmpty()) {
-            log.warn("User {} is not a coordinator in any sector", coordinatorId);
-            return new ArrayList<>();
-        }
-
-        // Собираем все заявки из секторов, где пользователь координатор
-        List<SectorIntroductionRequest> allRequests = new ArrayList<>();
-        for (SectorParticipant participant : coordinatorParticipants) {
-            List<SectorIntroductionRequest> requests = sectorIntroductionRequestRepository
-                    .getSectorIntroductionRequestsBySector_Id(participant.getSector().getId());
-            log.info("Sector {} has {} requests", participant.getSector().getId(), requests.size());
-            allRequests.addAll(requests);
-        }
-
-        return allRequests.stream()
-                .map(sectorIntroductionRequestMapper::toSectorIntroductionRequestDTO)
-                .toList();
-
+        }, "getRequestsListByCoordinator", coordinatorId);
     }
 
     @Transactional
     public List<SectorIntroductionRequestDTO> getRequestsListByCoordinatorWithStatus(
-            Long coordinatorId,
-            SectorIntroductionStatus status) {
+            Long coordinatorId, SectorIntroductionStatus status) {
 
-        log.info("Getting requests for coordinator id: {} with status: {}", coordinatorId, status);
+        return executeWithLogging(() -> {
+            List<SectorParticipant> coordinatorParticipants = participantRepository
+                    .findSectorsWhereUserIsCoordinator(coordinatorId);
 
-        // Проверяем, является ли пользователь координатором
-        List<SectorParticipant> coordinatorParticipants = sectorParticipantRepository
-                .findSectorsWhereUserIsCoordinator(coordinatorId);
+            if (coordinatorParticipants.isEmpty()) {
+                log.warn("User {} is not a coordinator in any sector", coordinatorId);
+                return new ArrayList<>();
+            }
 
-        if (coordinatorParticipants.isEmpty()) {
-            log.warn("User {} is not a coordinator in any sector", coordinatorId);
-            return new ArrayList<>();
-        }
+            List<SectorIntroductionRequest> requests;
+            if (status == null) {
+                requests = repository.findRequestsByCoordinatorId(coordinatorId);
+            } else {
+                requests = repository.findRequestsByCoordinatorIdAndStatus(coordinatorId, status.getDbValue());
+            }
 
-        List<SectorIntroductionRequest> requests;
+            return requests.stream()
+                    .map(mapper::toSectorIntroductionRequestDTO)
+                    .toList();
 
-        if (status == null) {
-            // Если статус не указан, получаем все заявки
-            requests = sectorIntroductionRequestRepository
-                    .findRequestsByCoordinatorId(coordinatorId);
-        } else {
-            // Если статус указан, получаем заявки с фильтром
-            String statusValue = status.getDbValue();
-            requests = sectorIntroductionRequestRepository
-                    .findRequestsByCoordinatorIdAndStatus(coordinatorId, statusValue);
-        }
-
-        log.info("Found {} requests with status: {}", requests.size(), status);
-
-        return requests.stream()
-                .map(sectorIntroductionRequestMapper::toSectorIntroductionRequestDTO)
-                .toList();
+        }, "getRequestsListByCoordinatorWithStatus", coordinatorId, status);
     }
 }

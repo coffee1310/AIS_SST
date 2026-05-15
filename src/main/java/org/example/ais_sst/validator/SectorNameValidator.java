@@ -4,34 +4,59 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import org.example.ais_sst.annotation.ValidSectorName;
+import org.example.ais_sst.dto.sector.SectorDTO;
 import org.example.ais_sst.repository.SectorRepository;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SectorNameValidator implements ConstraintValidator<ValidSectorName, String> {
+public class SectorNameValidator implements ConstraintValidator<ValidSectorName, Object> {
 
     private final SectorRepository sectorRepository;
 
     @Override
-    public void initialize(ValidSectorName validUserId) {
-
+    public void initialize(ValidSectorName constraintAnnotation) {
+        // Инициализация не требуется
     }
 
     @Override
-    public boolean isValid(String title, ConstraintValidatorContext context) {
-        if (title == null) return true;
+    public boolean isValid(Object value, ConstraintValidatorContext context) {
+        String title;
+        Long sectorId;
 
-        boolean exists = sectorRepository.existsByTitle(title);
-
-        if(exists) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(
-                    String.format("Сектор с названием '%s' уже существует", title)
-            ).addConstraintViolation();
-            return false;
+        // Если валидируем поле String (при создании)
+        if (value instanceof String) {
+            title = (String) value;
+            sectorId = null;
+        }
+        // Если валидируем весь DTO (при обновлении)
+        else if (value instanceof SectorDTO) {
+            SectorDTO dto = (SectorDTO) value;
+            title = dto.getTitle();
+            sectorId = dto.getId();
+        } else {
+            title = null;
+            sectorId = null;
         }
 
-        return true;
+        if (title == null || title.isEmpty()) {
+            return true;
+        }
+
+        // Проверяем существование сектора с таким названием
+        return sectorRepository.findByTitle(title)
+                .map(existingSector -> {
+                    // Если это тот же сектор (обновление) - пропускаем
+                    if (sectorId != null && existingSector.getId().equals(sectorId)) {
+                        return true;
+                    }
+                    // Иначе - название уже занято
+                    context.disableDefaultConstraintViolation();
+                    context.buildConstraintViolationWithTemplate(
+                            String.format("Сектор с названием '%s' уже существует", title)
+                    ).addConstraintViolation();
+                    return false;
+                })
+                .orElse(true); // Если сектор не найден - название свободно
     }
 }

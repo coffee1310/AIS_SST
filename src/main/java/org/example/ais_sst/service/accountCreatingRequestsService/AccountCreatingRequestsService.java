@@ -17,6 +17,7 @@ import org.example.ais_sst.exception.*;
 import org.example.ais_sst.mapper.AccountCreatingRequestMapper;
 import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.*;
+import org.example.ais_sst.service.base.BaseEntityService;
 import org.example.ais_sst.service.socialStatusService.AccountCreatingRequestsSocialStatusService;
 import org.example.ais_sst.service.socialStatusService.SocialStatusService;
 import org.example.ais_sst.service.userService.UserPhotoService;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class AccountCreatingRequestsService {
+public class AccountCreatingRequestsService extends BaseEntityService {
 
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
@@ -46,98 +47,111 @@ public class AccountCreatingRequestsService {
     private final AccountCreatingRequestsRepository accountCreatingRequestsRepository;
     private final RoleRepository roleRepository;
     private final AccountCreatingRequestSocialStatusRepository accountCreatingRequestsSocialStatusesRepository;
-    private final SectorParticipantRepository sectorParticipantRepository;
     private final AccountRequestPhotoService accountRequestPhotoService;
     private final UserPhotoService userPhotoService;
-
-    // Мапперы
     private final AccountCreatingRequestMapper requestMapper;
     private final UserMapper userMapper;
 
     public AccountCreatingRequest createAccountRequest(AccountCreatingRequestsSummaryDTO dto) {
-        log.info("Registration attempt for email: {}", dto.getStudentEmail());
+        return executeWithLogging(() -> {
+            validateUniqueEmail(dto.getStudentEmail());
+            validateUniquePhone(dto.getPhoneNumber());
 
-        if (userRepository.existsByStudentEmail(dto.getStudentEmail())) {
-            throw new EmailAlreadyExistsException("Ошибка: Email уже используется!");
+            Group userGroup = findEntityOrThrow(dto.getGroup_id(), groupRepository::findGroupById,
+                    () -> new GroupDoesNotExistException("Группа не найдена"), "Group");
+
+            Speciality userSpeciality = findEntityOrThrow(dto.getSpeciality_id(), specialityRepository::findSpecialityById,
+                    () -> new SpecialityDoesNotExistException("Специальность не найдена"), "Speciality");
+
+            AccountCreatingRequest request = requestMapper.toEntity(dto);
+            request.setGroup(userGroup);
+            request.setSpeciality(userSpeciality);
+            request.setPassword(passwordEncoder.encode(dto.getPassword()));
+            request.setStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ);
+
+            AccountCreatingRequest savedRequest = accountCreatingRequestsRepository.save(request);
+            log.info("Account request saved with ID: {}", savedRequest.getId());
+
+            savePhotoIfPresent(dto, savedRequest);
+            dto.setId(savedRequest.getId());
+            accountCreatingRequestsSocialStatusService.createAccountCreatingRequestSocialStatus(dto);
+
+            return savedRequest;
+        }, "createAccountRequest", dto.getStudentEmail());
+    }
+
+    private void validateUniqueEmail(String email) {
+        validateState(!userRepository.existsByStudentEmail(email),
+                () -> new EmailAlreadyExistsException("Email уже используется"),
+                "Email already exists: " + email);
+    }
+
+    private void validateUniquePhone(String phone) {
+        validateState(!userRepository.existsByPhoneNumber(phone),
+                () -> new PhoneAlreadyExistException("Телефон уже используется"),
+                "Phone already exists: " + phone);
+    }
+
+    private void savePhotoIfPresent(AccountCreatingRequestsSummaryDTO dto, AccountCreatingRequest request) {
+        if (dto.getPhoto() != null && !dto.getPhoto().isEmpty()) {
+            try {
+                String photoPath = accountRequestPhotoService.savePhotoFromBase64(dto.getPhoto(), request.getId());
+                request.setPathToPhoto(photoPath);
+                accountCreatingRequestsRepository.save(request);
+                log.info("Photo saved for request: {}", request.getId());
+            } catch (IOException e) {
+                log.error("Failed to save photo for request: {}", request.getId(), e);
+            }
         }
-
-        if (userRepository.existsByPhoneNumber(dto.getPhoneNumber())) {
-            throw new PhoneAlreadyExistException("Ошибка: Телефон уже используется!");
-        }
-
-        Group userGroup = groupRepository.findGroupById(dto.getGroup_id())
-                .orElseThrow(() -> new GroupDoesNotExistException(
-                        String.format("Ошибка: Группа с id: %s не существует", dto.getGroup_id())));
-
-        Speciality userSpeciality = specialityRepository.findSpecialityById(dto.getSpeciality_id())
-                .orElseThrow(() -> new SpecialityDoesNotExistException(
-                        String.format("Ошибка: Специальность с id: %s не существует", dto.getSpeciality_id())));
-
-        // Создаем заявку через маппер
-        AccountCreatingRequest accountCreatingRequest = requestMapper.toEntity(dto);
-        accountCreatingRequest.setGroup(userGroup);
-        accountCreatingRequest.setSpeciality(userSpeciality);
-        accountCreatingRequest.setPassword(passwordEncoder.encode(dto.getPassword()));
-        accountCreatingRequest.setStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ);
-
-        // Сохраняем сначала без фото, чтобы получить ID
-        AccountCreatingRequest savedRequest = accountCreatingRequestsRepository.save(accountCreatingRequest);
-        log.info("Account request registered successfully with ID: {}", savedRequest.getId());
-
-        // Сохраняем фото с использованием ID заявки
-        try {
-            String photoPath = accountRequestPhotoService.savePhotoFromBase64(dto.getPhoto(), savedRequest.getId());
-            savedRequest.setPathToPhoto(photoPath);
-            savedRequest = accountCreatingRequestsRepository.save(savedRequest);
-            log.info("Photo saved for request: {}", savedRequest.getId());
-        } catch (IOException e) {
-            log.error("Failed to save photo for request: {}", savedRequest.getId(), e);
-            // Не выбрасываем исключение, чтобы заявка всё равно создалась
-        }
-
-        dto.setId(savedRequest.getId());
-        accountCreatingRequestsSocialStatusService.createAccountCreatingRequestSocialStatus(dto);
-        log.info("Social statuses for request registered successfully");
-
-        return savedRequest;
     }
 
     public AccountCreatingRequestResponseDTO rejectAccountRequest(Long id, AccountCreatingRequestRejectDTO rejectDto) {
-        log.info("Rejecting account request with id: {}", id);
+        return executeWithLogging(() -> {
+            AccountCreatingRequest request = findEntityOrThrow(id, accountCreatingRequestsRepository::findAccountCreatingRequestById,
+                    () -> new AccountCreatingRequestDoesNotExistException("Заявка не найдена"), "Request");
 
-        AccountCreatingRequest request = accountCreatingRequestsRepository.findAccountCreatingRequestById(id)
-                .orElseThrow(() -> new AccountCreatingRequestDoesNotExistException(
-                        String.format("Заявка с id: %s не существует", id)));
+            validateState(request.getStatus() == AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ,
+                    () -> new IllegalStateException("Заявка уже обработана"),
+                    "Request already processed, status: " + request.getStatus());
 
-        if (request.getStatus() != AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ) {
-            throw new IllegalStateException(
-                    String.format("Заявка с id: %s уже обработана. Текущий статус: %s", id, request.getStatus()));
-        }
+            request.setStatus(AccountCreatingRequestStatus.ОТКЛОНЕНА);
+            request.setReasonForRefusal(rejectDto.getRejectionReason());
 
-        request.setStatus(AccountCreatingRequestStatus.ОТКЛОНЕНА);
-        request.setReasonForRefusal(rejectDto.getRejectionReason());
+            AccountCreatingRequest rejectedRequest = accountCreatingRequestsRepository.save(request);
+            log.info("Request {} rejected", id);
 
-        AccountCreatingRequest rejectedRequest = accountCreatingRequestsRepository.save(request);
-        log.info("Account request with id: {} rejected. Reason: {}", id, rejectDto.getRejectionReason());
-
-        // Используем маппер с @Context для конвертации фото
-        return requestMapper.toResponseDto(rejectedRequest, accountRequestPhotoService);
+            return requestMapper.toResponseDto(rejectedRequest, accountRequestPhotoService);
+        }, "rejectAccountRequest", id);
     }
 
     public UserSummaryDTO acceptAccountRequest(Long id) {
-        AccountCreatingRequest request = accountCreatingRequestsRepository.findAccountCreatingRequestById(id)
-                .orElseThrow(() -> new AccountCreatingRequestDoesNotExistException(
-                        String.format("Заявка с id: %s не существует", id)));
+        return executeWithLogging(() -> {
+            AccountCreatingRequest request = findEntityOrThrow(id, accountCreatingRequestsRepository::findAccountCreatingRequestById,
+                    () -> new AccountCreatingRequestDoesNotExistException("Заявка не найдена"), "Request");
 
-        if (request.getStatus() != AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ) {
-            throw new IllegalStateException(
-                    String.format("Заявка с id: %s уже обработана. Статус: %s", id, request.getStatus()));
-        }
+            validateState(request.getStatus() == AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ,
+                    () -> new IllegalStateException("Заявка уже обработана"),
+                    "Request already processed");
 
-        Role role = roleRepository.findByTitle("Activist")
-                .orElseThrow(() -> new RuntimeException("Роль Активист не найдена"));
+            Role role = findEntityOrThrow("Activist", roleRepository::findByTitle,
+                    () -> new RuntimeException("Роль Activist не найдена"), "Role");
 
-        User user = User.builder()
+            User user = buildUserFromRequest(request, role);
+            User savedUser = userRepository.save(user);
+            log.info("User created from request {} with ID: {}", id, savedUser.getId());
+
+            copyPhotoFromRequest(request, savedUser);
+            assignSocialStatuses(id, savedUser.getId());
+
+            request.setStatus(AccountCreatingRequestStatus.ОДОБРЕНА);
+            accountCreatingRequestsRepository.save(request);
+
+            return userMapper.toDto(savedUser);
+        }, "acceptAccountRequest", id);
+    }
+
+    private User buildUserFromRequest(AccountCreatingRequest request, Role role) {
+        return User.builder()
                 .name(request.getName())
                 .surname(request.getSurname())
                 .patronymic(request.getPatronymic())
@@ -156,130 +170,79 @@ public class AccountCreatingRequestsService {
                 .vkLink(request.getVkLink())
                 .additionalEmail(request.getAdditionalEmail())
                 .build();
+    }
 
-        // Сохраняем пользователя сначала без фото
-        User savedUser = userRepository.save(user);
-        log.info("User created successfully from request ID: {}, User ID: {}", id, savedUser.getId());
-
-        // Копируем фото из заявки в пользователя
+    private void copyPhotoFromRequest(AccountCreatingRequest request, User user) {
         if (request.getPathToPhoto() != null && !request.getPathToPhoto().isEmpty()) {
             try {
-                // Получаем фото заявки в Base64
                 String photoBase64 = accountRequestPhotoService.getPhotoAsBase64(request.getPathToPhoto());
-                if (photoBase64 != null && !photoBase64.isEmpty()) {
-                    // Сохраняем фото для пользователя
-                    String userPhotoPath = userPhotoService.savePhotoFromBase64(photoBase64, savedUser.getId());
-                    savedUser.setPathToPhoto(userPhotoPath);
-                    savedUser = userRepository.save(savedUser);
-                    log.info("Photo copied from request {} to user {}", id, savedUser.getId());
+                if (photoBase64 != null) {
+                    String userPhotoPath = userPhotoService.savePhotoFromBase64(photoBase64, user.getId());
+                    user.setPathToPhoto(userPhotoPath);
+                    userRepository.save(user);
+                    log.info("Photo copied from request {} to user {}", request.getId(), user.getId());
                 }
             } catch (IOException e) {
-                log.error("Failed to copy photo from request {} to user {}", id, savedUser.getId(), e);
+                log.error("Failed to copy photo", e);
             }
         }
+    }
 
-        List<Long> socialStatusIds = accountCreatingRequestsSocialStatusService.getSocialStatusIdsByRequestId(id);
-
+    private void assignSocialStatuses(Long requestId, Long userId) {
+        List<Long> socialStatusIds = accountCreatingRequestsSocialStatusService.getSocialStatusIdsByRequestId(requestId);
         if (socialStatusIds != null && !socialStatusIds.isEmpty()) {
-            UserSocialStatusesDTO socialStatusesDTO = UserSocialStatusesDTO.builder()
-                    .userId(savedUser.getId())
+            UserSocialStatusesDTO dto = UserSocialStatusesDTO.builder()
+                    .userId(userId)
                     .social_statuses_id(socialStatusIds)
                     .build();
-
-            socialStatusService.createUserSocialStatuses(socialStatusesDTO);
-            log.info("Social statuses assigned to user ID: {}", savedUser.getId());
+            socialStatusService.createUserSocialStatuses(dto);
+            log.info("Social statuses assigned to user {}", userId);
         }
-
-        request.setStatus(AccountCreatingRequestStatus.ОДОБРЕНА);
-        accountCreatingRequestsRepository.save(request);
-        log.info("Account request ID: {} approved", id);
-
-        return userMapper.toDto(savedUser);
     }
 
     public Page<AccountCreatingRequestResponseDTO> getRequests(Pageable pageable) {
-        Page<AccountCreatingRequest> requests = accountCreatingRequestsRepository.findAll(pageable);
-        return requests.map(request -> {
-            AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request, accountRequestPhotoService);
-            List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
-                    .findSocialStatusTitlesByRequestId(request.getId());
-            dto.setSocialStatuses(socialStatuses);
-            return dto;
-        });
+        return accountCreatingRequestsRepository.findAll(pageable)
+                .map(request -> enhanceDtoWithSocialStatuses(
+                        requestMapper.toResponseDto(request, accountRequestPhotoService), request.getId()));
     }
 
     public Page<AccountCreatingRequestResponseDTO> getPendingRequests(Pageable pageable) {
         log.info("Getting pending account requests");
-        Page<AccountCreatingRequest> requests = accountCreatingRequestsRepository
-                .findByStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ, pageable);
-
-        return requests.map(request -> {
-            AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request, accountRequestPhotoService);
-            List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
-                    .findSocialStatusTitlesByRequestId(request.getId());
-            dto.setSocialStatuses(socialStatuses);
-            dto.setAdditionalEmail(request.getAdditionalEmail());
-            dto.setVkLink(request.getVkLink());
-            return dto;
-        });
+        return accountCreatingRequestsRepository.findByStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ, pageable)
+                .map(request -> {
+                    AccountCreatingRequestResponseDTO dto = requestMapper.toResponseDto(request, accountRequestPhotoService);
+                    dto.setSocialStatuses(accountCreatingRequestsSocialStatusesRepository
+                            .findSocialStatusTitlesByRequestId(request.getId()));
+                    dto.setAdditionalEmail(request.getAdditionalEmail());
+                    dto.setVkLink(request.getVkLink());
+                    return dto;
+                });
     }
 
     public Page<AccountCreatingRequestResponseDTO> getRequestsWithFilters(
-            AccountCreatingRequestFilterDTO filter,
-            int page,
-            int size,
-            String sortBy,
-            String sortDirection) {
+            AccountCreatingRequestFilterDTO filter, int page, int size, String sortBy, String sortDirection) {
 
         log.info("Getting account requests with filters: {}", filter);
 
         int offset = page * size;
         String statusStr = convertStatusToDbValue(filter.getStatus());
-        String genderStr = filter.getGender();
 
         List<Object[]> results = accountCreatingRequestsRepository.findAllWithFiltersNative(
-                filter.getId(),
-                filter.getName(),
-                filter.getSurname(),
-                filter.getPatronymic(),
-                genderStr,
-                filter.getDateFrom(),
-                filter.getDateTo(),
-                filter.getStudentEmail(),
-                filter.getPhoneNumber(),
-                filter.getStudentIdNumber(),
-                filter.getCourseNumber(),
-                statusStr,
-                filter.getGroupId(),
-                filter.getSpecialityId(),
-                offset,
-                size);
+                filter.getId(), filter.getName(), filter.getSurname(), filter.getPatronymic(),
+                filter.getGender(), filter.getDateFrom(), filter.getDateTo(),
+                filter.getStudentEmail(), filter.getPhoneNumber(), filter.getStudentIdNumber(),
+                filter.getCourseNumber(), statusStr, filter.getGroupId(), filter.getSpecialityId(),
+                offset, size);
 
         long total = accountCreatingRequestsRepository.countAllWithFiltersNative(
-                filter.getId(),
-                filter.getName(),
-                filter.getSurname(),
-                filter.getPatronymic(),
-                genderStr,
-                filter.getDateFrom(),
-                filter.getDateTo(),
-                filter.getStudentEmail(),
-                filter.getPhoneNumber(),
-                filter.getStudentIdNumber(),
-                filter.getCourseNumber(),
-                statusStr,
-                filter.getGroupId(),
-                filter.getSpecialityId());
+                filter.getId(), filter.getName(), filter.getSurname(), filter.getPatronymic(),
+                filter.getGender(), filter.getDateFrom(), filter.getDateTo(),
+                filter.getStudentEmail(), filter.getPhoneNumber(), filter.getStudentIdNumber(),
+                filter.getCourseNumber(), statusStr, filter.getGroupId(), filter.getSpecialityId());
 
         List<AccountCreatingRequestResponseDTO> dtoList = results.stream()
-                .map(row -> {
-                    AccountCreatingRequestResponseDTO dto = mapRowToAccountCreatingRequestResponseDTO(row);
-                    Long requestId = ((Number) row[0]).longValue();
-                    List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
-                            .findSocialStatusTitlesByRequestId(requestId);
-                    dto.setSocialStatuses(socialStatuses);
-                    return dto;
-                })
+                .map(row -> enhanceDtoWithSocialStatuses(
+                        mapRowToResponseDTO(row), ((Number) row[0]).longValue()))
                 .collect(Collectors.toList());
 
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
@@ -288,31 +251,15 @@ public class AccountCreatingRequestsService {
         return new PageImpl<>(dtoList, pageable, total);
     }
 
-    private String convertStatusToDbValue(AccountCreatingRequestStatus status) {
-        if (status == null) {
-            return null;
-        }
-        switch (status) {
-            case НА_РАССМОТРЕНИИ:
-                return "На рассмотрении";
-            case ОДОБРЕНА:
-                return "Одобрена";
-            case ОТКЛОНЕНА:
-                return "Отклонена";
-            default:
-                return null;
-        }
+    private AccountCreatingRequestResponseDTO enhanceDtoWithSocialStatuses(AccountCreatingRequestResponseDTO dto, Long requestId) {
+        List<String> socialStatuses = accountCreatingRequestsSocialStatusesRepository
+                .findSocialStatusTitlesByRequestId(requestId);
+        dto.setSocialStatuses(socialStatuses);
+        return dto;
     }
 
-    private AccountCreatingRequestResponseDTO mapRowToAccountCreatingRequestResponseDTO(Object[] row) {
-        String statusFromDb = (String) row[11];
-        AccountCreatingRequestStatus status = convertDbValueToStatus(statusFromDb);
-
-        // Получаем путь к фото из БД (индекс 18)
+    private AccountCreatingRequestResponseDTO mapRowToResponseDTO(Object[] row) {
         String photoPath = row.length > 18 && row[18] != null ? (String) row[18] : null;
-
-        // Конвертируем путь в Base64 через сервис
-        String photoBase64 = accountRequestPhotoService.getPhotoAsBase64(photoPath);
 
         return AccountCreatingRequestResponseDTO.builder()
                 .id(((Number) row[0]).longValue())
@@ -326,31 +273,37 @@ public class AccountCreatingRequestsService {
                 .studentEmail((String) row[8])
                 .phoneNumber((String) row[9])
                 .reasonForRefusal((String) row[10])
-                .status(status)
+                .status(convertDbValueToStatus((String) row[11]))
                 .createdAt(row[12] != null ? ((java.sql.Timestamp) row[12]).toLocalDateTime() : null)
                 .updatedAt(row[13] != null ? ((java.sql.Timestamp) row[13]).toLocalDateTime() : null)
                 .groupId(row[14] != null ? ((Number) row[14]).longValue() : null)
                 .groupName((String) row[15])
                 .specialityId(row[16] != null ? ((Number) row[16]).longValue() : null)
                 .specialityName((String) row[17])
-                .photo(photoBase64)
+                .photo(accountRequestPhotoService.getPhotoAsBase64(photoPath))
                 .build();
     }
 
+    private String convertStatusToDbValue(AccountCreatingRequestStatus status) {
+        if (status == null) return null;
+        return switch (status) {
+            case НА_РАССМОТРЕНИИ -> "На рассмотрении";
+            case ОДОБРЕНА -> "Одобрена";
+            case ОТКЛОНЕНА -> "Отклонена";
+            default -> null;
+        };
+    }
+
     private AccountCreatingRequestStatus convertDbValueToStatus(String dbValue) {
-        if (dbValue == null) {
-            return null;
-        }
-        switch (dbValue) {
-            case "На рассмотрении":
-                return AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ;
-            case "Одобрена":
-                return AccountCreatingRequestStatus.ОДОБРЕНА;
-            case "Отклонена":
-                return AccountCreatingRequestStatus.ОТКЛОНЕНА;
-            default:
+        if (dbValue == null) return null;
+        return switch (dbValue) {
+            case "На рассмотрении" -> AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ;
+            case "Одобрена" -> AccountCreatingRequestStatus.ОДОБРЕНА;
+            case "Отклонена" -> AccountCreatingRequestStatus.ОТКЛОНЕНА;
+            default -> {
                 log.warn("Unknown status from DB: {}", dbValue);
-                return null;
-        }
+                yield null;
+            }
+        };
     }
 }

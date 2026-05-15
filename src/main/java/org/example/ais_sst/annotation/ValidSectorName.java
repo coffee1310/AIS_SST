@@ -6,13 +6,13 @@ import org.example.ais_sst.validator.SectorNameValidator;
 
 import java.lang.annotation.*;
 
-@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = SectorNameValidator.class)
 @Documented
 public @interface ValidSectorName {
 
-    String message() default "Сектор с таким именем уже сущесвует";
+    String message() default "Сектор с таким именем уже существует";
 
     Class<?>[] groups() default {};
 
