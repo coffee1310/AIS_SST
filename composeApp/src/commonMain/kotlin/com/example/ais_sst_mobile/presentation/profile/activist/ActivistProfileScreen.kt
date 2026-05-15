@@ -274,9 +274,20 @@ fun ActivistProfileScreen(
 
                             SectionTitle("Список секторов")
 
-                            // Заглушка TODO:
-                            SectorPlaceholderRow("Спортивный сектор", "Активист")
-                            SectorPlaceholderRow("Культмассовый сектор", "Активист", showDivider = false)
+                            if (user.userSectors.isEmpty()) {
+                                InfoRow("Участие", "Не состоит в секторах", showDivider = false)
+                            } else {
+                                user.userSectors.forEachIndexed { index, sectorName ->
+                                    val isCoordinatorHere = sectorName == user.coordinatorSectorTitle
+                                    val roleInSector = if (isCoordinatorHere) "Координатор" else "Активист"
+
+                                    SectorPlaceholderRow(
+                                        sectorName = sectorName,
+                                        role = roleInSector,
+                                        showDivider = index < user.userSectors.lastIndex
+                                    )
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(40.dp))
                         }

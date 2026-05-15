@@ -2,6 +2,7 @@ package com.example.ais_sst_mobile.data.repository
 
 import com.example.ais_sst_mobile.data.network.dto.AuthResponse
 import com.example.ais_sst_mobile.data.network.dto.LoginRequest
+import com.example.ais_sst_mobile.data.network.dto.LoginResponseWrapper
 import com.example.ais_sst_mobile.data.network.dto.RegisterRequest
 import com.example.ais_sst_mobile.domain.repository.AuthRepository
 import io.ktor.client.HttpClient
@@ -22,12 +23,10 @@ class AuthRepositoryImpl(
 
     override suspend fun login(request: LoginRequest): Result<AuthResponse> = runCatching {
         httpClient.plugin(Auth).providers.filterIsInstance<BearerAuthProvider>().firstOrNull()?.clearToken()
-
-        val response = httpClient.post("auth/login") {
+        val wrapper = httpClient.post("auth/login") {
             setBody(request)
-        }.body<AuthResponse>()
-
-        response
+        }.body<LoginResponseWrapper>()
+        wrapper.data
     }
 
     override suspend fun register(request: RegisterRequest): Result<Unit> = runCatching {

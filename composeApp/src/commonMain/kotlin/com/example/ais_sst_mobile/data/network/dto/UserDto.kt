@@ -46,7 +46,8 @@ data class UserProfileDto(
     val shortSpecialityTitle: String? = null,
     val specialityShortTitle: String? = null,
     val groupTitle: String? = null,
-    val specialityTitle: String? = null
+    val specialityTitle: String? = null,
+    val userSectors: List<String>? = null
 ) {
     val fullName: String
         get() = buildString {
@@ -81,7 +82,8 @@ data class UserProfileDto(
             gender = gender,
             socialStatuses = socialStatuses,
             coordinatorSectorId = this.coordinatorSectorId,
-            coordinatorSectorTitle = this.coordinatorSectorTitle ?: this.coordinatorSector
+            coordinatorSectorTitle = this.coordinatorSectorTitle ?: this.coordinatorSector,
+            userSectors = userSectors ?: emptyList()
         )
     }
 }

@@ -23,5 +23,6 @@ data class User(
     val coordinatorSectorId: Int? = null,
     val coordinatorSectorTitle: String? = null,
     val shortSpecialityTitle: String? = null,
-    val coordinatorSector: String? = null
+    val coordinatorSector: String? = null,
+    val userSectors: List<String> = emptyList()
 )

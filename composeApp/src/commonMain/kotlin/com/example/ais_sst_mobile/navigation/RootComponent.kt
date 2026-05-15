@@ -12,6 +12,8 @@ import com.example.ais_sst_mobile.core.prefs.SessionManager
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
@@ -34,9 +36,16 @@ class DefaultRootComponent(
     componentContext: ComponentContext
 ) : RootComponent, ComponentContext by componentContext, KoinComponent {
     private val sessionManager: SessionManager by inject()
-
     private val navigation = StackNavigation<Config>()
-
+    init {
+        MainScope().launch {
+            sessionManager.isAuthorizedFlow.collect { isAuthorized ->
+                if (!isAuthorized) {
+                    navigation.replaceAll(Config.Login)
+                }
+            }
+        }
+    }
     override val stack: Value<ChildStack<*, RootComponent.Child>> = childStack(
         source = navigation,
         serializer = Config.serializer(),

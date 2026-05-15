@@ -3,8 +3,10 @@ package com.example.ais_sst_mobile.core.network
 import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.data.network.dto.AuthResponse
 import com.example.ais_sst_mobile.data.network.dto.RefreshRequest
+import com.example.ais_sst_mobile.data.network.dto.RefreshResponseWrapper
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
@@ -40,7 +42,15 @@ fun createHttpClient(sessionManager: SessionManager): HttpClient {
             }
             level = LogLevel.ALL
         }
-
+        // мб удалить, если будут случайные вылеты
+        HttpResponseValidator {
+            validateResponse { response ->
+                val statusCode = response.status.value
+                if (statusCode == 401 || statusCode == 403) {
+                    sessionManager.logout()
+                }
+            }
+        }
         defaultRequest {
             url(BASE_URL)
             contentType(ContentType.Application.Json)
@@ -58,7 +68,7 @@ fun createHttpClient(sessionManager: SessionManager): HttpClient {
 
                 refreshTokens {
                     val currentRefreshToken = sessionManager.fetchRefreshToken()
-                        ?: return@refreshTokens null
+                    if (currentRefreshToken == null) return@refreshTokens null
 
                     try {
                         val refreshClient = HttpClient {
@@ -66,18 +76,23 @@ fun createHttpClient(sessionManager: SessionManager): HttpClient {
                                 json(Json { ignoreUnknownKeys = true })
                             }
                         }
-                        val response = refreshClient.post("${BASE_URL}auth/refresh") {
+
+                        val wrapper: RefreshResponseWrapper = refreshClient.post("${BASE_URL}auth/refresh") {
                             contentType(ContentType.Application.Json)
-                            setBody(RefreshRequest(currentRefreshToken))
-                        }.body<AuthResponse>()
+                            setBody<RefreshRequest>(RefreshRequest(currentRefreshToken))
+                        }.body<RefreshResponseWrapper>()
+
+                        val response = wrapper.data
 
                         sessionManager.saveAuthToken(response.token)
                         sessionManager.saveRefreshToken(response.refreshToken)
 
-                        BearerTokens(response.token, response.refreshToken)
+                        return@refreshTokens BearerTokens(response.token, response.refreshToken)
+
                     } catch (e: Exception) {
+                        e.printStackTrace()
                         sessionManager.logout()
-                        null
+                        return@refreshTokens null
                     }
                 }
                 sendWithoutRequest { request ->

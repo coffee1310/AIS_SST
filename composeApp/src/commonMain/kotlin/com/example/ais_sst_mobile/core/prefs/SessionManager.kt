@@ -17,10 +17,12 @@ class SessionManager(private val settings: Settings) {
 
     private val _activeRoleFlow = MutableStateFlow(fetchActiveRole())
     val activeRoleFlow = _activeRoleFlow.asStateFlow()
-
+    private val _isAuthorizedFlow = MutableStateFlow(isLoggedIn())
+    val isAuthorizedFlow = _isAuthorizedFlow.asStateFlow()
 
     fun saveAuthToken(token: String) {
         settings.putString(KEY_TOKEN, token)
+        _isAuthorizedFlow.value = true
     }
 
     fun fetchAuthToken(): String? {
@@ -76,5 +78,6 @@ class SessionManager(private val settings: Settings) {
         settings.remove(KEY_REAL_ROLE)
         settings.remove(KEY_ACTIVE_ROLE)
         _activeRoleFlow.value = AppRole.STUDENT
+        _isAuthorizedFlow.value = false
     }
 }

@@ -8,6 +8,11 @@ data class LoginRequest(
     val email: String,
     val password: String
 )
+@Serializable
+data class LoginResponseWrapper(
+    val data: AuthResponse,
+    val message: String
+)
 
 @Serializable
 data class AuthResponse(
@@ -23,6 +28,11 @@ data class AuthResponse(
 @Serializable
 data class RefreshRequest(
     val refreshToken: String
+)
+@Serializable
+data class RefreshResponseWrapper(
+    val data: AuthResponse,
+    val message: String
 )
 
 @Serializable
