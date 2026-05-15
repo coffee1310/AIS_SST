@@ -4,6 +4,7 @@ import com.example.ais_sst_mobile.data.network.dto.CreateSectorRequestDto
 import com.example.ais_sst_mobile.data.network.dto.ParticipantResponseDto
 import com.example.ais_sst_mobile.data.network.dto.SectorDto
 import com.example.ais_sst_mobile.data.network.dto.SectorRequestDto
+import com.example.ais_sst_mobile.data.network.dto.UpdateSectorRequestDto
 
 interface SectorsRepository {
     suspend fun getSectors(): Result<List<SectorDto>>
@@ -18,4 +19,5 @@ interface SectorsRepository {
     suspend fun createSector(request: CreateSectorRequestDto): Result<Unit>
     suspend fun removeCoordinator(sectorId: Int, userId: Int): Result<Unit>
     suspend fun appointCoordinator(sectorId: Int, userId: Int): Result<Unit>
+    suspend fun updateSector(id: Int, request: UpdateSectorRequestDto): Result<Unit>
 }

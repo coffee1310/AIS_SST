@@ -29,6 +29,7 @@ interface RootComponent {
         class ActivistProfile(val component: ActivistProfileComponent) : Child()
         class CreateSector(val component: CreateSectorComponent) : Child()
         class Board(val component: BoardComponent) : Child()
+        class EditSector(val component: EditSectorComponent) : Child()
     }
 }
 
@@ -85,7 +86,7 @@ class DefaultRootComponent(
                             is FullScreenRoute.ActivistProfile -> navigation.pushNew(Config.ActivistProfile(route.userId))
                             is FullScreenRoute.CreateSector -> navigation.pushNew(Config.CreateSector)
                             is FullScreenRoute.Board -> navigation.pushNew(Config.Board)
-                        }
+                            is FullScreenRoute.EditSector -> navigation.pushNew(Config.EditSector(route.sectorId))                        }
                     }
                 )
             )
@@ -133,6 +134,13 @@ class DefaultRootComponent(
                     }
                 )
             )
+            is Config.EditSector -> RootComponent.Child.EditSector(
+                EditSectorComponent(
+                    componentContext = context,
+                    sectorId = config.sectorId,
+                    onGoBack = { navigation.pop() }
+                )
+            )
         }
 
     @Serializable
@@ -146,5 +154,6 @@ class DefaultRootComponent(
         @Serializable data class ActivistProfile(val userId: Int) : Config
         @Serializable data object CreateSector : Config
         @Serializable data object Board : Config
+        @Serializable data class EditSector(val sectorId: Int) : Config
     }
 }

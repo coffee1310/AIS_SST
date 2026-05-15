@@ -39,4 +39,8 @@ enum class AppRole(val serverName: String, val uiName: String) {
                 this == CURATOR ||
                 this == DEPUTY_CHAIRMAN
     }
+    fun isFourthBoardMember(): Boolean {
+        return this == SECRETARY ||
+                this == CURATOR
+    }
 }

@@ -180,7 +180,7 @@ fun ActivistProfileScreen(
                                 Text("Портфолио активиста", style = MaterialTheme.typography.displayMedium)
                             }
 
-                            if (activeRole.isSecondBoardMember()) {
+                            if (activeRole.isFourthBoardMember()) {
                                 Spacer(modifier = Modifier.height(12.dp))
                                 OutlinedButton(
                                     onClick = { /* TODO: Изменить данные */ },

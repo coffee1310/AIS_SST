@@ -14,6 +14,7 @@ import com.example.ais_sst_mobile.presentation.profile.my_data.*
 import com.example.ais_sst_mobile.presentation.profile.requests.*
 import com.example.ais_sst_mobile.presentation.sectors.*
 import com.example.ais_sst_mobile.presentation.sectors.create.CreateSectorScreenModel
+import com.example.ais_sst_mobile.presentation.sectors.edit.EditSectorScreenModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
@@ -45,7 +46,7 @@ val appModule = module {
     factory { ActivistProfileScreenModel(get(), get()) }
     factory { CreateSectorScreenModel(get(), get()) }
     factory { BoardScreenModel(get(), get(), get()) }
-
+    factory { EditSectorScreenModel(get(), get()) }
 }
 
 private var isKoinInitialized = false

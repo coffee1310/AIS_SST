@@ -21,6 +21,7 @@ import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsS
 import com.example.ais_sst_mobile.presentation.profile.requests.RequestDetailsScreen
 import com.example.ais_sst_mobile.presentation.sectors.create.CreateSectorScreen
 import com.example.ais_sst_mobile.theme.AppTheme
+import com.example.ais_sst_mobile.presentation.sectors.edit.EditSectorScreen
 
 @OptIn(ExperimentalDecomposeApi::class)
 @Composable
@@ -64,6 +65,9 @@ fun App(root: RootComponent) {
                         component = instance.component
                     )
                     is RootComponent.Child.Board -> BoardScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.EditSector -> EditSectorScreen(
                         component = instance.component
                     )
                 }

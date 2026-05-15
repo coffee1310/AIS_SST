@@ -9,3 +9,11 @@ data class CreateSectorRequestDto(
     val coordinatorIds: List<Int>,
     val photo: String?
 )
+@Serializable
+data class UpdateSectorRequestDto(
+    val title: String,
+    val description: String,
+    val isActive: Boolean,
+    val photo: String?,
+    val coordinatorIds: List<Int>
+)

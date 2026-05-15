@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.domain.model.AppRole
+import com.example.ais_sst_mobile.navigation.FullScreenRoute
 import com.example.ais_sst_mobile.navigation.SectorDetailsComponent
 import com.example.ais_sst_mobile.presentation.components.CustomButton
 import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
@@ -361,7 +362,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                 if (isCuratorOrChairman || isDeputy) {
                                     CustomButton(
                                         text = "Редактировать данные",
-                                        onClick = { /* TODO */ },
+                                        onClick = { component.onNavigateToFullScreen(FullScreenRoute.EditSector(sector.id)) }, // <-- ВЫЗОВ НАВИГАЦИИ
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }

@@ -18,6 +18,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import com.example.ais_sst_mobile.data.network.dto.CreateSectorRequestDto
+import com.example.ais_sst_mobile.data.network.dto.UpdateSectorRequestDto
 import io.ktor.client.statement.bodyAsText
 
 
@@ -112,6 +113,22 @@ class SectorsRepositoryImpl(
                 errorBody.substringAfter("\"message\":\"").substringBefore("\"")
             } else {
                 "Ошибка при назначении координатора: ${response.status.value}"
+            }
+            throw Exception(errorMessage)
+        }
+    }
+    override suspend fun updateSector(id: Int, request: UpdateSectorRequestDto): Result<Unit> = runCatching {
+        val response = httpClient.put("sector/$id") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+
+        if (!response.status.isSuccess()) {
+            val errorBody = response.bodyAsText()
+            val errorMessage = if (errorBody.contains("\"message\"")) {
+                errorBody.substringAfter("\"message\":\"").substringBefore("\"")
+            } else {
+                "Ошибка при обновлении сектора: ${response.status.value}"
             }
             throw Exception(errorMessage)
         }

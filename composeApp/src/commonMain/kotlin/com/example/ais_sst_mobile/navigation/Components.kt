@@ -13,6 +13,7 @@ sealed interface FullScreenRoute {
     data class ActivistProfile(val userId: Int) : FullScreenRoute
     data object CreateSector : FullScreenRoute
     data object Board : FullScreenRoute
+    data class EditSector(val sectorId: Int) : FullScreenRoute
 }
 class LoginComponent(
     componentContext: ComponentContext,
@@ -40,7 +41,8 @@ class SectorDetailsComponent(
     val sectorId: Int,
     val onGoBack: () -> Unit,
     val onNavigateToParticipants: (Int, String) -> Unit,
-    val onNavigateToActivistProfile: (Int) -> Unit
+    val onNavigateToActivistProfile: (Int) -> Unit,
+    val onNavigateToFullScreen: (FullScreenRoute) -> Unit
 ) : ComponentContext by componentContext
 
 class SectorParticipantsComponent(
@@ -91,7 +93,8 @@ class SectorsComponent(
                     },
                     onNavigateToActivistProfile = { userId ->
                         onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
-                    }
+                    },
+                    onNavigateToFullScreen = onNavigateToFullScreen
                 )
             )
             is Config.Participants -> Child.Participants(
@@ -153,4 +156,9 @@ class BoardComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit,
     val onNavigateToActivistProfile: (Int) -> Unit
+) : ComponentContext by componentContext
+class EditSectorComponent(
+    componentContext: ComponentContext,
+    val sectorId: Int,
+    val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
