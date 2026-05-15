@@ -118,7 +118,10 @@ class DefaultRootComponent(
             is Config.Board -> RootComponent.Child.Board(
                 BoardComponent(
                     componentContext = context,
-                    onGoBack = { navigation.pop() }
+                    onGoBack = { navigation.pop() },
+                    onNavigateToActivistProfile = { userId ->
+                        navigation.pushNew(Config.ActivistProfile(userId))
+                    }
                 )
             )
         }

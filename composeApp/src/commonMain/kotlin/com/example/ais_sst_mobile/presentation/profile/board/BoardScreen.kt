@@ -40,6 +40,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.lazy.LazyColumn
+import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 
 data class KickDialogData(
@@ -66,6 +67,12 @@ fun BoardScreen(component: BoardComponent) {
     val filteredActivists by screenModel.filteredActivists.collectAsState()
 
     var appointDialogData by remember { mutableStateOf<AppointDialogData?>(null) }
+
+    val handleCardClick: (Int) -> Unit = { userId ->
+        if (activeRole.isThirdBoardMember()) {
+            component.onNavigateToActivistProfile(userId)
+        }
+    }
 
     if (appointDialogData != null) {
         androidx.compose.ui.window.Dialog(
@@ -298,8 +305,12 @@ fun BoardScreen(component: BoardComponent) {
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
-                        state.chairman?.let {
-                            ChairmanCard(user = it, canEdit = canEditChairman)
+                        state.chairman?.let { user ->
+                            ChairmanCard(
+                                user = user,
+                                canEdit = canEditChairman,
+                                onCardClick = { handleCardClick(user.id) }
+                            )
                         } ?: Text("Должность вакантна", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             style = MaterialTheme.typography.labelMedium)
 
@@ -309,7 +320,7 @@ fun BoardScreen(component: BoardComponent) {
                         SectionHeader(title = deputiesTitle, showAdd = canEditOthers, onAddClick = { /* TODO: Смена зама */ })
 
                         if (state.deputies.isEmpty()) {
-                            Text("Нет заместителей", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp))
+                            Text("Нет заместителей", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodySmall)
                         } else {
                             state.deputies.forEach { user ->
                                 val groupText = "студент группы ${user.courseNumber ?: ""}${user.specialityShortTitle ?: ""}-${user.groupName ?: ""}"
@@ -322,7 +333,8 @@ fun BoardScreen(component: BoardComponent) {
                                     onEditClick = { /* TODO */ },
                                     onKickClick = {
                                         kickDialogData = KickDialogData(fullName) { /* TODO: screenModel.removeDeputy(user.id) */ }
-                                    }
+                                    },
+                                    onCardClick = { handleCardClick(user.id) }
                                 )
                             }
                         }
@@ -333,7 +345,7 @@ fun BoardScreen(component: BoardComponent) {
                         SectionHeader(title = secretariesTitle, showAdd = canEditOthers, onAddClick = { /* TODO: Смена секретаря */ })
 
                         if (state.secretaries.isEmpty()) {
-                            Text("Нет секретарей", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp))
+                            Text("Нет секретарей", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodySmall)
                         } else {
                             state.secretaries.forEach { user ->
                                 val groupText = "студент группы ${user.courseNumber ?: ""}${user.specialityShortTitle ?: ""}-${user.groupName ?: ""}"
@@ -346,7 +358,8 @@ fun BoardScreen(component: BoardComponent) {
                                     onEditClick = { /* TODO */ },
                                     onKickClick = {
                                         kickDialogData = KickDialogData(fullName) { /* TODO: screenModel.removeSecretary(user.id) */ }
-                                    }
+                                    },
+                                    onCardClick = { handleCardClick(user.id) }
                                 )
                             }
                         }
@@ -365,7 +378,7 @@ fun BoardScreen(component: BoardComponent) {
                                 )
 
                                 if (sector.coordinators.isEmpty()) {
-                                    Text("Нет координаторов", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp))
+                                    Text("Нет координаторов", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 13.sp, modifier = Modifier.padding(bottom = 12.dp), style = MaterialTheme.typography.bodySmall)
                                 } else {
                                     sector.coordinators.forEach { coord ->
                                         val groupText = "студент группы ${coord.studentCourseNumber ?: ""}${coord.studentSpecialityTitle ?: ""}-${coord.studentGroupTitle ?: ""}"
@@ -382,7 +395,8 @@ fun BoardScreen(component: BoardComponent) {
                                                 kickDialogData = KickDialogData(fullName) {
                                                     screenModel.removeCoordinator(sector.id, coord.studentId)
                                                 }
-                                            }
+                                            },
+                                            onCardClick = { handleCardClick(coord.studentId) }
                                         )
                                     }
                                 }
@@ -400,7 +414,7 @@ fun BoardScreen(component: BoardComponent) {
                     .navigationBarsPadding()
                     .padding(bottom = 16.dp),
                 snackbar = { snackbarData ->
-                    com.example.ais_sst_mobile.presentation.components.CustomSnackbar(snackbarData = snackbarData)
+                    CustomSnackbar(snackbarData = snackbarData)
                 }
             )
         }
@@ -435,12 +449,15 @@ fun SectionHeader(title: String, showAdd: Boolean, onAddClick: () -> Unit, isSub
 }
 
 @Composable
-fun ChairmanCard(user: UserProfileDto, canEdit: Boolean) {
+fun ChairmanCard(user: UserProfileDto, canEdit: Boolean, onCardClick: () -> Unit) {
     Card(
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)),
         border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.extraLarge)
+            .clickable { onCardClick() }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(18.dp),
@@ -490,14 +507,18 @@ fun ChairmanCard(user: UserProfileDto, canEdit: Boolean) {
 }
 
 @Composable
-fun MemberCard(name: String, group: String, photo: String?, showMenu: Boolean, onEditClick: () -> Unit, onKickClick: () -> Unit) {
+fun MemberCard(name: String, group: String, photo: String?, showMenu: Boolean, onEditClick: () -> Unit, onKickClick: () -> Unit, onCardClick: () -> Unit) {
     var isMenuExpanded by remember { mutableStateOf(false) }
 
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f)),
         border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onCardClick() }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(14.dp),

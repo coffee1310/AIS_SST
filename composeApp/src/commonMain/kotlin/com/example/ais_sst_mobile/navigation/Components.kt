@@ -39,7 +39,8 @@ class SectorDetailsComponent(
     componentContext: ComponentContext,
     val sectorId: Int,
     val onGoBack: () -> Unit,
-    val onNavigateToParticipants: (Int, String) -> Unit
+    val onNavigateToParticipants: (Int, String) -> Unit,
+    val onNavigateToActivistProfile: (Int) -> Unit
 ) : ComponentContext by componentContext
 
 class SectorParticipantsComponent(
@@ -87,6 +88,9 @@ class SectorsComponent(
                     onGoBack = { navigation.pop() },
                     onNavigateToParticipants = { id, title ->
                         navigation.pushNew(Config.Participants(id, title))
+                    },
+                    onNavigateToActivistProfile = { userId ->
+                        onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
                     }
                 )
             )
@@ -147,5 +151,6 @@ class CreateSectorComponent(
 ) : ComponentContext by componentContext
 class BoardComponent(
     componentContext: ComponentContext,
-    val onGoBack: () -> Unit
+    val onGoBack: () -> Unit,
+    val onNavigateToActivistProfile: (Int) -> Unit
 ) : ComponentContext by componentContext

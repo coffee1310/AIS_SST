@@ -54,11 +54,12 @@ fun ActivistProfileContent(component: ProfileComponent, screenModel: ProfileScre
                         component.onNavigateToFullScreen(FullScreenRoute.MyData)})
                     ProfileMenuRow(icon = Icons.Outlined.StarOutline, title = "История баллов", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.WorkOutline, title = "Портфолио", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.Settings, title = "Настройки", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Group, title = "Правление студсовета", onClick = {
                         component.onNavigateToFullScreen(FullScreenRoute.Board)
                     })
                     //ProfileMenuRow(icon = Icons.Outlined.Info, title = "О студсовете", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Settings, title = "Настройки", onClick = { })
+
                     Spacer(modifier = Modifier.height(8.dp))
                     ProfileMenuRow(icon = Icons.Outlined.HelpOutline, title = "Поддержка", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Info, title = "О приложении", onClick = { })

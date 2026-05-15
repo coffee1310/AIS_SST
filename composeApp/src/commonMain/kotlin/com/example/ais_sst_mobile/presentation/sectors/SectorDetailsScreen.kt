@@ -3,6 +3,7 @@ package com.example.ais_sst_mobile.presentation.sectors
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -201,7 +202,15 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                     sector.coordinators.forEachIndexed { index, coordinator ->
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .then(
+                                                    if (activeRole.isSecondBoardMember()) {
+                                                        Modifier.clickable {
+                                                            component.onNavigateToActivistProfile(coordinator.studentId)
+                                                        }
+                                                    } else Modifier
+                                                )
                                         ) {
                                             val coordImage = remember(coordinator.studentPhoto) {
                                                 try {
@@ -374,6 +383,16 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                         Spacer(modifier = Modifier.height(100.dp))
                     }
                 }
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(bottom = 16.dp),
+                    snackbar = { snackbarData ->
+                        CustomSnackbar(snackbarData = snackbarData)
+                    }
+                )
             }
         }
     }

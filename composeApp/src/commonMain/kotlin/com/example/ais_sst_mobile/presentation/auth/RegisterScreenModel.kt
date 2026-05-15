@@ -75,8 +75,15 @@ class RegisterScreenModel(
             _state.update { it.copy(isLoading = true, registerError = null) }
 
             try {
+                val cleanCorpEmail = corpEmail.filterNot { it.isWhitespace() }
+                val cleanPass = pass.filterNot { it.isWhitespace() }
+                val cleanPhone = phone.filterNot { it.isWhitespace() }
+                val cleanVkLink = vkLink.filterNot { it.isWhitespace() }
+                val cleanAddEmail = addEmail.filterNot { it.isWhitespace() }
+
                 val formattedDate = "${birthDate.substring(4, 8)}-${birthDate.substring(2, 4)}-${birthDate.substring(0, 2)}"
-                val fullVkLink = "https://vk.ru/${vkLink.trim()}"
+
+                val fullVkLink = "https://vk.ru/$cleanVkLink"
                 val base64Photo = "data:image/jpeg;base64,${photoBytes.encodeBase64()}"
 
                 val request = RegisterRequest(
@@ -88,12 +95,12 @@ class RegisterScreenModel(
                     courseNumber = course.toInt(),
                     specialityId = specialtyId,
                     groupId = groupId,
-                    studentIdNumber = corpEmail.toIntOrNull() ?: 0,
-                    studentEmail = "$corpEmail$corpDomain",
-                    additionalEmail = addEmail.trim().takeIf { it.isNotEmpty() },
-                    phoneNumber = "+7$phone",
+                    studentIdNumber = cleanCorpEmail.toIntOrNull() ?: 0,
+                    studentEmail = "$cleanCorpEmail$corpDomain",
+                    additionalEmail = cleanAddEmail.takeIf { it.isNotEmpty() },
+                    phoneNumber = "+7$cleanPhone",
                     vkLink = fullVkLink,
-                    password = pass,
+                    password = cleanPass,
                     socialStatusesId = socialStatusIds.toList(),
                     photo = base64Photo
                 )

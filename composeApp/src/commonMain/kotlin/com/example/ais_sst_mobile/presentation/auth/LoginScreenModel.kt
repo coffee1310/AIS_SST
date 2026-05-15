@@ -129,9 +129,10 @@ class LoginScreenModel(
 
     fun login() {
         val currentUiState = _uiState.value
-        val loginId = currentUiState.login
+
+        val loginId = currentUiState.login.filterNot { it.isWhitespace() }
         val domain = currentUiState.domain
-        val pass = currentUiState.password
+        val pass = currentUiState.password.filterNot { it.isWhitespace() }
 
         if (loginId.isBlank() || pass.isBlank()) {
             _screenState.value = ScreenState.Error("Пожалуйста, заполните все поля")
@@ -143,7 +144,6 @@ class LoginScreenModel(
             return
         }
 
-        //val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\\\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}\$")
         val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$")
         if (!passwordRegex.matches(pass)) {
             _screenState.value = ScreenState.Error("Пароль: от 8 символов (A-Z, a-z, цифры, спецсимволы)")
