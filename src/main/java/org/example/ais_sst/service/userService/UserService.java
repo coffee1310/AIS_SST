@@ -136,10 +136,17 @@ public class UserService implements UserServiceImpl {
                 .map(row -> {
                     UserResponseDTO dto = mapRowToUserResponseDTO(row);
                     if (dto != null) {
-                        // Заполняем социальные статусы!
+                        // Заполняем социальные статусы
                         List<String> socialStatuses = socialStatusStudentRepository
                                 .findSocialStatusTitlesByStudentId(dto.getId());
                         dto.setSocialStatuses(socialStatuses);
+
+                        // НОВОЕ: заполняем список секторов пользователя
+                        List<String> userSectors = sectorParticipantRepository
+                                .findSectorTitlesByUserIdAndStatus(dto.getId(), SectorParticipantStatuses.Активный);
+                        dto.setUserSectors(userSectors);
+
+                        log.debug("User {} is member of {} sectors", dto.getId(), userSectors.size());
                     }
                     return dto;
                 })
@@ -149,10 +156,13 @@ public class UserService implements UserServiceImpl {
         // Сортировка в Java
         Comparator<UserResponseDTO> comparator = Comparator.comparing(
                 user -> {
-                    switch(sortBy) {
-                        case "name": return user.getName();
-                        case "surname": return user.getSurname();
-                        default: return user.getId().toString();
+                    switch (sortBy) {
+                        case "name":
+                            return user.getName();
+                        case "surname":
+                            return user.getSurname();
+                        default:
+                            return user.getId().toString();
                     }
                 },
                 Collator.getInstance(new Locale("ru"))
@@ -202,6 +212,16 @@ public class UserService implements UserServiceImpl {
                     dto.setCoordinatorSectorTitle((String) info[1]);
                 }
             }
+
+            // НОВОЕ: заполняем список секторов пользователя
+            List<String> userSectors = sectorParticipantRepository
+                    .findSectorTitlesByUserIdAndStatus(user.getId(), SectorParticipantStatuses.Активный);
+            dto.setUserSectors(userSectors);
+
+            // Заполняем социальные статусы
+            List<String> socialStatuses = socialStatusStudentRepository
+                    .findSocialStatusTitlesByStudentId(user.getId());
+            dto.setSocialStatuses(socialStatuses);
 
             return dto;
         });

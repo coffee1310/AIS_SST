@@ -22,11 +22,11 @@ public class AccountRequestPhotoService extends BasePhotoService implements Phot
 
     @Override
     public String getPhotoAsBase64(String photoPath) {
-        return getPhotoAsBase64(photoPath);
+        return super.getPhotoAsBase64(photoPath);
     }
 
     @Override
     public void deletePhoto(String photoPath) throws IOException {
-        deletePhoto(photoPath);
+        super.deletePhoto(photoPath);
     }
 }

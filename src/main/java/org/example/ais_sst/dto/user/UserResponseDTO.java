@@ -36,4 +36,7 @@ public class UserResponseDTO {
     private List<String> socialStatuses;  // Добавлено поле для социальных статусов
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private List<String> userSectors;
+
 }

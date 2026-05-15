@@ -22,11 +22,13 @@ public class UserPhotoService extends BasePhotoService implements PhotoService {
 
     @Override
     public String getPhotoAsBase64(String photoPath) {
-        return getPhotoAsBase64(photoPath);
+        // Вызываем метод родительского класса, а не сами себя!
+        return super.getPhotoAsBase64(photoPath);
     }
 
     @Override
     public void deletePhoto(String photoPath) throws IOException {
-        deletePhoto(photoPath);
+        super.deletePhoto(photoPath);
     }
+
 }

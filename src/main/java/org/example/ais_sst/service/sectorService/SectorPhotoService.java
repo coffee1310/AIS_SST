@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 
+@Slf4j
 @Service
 public class SectorPhotoService extends BasePhotoService implements PhotoService {
 
@@ -21,11 +22,11 @@ public class SectorPhotoService extends BasePhotoService implements PhotoService
 
     @Override
     public String getPhotoAsBase64(String photoPath) {
-        return "";
+        return super.getPhotoAsBase64(photoPath);
     }
 
     @Override
     public void deletePhoto(String photoPath) throws IOException {
-
+        super.deletePhoto(photoPath);
     }
 }
