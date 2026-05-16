@@ -105,7 +105,7 @@ fun EditRoleScreen(component: EditRoleComponent) {
 
                         CustomTextField(
                             value = title,
-                            onValueChange = { screenModel.title.value = it },
+                            onValueChange = { if (it.length <= 32) screenModel.title.value = it },
                             placeholder = "* Название роли",
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                         )

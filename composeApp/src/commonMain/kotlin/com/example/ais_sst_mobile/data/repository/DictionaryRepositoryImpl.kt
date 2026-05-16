@@ -13,6 +13,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import com.example.ais_sst_mobile.data.network.dto.EventGlobalRoleDto
+import com.example.ais_sst_mobile.data.network.dto.GroupsResponseWrapper
+import com.example.ais_sst_mobile.data.network.dto.SocialStatusesResponseWrapper
+import com.example.ais_sst_mobile.data.network.dto.SpecialitiesResponseWrapper
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -24,18 +27,18 @@ class DictionaryRepositoryImpl(
 ) : DictionaryRepository {
 
     override suspend fun getSpecialities(): Result<List<Speciality>> = runCatching {
-        val response: List<SpecialityDto> = httpClient.get("specialities").body()
-        response.map { it.toDomain() }
+        val response = httpClient.get("specialities").body<SpecialitiesResponseWrapper>()
+        response.data.map { it.toDomain() }
     }
 
     override suspend fun getSocialStatuses(): Result<List<SocialStatus>> = runCatching {
-        val response: List<SocialStatusDto> = httpClient.get("social_status").body()
-        response.map { it.toDomain() }
+        val response = httpClient.get("social_status").body<SocialStatusesResponseWrapper>()
+        response.data.map { it.toDomain() }
     }
 
     override suspend fun getGroups(): Result<List<Group>> = runCatching {
-        val response: List<GroupDto> = httpClient.get("group").body()
-        response.map { it.toDomain() }
+        val response = httpClient.get("group").body<GroupsResponseWrapper>()
+        response.data.map { it.toDomain() }
     }
     override suspend fun getEventRoles(): Result<List<EventGlobalRoleDto>> = runCatching {
         httpClient.get("roles").body()

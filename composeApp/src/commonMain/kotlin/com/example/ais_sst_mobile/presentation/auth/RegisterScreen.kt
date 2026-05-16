@@ -254,8 +254,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 CustomTextField(
                     modifier = contentModifier,
                     value = surname,
-                    onValueChange = { surname = it; generalError = null },
-                    placeholder = "* Фамилия",
+                    onValueChange = { if (it.length <= 64) { surname = it; generalError = null } },                    placeholder = "* Фамилия",
                     isError = isSurnameError,
                     errorMessage = if (isSurnameError) "Только кириллица, с заглавной буквы" else null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
@@ -266,8 +265,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 CustomTextField(
                     modifier = contentModifier,
                     value = name,
-                    onValueChange = { name = it; generalError = null },
-                    placeholder = "* Имя",
+                    onValueChange = { if (it.length <= 64) { name = it; generalError = null } },                    placeholder = "* Имя",
                     isError = isNameError,
                     errorMessage = if (isNameError) "Только кириллица, с заглавной буквы" else null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
@@ -278,8 +276,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 CustomTextField(
                     modifier = contentModifier,
                     value = patronymic,
-                    onValueChange = { patronymic = it; generalError = null },
-                    placeholder = "* Отчество",
+                    onValueChange = { if (it.length <= 64) { patronymic = it; generalError = null } },                    placeholder = "* Отчество",
                     isError = isPatronymicError,
                     errorMessage = if (isPatronymicError) "Только кириллица, с заглавной буквы" else null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
@@ -490,15 +487,17 @@ fun RegisterScreen(component: RegisterComponent) {
                     modifier = contentModifier,
                     value = corpEmail,
                     onValueChange = { newValue ->
-                        if (corpDomain == "@edu.fa.ru") {
-                            if (newValue.length <= 6 && newValue.all { c -> c.isDigit() }) {
-                                corpEmail = newValue
-                                generalError = null
-                            }
-                        } else {
-                            if (!newValue.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
-                                corpEmail = newValue
-                                generalError = null
+                        if (newValue.length + corpDomain.length <= 32) {
+                            if (corpDomain == "@edu.fa.ru") {
+                                if (newValue.length <= 6 && newValue.all { c -> c.isDigit() }) {
+                                    corpEmail = newValue
+                                    generalError = null
+                                }
+                            } else {
+                                if (!newValue.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }) {
+                                    corpEmail = newValue
+                                    generalError = null
+                                }
                             }
                         }
                     },
@@ -546,8 +545,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 CustomTextField(
                     modifier = contentModifier,
                     value = addEmail,
-                    onValueChange = { addEmail = it; generalError = null },
-                    placeholder = "  Дополнительная почта",
+                    onValueChange = { if (it.length <= 256) { addEmail = it; generalError = null } },                    placeholder = "  Дополнительная почта",
                     isError = isAddEmailError,
                     errorMessage = if (isAddEmailError) "Некорректный формат почты" else null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -573,8 +571,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 CustomTextField(
                     modifier = contentModifier.onFocusChanged { isVkFocused = it.isFocused },
                     value = vkLink,
-                    onValueChange = { vkLink = it; generalError = null },
-                    placeholder = "* Ссылка на ВКонтакте",
+                    onValueChange = { if (it.length <= 256) { vkLink = it; generalError = null } },                    placeholder = "* Ссылка на ВКонтакте",
                     isError = isVkLinkError,
                     errorMessage = if (isVkLinkError) "Ссылка не должна содержать пробелов и русских букв" else null,
                     visualTransformation = PrefixTransformation("https://vk.ru/", isVkFocused),
@@ -586,8 +583,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 CustomTextField(
                     modifier = contentModifier,
                     value = password,
-                    onValueChange = { password = it; generalError = null },
-                    placeholder = "* Пароль",
+                    onValueChange = { if (it.length <= 256) { password = it; generalError = null } },                    placeholder = "* Пароль",
                     isError = isPasswordError,
                     errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры и спецсимволы" else null,
                     visualTransformation = if (isPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -605,8 +601,7 @@ fun RegisterScreen(component: RegisterComponent) {
                 CustomTextField(
                     modifier = contentModifier,
                     value = confirmPassword,
-                    onValueChange = { confirmPassword = it; generalError = null },
-                    placeholder = "* Повторите пароль",
+                    onValueChange = { if (it.length <= 256) { confirmPassword = it; generalError = null } },                    placeholder = "* Повторите пароль",
                     isError = isConfirmPasswordError,
                     errorMessage = if (isConfirmPasswordError) "Пароли не совпадают" else null,
                     visualTransformation = if (isConfirmPassVisible) VisualTransformation.None else PasswordVisualTransformation(),

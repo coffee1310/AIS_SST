@@ -98,7 +98,8 @@ fun CreateRoleScreen(component: CreateRoleComponent) {
 
                     CustomTextField(
                         value = title,
-                        onValueChange = { title = it },
+                        // Ограничение ввода до 32 символов
+                        onValueChange = { if (it.length <= 32) title = it },
                         placeholder = "* Название роли",
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                     )

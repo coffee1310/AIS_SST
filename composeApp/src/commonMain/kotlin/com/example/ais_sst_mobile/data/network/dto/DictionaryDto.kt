@@ -31,6 +31,20 @@ data class GroupDto(
         )
     }
 }
+@Serializable
+data class SpecialitiesResponseWrapper(
+    val data: List<SpecialityDto>
+)
+
+@Serializable
+data class SocialStatusesResponseWrapper(
+    val data: List<SocialStatusDto>
+)
+
+@Serializable
+data class GroupsResponseWrapper(
+    val data: List<GroupDto>
+)
 
 fun SpecialityDto.toDomain() = Speciality(id = id, title = title)
 fun SocialStatusDto.toDomain() = SocialStatus(id = id, title = title)

@@ -60,7 +60,6 @@ fun LoginScreen(component: LoginComponent) {
 
     val focusManager = LocalFocusManager.current
 
-    //val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\\\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}\$") }
     val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$") }
 
     val isLoginError = uiState.domain == "@edu.fa.ru" && uiState.login.isNotEmpty() && uiState.login.length != 6
@@ -110,7 +109,11 @@ fun LoginScreen(component: LoginComponent) {
             CustomTextField(
                 modifier = contentModifier,
                 value = uiState.login,
-                onValueChange = { screenModel.updateLogin(it) },
+                onValueChange = { newValue ->
+                    if (newValue.length + uiState.domain.length <= 32) {
+                        screenModel.updateLogin(newValue)
+                    }
+                },
                 placeholder = if (uiState.domain == "@edu.fa.ru") "Номер студбилета" else "Логин",
                 isError = isLoginError,
                 errorMessage = if (isLoginError) "Студбилет должен состоять из 6 цифр" else null,
@@ -161,7 +164,11 @@ fun LoginScreen(component: LoginComponent) {
             CustomTextField(
                 modifier = contentModifier,
                 value = uiState.password,
-                onValueChange = { screenModel.updatePassword(it) },
+                onValueChange = { newValue ->
+                    if (newValue.length <= 256) {
+                        screenModel.updatePassword(newValue)
+                    }
+                },
                 placeholder = "Пароль",
                 isError = isPasswordError,
                 errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры, спецсимволы" else null,

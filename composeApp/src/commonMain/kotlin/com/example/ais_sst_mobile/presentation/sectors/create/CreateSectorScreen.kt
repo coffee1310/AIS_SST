@@ -141,7 +141,7 @@ fun CreateSectorScreen(component: CreateSectorComponent) {
 
                     CustomTextField(
                         value = title,
-                        onValueChange = { title = it },
+                        onValueChange = { if (it.length <= 128) title = it }, // <-- Ограничение 128
                         placeholder = "* Название сектора",
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                     )

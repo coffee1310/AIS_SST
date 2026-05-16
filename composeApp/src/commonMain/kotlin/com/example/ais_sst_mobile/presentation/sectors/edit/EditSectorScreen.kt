@@ -140,7 +140,7 @@ fun EditSectorScreen(component: EditSectorComponent) {
 
                         CustomTextField(
                             value = title,
-                            onValueChange = { screenModel.updateTitle(it) },
+                            onValueChange = { if (it.length <= 128) screenModel.updateTitle(it) }, // <-- Ограничение 128
                             placeholder = "* Название сектора",
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                         )
