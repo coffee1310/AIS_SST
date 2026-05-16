@@ -1,0 +1,41 @@
+﻿<Page x:Class="Diplom_Stud.Pages.Coordinator.EventParticipantsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Loaded="Page_Loaded">
+    <Grid>
+        <StackPanel>
+            <TextBlock Text="Утвержденные участники" Foreground="White" FontSize="20" FontFamily="Digital Pixel" Margin="0,0,0,20"/>
+
+            <ItemsControl x:Name="ParticipantsListControl">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10" Padding="15">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse Grid.Column="0" Width="40" Height="40" Margin="0,0,15,0">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding FullName}" Foreground="White" FontFamily="Montserrat" FontSize="15" Margin="0,0,0,2"/>
+                                    <TextBlock Text="{Binding RoleTitle}" Foreground="#02B3BA" FontFamily="Montserrat Thin" FontSize="12"/>
+                                </StackPanel>
+
+                                <Button Grid.Column="2" Content="Исключить" Style="{StaticResource OutlineButtonStyle}" Foreground="#E81123" BorderBrush="#E81123" Padding="15,5" FontSize="12" VerticalAlignment="Center" Tag="{Binding ParticipantId}" Click="KickParticipant_Click"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock x:Name="EmptyParticipantsText" Text="Участников пока нет." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,20,0,0" Visibility="Collapsed"/>
+        </StackPanel>
+    </Grid>
+</Page>

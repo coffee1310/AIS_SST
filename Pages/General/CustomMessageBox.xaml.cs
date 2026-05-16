@@ -62,7 +62,8 @@ namespace Diplom_Stud.Components
             Info,
             Error,
             Success,
-            Question 
+            Question,
+            Warning
         }
     }
 }

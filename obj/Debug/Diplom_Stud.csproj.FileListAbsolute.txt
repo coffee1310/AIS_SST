@@ -158,3 +158,13 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RequestDetailsWindow
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Curator\RequestDetailsWindow.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorHome.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorHome.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorEventDetails.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventFinalizePage.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventParticipantsPage.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventRequestsPage.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorEventDetails.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventFinalizePage.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventParticipantsPage.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventRequestsPage.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventEditPage.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventEditPage.baml

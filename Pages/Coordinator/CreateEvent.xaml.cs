@@ -438,6 +438,8 @@ namespace Diplom_Stud.Pages.Coordinator
 
     public class RoleItem : INotifyPropertyChanged
     {
+        public int RoleId { get; set; }
+
         private bool _isExpanded = false;
         public bool IsExpanded
         {

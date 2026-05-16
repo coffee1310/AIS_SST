@@ -157,6 +157,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\Coordinator\CoordinatorEventDetails.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Pages\Coordinator\CoordinatorPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -166,6 +170,22 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\Coordinator\CoordinatorHome.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Coordinator\EventEditPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Coordinator\EventFinalizePage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Coordinator\EventParticipantsPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Coordinator\EventRequestsPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -230,6 +250,9 @@
     <Compile Include="Pages\Activist\Tasks.xaml.cs">
       <DependentUpon>Tasks.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Pages\Coordinator\CoordinatorEventDetails.xaml.cs">
+      <DependentUpon>CoordinatorEventDetails.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Pages\Coordinator\CoordinatorPanel.xaml.cs">
       <DependentUpon>CoordinatorPanel.xaml</DependentUpon>
     </Compile>
@@ -238,6 +261,18 @@
     </Compile>
     <Compile Include="Pages\Coordinator\CoordinatorHome.xaml.cs">
       <DependentUpon>CoordinatorHome.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Coordinator\EventEditPage.xaml.cs">
+      <DependentUpon>EventEditPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Coordinator\EventFinalizePage.xaml.cs">
+      <DependentUpon>EventFinalizePage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Coordinator\EventParticipantsPage.xaml.cs">
+      <DependentUpon>EventParticipantsPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Coordinator\EventRequestsPage.xaml.cs">
+      <DependentUpon>EventRequestsPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Curator\RegistrationRequests.xaml.cs">
       <DependentUpon>RegistrationRequests.xaml</DependentUpon>
