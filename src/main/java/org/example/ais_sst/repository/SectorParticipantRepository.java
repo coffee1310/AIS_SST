@@ -56,4 +56,6 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     // НОВЫЙ МЕТОД: получить все секторы с деталями
     @Query("SELECT sp.sector.id, sp.sector.title, sp.status, sp.isCoordinator FROM SectorParticipant sp WHERE sp.student.id = :userId AND sp.status = :status")
     List<Object[]> findSectorDetailsByUserIdAndStatus(@Param("userId") Long userId, @Param("status") SectorParticipantStatuses status);
+
+    List<SectorParticipant> findByStudentIdAndStatus(Long studentId, SectorParticipantStatuses status);
 }

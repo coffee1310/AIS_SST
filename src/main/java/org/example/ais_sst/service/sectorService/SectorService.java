@@ -323,12 +323,8 @@ public class SectorService {
     }
 
     @Transactional
-    public void kickParticipantFromSector(Long sectorId, Long coordinatorId, Long participantId) throws RoleNotFoundException {
+    public void kickParticipantFromSector(Long sectorId, Long coordinatorId, Long participantId) {
         log.info("Kicking participant {} from sector {} by coordinator {}", participantId, sectorId, coordinatorId);
-
-        User coordinator = userRepository.findById(coordinatorId)
-                .orElseThrow(() -> new UserDoesNotExistException(
-                        String.format("Координатор с id: %d не найден", coordinatorId)));
 
         SectorParticipant coordinatorParticipant = sectorParticipantRepository
                 .findBySectorIdAndStudentId(sectorId, coordinatorId)
@@ -341,10 +337,6 @@ public class SectorService {
                             coordinatorId, sectorId));
         }
 
-        User participant = userRepository.findById(participantId)
-                .orElseThrow(() -> new UserDoesNotExistException(
-                        String.format("Участник с id: %d не найден", participantId)));
-
         SectorParticipant participantEntry = sectorParticipantRepository
                 .findBySectorIdAndStudentId(sectorId, participantId)
                 .orElseThrow(() -> new UserDoesNotExistException(
@@ -354,30 +346,14 @@ public class SectorService {
             throw new SecurityException("Нельзя выгнать координатора из сектора");
         }
 
-        sectorParticipantRepository.delete(participantEntry);
-        log.info("User {} removed from sector {}", participantId, sectorId);
+        // Вместо удаления - меняем статус на "Вышедший"
+        participantEntry.setStatus(SectorParticipantStatuses.Вышедший);
+        participantEntry.setIsCoordinator(false); // Снимаем флаг координатора, если был
+        sectorParticipantRepository.save(participantEntry);
 
-        List<SectorParticipant> userSectors = sectorParticipantRepository.findByStudentId(participantId);
-        if (userSectors.isEmpty()) {
-            Role activistRole = roleRepository.findByTitle("Activist")
-                    .orElseThrow(() -> new RoleNotFoundException("Роль 'Activist' не найдена"));
-            participant.setRole(activistRole);
-            userRepository.save(participant);
-            log.info("User {} role changed to Activist (no longer in any sector)", participantId);
-        }
+        log.info("User {} status changed to 'Вышедший' in sector {}", participantId, sectorId);
 
-        List<SectorIntroductionRequest> approvedRequests = sectorIntroductionRequestRepository
-                .getSectorIntroductionRequestsBySector_IdAndStatus(sectorId, SectorIntroductionStatus.ОДОБРЕНА)
-                .stream()
-                .filter(req -> req.getUser().getId().equals(participantId))
-                .toList();
-
-        for (SectorIntroductionRequest request : approvedRequests) {
-            request.setStatus(SectorIntroductionStatus.ВЫШЕДШИЙ);
-            sectorIntroductionRequestRepository.save(request);
-        }
-
-        log.info("User {} kicked from sector {} successfully", participantId, sectorId);
+        log.info("User {} kicked from sector {} successfully (status: Вышедший)", participantId, sectorId);
     }
 
     @Transactional
