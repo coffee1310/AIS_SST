@@ -1,5 +1,6 @@
 package org.example.ais_sst.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.request.LoginRequest;
 import org.example.ais_sst.dto.request.RefreshTokenRequest;
@@ -15,6 +16,8 @@ import org.example.ais_sst.security.jwt.JwtUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.service.redisService.RedisKeys;
+import org.example.ais_sst.service.redisService.RedisRateLimitService;
 import org.example.ais_sst.service.tokens.RefreshTokenService;
 import org.example.ais_sst.service.tokens.RevokedTokenService;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,12 +54,38 @@ public class AuthController extends BaseController {
     private final RefreshTokenService refreshTokenService;
     private final SocialStatusStudentsRepository socialStatusStudentRepository;
     private final RevokedTokenService revokedTokenService;
+    private final RedisRateLimitService rateLimitService;
+    private final HttpServletRequest httpServletRequest;
 
     @Value("${app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
+    private ResponseEntity<Map<String, Object>> createErrorResponse(HttpStatus status, String error, String message, String path) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("error", error);
+        body.put("message", message);
+        body.put("path", path);
+        return ResponseEntity.status(status).body(body);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        String clientIp = httpServletRequest.getRemoteAddr();
+        String rateLimitKey = RedisKeys.rateLimit("login", clientIp);
+
+        // Rate limiting: 5 попыток за 60 секунд
+        if (rateLimitService.isRateLimited(rateLimitKey, 5, 60)) {
+            log.warn("Rate limit exceeded for IP: {}", clientIp);
+            return createErrorResponse(
+                    HttpStatus.TOO_MANY_REQUESTS,
+                    "Too Many Requests",
+                    "Too many login attempts. Please try again later.",
+                    "/api/auth/login"
+            );
+        }
+
         logInfo("/api/auth/login", "Login attempt for email: {}", loginRequest.getEmail());
 
         Authentication authentication = authenticationManager.authenticate(
@@ -101,7 +131,6 @@ public class AuthController extends BaseController {
                 roles);
 
         return createSuccessResponse("Login successful", jwtResponse);
-
     }
 
     @PostMapping("/refresh")
@@ -110,121 +139,75 @@ public class AuthController extends BaseController {
 
         String requestRefreshToken = request.getRefreshToken();
 
-        // Проверяем, не отозван ли refresh токен
+        // Проверяем, не отозван ли refresh токен в Redis
         if (revokedTokenService.isRefreshTokenRevoked(requestRefreshToken)) {
             log.warn("Refresh token has been revoked: {}", requestRefreshToken);
-            ResponseEntity<?> body = ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of(
-                            "timestamp", LocalDateTime.now(),
-                            "status", 401,
-                            "error", "Token Revoked",
-                            "message", "Refresh token has been revoked. Please login again.",
-                            "path", "/api/auth/refresh"
-                    ));
-            return body;
+            return createErrorResponse(
+                    HttpStatus.UNAUTHORIZED,
+                    "Token Revoked",
+                    "Refresh token has been revoked. Please login again.",
+                    "/api/auth/refresh"
+            );
         }
 
         return refreshTokenService.findByToken(requestRefreshToken)
-                .map(refreshToken -> {
-                    try {
-                        refreshTokenService.verifyExpiration(refreshToken);
+            .map(refreshToken -> {
+                try {
+                    refreshTokenService.verifyExpiration(refreshToken);
 
-                        Long userId = refreshToken.getUser().getId();
-                        User user = refreshToken.getUser();
+                    Long userId = refreshToken.getUser().getId();
+                    User user = refreshToken.getUser();
 
-                        // Отзываем старые токены
-                        refreshTokenService.revokeRefreshToken(requestRefreshToken);
-                        revokedTokenService.revokeRefreshToken(requestRefreshToken);
-                        revokedTokenService.revokeAllUserTokens(userId);
+                    // Отзываем старые токены
+                    refreshTokenService.revokeRefreshToken(requestRefreshToken);
+                    revokedTokenService.revokeRefreshToken(requestRefreshToken);
+                    revokedTokenService.revokeAllUserTokens(userId);
 
-                        // Создаем новые токены
-                        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(userId);
+                    // Создаем новые токены
+                    RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(userId);
 
-                        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                user.getStudentEmail(), user.getPassword());
-                        String newAccessToken = jwtUtils.generateJwtToken(authentication);
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(
+                            user.getStudentEmail(), user.getPassword());
+                    String newAccessToken = jwtUtils.generateJwtToken(authentication);
 
-                        String jti = jwtUtils.getJtiFromToken(newAccessToken);
-                        revokedTokenService.storeActiveToken(userId, jti, System.currentTimeMillis() + jwtExpirationMs);
+                    String jti = jwtUtils.getJtiFromToken(newAccessToken);
+                    revokedTokenService.storeActiveToken(userId, jti, System.currentTimeMillis() + jwtExpirationMs);
 
-                        List<String> roles = user.getRole() != null
-                                ? List.of(user.getRole().getTitle())
-                                : List.of("USER");
+                    List<String> roles = user.getRole() != null
+                            ? List.of(user.getRole().getTitle())
+                            : List.of("USER");
 
-                        JwtResponse jwtResponse = new JwtResponse(
-                                newAccessToken,
-                                newRefreshToken.getToken(),
-                                userId,
-                                user.getStudentEmail(),
-                                user.getName(),
-                                user.getSurname(),
-                                roles);
+                    JwtResponse jwtResponse = new JwtResponse(
+                            newAccessToken,
+                            newRefreshToken.getToken(),
+                            userId,
+                            user.getStudentEmail(),
+                            user.getName(),
+                            user.getSurname(),
+                            roles);
 
-                        log.info("Tokens refreshed successfully for user: {}", userId);
-                        return createSuccessResponse("Token refreshed successfully", jwtResponse);
+                    log.info("Tokens refreshed successfully for user: {}", userId);
+                    return createSuccessResponse("Token refreshed successfully", jwtResponse);
 
-                    } catch (TokenRefreshException e) {
-                        log.error("Refresh token expired: {}", e.getMessage());
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                .body(Map.of(
-                                        "timestamp", LocalDateTime.now(),
-                                        "status", 401,
-                                        "error", "Token Expired",
-                                        "message", e.getMessage(),
-                                        "path", "/api/auth/refresh"
-                                ));
-                    }
-                })
-                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of(
-                                "timestamp", LocalDateTime.now(),
-                                "status", 401,
-                                "error", "Token Not Found",
-                                "message", "Refresh token not found. Please login again.",
-                                "path", "/api/auth/refresh"
-                        )));
+                } catch (TokenRefreshException e) {
+                    log.error("Refresh token expired: {}", e.getMessage());
+                    return createErrorResponse(
+                            HttpStatus.UNAUTHORIZED,
+                            "Token Expired",
+                            e.getMessage(),
+                            "/api/auth/refresh"
+                    );
+                }
+            })
+            .orElse(createErrorResponse(
+                    HttpStatus.UNAUTHORIZED,
+                    "Token Not Found",
+                    "Refresh token not found. Please login again.",
+                    "/api/auth/refresh"
+            ));
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser(@RequestHeader("Authorization") String authorizationHeader) {
-        logInfo("/api/auth/logout", "Logout request");
 
-        String accessToken = null;
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            accessToken = authorizationHeader.substring(7);
-        }
-
-        if (accessToken != null) {
-            // Получаем JTI из токена и отзываем по JTI
-            String jti = jwtUtils.getJtiFromToken(accessToken);
-            if (jti != null) {
-                revokedTokenService.revokeAccessToken(jti);
-                log.info("Access token revoked on logout, JTI: {}", jti);
-            }
-        }
-
-        return createSuccessResponse("Logout successful", null);
-
-    }
-
-    @PostMapping("/logout/all")
-    public ResponseEntity<?> logoutAllDevices() {
-        logInfo("/api/auth/logout/all", "Logout from all devices request");
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
-            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-            Long userId = userDetails.getId();
-
-            // Отзываем все токены пользователя
-            refreshTokenService.revokeAllUserTokens(userId);
-            revokedTokenService.revokeAllUserTokens(userId);  // <-- ДОБАВЬТЕ ЭТО
-
-            log.info("All tokens revoked for user: {}", userId);
-        }
-
-        return createSuccessResponse("Logged out from all devices", null);
-    }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserSummaryDTO userSummaryDTO) {

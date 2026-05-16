@@ -17,6 +17,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
 
   app:
     build: .
@@ -37,6 +45,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   ais_sst_network:
