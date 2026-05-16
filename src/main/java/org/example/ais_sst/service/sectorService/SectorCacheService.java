@@ -57,12 +57,12 @@ public class SectorCacheService {
         Object cached = redisService.get(key);
 
         if (cached != null) {
-            hits.incrementAndGet();
+            hits.incrementAndGet();  // ← Увеличиваем счетчик попаданий
             log.debug("Cache HIT for sector id: {}", id);
             return Optional.of((SectorDTO) cached);
         }
 
-        misses.incrementAndGet();
+        misses.incrementAndGet();  // ← Увеличиваем счетчик промахов
         log.debug("Cache MISS for sector id: {}", id);
         return Optional.empty();
     }
@@ -72,12 +72,12 @@ public class SectorCacheService {
         Object cached = redisService.get(ALL_SECTORS_KEY);
 
         if (cached != null) {
-            hits.incrementAndGet();
+            hits.incrementAndGet();  // ← Добавить
             log.debug("Cache HIT for all sectors");
             return Optional.of((List<SectorDTO>) cached);
         }
 
-        misses.incrementAndGet();
+        misses.incrementAndGet();  // ← Добавить
         log.debug("Cache MISS for all sectors");
         return Optional.empty();
     }
@@ -87,15 +87,16 @@ public class SectorCacheService {
         Object cached = redisService.get(ACTIVE_SECTORS_KEY);
 
         if (cached != null) {
-            hits.incrementAndGet();
+            hits.incrementAndGet();  // ← Добавить
             log.debug("Cache HIT for active sectors");
             return Optional.of((List<SectorDTO>) cached);
         }
 
-        misses.incrementAndGet();
+        misses.incrementAndGet();  // ← Добавить
         log.debug("Cache MISS for active sectors");
         return Optional.empty();
     }
+
 
     public void cacheSector(SectorDTO sector) {
         if (sector == null || sector.getId() == null) return;
