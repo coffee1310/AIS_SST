@@ -45,7 +45,7 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" Width="950" Margin="40,50,40,50">
 
-                <TextBlock Text="Заявки на регистрацию" FontSize="40" FontFamily="Digital Pixel" Foreground="White" Margin="0,0,0,40"/>
+                <TextBlock Text="Заявки на регистрацию" FontSize="36" FontFamily="Digital Pixel" Foreground="White" Margin="0,0,0,40"/>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
                     <RadioButton x:Name="TabPending" Style="{StaticResource TabRadioButtonStyle}" IsChecked="True" Checked="Tab_Checked" Tag="НА_РАССМОТРЕНИИ">

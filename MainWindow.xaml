@@ -88,7 +88,7 @@
                                     <ImageBrush ImageSource="/Resources/prof.png" Stretch="UniformToFill"/>
                                 </Ellipse.Fill>
                             </Ellipse>
-                            <TextBlock Text="Иванов Иван" Foreground="White" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" Margin="0,10,0,0" FontFamily="Digital Pixel"/>
+                            <TextBlock Text="Иванов Иван" Foreground="White" FontWeight="Bold" FontSize="10" HorizontalAlignment="Center" Margin="0,10,0,0" FontFamily="Digital Pixel"/>
                             <TextBlock Text="123456@edu.fa.ru" Foreground="#D1CDEF" FontSize="11" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>

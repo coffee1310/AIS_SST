@@ -103,7 +103,8 @@ namespace Diplom_Stud.Pages.Activist
                                 roleTitle = item.role,
                                 gender = item.gender,
                                 coordinatorSector = item.coordinatorSectorTitle,
-                                socialStatuses = item.socialStatuses
+                                socialStatuses = item.socialStatuses,
+                                userSectors = item.userSectors
                             };
                         }
                     }
@@ -157,7 +158,7 @@ namespace Diplom_Stud.Pages.Activist
                 if (IsViewMode)
                 {
                     BackButton.Visibility = Visibility.Visible;
-                    ActionButtonsGrid.Visibility = Visibility.Collapsed; 
+                    ActionButtonsGrid.Visibility = Visibility.Collapsed;
                     PortfolioUploadPanel.Visibility = Visibility.Collapsed;
 
                     RoleArrow.Visibility = Visibility.Collapsed;
@@ -181,17 +182,27 @@ namespace Diplom_Stud.Pages.Activist
                     }
                 }
 
-                string course = data.courseNumber?.ToString() ?? "";
-                string specAcronym = data.shortSpecialityTitle ?? "";
-                string group = data.groupTitle ?? "";
+                bool isCurator = data.roleTitle == "Curator" || data.roleTitle == "Admin_curator";
 
-                if (!string.IsNullOrEmpty(group))
+                if (isCurator)
                 {
-                    GroupTextBlock.Text = $"Группа: {course}{specAcronym}-{group}";
+                    GroupTextBlock.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    GroupTextBlock.Text = "Группа: не указана";
+                    GroupTextBlock.Visibility = Visibility.Visible;
+                    string course = data.courseNumber?.ToString() ?? "";
+                    string specAcronym = data.shortSpecialityTitle ?? "";
+                    string group = data.groupTitle ?? "";
+
+                    if (!string.IsNullOrEmpty(group))
+                    {
+                        GroupTextBlock.Text = $"Группа: {course}{specAcronym}-{group}";
+                    }
+                    else
+                    {
+                        GroupTextBlock.Text = "Группа: не указана";
+                    }
                 }
 
                 EventsCountTextBlock.Text = data.events_count?.ToString() ?? "0";
@@ -236,22 +247,41 @@ namespace Diplom_Stud.Pages.Activist
                     }
                 }
 
-                var userSectors = new List<string>();
-
-                if (!string.IsNullOrEmpty(data.coordinatorSector))
+                if (isCurator)
                 {
-                    userSectors.Add($"{data.coordinatorSector} (Координатор)");
-                }
-
-                if (userSectors.Count > 0)
-                {
-                    UserSectorsList.ItemsSource = userSectors;
-                    NoSectorsText.Visibility = Visibility.Collapsed;
+                    UserSectorsGrid.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    UserSectorsList.ItemsSource = null;
-                    NoSectorsText.Visibility = Visibility.Visible;
+                    UserSectorsGrid.Visibility = Visibility.Visible;
+                    var userSectorsDisplay = new List<string>();
+
+                    if (!string.IsNullOrEmpty(data.coordinatorSector))
+                    {
+                        userSectorsDisplay.Add($"{data.coordinatorSector} (Координатор)");
+                    }
+
+                    if (data.userSectors != null)
+                    {
+                        foreach (var sector in data.userSectors)
+                        {
+                            if (sector != data.coordinatorSector)
+                            {
+                                userSectorsDisplay.Add(sector);
+                            }
+                        }
+                    }
+
+                    if (userSectorsDisplay.Count > 0)
+                    {
+                        UserSectorsList.ItemsSource = userSectorsDisplay;
+                        NoSectorsText.Visibility = Visibility.Collapsed;
+                    }
+                    else
+                    {
+                        UserSectorsList.ItemsSource = null;
+                        NoSectorsText.Visibility = Visibility.Visible;
+                    }
                 }
 
             }
@@ -297,6 +327,10 @@ namespace Diplom_Stud.Pages.Activist
             else if (role == "Admin")
             {
                 return "Администратор";
+            }
+            else if (role == "Curator" || role == "Admin_curator")
+            {
+                return "Куратор";
             }
 
             return !string.IsNullOrEmpty(role) ? role : "Студент";
@@ -429,6 +463,7 @@ namespace Diplom_Stud.Pages.Activist
         public int? coordinatorSectorId { get; set; }
         public string coordinatorSectorTitle { get; set; }
         public List<string> socialStatuses { get; set; }
+        public List<string> userSectors { get; set; }
     }
 
     public class UserPageResponse
@@ -459,5 +494,6 @@ namespace Diplom_Stud.Pages.Activist
         public string gender { get; set; }
         public string coordinatorSectorTitle { get; set; }
         public List<string> socialStatuses { get; set; }
+        public List<string> userSectors { get; set; } // Добавлено поле секторов
     }
 }

@@ -9,92 +9,92 @@
       Title="Event Registration"
       Loaded="Page_Loaded">
 
+    <Page.Resources>
+        <Style x:Key="RoleCardCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Background" Value="#12101C"/>
+            <Setter Property="BorderBrush" Value="#2A283C"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+
+                                <Border x:Name="checkIndicator" Width="22" Height="22" BorderBrush="#02B3BA" BorderThickness="1.5" CornerRadius="4" Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                    <Path x:Name="checkMark" Data="M4,10 L9,14 L16,5" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Visibility="Hidden" Stretch="Uniform" Margin="4"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#2D254A"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#4B3D80"/>
+                                <Setter TargetName="checkIndicator" Property="Background" Value="#02B3BA"/>
+                                <Setter TargetName="checkMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#4B3D80"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
     <Grid Background="Transparent">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" MaxWidth="1050" Margin="40,50,40,50">
 
-                <TextBlock Text="Мероприятие" FontSize="48" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+                <Button x:Name="BackButton" Content="&lt; Назад" Style="{StaticResource GhostButtonStyle}" Foreground="#A084FB" FontFamily="Montserrat" FontSize="14" HorizontalAlignment="Left" Click="BackButton_Click" Margin="0,0,0,10"/>
 
-                <TextBlock Text="Вечер талантов" FontSize="24" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                <TextBlock Text="Мероприятие" FontSize="36" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,30"/>
 
-                <TextBlock Text="Выберите, как Вы хотите помочь сделать это событие незабываемым!" Foreground="#7A7886" FontSize="14" FontFamily="Montserrat Thin" HorizontalAlignment="Center" Margin="0,0,0,50"/>
+                <TextBlock x:Name="EventTitleText" Text="Загрузка..." FontSize="24" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,15" TextWrapping="Wrap" TextAlignment="Center"/>
 
-                <UniformGrid Columns="3" Margin="-10,0,-10,0">
+                <TextBlock Text="Выберите, как Вы хотите помочь сделать это событие незабываемым!" Foreground="#7A7886" FontSize="14" FontFamily="Montserrat Thin" HorizontalAlignment="Center" Margin="0,0,0,50" TextWrapping="Wrap" TextAlignment="Center"/>
 
-                    <RadioButton Style="{StaticResource RoleCardRadioButtonStyle}" Margin="10">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
+                <ItemsControl x:Name="RolesItemsControl" Margin="-10,0,-10,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Style="{StaticResource RoleCardCheckBoxStyle}" Margin="10" Tag="{Binding Id}" Checked="Role_Checked" Unchecked="Role_Unchecked">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
 
-                            <Grid Grid.Row="0" Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Организатор" Foreground="White" FontSize="16" FontFamily="Montserrat"/>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1.5" Stretch="Uniform" Width="12" Height="12" Margin="0,0,5,0"/>
-                                    <TextBlock Text="10 мая" Foreground="#02B3BA" FontSize="12" FontFamily="Montserrat Thin"/>
-                                </StackPanel>
-                            </Grid>
+                                    <Grid Grid.Row="0" Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Title}" Foreground="White" FontSize="16" FontFamily="Digital Pixel" TextWrapping="Wrap" Margin="0,0,10,0"/>
 
-                            <StackPanel Grid.Row="1">
-                                <TextBlock Text="• Координация всех этапов мероприятия." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                                <TextBlock Text="• Связь с участниками и волонтерами." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                                <TextBlock Text="• Решение организационных вопросов." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                            </StackPanel>
-                        </Grid>
-                    </RadioButton>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                            <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1.5" Stretch="Uniform" Width="12" Height="12" Margin="0,0,5,0"/>
+                                            <TextBlock Text="{Binding DeadlineText}" Foreground="#02B3BA" FontSize="12" FontFamily="Montserrat Thin"/>
+                                        </StackPanel>
+                                    </Grid>
 
-                    <RadioButton Style="{StaticResource RoleCardRadioButtonStyle}" Margin="10">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="1" Margin="0,0,0,25">
+                                        <TextBlock Text="{Binding Description}" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                                    </StackPanel>
+                                </Grid>
+                            </CheckBox>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                            <Grid Grid.Row="0" Margin="0,0,0,15">
-                                <TextBlock Text="Волонтер" Foreground="White" FontSize="16" FontFamily="Montserrat"/>
-                            </Grid>
-
-                            <StackPanel Grid.Row="1">
-                                <TextBlock Text="• Помощь в расстановке оборудования." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                                <TextBlock Text="• Встреча и регистрация гостей." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                                <TextBlock Text="• Поддержание порядка в зале." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                            </StackPanel>
-                        </Grid>
-                    </RadioButton>
-
-                    <RadioButton Style="{StaticResource RoleCardRadioButtonStyle}" Margin="10">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0" Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Выступающий" Foreground="White" FontSize="16" FontFamily="Montserrat"/>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1.5" Stretch="Uniform" Width="12" Height="12" Margin="0,0,5,0"/>
-                                    <TextBlock Text="12 мая" Foreground="#02B3BA" FontSize="12" FontFamily="Montserrat Thin"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <StackPanel Grid.Row="1">
-                                <TextBlock Text="• Подготовка и репетиция номера." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                                <TextBlock Text="• Своевременное прибытие на саундчек." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                                <TextBlock Text="• Выступление согласно программе." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                            </StackPanel>
-                        </Grid>
-                    </RadioButton>
-
-                </UniformGrid>
+                <TextBlock x:Name="EmptyRolesText" Text="Нет доступных ролей для регистрации." Foreground="#7A7886" FontSize="14" FontFamily="Montserrat Thin" HorizontalAlignment="Center" Margin="0,0,0,40" Visibility="Collapsed"/>
 
                 <Border Background="#12101C" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="12" Margin="0,30,0,40" MaxWidth="700" HorizontalAlignment="Stretch" Padding="15">
                     <Grid>
@@ -118,9 +118,16 @@
                     </Grid>
                 </Border>
 
-                <Button Content="Отправить заявку" Style="{StaticResource PillButtonStyle}" HorizontalAlignment="Center" Padding="60,15" FontSize="14"/>
+                <Button x:Name="SubmitBtn" Content="Отправить заявку" Style="{StaticResource PillButtonStyle}" HorizontalAlignment="Center" Padding="60,15" FontSize="14" Click="SubmitBtn_Click"/>
 
             </StackPanel>
         </ScrollViewer>
+
+        <Grid x:Name="LoadingOverlay" Background="#E61A1A2E" Visibility="Visible">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4" Foreground="#02B3BA" Background="#2A283C" BorderThickness="0" Margin="0,0,0,15"/>
+                <TextBlock Text="Загрузка данных..." Foreground="White" FontFamily="Digital Pixel" FontSize="18" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>
