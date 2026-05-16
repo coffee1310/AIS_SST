@@ -22,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.relation.RoleNotFoundException;
+import java.net.http.HttpResponse;
 import java.util.List;
 
 import org.example.ais_sst.controller.base.BaseController;
@@ -204,5 +205,17 @@ public class SectorsController extends BaseController {
         updateDTO.setId(id);
         SectorDTO updatedSector = sectorService.updateSector(updateDTO);
         return ResponseEntity.ok(updatedSector);
+    }
+
+    @DeleteMapping("/deactivate/{id}")
+    public ResponseEntity<?> deactivateSector(@PathVariable Long id) {
+        sectorService.deactivateSector(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/activate/{id}")
+    public ResponseEntity<?> activateSector(@PathVariable Long id) {
+        sectorService.activateSector(id);
+        return ResponseEntity.noContent().build();
     }
 }

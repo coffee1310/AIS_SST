@@ -502,4 +502,20 @@ public class SectorService {
         log.info("Coordinators updated for sector {}: removed {}, added {}",
                 sectorId, toRemove.size(), toAdd.size());
     }
+
+    @Transactional
+    public void deactivateSector(Long id) {
+        sectorRepository.findById(id)
+                        .orElseThrow(() -> new SectorDoesNotExistException(String.format("Сектор с id: %s не существует", id)));
+
+        sectorRepository.deactivateSector(id);
+    }
+
+    @Transactional
+    public void activateSector(Long id) {
+        sectorRepository.findById(id)
+                .orElseThrow(() -> new SectorDoesNotExistException(String.format("Сектор с id: %s не существует", id)));
+
+        sectorRepository.activateSector(id);
+    }
 }

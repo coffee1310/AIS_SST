@@ -16,6 +16,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.service.tokens.RefreshTokenService;
+import org.example.ais_sst.service.tokens.RevokedTokenService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,7 +28,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -44,6 +49,10 @@ public class AuthController extends BaseController {
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
     private final SocialStatusStudentsRepository socialStatusStudentRepository;
+    private final RevokedTokenService revokedTokenService;
+
+    @Value("${app.jwtExpirationMs}")
+    private int jwtExpirationMs;
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -53,27 +62,46 @@ public class AuthController extends BaseController {
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getId();
+
+        // 1. Отзываем ВСЕ старые токены пользователя
+        refreshTokenService.revokeAllUserTokens(userId);
+        revokedTokenService.revokeAllUserTokens(userId);
+
+        log.info("All old tokens revoked for user: {}", userId);
+
+        // 2. Генерируем новый access token
+        String newAccessToken = jwtUtils.generateJwtToken(authentication);
+
+        // 3. Получаем JTI из нового токена
+        String jti = jwtUtils.getJtiFromToken(newAccessToken);
+
+        // 4. Сохраняем JTI как активный
+        long accessTokenExpiration = System.currentTimeMillis() + jwtExpirationMs;
+        revokedTokenService.storeActiveToken(userId, jti, accessTokenExpiration);
+
+        // 5. Создаем новый refresh token
+        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(userId);
+
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        logInfo("/api/auth/login", "User logged in successfully: {}", loginRequest.getEmail());
-
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+        logInfo("/api/auth/login", "User logged in successfully: {}, new JTI: {}", loginRequest.getEmail(), jti);
 
         JwtResponse jwtResponse = new JwtResponse(
-                jwt,
-                refreshToken.getToken(),
-                userDetails.getId(),
+                newAccessToken,
+                newRefreshToken.getToken(),
+                userId,
                 userDetails.getUsername(),
                 userDetails.getName(),
                 userDetails.getSurname(),
                 roles);
 
         return createSuccessResponse("Login successful", jwtResponse);
+
     }
 
     @PostMapping("/refresh")
@@ -82,48 +110,101 @@ public class AuthController extends BaseController {
 
         String requestRefreshToken = request.getRefreshToken();
 
+        // Проверяем, не отозван ли refresh токен
+        if (revokedTokenService.isRefreshTokenRevoked(requestRefreshToken)) {
+            log.warn("Refresh token has been revoked: {}", requestRefreshToken);
+            ResponseEntity<?> body = ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                            "timestamp", LocalDateTime.now(),
+                            "status", 401,
+                            "error", "Token Revoked",
+                            "message", "Refresh token has been revoked. Please login again.",
+                            "path", "/api/auth/refresh"
+                    ));
+            return body;
+        }
+
         return refreshTokenService.findByToken(requestRefreshToken)
-                .map(refreshToken -> refreshTokenService.verifyExpiration(refreshToken))
-                .map(RefreshToken::getUser)
-                .map(user -> {
-                    Authentication authentication = new UsernamePasswordAuthenticationToken(
-                            user.getStudentEmail(), user.getPassword());
-                    String accessToken = jwtUtils.generateJwtToken(authentication);
+                .map(refreshToken -> {
+                    try {
+                        refreshTokenService.verifyExpiration(refreshToken);
 
-                    RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getId());
+                        Long userId = refreshToken.getUser().getId();
+                        User user = refreshToken.getUser();
 
-                    List<String> roles = user.getRole() != null
-                            ? List.of(user.getRole().getTitle())
-                            : List.of("USER");
+                        // Отзываем старые токены
+                        refreshTokenService.revokeRefreshToken(requestRefreshToken);
+                        revokedTokenService.revokeRefreshToken(requestRefreshToken);
+                        revokedTokenService.revokeAllUserTokens(userId);
 
-                    JwtResponse jwtResponse = new JwtResponse(
-                            accessToken,
-                            newRefreshToken.getToken(),
-                            user.getId(),
-                            user.getStudentEmail(),
-                            user.getName(),
-                            user.getSurname(),
-                            roles);
+                        // Создаем новые токены
+                        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(userId);
 
-                    return createSuccessResponse("Token refreshed successfully", jwtResponse);
+                        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                user.getStudentEmail(), user.getPassword());
+                        String newAccessToken = jwtUtils.generateJwtToken(authentication);
+
+                        String jti = jwtUtils.getJtiFromToken(newAccessToken);
+                        revokedTokenService.storeActiveToken(userId, jti, System.currentTimeMillis() + jwtExpirationMs);
+
+                        List<String> roles = user.getRole() != null
+                                ? List.of(user.getRole().getTitle())
+                                : List.of("USER");
+
+                        JwtResponse jwtResponse = new JwtResponse(
+                                newAccessToken,
+                                newRefreshToken.getToken(),
+                                userId,
+                                user.getStudentEmail(),
+                                user.getName(),
+                                user.getSurname(),
+                                roles);
+
+                        log.info("Tokens refreshed successfully for user: {}", userId);
+                        return createSuccessResponse("Token refreshed successfully", jwtResponse);
+
+                    } catch (TokenRefreshException e) {
+                        log.error("Refresh token expired: {}", e.getMessage());
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body(Map.of(
+                                        "timestamp", LocalDateTime.now(),
+                                        "status", 401,
+                                        "error", "Token Expired",
+                                        "message", e.getMessage(),
+                                        "path", "/api/auth/refresh"
+                                ));
+                    }
                 })
-                .orElseThrow(() -> new TokenRefreshException(requestRefreshToken, "Refresh token not found"));
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of(
+                                "timestamp", LocalDateTime.now(),
+                                "status", 401,
+                                "error", "Token Not Found",
+                                "message", "Refresh token not found. Please login again.",
+                                "path", "/api/auth/refresh"
+                        )));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser(@RequestHeader("Authorization") String authorizationHeader) {
         logInfo("/api/auth/logout", "Logout request");
 
-        String token = null;
+        String accessToken = null;
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            token = authorizationHeader.substring(7);
+            accessToken = authorizationHeader.substring(7);
         }
 
-        if (token != null) {
-            refreshTokenService.revokeRefreshToken(token);
+        if (accessToken != null) {
+            // Получаем JTI из токена и отзываем по JTI
+            String jti = jwtUtils.getJtiFromToken(accessToken);
+            if (jti != null) {
+                revokedTokenService.revokeAccessToken(jti);
+                log.info("Access token revoked on logout, JTI: {}", jti);
+            }
         }
 
         return createSuccessResponse("Logout successful", null);
+
     }
 
     @PostMapping("/logout/all")
@@ -133,7 +214,13 @@ public class AuthController extends BaseController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-            refreshTokenService.revokeAllUserTokens(userDetails.getId());
+            Long userId = userDetails.getId();
+
+            // Отзываем все токены пользователя
+            refreshTokenService.revokeAllUserTokens(userId);
+            revokedTokenService.revokeAllUserTokens(userId);  // <-- ДОБАВЬТЕ ЭТО
+
+            log.info("All tokens revoked for user: {}", userId);
         }
 
         return createSuccessResponse("Logged out from all devices", null);

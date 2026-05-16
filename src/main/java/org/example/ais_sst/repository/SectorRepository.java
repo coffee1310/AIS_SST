@@ -2,6 +2,7 @@ package org.example.ais_sst.repository;
 
 import org.example.ais_sst.entity.Sector;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,4 +48,12 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     Sector getSectorById(Long id);
 
     Optional<Sector> findByTitle(String title);
+
+    @Modifying
+    @Query("update Sector s set s.isActive = false where s.id = :id")
+    Integer deactivateSector(@Param("id") Long id);
+
+    @Modifying
+    @Query("update Sector s set s.isActive = true where s.id = :id")
+    Integer activateSector(@Param("id") Long id);
 }

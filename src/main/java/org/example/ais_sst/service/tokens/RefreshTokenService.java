@@ -20,58 +20,56 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RefreshTokenService {
 
-    private final RefreshTokenRepository refreshTokenRepository;
-
     @Value("${app.jwtRefreshExpirationMs}")
     private Long refreshTokenDurationMs;
 
-    @Transactional
-    public RefreshToken createRefreshToken(Long userId) {
-        // Удаляем старый токен
-        refreshTokenRepository.deleteByUserId(userId);
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
 
-        RefreshToken refreshToken = RefreshToken.builder()
-                .token(UUID.randomUUID().toString())
-                .user(User.builder().id(userId).build())
-                .expiryDate(Instant.now().plusMillis(refreshTokenDurationMs))
-                .revoked(false)
-                .build();
-
-        return refreshTokenRepository.save(refreshToken);
-    }
-
-    // Метод должен возвращать Optional<RefreshToken>
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
     }
 
     @Transactional
+    public RefreshToken createRefreshToken(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        refreshTokenRepository.deleteByUserId(userId);
+        log.info("Deleted all old refresh tokens for user: {}", userId);
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .user(user)
+                .token(UUID.randomUUID().toString())
+                .expiryDate(Instant.now().plusMillis(refreshTokenDurationMs))
+                .build();
+
+        RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
+        log.info("Created new refresh token for user: {}", userId);
+
+        return savedToken;
+    }
+
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
             refreshTokenRepository.delete(token);
-            throw new TokenRefreshException(token.getToken(), "Refresh token was expired. Please make a new login request");
+            log.warn("Refresh token expired: {}", token.getToken());
+            throw new TokenRefreshException(token.getToken(), "Refresh token expired. Please login again.");
         }
-
-        if (token.isRevoked()) {
-            refreshTokenRepository.delete(token);
-            throw new TokenRefreshException(token.getToken(), "Refresh token was revoked. Please make a new login request");
-        }
-
         return token;
     }
 
     @Transactional
     public void revokeRefreshToken(String token) {
         refreshTokenRepository.findByToken(token).ifPresent(refreshToken -> {
-            refreshToken.setRevoked(true);
-            refreshTokenRepository.save(refreshToken);
-            log.info("Refresh token revoked: {}", token);
+            refreshTokenRepository.delete(refreshToken);
+            log.info("Revoked refresh token: {}", token);
         });
     }
 
     @Transactional
     public void revokeAllUserTokens(Long userId) {
         refreshTokenRepository.deleteByUserId(userId);
-        log.info("All refresh tokens revoked for user: {}", userId);
+        log.info("Revoked all refresh tokens for user: {}", userId);
     }
 }

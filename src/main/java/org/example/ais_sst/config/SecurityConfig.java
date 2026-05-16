@@ -3,6 +3,7 @@ package org.example.ais_sst.config;  // ПРАВИЛЬНО!
 import org.example.ais_sst.security.jwt.AuthTokenFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.security.jwt.JwtAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,6 +32,8 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final AuthTokenFilter authTokenFilter;  // ДОЛЖНО БЫТЬ FINAL!
+
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -61,7 +64,6 @@ public class SecurityConfig {
         log.info("========== НАСТРОЙКА БЕЗОПАСНОСТИ ==========");
         log.info("Configuring security with CSRF DISABLED...");
 
-        // ПРОВЕРЯЕМ, ЧТО authTokenFilter НЕ NULL
         if (authTokenFilter == null) {
             log.error("authTokenFilter is NULL!");
             throw new IllegalStateException("authTokenFilter cannot be null");
@@ -76,6 +78,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                // ДОБАВЬТЕ ЭТУ СТРОКУ - обработчик ошибок аутентификации
+                .exceptionHandling(exceptions ->
+                        exceptions.authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
                 .authorizeHttpRequests(authz -> {
                     authz
