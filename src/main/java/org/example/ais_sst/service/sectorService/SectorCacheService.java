@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -19,6 +19,9 @@ public class SectorCacheService {
 
     private final RedisService redisService;
 
+    private final AtomicLong hits = new AtomicLong(0);
+    private final AtomicLong misses = new AtomicLong(0);
+
     @Value("${app.redis.cache.sector.ttl:3600}")
     private long sectorCacheTtlSeconds;
 
@@ -26,16 +29,40 @@ public class SectorCacheService {
     private static final String ALL_SECTORS_KEY = "cache:sectors:all";
     private static final String ACTIVE_SECTORS_KEY = "cache:sectors:active";
 
+    // ========== GETTERS ДЛЯ СТАТИСТИКИ ==========
+
+    public long getHits() {
+        return hits.get();
+    }
+
+    public long getMisses() {
+        return misses.get();
+    }
+
+    public double getHitRate() {
+        long total = hits.get() + misses.get();
+        return total == 0 ? 0 : (double) hits.get() / total * 100;
+    }
+
+    public int getCacheSize() {
+        Set<String> keys = redisService.keys(SECTOR_PREFIX + "*");
+        return keys != null ? keys.size() : 0;
+    }
+
+    // ========== ОСНОВНЫЕ МЕТОДЫ ==========
+
     @SuppressWarnings("unchecked")
     public Optional<SectorDTO> getSectorById(Long id) {
         String key = SECTOR_PREFIX + id;
         Object cached = redisService.get(key);
 
         if (cached != null) {
+            hits.incrementAndGet();
             log.debug("Cache HIT for sector id: {}", id);
             return Optional.of((SectorDTO) cached);
         }
 
+        misses.incrementAndGet();
         log.debug("Cache MISS for sector id: {}", id);
         return Optional.empty();
     }
@@ -45,10 +72,12 @@ public class SectorCacheService {
         Object cached = redisService.get(ALL_SECTORS_KEY);
 
         if (cached != null) {
+            hits.incrementAndGet();
             log.debug("Cache HIT for all sectors");
             return Optional.of((List<SectorDTO>) cached);
         }
 
+        misses.incrementAndGet();
         log.debug("Cache MISS for all sectors");
         return Optional.empty();
     }
@@ -58,10 +87,12 @@ public class SectorCacheService {
         Object cached = redisService.get(ACTIVE_SECTORS_KEY);
 
         if (cached != null) {
+            hits.incrementAndGet();
             log.debug("Cache HIT for active sectors");
             return Optional.of((List<SectorDTO>) cached);
         }
 
+        misses.incrementAndGet();
         log.debug("Cache MISS for active sectors");
         return Optional.empty();
     }

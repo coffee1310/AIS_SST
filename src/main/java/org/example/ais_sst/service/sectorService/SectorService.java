@@ -1,6 +1,8 @@
 package org.example.ais_sst.service.sectorService;
 
-import jakarta.transaction.Transactional;
+import jakarta.annotation.PostConstruct;
+import org.hibernate.Hibernate;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.sector.SectorDTO;
@@ -48,6 +50,7 @@ public class SectorService {
     private final UserPhotoService userPhotoService;
     private final SectorPhotoService sectorPhotoService;
     private final SectorCacheService sectorCacheService;
+
 
     @Transactional
     public SectorDTO createSector(SectorDTO sectorDTO) throws RoleNotFoundException {
@@ -571,7 +574,7 @@ public class SectorService {
         log.info("Sector cache refreshed: {} total, {} active", sectorDTOs.size(), activeSectorDTOs.size());
     }
 
-    @Transactional()
+    @Transactional
     public List<SectorDTO> getAllSectorsWithoutCache() {
         log.debug("Loading all sectors from database (cache bypassed)");
 

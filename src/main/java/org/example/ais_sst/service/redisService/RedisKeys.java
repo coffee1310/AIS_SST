@@ -8,6 +8,7 @@ public class RedisKeys {
     private static final String PREFIX_CACHE = "cache:";
     private static final String PREFIX_RATE_LIMIT = "ratelimit:";
     private static final String PREFIX_SESSION = "session:";
+    private static final String PREFIX_STATS = "stats:";
 
     // Ключи для токенов
     public static String revokedAccessToken(String jti) {
@@ -47,5 +48,9 @@ public class RedisKeys {
 
     public static String userSessions(Long userId) {
         return PREFIX_USER + userId + ":sessions";
+    }
+
+    public static String cacheStats(String name) {
+        return PREFIX_STATS + "cache:" + name;
     }
 }

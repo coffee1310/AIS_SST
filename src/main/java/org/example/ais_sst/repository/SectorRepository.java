@@ -66,4 +66,5 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     @Query("SELECT DISTINCT s FROM Sector s LEFT JOIN FETCH s.sectorParticipants p LEFT JOIN FETCH p.student")
     List<Sector> findAllWithParticipants();
 
+
 }
