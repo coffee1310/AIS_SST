@@ -45,16 +45,4 @@ public class CacheMonitoringController {
 
         return ResponseEntity.ok(details);
     }
-
-    @PostMapping("/warmup")
-    public ResponseEntity<String> warmupCache() {
-        sectorService.refreshSectorCache();
-        return ResponseEntity.ok("Cache warmed up successfully");
-    }
-
-    @PostMapping("/clear")
-    public ResponseEntity<String> clearCache() {
-        sectorCacheService.invalidateAllSectorCache();
-        return ResponseEntity.ok("Cache cleared successfully");
-    }
 }

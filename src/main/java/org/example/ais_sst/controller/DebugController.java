@@ -55,23 +55,4 @@ public class DebugController {
         """;
         return jdbcTemplate.queryForList(query);
     }
-
-    @GetMapping("/sectors")
-    public ResponseEntity<?> debugSectors() {
-        Map<String, Object> debug = new HashMap<>();
-
-        // Проверяем, что возвращает метод getAllSectors()
-        List<SectorDTO> sectors = sectorService.getAllSectorsWithoutCache();
-        debug.put("database_sectors_count", sectors.size());
-        debug.put("database_sectors", sectors.stream()
-                .map(s -> Map.of("id", s.getId(), "title", s.getTitle()))
-                .collect(Collectors.toList()));
-
-        // Проверяем, что в Redis
-        debug.put("redis_sectors_count", sectorCacheService.getCacheSize());
-        debug.put("redis_all_sectors_exists", redisService.exists("cache:sectors:all"));
-        debug.put("redis_active_sectors_exists", redisService.exists("cache:sectors:active"));
-
-        return ResponseEntity.ok(debug);
-    }
 }
