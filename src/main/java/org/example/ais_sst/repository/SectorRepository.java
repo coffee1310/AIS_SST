@@ -56,4 +56,14 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     @Modifying
     @Query("update Sector s set s.isActive = true where s.id = :id")
     Integer activateSector(@Param("id") Long id);
+
+    List<Sector> findByIsActiveTrue();
+
+    @Query("SELECT DISTINCT s FROM Sector s LEFT JOIN FETCH s.sectorParticipants p LEFT JOIN FETCH p.student WHERE s.isActive = true")
+    List<Sector> findActiveSectorsWithParticipants();
+
+    // Новый метод для загрузки всех секторов с инициализацией
+    @Query("SELECT DISTINCT s FROM Sector s LEFT JOIN FETCH s.sectorParticipants p LEFT JOIN FETCH p.student")
+    List<Sector> findAllWithParticipants();
+
 }

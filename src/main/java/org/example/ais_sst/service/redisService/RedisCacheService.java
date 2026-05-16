@@ -17,13 +17,13 @@ public class RedisCacheService {
     /**
      * Получить данные из кэша или загрузить через supplier
      */
+    @SuppressWarnings("unchecked")
     public <T> T getOrLoad(String key, Supplier<T> loader, long ttlSeconds, Class<T> type) {
         // Пытаемся получить из кэша
-        String cachedValue = redisService.get(key);
+        Object cachedValue = redisService.get(key);
 
         if (cachedValue != null) {
             log.debug("Cache HIT for key: {}", key);
-            // Здесь нужна десериализация, для простоты используем строки
             return (T) cachedValue;
         }
 
@@ -34,7 +34,7 @@ public class RedisCacheService {
 
         if (value != null) {
             // Сохраняем в кэш
-            redisService.set(key, value.toString(), ttlSeconds);
+            redisService.set(key, value, ttlSeconds);
         }
 
         return value;

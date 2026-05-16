@@ -13,38 +13,29 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RedisService {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    /**
-     * Сохранить значение с ключом и TTL
-     */
-    public void set(String key, String value, long ttlSeconds) {
+    public void set(String key, Object value, long ttlSeconds) {
         try {
             redisTemplate.opsForValue().set(key, value, ttlSeconds, TimeUnit.SECONDS);
-            log.debug("Redis SET: {} = {} (TTL: {}s)", key, value, ttlSeconds);
+            log.debug("Redis SET: {} (TTL: {}s)", key, ttlSeconds);
         } catch (Exception e) {
             log.error("Failed to set Redis key: {}", key, e);
         }
     }
 
-    /**
-     * Сохранить значение без TTL (вечно)
-     */
-    public void set(String key, String value) {
+    public void set(String key, Object value) {
         try {
             redisTemplate.opsForValue().set(key, value);
-            log.debug("Redis SET: {} = {}", key, value);
+            log.debug("Redis SET: {}", key);
         } catch (Exception e) {
             log.error("Failed to set Redis key: {}", key, e);
         }
     }
 
-    /**
-     * Получить значение по ключу
-     */
-    public String get(String key) {
+    public Object get(String key) {
         try {
-            String value = redisTemplate.opsForValue().get(key);
+            Object value = redisTemplate.opsForValue().get(key);
             log.debug("Redis GET: {} = {}", key, value);
             return value;
         } catch (Exception e) {
@@ -53,9 +44,6 @@ public class RedisService {
         }
     }
 
-    /**
-     * Удалить ключ
-     */
     public void delete(String key) {
         try {
             redisTemplate.delete(key);
@@ -65,9 +53,6 @@ public class RedisService {
         }
     }
 
-    /**
-     * Проверить существование ключа
-     */
     public boolean exists(String key) {
         try {
             Boolean exists = redisTemplate.hasKey(key);
@@ -79,9 +64,6 @@ public class RedisService {
         }
     }
 
-    /**
-     * Установить TTL для ключа
-     */
     public void expire(String key, long ttlSeconds) {
         try {
             redisTemplate.expire(key, ttlSeconds, TimeUnit.SECONDS);
@@ -91,23 +73,6 @@ public class RedisService {
         }
     }
 
-    /**
-     * Получить TTL ключа
-     */
-    public long getTTL(String key) {
-        try {
-            Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
-            log.debug("Redis TTL: {} = {}s", key, ttl);
-            return ttl != null ? ttl : -2;
-        } catch (Exception e) {
-            log.error("Failed to get TTL for key: {}", key, e);
-            return -2;
-        }
-    }
-
-    /**
-     * Добавить значение в Set
-     */
     public void addToSet(String key, String value) {
         try {
             redisTemplate.opsForSet().add(key, value);
@@ -117,9 +82,6 @@ public class RedisService {
         }
     }
 
-    /**
-     * Удалить значение из Set
-     */
     public void removeFromSet(String key, String value) {
         try {
             redisTemplate.opsForSet().remove(key, value);
@@ -129,12 +91,10 @@ public class RedisService {
         }
     }
 
-    /**
-     * Получить все значения из Set
-     */
+    @SuppressWarnings("unchecked")
     public Set<String> getSet(String key) {
         try {
-            Set<String> members = redisTemplate.opsForSet().members(key);
+            Set<String> members = (Set<String>) (Object) redisTemplate.opsForSet().members(key);
             log.debug("Redis SMEMBERS: {} (size: {})", key, members != null ? members.size() : 0);
             return members;
         } catch (Exception e) {
@@ -143,26 +103,12 @@ public class RedisService {
         }
     }
 
-    /**
-     * Проверить наличие значения в Set
-     */
-    public boolean isMemberOfSet(String key, String value) {
-        try {
-            Boolean isMember = redisTemplate.opsForSet().isMember(key, value);
-            log.debug("Redis SISMEMBER: {} in {} = {}", value, key, isMember);
-            return Boolean.TRUE.equals(isMember);
-        } catch (Exception e) {
-            log.error("Failed to check Redis set membership: {}", key, e);
-            return false;
-        }
-    }
-
-    /**
-     * Инкрементировать счетчик
-     */
-    public long increment(String key) {
+    public long incrementWithExpire(String key, long ttlSeconds) {
         try {
             Long value = redisTemplate.opsForValue().increment(key);
+            if (value != null && value == 1) {
+                expire(key, ttlSeconds);
+            }
             log.debug("Redis INCR: {} = {}", key, value);
             return value != null ? value : 0;
         } catch (Exception e) {
@@ -171,26 +117,6 @@ public class RedisService {
         }
     }
 
-    /**
-     * Инкрементировать счетчик с TTL
-     */
-    public long incrementWithExpire(String key, long ttlSeconds) {
-        try {
-            Long value = redisTemplate.opsForValue().increment(key);
-            if (value != null && value == 1) {
-                expire(key, ttlSeconds);
-            }
-            log.debug("Redis INCR: {} = {} (TTL: {}s)", key, value, ttlSeconds);
-            return value != null ? value : 0;
-        } catch (Exception e) {
-            log.error("Failed to increment Redis key: {}", key, e);
-            return 0;
-        }
-    }
-
-    /**
-     * Получить все ключи по паттерну
-     */
     public Set<String> keys(String pattern) {
         try {
             Set<String> keys = redisTemplate.keys(pattern);
@@ -202,9 +128,6 @@ public class RedisService {
         }
     }
 
-    /**
-     * Очистить все ключи по паттерну
-     */
     public void deleteByPattern(String pattern) {
         try {
             Set<String> keys = keys(pattern);
@@ -216,5 +139,4 @@ public class RedisService {
             log.error("Failed to delete Redis keys by pattern: {}", pattern, e);
         }
     }
-
 }

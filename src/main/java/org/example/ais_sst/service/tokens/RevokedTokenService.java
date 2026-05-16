@@ -29,7 +29,6 @@ public class RevokedTokenService {
         }
 
         String key = RedisKeys.revokedAccessToken(jti);
-        // TTL = время жизни access токена (в секундах)
         long ttlSeconds = accessTokenTtlSeconds / 1000;
         redisService.set(key, "revoked", ttlSeconds);
         log.info("Access token revoked, JTI: {}, TTL: {} seconds", jti, ttlSeconds);
@@ -93,14 +92,11 @@ public class RevokedTokenService {
         String userTokensKey = RedisKeys.userActiveTokens(userId);
         String userCurrentKey = RedisKeys.userCurrentToken(userId);
 
-        // Добавляем JTI в множество активных токенов пользователя
         redisService.addToSet(userTokensKey, jti);
-        // Устанавливаем TTL для множества (время жизни access токена)
         long ttlSeconds = (expirationTime - System.currentTimeMillis()) / 1000;
         if (ttlSeconds > 0) {
             redisService.expire(userTokensKey, ttlSeconds);
         }
-        // Сохраняем текущий активный токен
         redisService.set(userCurrentKey, jti, ttlSeconds);
 
         log.info("Active token stored for user: {}, JTI: {}, TTL: {} seconds", userId, jti, ttlSeconds);
@@ -118,7 +114,6 @@ public class RevokedTokenService {
         String userTokensKey = RedisKeys.userActiveTokens(userId);
         String userCurrentKey = RedisKeys.userCurrentToken(userId);
 
-        // Получаем все JTI токенов пользователя
         Set<String> tokens = redisService.getSet(userTokensKey);
 
         if (tokens != null && !tokens.isEmpty()) {
@@ -131,7 +126,6 @@ public class RevokedTokenService {
             log.info("No active tokens found for user: {}", userId);
         }
 
-        // Удаляем записи пользователя
         redisService.delete(userTokensKey);
         redisService.delete(userCurrentKey);
     }
@@ -145,6 +139,12 @@ public class RevokedTokenService {
         }
 
         String userCurrentKey = RedisKeys.userCurrentToken(userId);
-        return redisService.get(userCurrentKey);
+        Object value = redisService.get(userCurrentKey);
+
+        if (value instanceof String) {
+            return (String) value;
+        }
+
+        return value != null ? value.toString() : null;
     }
 }
