@@ -1,10 +1,14 @@
 package com.example.ais_sst_mobile.navigation
 
 import com.arkivanov.decompose.ComponentContext
-import com.arkivanov.decompose.router.stack.*
+import com.arkivanov.decompose.router.stack.ChildStack
+import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.pushNew
+import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Serializable
-import com.arkivanov.decompose.router.stack.replaceAll
 
 sealed interface FullScreenRoute {
     data object AccountRequests : FullScreenRoute
@@ -14,7 +18,11 @@ sealed interface FullScreenRoute {
     data object CreateSector : FullScreenRoute
     data object Board : FullScreenRoute
     data class EditSector(val sectorId: Int) : FullScreenRoute
+    data object EventGlobalRoles : FullScreenRoute
+    data object CreateRole : FullScreenRoute
+    data class EditRole(val roleId: Int) : FullScreenRoute
 }
+
 class LoginComponent(
     componentContext: ComponentContext,
     val onNavigateToRegister: () -> Unit,
@@ -29,6 +37,7 @@ class RegisterComponent(
 class HomeComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 class TasksComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 class CalendarComponent(componentContext: ComponentContext) : ComponentContext by componentContext
+
 class SectorListComponent(
     componentContext: ComponentContext,
     val onNavigateToDetails: (Int) -> Unit,
@@ -52,6 +61,7 @@ class SectorParticipantsComponent(
     val onGoBack: () -> Unit,
     val onNavigateToActivistProfile: (Int) -> Unit
 ) : ComponentContext by componentContext
+
 class SectorsComponent(
     componentContext: ComponentContext,
     val onNavigateToFullScreen: (FullScreenRoute) -> Unit
@@ -123,6 +133,7 @@ class SectorsComponent(
         @Serializable data class Participants(val sectorId: Int, val sectorTitle: String) : Config
     }
 }
+
 class ProfileComponent(
     componentContext: ComponentContext,
     val onLogout: () -> Unit,
@@ -134,31 +145,54 @@ class AccountRequestsComponent(
     val onGoBack: () -> Unit,
     val onNavigateToRequestDetails: (Int) -> Unit
 ) : ComponentContext by componentContext
+
 class MyDataComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
+
 class RequestDetailsComponent(
     componentContext: ComponentContext,
     val requestId: Int,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
+
 class ActivistProfileComponent(
     componentContext: ComponentContext,
     val userId: Int,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
+
 class CreateSectorComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
+
 class BoardComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit,
     val onNavigateToActivistProfile: (Int) -> Unit
 ) : ComponentContext by componentContext
+
 class EditSectorComponent(
     componentContext: ComponentContext,
     val sectorId: Int,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+class EventRolesComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit,
+    val onNavigateToFullScreen: (FullScreenRoute) -> Unit
+) : ComponentContext by componentContext
+
+class CreateRoleComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+class EditRoleComponent(
+    componentContext: ComponentContext,
+    val roleId: Int,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

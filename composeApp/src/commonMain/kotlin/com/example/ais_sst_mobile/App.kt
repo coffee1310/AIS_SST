@@ -16,6 +16,9 @@ import com.example.ais_sst_mobile.presentation.auth.RegisterScreen
 import com.example.ais_sst_mobile.presentation.main.MainScreen
 import com.example.ais_sst_mobile.presentation.profile.activist.ActivistProfileScreen
 import com.example.ais_sst_mobile.presentation.profile.board.BoardScreen
+import com.example.ais_sst_mobile.presentation.profile.event_roles.EventRolesScreen
+import com.example.ais_sst_mobile.presentation.profile.event_roles.create.CreateRoleScreen
+import com.example.ais_sst_mobile.presentation.profile.event_roles.edit.EditRoleScreen
 import com.example.ais_sst_mobile.presentation.profile.my_data.MyDataScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.AccountRequestsScreen
 import com.example.ais_sst_mobile.presentation.profile.requests.RequestDetailsScreen
@@ -68,6 +71,15 @@ fun App(root: RootComponent) {
                         component = instance.component
                     )
                     is RootComponent.Child.EditSector -> EditSectorScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.EventRoles -> EventRolesScreen(
+                        instance.component
+                    )
+                    is RootComponent.Child.CreateRole -> CreateRoleScreen(
+                        instance.component
+                    )
+                    is RootComponent.Child.EditRole -> EditRoleScreen(
                         component = instance.component
                     )
                 }

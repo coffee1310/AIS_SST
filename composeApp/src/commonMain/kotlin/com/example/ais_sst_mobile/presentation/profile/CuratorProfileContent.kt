@@ -56,6 +56,9 @@ fun CuratorProfileContent(component: ProfileComponent, screenModel: ProfileScree
                     ProfileMenuRow(icon = Icons.Outlined.Group, title = "Правление студсовета", onClick = {
                         component.onNavigateToFullScreen(FullScreenRoute.Board)
                     })
+                    ProfileMenuRow(icon = Icons.Outlined.Cases, title = "Роли на мероприятия", onClick = {
+                        component.onNavigateToFullScreen(FullScreenRoute.EventGlobalRoles)
+                    })
                     ProfileMenuRow(icon = Icons.Outlined.NotificationAdd, title = "Создание уведомлений", onClick = { })
 
                     Spacer(modifier = Modifier.height(8.dp))

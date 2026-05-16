@@ -228,6 +228,10 @@ fun CoordinatorSectorDashboard(
                     ) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
                     }
+                } else if (filteredParticipants.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Нет участников", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    }
                 } else {
                     Text(
                         text = "Список участников (${filteredParticipants.size})",

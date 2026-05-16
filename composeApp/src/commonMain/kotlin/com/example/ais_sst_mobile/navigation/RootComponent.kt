@@ -9,11 +9,11 @@ import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.example.ais_sst_mobile.core.prefs.SessionManager
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
 
 interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
@@ -30,6 +30,9 @@ interface RootComponent {
         class CreateSector(val component: CreateSectorComponent) : Child()
         class Board(val component: BoardComponent) : Child()
         class EditSector(val component: EditSectorComponent) : Child()
+        class EventRoles(val component: EventRolesComponent) : Child()
+        class CreateRole(val component: CreateRoleComponent) : Child()
+        class EditRole(val component: EditRoleComponent) : Child()
     }
 }
 
@@ -38,6 +41,7 @@ class DefaultRootComponent(
 ) : RootComponent, ComponentContext by componentContext, KoinComponent {
     private val sessionManager: SessionManager by inject()
     private val navigation = StackNavigation<Config>()
+
     init {
         MainScope().launch {
             sessionManager.isAuthorizedFlow.collect { isAuthorized ->
@@ -47,6 +51,7 @@ class DefaultRootComponent(
             }
         }
     }
+
     override val stack: Value<ChildStack<*, RootComponent.Child>> = childStack(
         source = navigation,
         serializer = Config.serializer(),
@@ -86,7 +91,11 @@ class DefaultRootComponent(
                             is FullScreenRoute.ActivistProfile -> navigation.pushNew(Config.ActivistProfile(route.userId))
                             is FullScreenRoute.CreateSector -> navigation.pushNew(Config.CreateSector)
                             is FullScreenRoute.Board -> navigation.pushNew(Config.Board)
-                            is FullScreenRoute.EditSector -> navigation.pushNew(Config.EditSector(route.sectorId))                        }
+                            is FullScreenRoute.EditSector -> navigation.pushNew(Config.EditSector(route.sectorId))
+                            is FullScreenRoute.EventGlobalRoles -> navigation.pushNew(Config.EventRoles)
+                            is FullScreenRoute.CreateRole -> navigation.pushNew(Config.CreateRole)
+                            is FullScreenRoute.EditRole -> navigation.pushNew(Config.EditRole(route.roleId))
+                        }
                     }
                 )
             )
@@ -141,6 +150,25 @@ class DefaultRootComponent(
                     onGoBack = { navigation.pop() }
                 )
             )
+            is Config.EventRoles -> RootComponent.Child.EventRoles(
+                EventRolesComponent(
+                    componentContext = context,
+                    onGoBack = { navigation.pop() },
+                    onNavigateToFullScreen = { route ->
+                        when (route) {
+                            is FullScreenRoute.CreateRole -> navigation.pushNew(Config.CreateRole)
+                            is FullScreenRoute.EditRole -> navigation.pushNew(Config.EditRole(route.roleId))
+                            else -> {}
+                        }
+                    }
+                )
+            )
+            is Config.CreateRole -> RootComponent.Child.CreateRole(
+                CreateRoleComponent(componentContext = context, onGoBack = { navigation.pop() })
+            )
+            is Config.EditRole -> RootComponent.Child.EditRole(
+                EditRoleComponent(componentContext = context, roleId = config.roleId, onGoBack = { navigation.pop() })
+            )
         }
 
     @Serializable
@@ -155,5 +183,8 @@ class DefaultRootComponent(
         @Serializable data object CreateSector : Config
         @Serializable data object Board : Config
         @Serializable data class EditSector(val sectorId: Int) : Config
+        @Serializable data object EventRoles : Config
+        @Serializable data object CreateRole : Config
+        @Serializable data class EditRole(val roleId: Int) : Config
     }
 }

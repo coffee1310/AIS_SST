@@ -2,7 +2,6 @@ package com.example.ais_sst_mobile.di
 
 import com.example.ais_sst_mobile.core.network.createHttpClient
 import com.example.ais_sst_mobile.core.prefs.SessionManager
-// Удали импорт старого createSettings, если он был
 import com.example.ais_sst_mobile.data.repository.*
 import com.example.ais_sst_mobile.domain.repository.*
 import com.example.ais_sst_mobile.presentation.auth.*
@@ -10,6 +9,9 @@ import com.example.ais_sst_mobile.presentation.home.*
 import com.example.ais_sst_mobile.presentation.profile.*
 import com.example.ais_sst_mobile.presentation.profile.activist.ActivistProfileScreenModel
 import com.example.ais_sst_mobile.presentation.profile.board.BoardScreenModel
+import com.example.ais_sst_mobile.presentation.profile.event_roles.EventRolesScreenModel
+import com.example.ais_sst_mobile.presentation.profile.event_roles.create.CreateRoleScreenModel
+import com.example.ais_sst_mobile.presentation.profile.event_roles.edit.EditRoleScreenModel
 import com.example.ais_sst_mobile.presentation.profile.my_data.*
 import com.example.ais_sst_mobile.presentation.profile.requests.*
 import com.example.ais_sst_mobile.presentation.sectors.*
@@ -47,6 +49,9 @@ val appModule = module {
     factory { CreateSectorScreenModel(get(), get()) }
     factory { BoardScreenModel(get(), get(), get()) }
     factory { EditSectorScreenModel(get(), get()) }
+    factory { EventRolesScreenModel(get()) }
+    factory { CreateRoleScreenModel(get(), get()) }
+    factory { EditRoleScreenModel(get(), get()) }
 }
 
 private var isKoinInitialized = false
