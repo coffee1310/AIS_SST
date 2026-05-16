@@ -75,3 +75,5 @@ databaseChangeLog:
       file: db/changelog/changes/039-add-deadline-and-description-to-sectors.yaml
   - include:
       file: db/changelog/changes/040-add_is_deleted_column_to_users.yaml
+  - include:
+      file: db/changelog/changes/041-add-indexes-for-performance.yaml

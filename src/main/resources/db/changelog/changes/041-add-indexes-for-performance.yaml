@@ -1,0 +1,266 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-indexes-for-performance
+      author: coffee13102006
+      comment: Добавление индексов для оптимизации запросов к секторам и пользователям
+      changes:
+        # ==================== ИНДЕКСЫ ДЛЯ ТАБЛИЦЫ sectors ====================
+        - createIndex:
+            indexName: idx_sectors_is_active
+            tableName: sectors
+            columns:
+              - column:
+                  name: is_active
+            remarks: Индекс для фильтрации активных секторов
+
+        - createIndex:
+            indexName: idx_sectors_title
+            tableName: sectors
+            columns:
+              - column:
+                  name: title
+            remarks: Индекс для поиска по названию сектора
+
+        - createIndex:
+            indexName: idx_sectors_is_active_title
+            tableName: sectors
+            columns:
+              - column:
+                  name: is_active
+              - column:
+                  name: title
+            remarks: Составной индекс для сортировки по is_active и title
+
+        # ==================== ИНДЕКСЫ ДЛЯ ТАБЛИЦЫ sector_participants ====================
+        - createIndex:
+            indexName: idx_sector_participants_sector_id
+            tableName: sector_participants
+            columns:
+              - column:
+                  name: sector_id
+            remarks: Индекс для JOIN по sector_id
+
+        - createIndex:
+            indexName: idx_sector_participants_student_id
+            tableName: sector_participants
+            columns:
+              - column:
+                  name: student_id
+            remarks: Индекс для JOIN по student_id
+
+        - createIndex:
+            indexName: idx_sector_participants_status
+            tableName: sector_participants
+            columns:
+              - column:
+                  name: status
+            remarks: Индекс для фильтрации по статусу участника
+
+        - createIndex:
+            indexName: idx_sector_participants_is_coordinator
+            tableName: sector_participants
+            columns:
+              - column:
+                  name: is_coordinator
+            remarks: Индекс для фильтрации координаторов
+
+        - createIndex:
+            indexName: idx_sector_participants_sector_status
+            tableName: sector_participants
+            columns:
+              - column:
+                  name: sector_id
+              - column:
+                  name: status
+            remarks: Составной индекс для фильтрации участников по сектору и статусу
+
+        - createIndex:
+            indexName: idx_sector_participants_sector_coordinator
+            tableName: sector_participants
+            columns:
+              - column:
+                  name: sector_id
+              - column:
+                  name: is_coordinator
+            remarks: Составной индекс для поиска координаторов сектора
+
+        - createIndex:
+            indexName: idx_sector_participants_student_status
+            tableName: sector_participants
+            columns:
+              - column:
+                  name: student_id
+              - column:
+                  name: status
+            remarks: Составной индекс для фильтрации участников по студенту и статусу
+
+        # ==================== ИНДЕКСЫ ДЛЯ ТАБЛИЦЫ sector_introduction_request ====================
+        - createIndex:
+            indexName: idx_sir_sector_id
+            tableName: sector_introduction_request
+            columns:
+              - column:
+                  name: sector_id
+            remarks: Индекс для JOIN по sector_id
+
+        - createIndex:
+            indexName: idx_sir_user_id
+            tableName: sector_introduction_request
+            columns:
+              - column:
+                  name: user_id
+            remarks: Индекс для JOIN по user_id
+
+        - createIndex:
+            indexName: idx_sir_status
+            tableName: sector_introduction_request
+            columns:
+              - column:
+                  name: status
+            remarks: Индекс для фильтрации по статусу заявки
+
+        - createIndex:
+            indexName: idx_sir_sector_status
+            tableName: sector_introduction_request
+            columns:
+              - column:
+                  name: sector_id
+              - column:
+                  name: status
+            remarks: Составной индекс для фильтрации заявок по сектору и статусу
+
+        - createIndex:
+            indexName: idx_sir_user_sector_status
+            tableName: sector_introduction_request
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: sector_id
+              - column:
+                  name: status
+            remarks: Составной индекс для быстрого поиска заявок пользователя в секторе
+
+        # ==================== ИНДЕКСЫ ДЛЯ ТАБЛИЦЫ users ====================
+        - createIndex:
+            indexName: idx_users_email
+            tableName: users
+            columns:
+              - column:
+                  name: student_email
+            remarks: Индекс для поиска по email (уникальный)
+
+        - createIndex:
+            indexName: idx_users_phone
+            tableName: users
+            columns:
+              - column:
+                  name: phone_number
+            remarks: Индекс для поиска по телефону (уникальный)
+
+        - createIndex:
+            indexName: idx_users_role_id
+            tableName: users
+            columns:
+              - column:
+                  name: role_id
+            remarks: Индекс для JOIN по role_id
+
+        - createIndex:
+            indexName: idx_users_group_id
+            tableName: users
+            columns:
+              - column:
+                  name: group_id
+            remarks: Индекс для JOIN по group_id
+
+        - createIndex:
+            indexName: idx_users_speciality_id
+            tableName: users
+            columns:
+              - column:
+                  name: speciality_id
+            remarks: Индекс для JOIN по speciality_id
+
+        - createIndex:
+            indexName: idx_users_name_surname
+            tableName: users
+            columns:
+              - column:
+                  name: name
+              - column:
+                  name: surname
+            remarks: Составной индекс для поиска по имени и фамилии
+
+        - createIndex:
+            indexName: idx_users_is_active
+            tableName: users
+            columns:
+              - column:
+                  name: is_active
+            remarks: Индекс для фильтрации активных пользователей
+
+        - createIndex:
+            indexName: idx_users_is_banned
+            tableName: users
+            columns:
+              - column:
+                  name: is_banned
+            remarks: Индекс для фильтрации заблокированных пользователей
+
+        # ==================== ИНДЕКСЫ ДЛЯ ТАБЛИЦЫ roles ====================
+        - createIndex:
+            indexName: idx_roles_title
+            tableName: roles
+            columns:
+              - column:
+                  name: title
+            remarks: Индекс для поиска роли по названию
+
+        # ==================== ИНДЕКСЫ ДЛЯ ТАБЛИЦЫ groups ====================
+        - createIndex:
+            indexName: idx_groups_title
+            tableName: groups
+            columns:
+              - column:
+                  name: title
+            remarks: Индекс для поиска группы по названию
+
+        # ==================== ИНДЕКСЫ ДЛЯ ТАБЛИЦЫ specialities ====================
+        - createIndex:
+            indexName: idx_specialities_title
+            tableName: specialities
+            columns:
+              - column:
+                  name: title
+            remarks: Индекс для поиска специальности по названию
+
+  # Дополнительный changeSet для полнотекстового поиска (опционально)
+  - changeSet:
+      id: enable-fulltext-search
+      author: coffee13102006
+      comment: Включение полнотекстового поиска для таблиц
+      changes:
+        - sql:
+            comment: Создание GIN индекса для полнотекстового поиска по пользователям
+            sql: |
+              -- Создание индекса для полнотекстового поиска по пользователям
+              CREATE INDEX IF NOT EXISTS idx_users_search_gin 
+              ON users USING GIN (
+                to_tsvector('russian', 
+                  COALESCE(name, '') || ' ' || 
+                  COALESCE(surname, '') || ' ' || 
+                  COALESCE(student_email, '')
+                )
+              );
+              
+              -- Создание индекса для ILIKE поиска (требуется расширение pg_trgm)
+              CREATE EXTENSION IF NOT EXISTS pg_trgm;
+              
+              CREATE INDEX IF NOT EXISTS idx_users_name_trgm ON users USING GIN (name gin_trgm_ops);
+              CREATE INDEX IF NOT EXISTS idx_users_surname_trgm ON users USING GIN (surname gin_trgm_ops);
+              CREATE INDEX IF NOT EXISTS idx_users_email_trgm ON users USING GIN (student_email gin_trgm_ops);
+              
+              CREATE INDEX IF NOT EXISTS idx_sectors_title_trgm ON sectors USING GIN (title gin_trgm_ops);
+              
+              COMMIT;
