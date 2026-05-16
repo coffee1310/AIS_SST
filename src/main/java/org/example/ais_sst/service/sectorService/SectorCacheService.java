@@ -108,10 +108,26 @@ public class SectorCacheService {
     }
 
     public void cacheAllSectors(List<SectorDTO> sectors) {
-        if (sectors == null) return;
+        if (sectors == null || sectors.isEmpty()) {
+            log.warn("Attempt to cache empty sector list");
+            return;
+        }
 
+        log.info("Caching {} sectors", sectors.size());
+
+        // Сохраняем список всех секторов
         redisService.set(ALL_SECTORS_KEY, sectors, sectorCacheTtlSeconds);
-        log.debug("All sectors cached, count: {}, TTL: {}s", sectors.size(), sectorCacheTtlSeconds);
+
+        // Сохраняем каждый сектор отдельно
+        for (SectorDTO sector : sectors) {
+            if (sector != null && sector.getId() != null) {
+                String key = SECTOR_PREFIX + sector.getId();
+                redisService.set(key, sector, sectorCacheTtlSeconds);
+                log.debug("Cached sector {}: {}", sector.getId(), sector.getTitle());
+            }
+        }
+
+        log.info("Successfully cached {} sectors", sectors.size());
     }
 
     public void cacheActiveSectors(List<SectorDTO> sectors) {
