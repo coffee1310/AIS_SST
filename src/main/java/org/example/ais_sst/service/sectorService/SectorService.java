@@ -1,5 +1,8 @@
 package org.example.ais_sst.service.sectorService;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.sector.SectorDTO;
@@ -16,10 +19,12 @@ import org.example.ais_sst.mapper.SectorParticipantMapper;
 import org.example.ais_sst.mapper.converter.SectorWithUserStatusConverter;
 import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.userService.UserPhotoService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,39 +55,91 @@ public class SectorService {
     private final UserPhotoService userPhotoService;
     private final SectorPhotoService sectorPhotoService;
 
+    @Value("${app.cache.sector.ttl:3600}")
+    private long sectorCacheTtlSeconds;
+
+    // Локальный кэш для фото (Caffeine)
+    private final Cache<Long, String> photoCache = Caffeine.newBuilder()
+            .maximumSize(200)
+            .expireAfterWrite(24, TimeUnit.HOURS)
+            .recordStats()
+            .build();
+
+    // Локальный кэш для списка секторов
+    private final Cache<String, List<SectorDTO>> sectorListCache = Caffeine.newBuilder()
+            .maximumSize(10)
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .recordStats()
+            .build();
+
     // ==================== CACHED METHODS ====================
 
     @Cacheable(value = "sector", key = "#id", unless = "#result == null")
-    @Transactional
+    @Transactional(readOnly = true)
     public SectorDTO getSectorById(Long id) {
         log.info("🟡 Loading sector {} from DATABASE (cache miss)", id);
+
+        long startTime = System.currentTimeMillis();
 
         Sector sector = sectorRepository.findSectorById(id)
                 .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + id + " не существует"));
 
-        return buildSectorDTO(sector);
+        SectorDTO result = buildSectorDTO(sector);
+
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("✅ Sector {} loaded in {} ms", id, duration);
+
+        return result;
     }
 
-    @Cacheable(value = "allSectors", key = "'all'")
     @Transactional(readOnly = true)
     public List<SectorDTO> getAllSectors() {
+        // Проверяем локальный кэш
+        List<SectorDTO> cached = sectorListCache.getIfPresent("all");
+        if (cached != null) {
+            log.info("🟢 Returning ALL sectors from Caffeine cache (size: {})", cached.size());
+            return cached;
+        }
+
         log.info("🟡 Loading ALL sectors from DATABASE (cache miss)");
+        long startTime = System.currentTimeMillis();
 
         List<Sector> sectors = sectorRepository.findAll();
-        return sectors.stream()
+        List<SectorDTO> result = sectors.stream()
+                .parallel()  // Параллельная обработка для ускорения
                 .map(this::buildSectorDTO)
                 .collect(Collectors.toList());
+
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("✅ Loaded {} sectors from DB in {} ms", result.size(), duration);
+
+        // Сохраняем в локальный кэш
+        sectorListCache.put("all", result);
+        sectorListCache.put("active", result.stream()
+                .filter(SectorDTO::getIsActive)
+                .collect(Collectors.toList()));
+
+        return result;
     }
 
-    @Cacheable(value = "activeSectors", key = "'active'")
     @Transactional(readOnly = true)
     public List<SectorDTO> getActiveSectors() {
+        List<SectorDTO> cached = sectorListCache.getIfPresent("active");
+        if (cached != null) {
+            log.info("🟢 Returning ACTIVE sectors from Caffeine cache (size: {})", cached.size());
+            return cached;
+        }
+
         log.info("🟡 Loading ACTIVE sectors from DATABASE (cache miss)");
 
         List<Sector> sectors = sectorRepository.findByIsActiveTrue();
-        return sectors.stream()
+        List<SectorDTO> result = sectors.stream()
                 .map(this::buildSectorDTO)
                 .collect(Collectors.toList());
+
+        sectorListCache.put("active", result);
+
+        return result;
     }
 
     // ==================== CACHE EVICTION ====================
@@ -91,11 +149,11 @@ public class SectorService {
     public SectorDTO createSector(SectorDTO sectorDTO) throws RoleNotFoundException {
         log.info("🟢 Creating sector '{}' - clearing all caches", sectorDTO.getTitle());
 
-        // Создаем и сохраняем сектор
+        long startTime = System.currentTimeMillis();
+
         Sector savedSector = sectorRepository.save(sectorMapper.toEntity(sectorDTO));
         log.info("Sector saved with id: {}", savedSector.getId());
 
-        // Сохраняем фото (если есть)
         if (sectorDTO.getPhoto() != null && !sectorDTO.getPhoto().isEmpty()) {
             try {
                 String photoPath = sectorPhotoService.savePhotoFromBase64(sectorDTO.getPhoto(), savedSector.getId());
@@ -107,7 +165,6 @@ public class SectorService {
             }
         }
 
-        // Добавляем координаторов
         if (sectorDTO.getCoordinatorIds() != null && !sectorDTO.getCoordinatorIds().isEmpty()) {
             for (Long coordinatorId : sectorDTO.getCoordinatorIds()) {
                 try {
@@ -118,8 +175,14 @@ public class SectorService {
             }
         }
 
+        // Инвалидируем локальные кэши
+        sectorListCache.invalidateAll();
+        photoCache.invalidateAll();
+
         SectorDTO result = buildSectorDTO(savedSector);
-        log.info("✅ Sector created with id: {}", savedSector.getId());
+
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("✅ Sector created in {} ms", duration);
 
         return result;
     }
@@ -129,19 +192,21 @@ public class SectorService {
     public SectorDTO updateSector(SectorUpdateDTO updateDTO) throws RoleNotFoundException {
         log.info("🟢 Updating sector {} - clearing all caches", updateDTO.getId());
 
+        long startTime = System.currentTimeMillis();
+
         Sector existingSector = sectorRepository.findById(updateDTO.getId())
                 .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + updateDTO.getId() + " не существует"));
 
-        // Обновляем основные поля
         if (updateDTO.getTitle() != null) existingSector.setTitle(updateDTO.getTitle());
         if (updateDTO.getDescription() != null) existingSector.setDescription(updateDTO.getDescription());
         if (updateDTO.getIsActive() != null) existingSector.setIsActive(updateDTO.getIsActive());
 
-        // Обновляем фото
         if (updateDTO.getPhoto() != null && !updateDTO.getPhoto().isEmpty()) {
             try {
                 if (existingSector.getPathToPhoto() != null && !existingSector.getPathToPhoto().isEmpty()) {
                     sectorPhotoService.deletePhoto(existingSector.getPathToPhoto());
+                    // Удаляем фото из кэша
+                    photoCache.invalidate(updateDTO.getId());
                 }
                 String photoPath = sectorPhotoService.savePhotoFromBase64(updateDTO.getPhoto(), updateDTO.getId());
                 existingSector.setPathToPhoto(photoPath);
@@ -153,13 +218,17 @@ public class SectorService {
 
         Sector updatedSector = sectorRepository.save(existingSector);
 
-        // Обновляем координаторов
         if (updateDTO.getCoordinatorIds() != null) {
             updateCoordinators(updateDTO.getId(), updateDTO.getCoordinatorIds());
         }
 
+        // Инвалидируем кэши
+        sectorListCache.invalidateAll();
+
         SectorDTO result = buildSectorDTO(updatedSector);
-        log.info("✅ Sector {} updated", updateDTO.getId());
+
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("✅ Sector {} updated in {} ms", updateDTO.getId(), duration);
 
         return result;
     }
@@ -173,34 +242,42 @@ public class SectorService {
                 .orElseThrow(() -> new SectorDoesNotExistException("Сектор не найден"));
         sectorRepository.delete(sector);
 
+        // Очищаем кэши
+        sectorListCache.invalidateAll();
+        photoCache.invalidate(id);
+
         log.info("✅ Sector {} deleted", id);
     }
 
-    @CacheEvict(value = {"sector", "allSectors", "activeSectors"}, key = "#id")
+    @CacheEvict(value = {"sector", "allSectors", "activeSectors"}, allEntries = true)
     @Transactional
     public void deactivateSector(Long id) {
-        log.info("🟢 Deactivating sector {} - clearing cache", id);
+        log.info("🟢 Deactivating sector {} - clearing caches", id);
 
         sectorRepository.findById(id)
-                .orElseThrow(() -> new SectorDoesNotExistException(String.format("Сектор с id: %s не существует", id)));
+                .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + id + " не существует"));
         sectorRepository.deactivateSector(id);
+
+        sectorListCache.invalidateAll();
 
         log.info("✅ Sector {} deactivated", id);
     }
 
-    @CacheEvict(value = {"sector", "allSectors", "activeSectors"}, key = "#id")
+    @CacheEvict(value = {"sector", "allSectors", "activeSectors"}, allEntries = true)
     @Transactional
     public void activateSector(Long id) {
-        log.info("🟢 Activating sector {} - clearing cache", id);
+        log.info("🟢 Activating sector {} - clearing caches", id);
 
         sectorRepository.findById(id)
-                .orElseThrow(() -> new SectorDoesNotExistException(String.format("Сектор с id: %s не существует", id)));
+                .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + id + " не существует"));
         sectorRepository.activateSector(id);
+
+        sectorListCache.invalidateAll();
 
         log.info("✅ Sector {} activated", id);
     }
 
-    // ==================== NON-CACHED METHODS (user-specific) ====================
+    // ==================== NON-CACHED METHODS ====================
 
     @Transactional(readOnly = true)
     public List<SectorWithUserStatusDTO> getSectorsWithUserStatus(Long userId) {
@@ -210,6 +287,8 @@ public class SectorService {
             log.warn("User with id {} does not exist", userId);
             return new ArrayList<>();
         }
+
+        long startTime = System.currentTimeMillis();
 
         List<Object[]> results = sectorRepository.findSectorsWithUserStatus(userId);
 
@@ -237,6 +316,9 @@ public class SectorService {
             sector.setCoordinators(coordinatorDTOs);
         }
 
+        long duration = System.currentTimeMillis() - startTime;
+        log.debug("✅ Loaded {} sectors for user {} in {} ms", sectors.size(), userId, duration);
+
         return sectors;
     }
 
@@ -248,19 +330,39 @@ public class SectorService {
                 .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + sectorId + " не существует"));
 
         Page<SectorParticipant> participants = sectorParticipantRepository.findBySectorId(sectorId, pageable);
+
         return participants.map(participant -> sectorParticipantMapper.toResponseDto(participant, userPhotoService));
+    }
+
+    @Transactional(readOnly = true)
+    public SectorParticipantResponseDTO getSectorCoordinator(Long sectorId) {
+        log.info("Getting coordinator for sector id: {}", sectorId);
+
+        return sectorParticipantRepository
+                .findBySectorIdAndIsCoordinatorTrue(sectorId)
+                .stream()
+                .findFirst()
+                .map(coordinator -> sectorParticipantMapper.toResponseDto(coordinator, userPhotoService))
+                .orElse(null);
     }
 
     // ==================== HELPER METHODS ====================
 
     private SectorDTO buildSectorDTO(Sector sector) {
-        SectorDTO sectorDTO = sectorMapper.toSectorDTO(sector, sectorPhotoService);
+        long startTime = System.currentTimeMillis();
 
+        SectorDTO sectorDTO = sectorMapper.toSectorDTO(sector, null);
+
+        // Загружаем фото из кэша или БД
         if (sector.getPathToPhoto() != null && !sector.getPathToPhoto().isEmpty()) {
-            String photoBase64 = sectorPhotoService.getPhotoAsBase64(sector.getPathToPhoto());
-            sectorDTO.setPhoto(photoBase64);
+            String photo = photoCache.get(sector.getId(), id -> {
+                log.debug("Loading photo for sector {} from disk", id);
+                return sectorPhotoService.getPhotoAsBase64(sector.getPathToPhoto());
+            });
+            sectorDTO.setPhoto(photo);
         }
 
+        // Загружаем координаторов
         List<SectorParticipant> coordinators = sectorParticipantRepository
                 .findBySectorIdAndIsCoordinatorTrue(sector.getId());
 
@@ -274,8 +376,15 @@ public class SectorService {
                 .collect(Collectors.toList());
         sectorDTO.setCoordinators(coordinatorDTOs);
 
+        long duration = System.currentTimeMillis() - startTime;
+        if (duration > 10) {
+            log.debug("Building DTO for sector {} took {} ms", sector.getId(), duration);
+        }
+
         return sectorDTO;
     }
+
+    // ==================== COORDINATOR METHODS ====================
 
     private void addCoordinatorOnCreate(Long sectorId, Long userId) throws RoleNotFoundException {
         log.debug("Adding coordinator {} to new sector {}", userId, sectorId);
@@ -333,6 +442,9 @@ public class SectorService {
         user.setRole(role);
         userRepository.save(user);
 
+        // Инвалидируем кэш сектора
+        sectorListCache.invalidateAll();
+
         log.info("User {} became coordinator of sector {}", userId, sectorId);
     }
 
@@ -363,6 +475,9 @@ public class SectorService {
             addCoordinator(sectorId, userId);
         }
 
+        // Инвалидируем кэш
+        sectorListCache.invalidateAll();
+
         log.info("Coordinators updated: removed {}, added {}", toRemove.size(), toAdd.size());
     }
 
@@ -381,6 +496,9 @@ public class SectorService {
         participant.setIsCoordinator(false);
         sectorParticipantRepository.save(participant);
 
+        // Инвалидируем кэш
+        sectorListCache.invalidateAll();
+
         List<SectorParticipant> coordinatorEntries = sectorParticipantRepository
                 .findAllByStudentIdAndIsCoordinatorTrue(userId);
 
@@ -392,6 +510,8 @@ public class SectorService {
             user.setRole(activistRole);
             userRepository.save(user);
         }
+
+        log.info("Coordinator removed from sector {}", sectorId);
     }
 
     @Transactional
@@ -418,6 +538,9 @@ public class SectorService {
         participantEntry.setIsCoordinator(false);
         sectorParticipantRepository.save(participantEntry);
 
+        // Инвалидируем кэш
+        sectorListCache.invalidateAll();
+
         log.info("User {} kicked from sector {} (status: Вышедший)", participantId, sectorId);
     }
 
@@ -439,18 +562,36 @@ public class SectorService {
 
         participant.setStatus(SectorParticipantStatuses.Вышедший);
         sectorParticipantRepository.save(participant);
+
+        // Инвалидируем кэш
+        sectorListCache.invalidateAll();
+
         log.info("User {} left sector {}", userId, sectorId);
     }
 
-    @Transactional(readOnly = true)
-    public SectorParticipantResponseDTO getSectorCoordinator(Long sectorId) {
-        log.info("Getting coordinator for sector id: {}", sectorId);
+    // ==================== CACHE STATISTICS ====================
 
-        return sectorParticipantRepository
-                .findBySectorIdAndIsCoordinatorTrue(sectorId)
-                .stream()
-                .findFirst()
-                .map(coordinator -> sectorParticipantMapper.toResponseDto(coordinator, userPhotoService))
-                .orElse(null);
+    public Map<String, Object> getCacheStats() {
+        Map<String, Object> stats = new LinkedHashMap<>();
+
+        var photoStats = photoCache.stats();
+        stats.put("photo_cache_hit_rate", String.format("%.2f%%", photoStats.hitRate() * 100));
+        stats.put("photo_cache_size", photoCache.estimatedSize());
+        stats.put("photo_cache_hits", photoStats.hitCount());
+        stats.put("photo_cache_misses", photoStats.missCount());
+
+        stats.put("sector_list_cache_size", sectorListCache.estimatedSize());
+        stats.put("sector_list_keys", sectorListCache.asMap().keySet());
+
+        return stats;
+    }
+
+    // Периодическая очистка кэша (раз в час)
+    @Scheduled(fixedDelay = 3600000)
+    public void cleanCache() {
+        log.info("🧹 Cleaning sector cache...");
+        long beforeSize = sectorListCache.estimatedSize();
+        sectorListCache.invalidateAll();
+        log.info("✅ Cache cleaned: {} entries removed", beforeSize);
     }
 }
