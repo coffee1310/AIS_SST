@@ -14,6 +14,7 @@ import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.enums.SectorIntroductionStatus;
 import org.example.ais_sst.service.sectorService.SectorIntroductionRequestService;
 import org.example.ais_sst.service.sectorService.SectorService;
+import org.example.ais_sst.utils.MeasurePerformance;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,7 @@ public class SectorsController extends BaseController {
     }
 
     @GetMapping
+    @MeasurePerformance
     public ResponseEntity<?> getSectors(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         List<SectorWithUserStatusDTO> sectors = sectorService.getSectorsWithUserStatus(customUserDetails.getId());
         return new ResponseEntity<>(sectors, HttpStatus.OK);

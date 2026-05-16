@@ -570,4 +570,14 @@ public class SectorService {
 
         log.info("Sector cache refreshed: {} total, {} active", sectorDTOs.size(), activeSectorDTOs.size());
     }
+
+    @Transactional()
+    public List<SectorDTO> getAllSectorsWithoutCache() {
+        log.debug("Loading all sectors from database (cache bypassed)");
+
+        List<Sector> sectors = sectorRepository.findAll();
+        return sectors.stream()
+                .map(this::buildSectorDTO)
+                .collect(Collectors.toList());
+    }
 }
