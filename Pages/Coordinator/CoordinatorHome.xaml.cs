@@ -183,11 +183,13 @@ namespace Diplom_Stud.Pages.Coordinator
         }
 
 
+        // --- ОБРАБОТЧИКИ КЛИКОВ ---
+
         private void EventCard_Click(object sender, MouseButtonEventArgs e)
         {
             if (sender is Border border && border.Tag is int eventId)
             {
-                this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.EventDetails(eventId));
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
             }
         }
 
@@ -195,7 +197,7 @@ namespace Diplom_Stud.Pages.Coordinator
         {
             if (sender is Border border && border.Tag is int eventId)
             {
-                this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.EventDetails(eventId));
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
             }
         }
 
@@ -203,7 +205,7 @@ namespace Diplom_Stud.Pages.Coordinator
         {
             if (sender is Button btn && btn.Tag is int eventId)
             {
-                this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.EventDetails(eventId));
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
             }
         }
 

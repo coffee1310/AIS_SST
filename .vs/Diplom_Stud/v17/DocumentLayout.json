@@ -3,15 +3,43 @@
   "WorkspaceRootPath": "C:\\Users\\danii\\source\\repos\\AIS_SST\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\eventeditpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\eventeditpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\createevent.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\createevent.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\eventeditpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\createevent.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\createevent.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\eventdetails.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\eventdetails.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\eventdetails.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\eventdetails.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\eventregistration.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\eventregistration.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\eventregistration.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\eventregistration.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\eventeditpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\eventeditpage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\coordinatoreventdetails.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\coordinatoreventdetails.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\coordinatoreventdetails.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\coordinatoreventdetails.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|C:\\Users\\danii\\source\\repos\\AIS_SST\\pages\\coordinator\\eventeditpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\eventeditpage.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     }
   ],
@@ -22,46 +50,8 @@
       "DocumentGroups": [
         {
           "DockedHeight": 240,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 4,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "CreateEvent.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CreateEvent.xaml.cs",
-              "RelativeDocumentMoniker": "Pages\\Coordinator\\CreateEvent.xaml.cs",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CreateEvent.xaml.cs",
-              "RelativeToolTip": "Pages\\Coordinator\\CreateEvent.xaml.cs",
-              "ViewState": "AgIAAKwBAAAAAAAAAAAMwLYBAAAyAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-16T21:45:02.755Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "EventEditPage.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventEditPage.xaml.cs",
-              "RelativeDocumentMoniker": "Pages\\Coordinator\\EventEditPage.xaml.cs",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventEditPage.xaml.cs",
-              "RelativeToolTip": "Pages\\Coordinator\\EventEditPage.xaml.cs",
-              "ViewState": "AgIAAAwCAAAAAAAAAAAlwA4CAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-16T21:43:40.055Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "EventEditPage.xaml",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventEditPage.xaml",
-              "RelativeDocumentMoniker": "Pages\\Coordinator\\EventEditPage.xaml",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventEditPage.xaml",
-              "RelativeToolTip": "Pages\\Coordinator\\EventEditPage.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-05-16T21:33:31.834Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
@@ -77,6 +67,131 @@
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "CreateEvent.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CreateEvent.xaml.cs",
+              "RelativeDocumentMoniker": "Pages\\Coordinator\\CreateEvent.xaml.cs",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CreateEvent.xaml.cs",
+              "RelativeToolTip": "Pages\\Coordinator\\CreateEvent.xaml.cs",
+              "ViewState": "AgIAAFAAAAAAAAAAAAAmwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-17T00:21:37.973Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "CreateEvent.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CreateEvent.xaml",
+              "RelativeDocumentMoniker": "Pages\\Coordinator\\CreateEvent.xaml",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CreateEvent.xaml",
+              "RelativeToolTip": "Pages\\Coordinator\\CreateEvent.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-05-17T00:21:36.335Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "EventDetails.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventDetails.xaml",
+              "RelativeDocumentMoniker": "Pages\\Activist\\EventDetails.xaml",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventDetails.xaml",
+              "RelativeToolTip": "Pages\\Activist\\EventDetails.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-05-16T22:30:40.793Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "EventDetails.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventDetails.xaml.cs",
+              "RelativeDocumentMoniker": "Pages\\Activist\\EventDetails.xaml.cs",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventDetails.xaml.cs",
+              "RelativeToolTip": "Pages\\Activist\\EventDetails.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-16T22:30:39.247Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "EventRegistration.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventRegistration.xaml",
+              "RelativeDocumentMoniker": "Pages\\Activist\\EventRegistration.xaml",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventRegistration.xaml",
+              "RelativeToolTip": "Pages\\Activist\\EventRegistration.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-05-16T22:30:09.662Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "EventRegistration.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventRegistration.xaml.cs",
+              "RelativeDocumentMoniker": "Pages\\Activist\\EventRegistration.xaml.cs",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventRegistration.xaml.cs",
+              "RelativeToolTip": "Pages\\Activist\\EventRegistration.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-16T22:30:07.949Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "CoordinatorEventDetails.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorEventDetails.xaml.cs",
+              "RelativeDocumentMoniker": "Pages\\Coordinator\\CoordinatorEventDetails.xaml.cs",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorEventDetails.xaml.cs",
+              "RelativeToolTip": "Pages\\Coordinator\\CoordinatorEventDetails.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-16T22:17:00.574Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "CoordinatorEventDetails.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorEventDetails.xaml",
+              "RelativeDocumentMoniker": "Pages\\Coordinator\\CoordinatorEventDetails.xaml",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorEventDetails.xaml",
+              "RelativeToolTip": "Pages\\Coordinator\\CoordinatorEventDetails.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-05-16T22:17:09.056Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "EventEditPage.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventEditPage.xaml.cs",
+              "RelativeDocumentMoniker": "Pages\\Coordinator\\EventEditPage.xaml.cs",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventEditPage.xaml.cs",
+              "RelativeToolTip": "Pages\\Coordinator\\EventEditPage.xaml.cs",
+              "ViewState": "AgIAAPUBAAAAAAAAAIA9wA4CAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-16T21:43:40.055Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "EventEditPage.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventEditPage.xaml",
+              "RelativeDocumentMoniker": "Pages\\Coordinator\\EventEditPage.xaml",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventEditPage.xaml",
+              "RelativeToolTip": "Pages\\Coordinator\\EventEditPage.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-05-16T21:33:31.834Z",
+              "EditorCaption": ""
             }
           ]
         },

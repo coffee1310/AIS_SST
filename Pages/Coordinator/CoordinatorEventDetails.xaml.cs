@@ -15,8 +15,6 @@ namespace Diplom_Stud.Pages.Coordinator
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            EventTitleHeader.Text = $"Мероприятие #{_eventId}"; 
-
             EventMainFrame.Navigate(new EventEditPage(_eventId));
         }
 
@@ -32,12 +30,6 @@ namespace Diplom_Stud.Pages.Coordinator
                 EventMainFrame.Navigate(new EventParticipantsPage(_eventId));
             else if (TabFinalize.IsChecked == true)
                 EventMainFrame.Navigate(new EventFinalizePage(_eventId));
-        }
-
-        private void BackButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.NavigationService.CanGoBack)
-                this.NavigationService.GoBack();
         }
     }
 }

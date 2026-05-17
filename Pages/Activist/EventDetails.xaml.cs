@@ -153,24 +153,23 @@ namespace Diplom_Stud.Pages.Activist
             }
         }
 
-
         private string FormatEventDateTime(string dateStr, string startStr, string endStr)
         {
             string result = "Время не указано";
 
             if (!string.IsNullOrEmpty(dateStr) && DateTime.TryParse(dateStr, out DateTime date))
             {
-                result = date.ToString("d MMMM", new CultureInfo("ru-RU")); 
+                result = date.ToString("d MMMM", new CultureInfo("ru-RU"));
 
                 string timePart = "";
                 if (!string.IsNullOrEmpty(startStr) && startStr.Length >= 5)
                 {
-                    timePart += startStr.Substring(0, 5); 
+                    timePart += startStr.Substring(0, 5);
                 }
 
                 if (!string.IsNullOrEmpty(endStr) && endStr.Length >= 5)
                 {
-                    timePart += " - " + endStr.Substring(0, 5); 
+                    timePart += " - " + endStr.Substring(0, 5);
                 }
 
                 if (!string.IsNullOrEmpty(timePart))
@@ -233,14 +232,6 @@ namespace Diplom_Stud.Pages.Activist
             }
             catch (Exception ex) { Debug.WriteLine($"Ошибка обработки фото: {ex.Message}"); }
             return null;
-        }
-
-        private void BackButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.NavigationService.CanGoBack)
-            {
-                this.NavigationService.GoBack();
-            }
         }
 
         private void RegisterButton_Click(object sender, RoutedEventArgs e)

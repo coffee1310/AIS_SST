@@ -1,9 +1,11 @@
 ﻿using Diplom_Stud.Components;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -14,6 +16,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace Diplom_Stud.Pages.Coordinator
 {
@@ -25,8 +28,9 @@ namespace Diplom_Stud.Pages.Coordinator
         private List<SectorDto> _apiSectors = new List<SectorDto>();
 
         public ObservableCollection<RoleItem> Roles { get; set; } = new ObservableCollection<RoleItem>();
-
         public ObservableCollection<UserDto> SelectedOrganizers { get; set; } = new ObservableCollection<UserDto>();
+
+        private string _newBase64Image = null;
 
         private string _eventTitle;
         public string EventTitle { get => _eventTitle; set { _eventTitle = value; OnPropertyChanged(nameof(EventTitle)); } }
@@ -78,7 +82,6 @@ namespace Diplom_Stud.Pages.Coordinator
             }
 
             Roles.CollectionChanged += Roles_CollectionChanged;
-
             CbUsers.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler(CbUsers_TextChanged));
 
             MainRoot.DataContext = this;
@@ -130,7 +133,7 @@ namespace Diplom_Stud.Pages.Coordinator
                                 CbUsers.Items.Add(new ComboBoxItem
                                 {
                                     Content = user.DisplayName,
-                                    Tag = user, 
+                                    Tag = user,
                                     Foreground = System.Windows.Media.Brushes.White
                                 });
                             }
@@ -156,6 +159,36 @@ namespace Diplom_Stud.Pages.Coordinator
                 CustomMessageBox.Show($"Ошибка сети при загрузке справочников: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
         }
+
+        private void UploadImage_Click(object sender, MouseButtonEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    byte[] imageBytes = File.ReadAllBytes(openFileDialog.FileName);
+                    var bitmap = new BitmapImage();
+                    using (var ms = new MemoryStream(imageBytes))
+                    {
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.StreamSource = ms;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                    }
+                    EditEventImage.ImageSource = bitmap;
+                    UploadPlaceholder.Visibility = Visibility.Collapsed;
+                    _newBase64Image = $"data:image/jpeg;base64,{Convert.ToBase64String(imageBytes)}";
+                }
+                catch (Exception ex)
+                {
+                    CustomMessageBox.Show($"Ошибка загрузки фото: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+        }
+
         private void CbUsers_TextChanged(object sender, TextChangedEventArgs e)
         {
             var cb = (ComboBox)sender;
@@ -280,7 +313,8 @@ namespace Diplom_Stud.Pages.Coordinator
                     isDraft = IsDraft,
                     draft = IsDraft,
                     organizer_id = App.CurrentUser?.Id ?? 0,
-                    organizerId = App.CurrentUser?.Id ?? 0
+                    organizerId = App.CurrentUser?.Id ?? 0,
+                    photo = _newBase64Image ?? "" 
                 };
 
                 string eventJson = JsonSerializer.Serialize(eventPayload);

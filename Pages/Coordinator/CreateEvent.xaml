@@ -14,7 +14,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="{Binding FontSize, RelativeSource={RelativeSource AncestorType=DatePicker}}"/>
             <Setter Property="Padding" Value="15,0"/>
             <Setter Property="FontFamily" Value="Montserrat Thin"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -215,12 +215,17 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Grid Grid.Column="0" Height="110" Cursor="Hand">
+                    <Grid Grid.Column="0" Height="110" Cursor="Hand" MouseLeftButtonUp="UploadImage_Click">
                         <Rectangle Stroke="#2A283C" StrokeThickness="1.5" StrokeDashArray="4 4" RadiusX="8" RadiusY="8" Fill="#1C1B29"/>
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <StackPanel x:Name="UploadPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Path Data="M19,4h-3.17L14,2H10L8.17,4H5C3.9,4 3,4.9 3,6v12c0,1.1 0.9,2 2,2h14c1.1,0 2-0.9 2-2V6C21,4.9 20.1,4 19,4z M12,17c-2.76,0-5-2.24-5-5s2.24-5 5-5s5,2.24 5,5S14.76,17 12,17z M12,9c-1.65,0-3,1.35-3,3s1.35,3 3,3s3-1.35 3-3S13.65,9 12,9z" Fill="#7A7886" Stretch="Uniform" Width="24" Height="20" Margin="0,0,0,8" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Добавить" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Добавить обложку" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12" HorizontalAlignment="Center"/>
                         </StackPanel>
+                        <Border CornerRadius="8" ClipToBounds="True">
+                            <Border.Background>
+                                <ImageBrush x:Name="EditEventImage" Stretch="UniformToFill"/>
+                            </Border.Background>
+                        </Border>
                     </Grid>
 
                     <Border Grid.Column="2" Style="{StaticResource RegInputBorderStyle}" Height="Auto" Padding="20,15">
@@ -258,7 +263,6 @@
                     </Border>
                 </Grid>
 
-                <!-- НОВЫЙ БЛОК: ОРГАНИЗАТОРЫ -->
                 <TextBlock Text="Доп. Организаторы" Style="{StaticResource SubtitleStyle}"/>
 
                 <Grid Margin="0,0,0,15">
@@ -270,7 +274,6 @@
 
                     <Border Grid.Column="0" Style="{StaticResource RegInputBorderStyle}" Height="45">
                         <Grid>
-                            <!-- Поиск пользователя в стиле страницы регистрации -->
                             <ComboBox x:Name="CbUsers" 
                                       IsEditable="True" 
                                       StaysOpenOnEdit="True"
@@ -283,7 +286,6 @@
                     <Button Grid.Column="2" Content="Добавить" Style="{StaticResource OutlineButtonStyle}" Foreground="#02B3BA" BorderBrush="#02B3BA" Padding="0" Click="AddOrganizer_Click"/>
                 </Grid>
 
-                <!-- СПИСОК ВЫБРАННЫХ ОРГАНИЗАТОРОВ -->
                 <ItemsControl ItemsSource="{Binding SelectedOrganizers}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -409,13 +411,13 @@
                                                 </Grid.ColumnDefinitions>
 
                                                 <Border Grid.Column="0" Style="{StaticResource RegInputBorderStyle}" Height="40">
-                                                    <DatePicker SelectedDate="{Binding DeadlineDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SelectedDateFormat="Short" Tag="Дедлайн (ГГГГ-ММ-ДД)" FontSize="11"/>
+                                                    <DatePicker SelectedDate="{Binding DeadlineDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SelectedDateFormat="Short" Tag="Дедлайн (ГГГГ-ММ-ДД)" FontSize="14"/>
                                                 </Border>
 
                                                 <Border Grid.Column="2" Style="{StaticResource RegInputBorderStyle}" Height="40">
                                                     <Grid>
                                                         <Path Data="M11.99,2C6.47,2 2,6.48 2,12s4.47,10 9.99,10C17.52,22 22,17.52 22,12S17.52,2 11.99,2z M12,20c-4.42,0-8-3.58-8-8s3.58-8 8-8s8,3.58 8,8S16.42,20 12,20z M12.5,7H11v6l5.25,3.15l0.75-1.23l-4.5-2.67V7z" Fill="#7A7886" Stretch="Uniform" Width="12" Height="12" HorizontalAlignment="Left" Margin="10,0,0,0"/>
-                                                        <TextBox Text="{Binding DeadlineTime, Mode=TwoWay}" Style="{StaticResource RegInnerInputStyle}" Tag="Время" MaxLength="5" PreviewTextInput="Time_PreviewTextInput" TextChanged="Time_TextChanged" FontSize="11" Padding="30,0,10,0" TextWrapping="Wrap"/>
+                                                        <TextBox Text="{Binding DeadlineTime, Mode=TwoWay}" Style="{StaticResource RegInnerInputStyle}" Tag="Время" MaxLength="5" PreviewTextInput="Time_PreviewTextInput" TextChanged="Time_TextChanged" FontSize="14" Padding="30,0,10,0"/>
                                                     </Grid>
                                                 </Border>
                                             </Grid>

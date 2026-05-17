@@ -37,12 +37,7 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" Width="950" Margin="40,50,40,50">
 
-                <Grid Margin="0,0,0,30">
-                    <Button x:Name="BackButton" Content="&lt; Назад" Style="{StaticResource GhostButtonStyle}" Foreground="#A084FB" FontFamily="Montserrat" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Center" Click="BackButton_Click"/>
-                    <TextBlock Text="Управление мероприятием" FontSize="30" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Grid>
-
-                <TextBlock x:Name="EventTitleHeader" Text="Загрузка..." FontSize="20" FontFamily="Digital Pixel" Foreground="#02B3BA" HorizontalAlignment="Center" Margin="0,0,0,40"/>
+                <TextBlock Text="Управление мероприятием" FontSize="30" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,40"/>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,40" HorizontalAlignment="Center">
                     <RadioButton x:Name="TabEdit" Content="Данные" Style="{StaticResource TabRadioButtonStyle}" IsChecked="True" Checked="Tab_Checked"/>
