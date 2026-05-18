@@ -40,8 +40,7 @@
                     </Popup>
                 </StackPanel>
 
-
-                <Grid Margin="10,0,10,20">
+                <Grid x:Name="DraftsHeaderGrid" Margin="10,0,10,20">
                     <TextBlock Text="Мои черновики" FontSize="24" FontFamily="Digital Pixel" Foreground="#A084FB" VerticalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Content="Все черновики" Style="{StaticResource PurpleOutlineButtonStyle}" Margin="0,0,15,0"/>
@@ -95,11 +94,10 @@
 
                 <TextBlock x:Name="EmptyDraftsText" Text="У вас пока нет черновиков." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,-40,0,60" Visibility="Collapsed"/>
 
-
                 <Grid Margin="10,0,10,20">
-                    <TextBlock Text="Ближайшие мероприятия" FontSize="24" FontFamily="Digital Pixel" Foreground="White" VerticalAlignment="Center"/>
+                    <TextBlock Text="Мои мероприятия" FontSize="24" FontFamily="Digital Pixel" Foreground="White" VerticalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="Все мероприятия" Style="{StaticResource PurpleOutlineButtonStyle}" Margin="0,0,15,0"/>
+                        <Button Content="Все мероприятия" Style="{StaticResource PurpleOutlineButtonStyle}" Margin="0,0,15,0" Click="AllEvents_Click"/>
                         <Button Style="{StaticResource PurpleArrowButtonStyle}" Margin="0,0,10,0">
                             <Path Data="M10,1 L4,7 L10,13 M4,7 L16,7" Stroke="White" StrokeThickness="2" Stretch="Uniform" Width="14" Height="10"/>
                         </Button>
@@ -117,7 +115,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource EventCardStyle}" Cursor="Hand" MouseLeftButtonUp="EventCard_Click" Tag="{Binding Id}">
+                            <Border Style="{StaticResource EventCardStyle}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="{Binding CardBorderThickness}" Cursor="Hand" MouseLeftButtonUp="EventCard_Click" Tag="{Binding Id}">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -146,7 +144,6 @@
                 </ItemsControl>
 
                 <TextBlock x:Name="EmptyEventsText" Text="Мероприятий пока нет." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,-40,0,60" Visibility="Collapsed"/>
-
 
                 <Grid Margin="10,0,10,20">
                     <TextBlock Text="Текущие задачи" FontSize="24" FontFamily="Digital Pixel" Foreground="White" VerticalAlignment="Center"/>
