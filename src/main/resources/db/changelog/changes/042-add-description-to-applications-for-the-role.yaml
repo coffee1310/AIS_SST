@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-description-to-applications-for-the-role
+      author: coffee13102006
+      comment: Добавление поля description в таблицу applications_for_the_role
+      changes:
+        - addColumn:
+            tableName: applications_for_the_role
+            columns:
+              - column:
+                  name: description
+                  type: TEXT
+                  remarks: "Пожелания пользователя при подаче заявки на роль"
+                  value: null

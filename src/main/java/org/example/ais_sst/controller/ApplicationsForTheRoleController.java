@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.controller.base.BaseController;
+import org.example.ais_sst.dto.event_roles_application.RoleApplicationCreateDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationFilterDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationRejectDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationResponseDTO;
@@ -39,10 +40,14 @@ public class ApplicationsForTheRoleController extends BaseController {
     @Operation(summary = "Подать заявку на роль")
     public ResponseEntity<RoleApplicationResponseDTO> createApplication(
             @PathVariable Long eventRoleId,
+            @Valid @RequestBody(required = false) RoleApplicationCreateDTO createDTO,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         logInfo("/api/role-applications/{}", "Creating application", eventRoleId);
-        RoleApplicationResponseDTO response = roleApplicationService.createApplication(eventRoleId, userDetails.getId());
+
+        String description = createDTO != null ? createDTO.getDescription() : null;
+        RoleApplicationResponseDTO response = roleApplicationService.createApplication(eventRoleId, userDetails.getId(), description);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

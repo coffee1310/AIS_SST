@@ -1,6 +1,5 @@
 package org.example.ais_sst.service.ApplicationsForTheRoleService;
 
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationFilterDTO;
@@ -39,17 +38,16 @@ public class ApplicationsForTheRoleService {
      * Подача заявки на роль
      */
     @Transactional
-    public RoleApplicationResponseDTO createApplication(Long eventRoleId, Long userId) {
+    public RoleApplicationResponseDTO createApplication(Long eventRoleId, Long userId, String description) {
         log.info("Creating application for user: {}, eventRole: {}", userId, eventRoleId);
 
-        // Получаем первый сектор пользователя (или можно передавать sectorParticipantId)
+        // Получаем первый сектор пользователя
         List<SectorParticipant> userSectors = sectorParticipantRepository.findByStudentId(userId);
 
         if (userSectors.isEmpty()) {
             throw new SectorParticipantNotFoundException("Участник сектора не найден для пользователя с id: " + userId);
         }
 
-        // Берем первый сектор (или можно добавить выбор сектора)
         SectorParticipant sectorParticipant = userSectors.get(0);
 
         EventRole eventRole = eventRoleRepository.findById(eventRoleId)
@@ -71,12 +69,20 @@ public class ApplicationsForTheRoleService {
                 .eventRole(eventRole)
                 .isReserve(isReserve)
                 .status(RoleApplicationStatuses.НА_РАССМОТРЕНИИ)
+                .description(description)  // НОВОЕ ПОЛЕ
                 .build();
 
         ApplicationsForTheRole savedApplication = roleApplicationRepository.save(application);
-        log.info("Application created with id: {}, isReserve: {}", savedApplication.getId(), isReserve);
+        log.info("Application created with id: {}, isReserve: {}, description: {}",
+                savedApplication.getId(), isReserve, description);
 
         return roleApplicationMapper.toResponseDto(savedApplication);
+    }
+
+    // Перегруженный метод для обратной совместимости
+    @Transactional
+    public RoleApplicationResponseDTO createApplication(Long eventRoleId, Long userId) {
+        return createApplication(eventRoleId, userId, null);
     }
 
     /**
@@ -177,7 +183,6 @@ public class ApplicationsForTheRoleService {
     public Page<RoleApplicationResponseDTO> getMyApplications(Long userId, Pageable pageable) {
         log.info("Getting applications for user: {}", userId);
 
-        // Получаем все sectorParticipantId пользователя
         List<Long> sectorParticipantIds = sectorParticipantRepository.findByStudentId(userId)
                 .stream()
                 .map(SectorParticipant::getId)

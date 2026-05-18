@@ -48,6 +48,9 @@ public class ApplicationsForTheRole {
     @Column(name = "rejection_reason", length = Integer.MAX_VALUE)
     private String rejectionReason;
 
+    @Column(name = "description", length = Integer.MAX_VALUE)
+    private String description;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -18,5 +18,6 @@ public interface RoleApplicationMapper {
     @Mapping(target = "eventRoleName", source = "eventRole.globalEventRole.title")
     @Mapping(target = "eventId", source = "eventRole.event.id")
     @Mapping(target = "eventTitle", source = "eventRole.event.title")
+    @Mapping(source = "description", target = "description")  // НОВОЕ
     RoleApplicationResponseDTO toResponseDto(ApplicationsForTheRole entity);
 }

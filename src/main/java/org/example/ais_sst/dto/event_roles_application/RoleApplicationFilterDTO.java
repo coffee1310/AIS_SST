@@ -18,5 +18,5 @@ public class RoleApplicationFilterDTO {
     private LocalDateTime dateFrom;
     private LocalDateTime dateTo;
     private Long sectorParticipantId;
-
+    private String description;
 }
