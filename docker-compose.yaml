@@ -42,10 +42,79 @@ services:
         condition: service_healthy
     networks:
       - ais_sst_network
+    volumes:
+      - /var/log/ais-sst:/var/logs
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    networks:
+      - ais_sst_network
+    restart: unless-stopped
+
+    # Promtail - агент для сбора логов
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./promtail-config.yaml:/etc/promtail/promtail-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log/ais-sst:/var/log/ais-sst:ro  # Монтируем логи приложения
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    networks:
+      - ais_sst_network
+    restart: unless-stopped
+    depends_on:
+      - loki
+
+  # Grafana - визуализация
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - ais_sst_network
+    restart: unless-stopped
+    depends_on:
+      - loki
+      - prometheus
+
+  # Prometheus - сбор метрик (опционально)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - ais_sst_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
   redis_data:
+  loki_data:
+  grafana_data:
+  prometheus_data:
 
 networks:
   ais_sst_network:
