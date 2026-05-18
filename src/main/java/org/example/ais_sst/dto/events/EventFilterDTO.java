@@ -39,4 +39,7 @@ public class EventFilterDTO {
     private Boolean isCompleted;
     private Boolean isActive;
     private Long creatorId;
+
+    private Boolean isResponsibleSector;
+    private Long currentUserId;
 }

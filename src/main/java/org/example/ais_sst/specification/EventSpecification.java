@@ -1,8 +1,8 @@
 package org.example.ais_sst.specification;
 
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.*;
 import org.example.ais_sst.dto.events.EventFilterDTO;
-import org.example.ais_sst.entity.Event;
+import org.example.ais_sst.entity.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
@@ -61,6 +61,25 @@ public class EventSpecification {
             }
             if (filter.getCreatorId() != null) {
                 predicates.add(cb.equal(root.get("eventCreator").get("id"), filter.getCreatorId()));
+            }
+
+            // Фильтрация по секторам, где пользователь является участником
+            if (filter.getIsResponsibleSector() != null &&
+                    filter.getIsResponsibleSector() &&
+                    filter.getCurrentUserId() != null) {
+
+                // Создаем JOIN'ы как в вашем SQL запросе
+                Join<Event, EventRole> eventRoles = root.join("eventRoles", JoinType.LEFT);
+                Join<EventRole, GlobalEventRole> globalEventRoles = eventRoles.join("globalEventRole", JoinType.LEFT);
+                Join<GlobalEventRole, Sector> sectors = globalEventRoles.join("sector", JoinType.LEFT);
+                Join<Sector, SectorParticipant> sectorParticipants = sectors.join("sectorParticipants", JoinType.LEFT);
+                Join<SectorParticipant, User> users = sectorParticipants.join("student", JoinType.LEFT);
+
+                // Добавляем условие по пользователю
+                predicates.add(cb.equal(users.get("id"), filter.getCurrentUserId()));
+
+                // Добавляем DISTINCT чтобы избежать дубликатов
+                query.distinct(true);
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

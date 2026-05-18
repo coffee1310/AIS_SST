@@ -81,4 +81,8 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<EventOrganizer> organizers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<EventRole> eventRoles = new ArrayList<>();
 }

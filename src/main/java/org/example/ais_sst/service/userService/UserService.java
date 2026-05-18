@@ -1,11 +1,12 @@
 package org.example.ais_sst.service.userService;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.user.UserFilterDTO;
 import org.example.ais_sst.dto.user.UserProfileInfoDTO;
-import org.example.ais_sst.dto.user.UserProjectionDTO;
 import org.example.ais_sst.dto.user.UserResponseDTO;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.example.ais_sst.entity.User;
@@ -16,16 +17,14 @@ import org.example.ais_sst.mapper.UserMapper;
 import org.example.ais_sst.repository.SectorParticipantRepository;
 import org.example.ais_sst.repository.SocialStatusStudentsRepository;
 import org.example.ais_sst.repository.UserRepository;
-import org.example.ais_sst.utils.ImageUtil;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
-import java.sql.Date;           // ← важно
-import java.sql.Timestamp;      // ← важно
+import java.sql.Date;
 import java.text.Collator;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,23 +38,47 @@ public class UserService implements UserServiceImpl {
     private final SectorParticipantRepository sectorParticipantRepository;
     private final UserPhotoService userPhotoService; // Добавлено
 
+    private final Cache<Long, UserProfileInfoDTO> userProfileCache = Caffeine.newBuilder()
+            .maximumSize(1000)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .recordStats()
+            .build();
+
     @Override
     public UserProfileInfoDTO getUserBasicInfo(Long userId) {
+        // Проверяем кэш
+        UserProfileInfoDTO cached = userProfileCache.getIfPresent(userId);
+        if (cached != null) {
+            log.debug("Returning user {} from cache", userId);
+            return cached;
+        }
+
+        log.debug("Loading user {} from database", userId);
+
+        // Загружаем из БД
         User user = userRepository.findUserById(userId)
                 .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
 
+        UserProfileInfoDTO result = buildUserProfileDTO(user);
+
+        // Сохраняем в кэш
+        userProfileCache.put(userId, result);
+
+        return result;
+    }
+
+    private UserProfileInfoDTO buildUserProfileDTO(User user) {
         String photoBase64 = user.getPathToPhoto() != null && !user.getPathToPhoto().isEmpty()
                 ? userPhotoService.getPhotoAsBase64(user.getPathToPhoto())
                 : null;
 
-        // Получаем социальные статусы
-        List<String> socialStatuses = socialStatusStudentRepository.findSocialStatusTitlesByStudentId(userId);
+        List<String> socialStatuses = socialStatusStudentRepository.findSocialStatusTitlesByStudentId(user.getId());
 
-        // Получаем информацию о секторе где пользователь координатор
         Long coordinatorSectorId = null;
         String coordinatorSectorTitle = null;
 
-        List<Object[]> coordinatorInfoList = sectorParticipantRepository.findCoordinatorSectorInfoByUserId(userId);
+        List<Object[]> coordinatorInfoList = sectorParticipantRepository.findCoordinatorSectorInfoByUserId(user.getId());
         if (!coordinatorInfoList.isEmpty()) {
             Object[] info = coordinatorInfoList.get(0);
             if (info.length > 0 && info[0] != null) {
@@ -66,14 +89,13 @@ public class UserService implements UserServiceImpl {
             }
         }
 
-        // НОВОЕ: получаем список секторов, в которых состоит пользователь (активные участники)
         List<String> userSectors = sectorParticipantRepository.findSectorTitlesByUserIdAndStatus(
-                userId, SectorParticipantStatuses.Активный);
+                user.getId(), SectorParticipantStatuses.Активный);
 
-        log.info("User {} is member of {} sectors: {}", userId, userSectors.size(), userSectors);
+        log.info("User {} is member of {} sectors: {}", user.getId(), userSectors.size(), userSectors);
 
         return UserProfileInfoDTO.builder()
-                .id(userId)
+                .id(user.getId())
                 .name(user.getName())
                 .surname(user.getSurname())
                 .patronymic(user.getPatronymic())
@@ -93,10 +115,10 @@ public class UserService implements UserServiceImpl {
                 .coordinatorSector(coordinatorSectorTitle)
                 .coordinatorSectorId(coordinatorSectorId)
                 .coordinatorSectorTitle(coordinatorSectorTitle)
-                .shortSpecialityTitle(user.getSpeciality().getShortTitle())
+                .shortSpecialityTitle(user.getSpeciality() != null ? user.getSpeciality().getShortTitle() : null)
                 .events_count(0)
                 .points_count(0)
-                .userSectors(userSectors)  // НОВОЕ поле
+                .userSectors(userSectors)
                 .build();
     }
 

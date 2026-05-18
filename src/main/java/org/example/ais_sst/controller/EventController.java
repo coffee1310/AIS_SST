@@ -77,6 +77,8 @@ public class EventController extends BaseController {
 
             @RequestParam(required = false) Long creatorId,   // ← теперь просто параметр, без подстановки
 
+            @RequestParam(required = false) Boolean isResponsibleSector,
+
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -102,7 +104,9 @@ public class EventController extends BaseController {
                 .isDraft(isDraft)
                 .isCompleted(isCompleted)
                 .isActive(isActive)
-                .creatorId(creatorId)                    // ← теперь null, если параметр не передан
+                .creatorId(creatorId)
+                .isResponsibleSector(isResponsibleSector)  // Добавляем\
+                .currentUserId(userDetails != null ? userDetails.getId() : null)
                 .build();
 
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
