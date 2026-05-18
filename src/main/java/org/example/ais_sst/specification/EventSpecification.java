@@ -63,6 +63,16 @@ public class EventSpecification {
                 predicates.add(cb.equal(root.get("eventCreator").get("id"), filter.getCreatorId()));
             }
 
+            if (filter.getIsOrganizer() != null && filter.getIsOrganizer() && filter.getCurrentUserId() != null) {
+                System.out.println("Applying organizer filter for user: " + filter.getCurrentUserId());
+                // Используем INNER JOIN
+                Join<Event, EventOrganizer> organizersJoin = root.join("organizers", JoinType.INNER);
+                predicates.add(cb.equal(organizersJoin.get("user").get("id"), filter.getCurrentUserId()));
+                query.distinct(true);
+            } else {
+                System.out.println("Organizer filter NOT applied");
+            }
+
             // Фильтрация по секторам, где пользователь является участником
             if (filter.getIsResponsibleSector() != null &&
                     filter.getIsResponsibleSector() &&
@@ -78,7 +88,6 @@ public class EventSpecification {
                 // Добавляем условие по пользователю
                 predicates.add(cb.equal(users.get("id"), filter.getCurrentUserId()));
 
-                // Добавляем DISTINCT чтобы избежать дубликатов
                 query.distinct(true);
             }
 

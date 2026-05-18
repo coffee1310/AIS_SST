@@ -78,6 +78,7 @@ public class EventController extends BaseController {
             @RequestParam(required = false) Long creatorId,   // ← теперь просто параметр, без подстановки
 
             @RequestParam(required = false) Boolean isResponsibleSector,
+            @RequestParam(required = false) Boolean isOrganizer,
 
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -107,6 +108,7 @@ public class EventController extends BaseController {
                 .creatorId(creatorId)
                 .isResponsibleSector(isResponsibleSector)  // Добавляем\
                 .currentUserId(userDetails != null ? userDetails.getId() : null)
+                .isOrganizer(isOrganizer)
                 .build();
 
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
