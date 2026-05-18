@@ -4,34 +4,34 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:Diplom_Stud.Pages.Activist"
-      mc:Ignorable="d" d:DesignWidth="1111"
+      mc:Ignorable="d" d:DesignWidth="1111" d:DesignHeight="1280"
       Title="Home"
-      Loaded="Page_Loaded" Height="1280">
+      Loaded="Page_Loaded">
 
     <Grid Background="Transparent">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" MaxWidth="1000" Margin="40,50,40,50">
 
-                <TextBlock Text="Добро пожаловать!" FontSize="64" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                <TextBlock Text="Иванов Иван Иванович" FontSize="20" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,50"/>
+                <TextBlock Text="Добро пожаловать!" FontSize="48" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock x:Name="tbUserName" Text="Загрузка..." FontSize="20" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,50"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,60">
                     <Border Style="{StaticResource StatCardStyle}">
                         <StackPanel>
                             <TextBlock Text="Всего мероприятий:" Foreground="#02B3BA" FontSize="11" FontFamily="Montserrat Thin" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="12" Foreground="White" FontSize="48" FontFamily="Digital Pixel" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="tbEventsCount" Text="0" Foreground="White" FontSize="18" FontFamily="Digital Pixel" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                     <Border Style="{StaticResource StatCardStyle}">
                         <StackPanel>
                             <TextBlock Text="Баллы рейтинга:" Foreground="#02B3BA" FontSize="11" FontFamily="Montserrat Thin" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="125" Foreground="White" FontSize="48" FontFamily="Digital Pixel" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="tbPointsCount" Text="0" Foreground="White" FontSize="18" FontFamily="Digital Pixel" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                     <Border Style="{StaticResource StatCardStyle}">
                         <StackPanel>
                             <TextBlock Text="Место в рейтинге:" Foreground="#02B3BA" FontSize="11" FontFamily="Montserrat Thin" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="3" Foreground="White" FontSize="48" FontFamily="Digital Pixel" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="tbRank" Text="0" Foreground="White" FontSize="18" FontFamily="Digital Pixel" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -39,7 +39,7 @@
                 <Grid Margin="10,0,10,20">
                     <TextBlock Text="Мероприятия" FontSize="24" FontFamily="Digital Pixel" Foreground="White" VerticalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="Все мероприятия" Style="{StaticResource PurpleOutlineButtonStyle}" Margin="0,0,15,0"/>
+                        <Button Content="Все мероприятия" Style="{StaticResource PurpleOutlineButtonStyle}" Margin="0,0,15,0" Click="AllEvents_Click"/>
                         <Button Style="{StaticResource PurpleArrowButtonStyle}" Margin="0,0,10,0">
                             <Path Data="M10,1 L4,7 L10,13 M4,7 L16,7" Stroke="White" StrokeThickness="2" Stretch="Uniform" Width="14" Height="10"/>
                         </Button>
@@ -49,88 +49,51 @@
                     </StackPanel>
                 </Grid>
 
-                <UniformGrid Columns="3" Margin="0,0,0,60">
-                    <Border Style="{StaticResource EventCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
+                <ItemsControl x:Name="EventsItemsControl" Margin="0,0,0,60">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource EventCardStyle}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="{Binding CardBorderThickness}" Cursor="Hand" MouseLeftButtonUp="EventCard_Click" Tag="{Binding Id}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
 
-                            <Border Grid.Row="0" CornerRadius="12" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/event1.png" Stretch="UniformToFill"/>
-                                </Border.Background>
+                                    <Border Grid.Row="0" CornerRadius="12" ClipToBounds="True" Height="130" Margin="15,15,15,0">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{Binding Image}" Stretch="UniformToFill"/>
+                                        </Border.Background>
+                                        <Grid>
+                                            <Border Background="#A084FB" CornerRadius="8" Padding="12,6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,10,0" Visibility="{Binding OrganizerBadgeVisibility}">
+                                                <TextBlock Text="Вы организатор" Foreground="White" FontSize="10" FontFamily="Montserrat" FontWeight="Bold"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <StackPanel Grid.Row="1" Margin="15,15,15,20">
+                                        <TextBlock Text="{Binding Title}" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                            <Path Data="M8,0 A8,8 0 1,0 8,16 A8,8 0 0,0 8,0 Z M8,2 V8 L12,10" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
+                                            <TextBlock Text="{Binding DateTimeDisplay}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="M8,0 C3.5,0 0,3.5 0,8 C0,13.5 8,16 8,16 C8,16 16,13.5 16,8 C16,3.5 12.5,0 8,0 Z M8,11 A3,3 0 1,1 8,5 A3,3 0 0,1 8,11 Z" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
+                                            <TextBlock Text="{Binding Venue}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
                             </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                            <StackPanel Grid.Row="1" Margin="15,15,15,20">
-                                <TextBlock Text="Конференция по карьере" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Path Data="M8,0 A8,8 0 1,0 8,16 A8,8 0 0,0 8,0 Z M8,2 V8 L12,10" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
-                                    <TextBlock Text="1 июня, 10:00" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="M8,0 C3.5,0 0,3.5 0,8 C0,13.5 8,16 8,16 C8,16 16,13.5 16,8 C16,3.5 12.5,0 8,0 Z M8,11 A3,3 0 1,1 8,5 A3,3 0 0,1 8,11 Z" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
-                                    <TextBlock Text="Авангардная улица, 7" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                <TextBlock x:Name="EmptyEventsText" Text="Доступных мероприятий пока нет." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,-40,0,60" Visibility="Collapsed"/>
 
-                    <Border Style="{StaticResource EventCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Border Grid.Row="0" CornerRadius="12" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/event2.png" Stretch="UniformToFill"/>
-                                </Border.Background>
-                            </Border>
-
-                            <StackPanel Grid.Row="1" Margin="15,15,15,20">
-                                <TextBlock Text="Встреча с выпускниками" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Path Data="M8,0 A8,8 0 1,0 8,16 A8,8 0 0,0 8,0 Z M8,2 V8 L12,10" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
-                                    <TextBlock Text="1 июня, 12:00" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="M8,0 C3.5,0 0,3.5 0,8 C0,13.5 8,16 8,16 C8,16 16,13.5 16,8 C16,3.5 12.5,0 8,0 Z M8,11 A3,3 0 1,1 8,5 A3,3 0 0,1 8,11 Z" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
-                                    <TextBlock Text="Кронштадтский бульвар, 37Б" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource EventCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Border Grid.Row="0" CornerRadius="12" Height="130" Margin="15,15,15,0">
-                                <Border.Background>
-                                    <ImageBrush ImageSource="/Resources/event3.png" Stretch="UniformToFill"/>
-                                </Border.Background>
-                            </Border>
-
-                            <StackPanel Grid.Row="1" Margin="15,15,15,20">
-                                <TextBlock Text="День открытых дверей" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Path Data="M8,0 A8,8 0 1,0 8,16 A8,8 0 0,0 8,0 Z M8,2 V8 L12,10" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
-                                    <TextBlock Text="5 июня, 12:00" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Data="M8,0 C3.5,0 0,3.5 0,8 C0,13.5 8,16 8,16 C8,16 16,13.5 16,8 C16,3.5 12.5,0 8,0 Z M8,11 A3,3 0 1,1 8,5 A3,3 0 0,1 8,11 Z" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
-                                    <TextBlock Text="Кронштадтский бульвар, 37Б" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </UniformGrid>
 
                 <Grid Margin="10,0,10,20">
                     <TextBlock Text="Текущие задачи" FontSize="24" FontFamily="Digital Pixel" Foreground="White" VerticalAlignment="Center"/>
@@ -161,7 +124,6 @@
                             </DockPanel>
                         </Grid>
                     </Border>
-
                     <Border Style="{StaticResource TaskCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -177,7 +139,6 @@
                             </DockPanel>
                         </Grid>
                     </Border>
-
                     <Border Style="{StaticResource TaskCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -197,5 +158,12 @@
 
             </StackPanel>
         </ScrollViewer>
+
+        <Grid x:Name="LoadingOverlay" Background="#E61A1A2E" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4" Foreground="#02B3BA" Background="#2A283C" BorderThickness="0" Margin="0,0,0,15"/>
+                <TextBlock Text="Загрузка данных..." Foreground="White" FontFamily="Digital Pixel" FontSize="18" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>

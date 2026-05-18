@@ -1,5 +1,4 @@
 ﻿using Diplom_Stud.Components;
-using Diplom_Stud.Pages.Coordinator;
 using Diplom_Stud.Pages.General;
 using System;
 using System.Collections.Generic;
@@ -80,64 +79,43 @@ namespace Diplom_Stud.Pages.Activist
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                HttpResponseMessage response = await _httpClient.GetAsync("/api/events?page=0&size=50&sortBy=id&sortDirection=DESC");
+                var user = App.CurrentUserProfile;
+                int userId = user?.id ?? 0;
+                bool isCoordinator = user != null && (user.roleTitle == "Coordinator" || user.roleTitle == "Sector_coordinator" || user.roleTitle == "Admin");
 
-                if (response.IsSuccessStatusCode)
+                var activeEventsDict = new Dictionary<int, EventViewModel>();
+
+                if (!App.IsActivistMode && isCoordinator)
                 {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var pageData = JsonSerializer.Deserialize<EventPageResponse>(responseBody, options);
+                    var draftsDto = await FetchEventsFromApi($"/api/events?isDraft=true&creatorId={userId}&page=0&size=100");
+                    var myEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&creatorId={userId}&page=0&size=100");
+                    var orgEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&isOrganizer=true&page=0&size=100");
+                    var sectorEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&isResponsibleSector=true&page=0&size=100");
 
-                    if (pageData?.content != null)
-                    {
-                        foreach (var ev in pageData.content)
-                        {
-                            string dateDisplay = "Дата не указана";
-                            if (!string.IsNullOrEmpty(ev.dateOfEvent) && DateTime.TryParse(ev.dateOfEvent, out DateTime date))
-                            {
-                                dateDisplay = date.ToString("d MMMM", new CultureInfo("ru-RU"));
-                            }
-
-                            if (!string.IsNullOrEmpty(ev.startTime) && ev.startTime.Length >= 5)
-                            {
-                                dateDisplay += $", {ev.startTime.Substring(0, 5)}";
-                            }
-
-                            ImageSource imgSource = new BitmapImage(new Uri("pack://application:,,,/Resources/event1.png")); 
-                            if (!string.IsNullOrEmpty(ev.photo))
-                            {
-                                var decodedBmp = GetImageFromBase64(ev.photo);
-                                if (decodedBmp != null) imgSource = decodedBmp;
-                            }
-
-                            string displayTitle = ev.title;
-                            Brush titleColor = Brushes.White;
-
-                            if (ev.isDraft)
-                            {
-                                displayTitle += " (Черновик)";
-                                titleColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#A084FB")); 
-                            }
-
-                            _allEvents.Add(new EventViewModel
-                            {
-                                Id = ev.id,
-                                Title = displayTitle,
-                                TitleColor = titleColor,
-                                DateTimeDisplay = dateDisplay,
-                                Venue = ev.venue ?? "Место не указано",
-                                Image = imgSource
-                            });
-                        }
-                    }
-
-                    EventsItemsControl.ItemsSource = _allEvents;
-                    if (_allEvents.Count == 0) EmptyEventsText.Visibility = Visibility.Visible;
+                    foreach (var ev in orgEventsDto) activeEventsDict[ev.id] = MapToViewModel(ev, true);
+                    foreach (var ev in myEventsDto) if (!activeEventsDict.ContainsKey(ev.id)) activeEventsDict[ev.id] = MapToViewModel(ev, false);
+                    foreach (var ev in sectorEventsDto) if (!activeEventsDict.ContainsKey(ev.id)) activeEventsDict[ev.id] = MapToViewModel(ev, false);
+                    foreach (var ev in draftsDto) if (!activeEventsDict.ContainsKey(ev.id)) activeEventsDict[ev.id] = MapToViewModel(ev, false);
                 }
                 else
                 {
-                    CustomMessageBox.Show($"Ошибка загрузки мероприятий: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    var orgEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isOrganizer=true&page=0&size=100");
+                    var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isResponsibleSector=true&page=0&size=100");
+                    var publicEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isPublic=true&page=0&size=100");
+
+                    foreach (var ev in orgEventsDto) activeEventsDict[ev.id] = MapToViewModel(ev, true);
+                    foreach (var ev in sectorEventsDto) if (!activeEventsDict.ContainsKey(ev.id)) activeEventsDict[ev.id] = MapToViewModel(ev, false);
+                    foreach (var ev in publicEventsDto) if (!activeEventsDict.ContainsKey(ev.id)) activeEventsDict[ev.id] = MapToViewModel(ev, false);
                 }
+
+                _allEvents = activeEventsDict.Values
+                    .OrderByDescending(v => v.IsOverdue)
+                    .ThenBy(v => v.EventDate)
+                    .ToList();
+
+                EventsItemsControl.ItemsSource = _allEvents;
+                if (_allEvents.Count == 0) EmptyEventsText.Visibility = Visibility.Visible;
+
             }
             catch (Exception ex)
             {
@@ -147,6 +125,75 @@ namespace Diplom_Stud.Pages.Activist
             {
                 LoadingOverlay.Visibility = Visibility.Collapsed;
             }
+        }
+
+        private async Task<List<EventDto>> FetchEventsFromApi(string url)
+        {
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    string json = await response.Content.ReadAsStringAsync();
+                    var pageData = JsonSerializer.Deserialize<EventPageResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return pageData?.content ?? new List<EventDto>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка FetchEventsFromApi ({url}): {ex.Message}");
+            }
+            return new List<EventDto>();
+        }
+
+        private EventViewModel MapToViewModel(EventDto ev, bool isOrganizer)
+        {
+            string dateDisplay = "Дата не указана";
+            DateTime parsedDate = DateTime.MaxValue;
+
+            if (!string.IsNullOrEmpty(ev.dateOfEvent) && DateTime.TryParse(ev.dateOfEvent, out DateTime date))
+            {
+                parsedDate = date;
+                dateDisplay = date.ToString("d MMMM", new CultureInfo("ru-RU"));
+            }
+
+            if (!string.IsNullOrEmpty(ev.startTime) && ev.startTime.Length >= 5)
+            {
+                dateDisplay += $", {ev.startTime.Substring(0, 5)}";
+            }
+
+            ImageSource imgSource = new BitmapImage(new Uri("pack://application:,,,/Resources/event1.png"));
+            if (!string.IsNullOrEmpty(ev.photo))
+            {
+                var decodedBmp = GetImageFromBase64(ev.photo);
+                if (decodedBmp != null) imgSource = decodedBmp;
+            }
+
+            string displayTitle = ev.title;
+            Brush titleColor = Brushes.White;
+
+            if (ev.isDraft)
+            {
+                displayTitle += " (Черновик)";
+                titleColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#A084FB"));
+            }
+
+            bool isOverdue = !ev.isDraft && !ev.isCompleted && parsedDate < DateTime.Now.Date;
+
+            return new EventViewModel
+            {
+                Id = ev.id,
+                Title = displayTitle,
+                TitleColor = titleColor,
+                DateTimeDisplay = dateDisplay,
+                Venue = ev.venue ?? "Место не указано",
+                Image = imgSource,
+                EventDate = parsedDate,
+                IsOverdue = isOverdue,
+                OrganizerBadgeVisibility = isOrganizer ? Visibility.Visible : Visibility.Collapsed,
+                CardBorderBrush = isOverdue ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E81123")) : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A283C")),
+                CardBorderThickness = isOverdue ? new Thickness(2) : new Thickness(1)
+            };
         }
 
         private void tbSearch_TextChanged(object sender, TextChangedEventArgs e)
@@ -167,13 +214,23 @@ namespace Diplom_Stud.Pages.Activist
         {
             if (sender is Border border && border.Tag is int eventId)
             {
-                this.NavigationService.Navigate(new EventDetails(eventId));
+                var user = App.CurrentUserProfile;
+                bool isCoordinator = user != null && (user.roleTitle == "Coordinator" || user.roleTitle == "Sector_coordinator" || user.roleTitle == "Admin");
+
+                if (!App.IsActivistMode && isCoordinator)
+                {
+                    this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
+                }
+                else
+                {
+                    this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.EventDetails(eventId));
+                }
             }
         }
 
         private void CreateEvent_Click(object sender, RoutedEventArgs e)
         {
-            this.NavigationService.Navigate(new CreateEvent());
+            this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CreateEvent());
         }
 
         private BitmapImage GetImageFromBase64(string base64String)
@@ -260,5 +317,11 @@ namespace Diplom_Stud.Pages.Activist
         public string DateTimeDisplay { get; set; }
         public string Venue { get; set; }
         public ImageSource Image { get; set; }
+
+        public Visibility OrganizerBadgeVisibility { get; set; }
+        public DateTime EventDate { get; set; }
+        public bool IsOverdue { get; set; }
+        public Brush CardBorderBrush { get; set; }
+        public Thickness CardBorderThickness { get; set; }
     }
 }

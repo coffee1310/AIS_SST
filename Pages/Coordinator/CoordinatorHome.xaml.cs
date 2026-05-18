@@ -104,6 +104,7 @@ namespace Diplom_Stud.Pages.Coordinator
                     .ThenBy(v => v.EventDate)
                     .ToList();
 
+                if (draftsVm.Count > 0)
                 {
                     DraftsHeaderGrid.Visibility = Visibility.Visible;
                     DraftsItemsControl.Visibility = Visibility.Visible;
@@ -213,7 +214,6 @@ namespace Diplom_Stud.Pages.Coordinator
 
             NavigationService?.Navigate(new Diplom_Stud.Pages.Activist.Home());
         }
-
 
         private void EventCard_Click(object sender, MouseButtonEventArgs e)
         {
