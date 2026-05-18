@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.example.ais_sst_mobile.domain.model.AppRole
+import com.example.ais_sst_mobile.navigation.FullScreenRoute
 import com.example.ais_sst_mobile.navigation.HomeComponent
 import com.example.ais_sst_mobile.navigation.HomeFeedComponent
 import com.example.ais_sst_mobile.platformTransitionAnimation
@@ -53,7 +54,9 @@ fun HomeFeedScreen(component: HomeFeedComponent) {
             onNavigateToUpcomingEventDetails = component.onNavigateToUpcomingEventDetails,
             onNavigateToAvailableEventDetails = component.onNavigateToAvailableEventDetails
         )
-        AppRole.SECTOR_COORDINATOR -> CoordinatorHomeContent()
+        AppRole.SECTOR_COORDINATOR -> CoordinatorHomeContent(
+            onNavigateToCreateEvent = { component.onNavigateToFullScreen(FullScreenRoute.CreateEvent) }
+        )
         AppRole.CHAIRMAN -> ChairmanHomeContent(screenModel)
         AppRole.CURATOR -> CuratorHomeContent(screenModel)
         AppRole.DEPUTY_CHAIRMAN -> DeputyChairmanHomeContent(screenModel)

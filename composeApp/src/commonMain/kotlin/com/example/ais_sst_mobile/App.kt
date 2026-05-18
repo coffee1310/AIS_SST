@@ -29,6 +29,8 @@ import com.example.ais_sst_mobile.theme.AppTheme
 import com.example.ais_sst_mobile.presentation.sectors.edit.EditSectorScreen
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
+import com.example.ais_sst_mobile.presentation.events.create.CreateEventScreen
+
 @OptIn(ExperimentalDecomposeApi::class)
 @Composable
 fun App(root: RootComponent) {
@@ -83,6 +85,9 @@ fun App(root: RootComponent) {
                             instance.component
                         )
                         is RootComponent.Child.EditRole -> EditRoleScreen(
+                            component = instance.component
+                        )
+                        is RootComponent.Child.CreateEvent -> CreateEventScreen(
                             component = instance.component
                         )
                     }

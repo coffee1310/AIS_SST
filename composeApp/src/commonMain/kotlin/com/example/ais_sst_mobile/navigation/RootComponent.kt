@@ -33,6 +33,7 @@ interface RootComponent {
         class EventRoles(val component: EventRolesComponent) : Child()
         class CreateRole(val component: CreateRoleComponent) : Child()
         class EditRole(val component: EditRoleComponent) : Child()
+        class CreateEvent(val component: CreateEventComponent) : Child()
     }
 }
 
@@ -95,6 +96,7 @@ class DefaultRootComponent(
                             is FullScreenRoute.EventGlobalRoles -> navigation.pushNew(Config.EventRoles)
                             is FullScreenRoute.CreateRole -> navigation.pushNew(Config.CreateRole)
                             is FullScreenRoute.EditRole -> navigation.pushNew(Config.EditRole(route.roleId))
+                            is FullScreenRoute.CreateEvent -> navigation.pushNew(Config.CreateEvent)
                         }
                     }
                 )
@@ -169,7 +171,9 @@ class DefaultRootComponent(
             is Config.EditRole -> RootComponent.Child.EditRole(
                 EditRoleComponent(componentContext = context, roleId = config.roleId, onGoBack = { navigation.pop() })
             )
-
+            is Config.CreateEvent -> RootComponent.Child.CreateEvent(
+                CreateEventComponent(componentContext = context, onGoBack = { navigation.pop() })
+            )
         }
 
     @Serializable
@@ -187,5 +191,6 @@ class DefaultRootComponent(
         @Serializable data object EventRoles : Config
         @Serializable data object CreateRole : Config
         @Serializable data class EditRole(val roleId: Int) : Config
+        @Serializable data object CreateEvent : Config
     }
 }

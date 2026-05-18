@@ -29,7 +29,7 @@ import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 import org.koin.compose.getKoin
 
 @Composable
-fun CoordinatorHomeContent() {
+fun CoordinatorHomeContent(onNavigateToCreateEvent: () -> Unit) {
     val koin = getKoin()
     val screenModel = remember { koin.get<CoordinatorHomeScreenModel>() }
 
@@ -136,7 +136,7 @@ fun CoordinatorHomeContent() {
                 .background(MaterialTheme.colorScheme.secondary)
                 .clickable {
                     when (selectedTab) {
-                        0 -> { /* TODO: Переход на Создание мероприятия */ }
+                        0 -> { onNavigateToCreateEvent() }
                         1 -> { /* TODO: Переход на Создание задачи */ }
                     }
                 }

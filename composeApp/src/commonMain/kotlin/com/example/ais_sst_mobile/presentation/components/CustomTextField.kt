@@ -30,6 +30,7 @@ fun CustomTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     suffix: @Composable (() -> Unit)? = null,
     readOnly: Boolean = false
@@ -64,6 +65,7 @@ fun CustomTextField(
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
+        leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
         suffix = suffix,
         textStyle = MaterialTheme.typography.bodyLarge,
@@ -78,8 +80,7 @@ fun CustomTextField(
             errorBorderColor = MaterialTheme.colorScheme.error,
             errorCursorColor = MaterialTheme.colorScheme.error,
             errorSupportingTextColor = MaterialTheme.colorScheme.error,
-
-            ),
+        ),
         shape = MaterialTheme.shapes.medium,
         modifier = modifier
             .fillMaxWidth()
