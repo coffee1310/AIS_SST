@@ -2,7 +2,6 @@ package com.example.ais_sst_mobile.presentation.home
 
 import androidx.lifecycle.ViewModel
 import com.example.ais_sst_mobile.core.prefs.SessionManager
-import com.example.ais_sst_mobile.presentation.components.EventUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 

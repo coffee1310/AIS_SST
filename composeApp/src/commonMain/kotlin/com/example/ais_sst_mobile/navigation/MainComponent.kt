@@ -38,7 +38,7 @@ class MainComponent(
 
     private fun createChild(config: Config, context: ComponentContext): Child =
         when (config) {
-            is Config.Home -> Child.Home(HomeComponent(context))
+            is Config.Home -> Child.Home(HomeComponent(context, onNavigateToFullScreen))
             is Config.Tasks -> Child.Tasks(TasksComponent(context))
             is Config.Calendar -> Child.Calendar(CalendarComponent(context))
             is Config.Sectors -> Child.Sectors(SectorsComponent(context, onNavigateToFullScreen))

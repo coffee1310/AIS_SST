@@ -4,7 +4,8 @@ import androidx.compose.runtime.Composable
 import com.arkivanov.decompose.extensions.compose.stack.animation.StackAnimation
 import com.arkivanov.essenty.backhandler.BackHandler
 import io.github.robinpcrd.cupertino.decompose.cupertinoPredictiveBackAnimation
-
+import com.arkivanov.decompose.extensions.compose.stack.animation.slide
+import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 
 @Composable
 actual fun <C : Any, T : Any> platformBackAnimation(
@@ -14,3 +15,6 @@ actual fun <C : Any, T : Any> platformBackAnimation(
     backHandler = backHandler,
     onBack = onBack
 )
+
+@Composable
+actual fun <C : Any, T : Any> platformTransitionAnimation(): StackAnimation<C, T>? = stackAnimation(slide())

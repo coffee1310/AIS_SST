@@ -34,7 +34,6 @@ class RegisterComponent(
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
 
-class HomeComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 class TasksComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 class CalendarComponent(componentContext: ComponentContext) : ComponentContext by componentContext
 
@@ -194,5 +193,99 @@ class CreateRoleComponent(
 class EditRoleComponent(
     componentContext: ComponentContext,
     val roleId: Int,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+class HomeComponent(
+    componentContext: ComponentContext,
+    val onNavigateToFullScreen: (FullScreenRoute) -> Unit
+) : ComponentContext by componentContext {
+
+    private val navigation = StackNavigation<Config>()
+
+    val stack: Value<ChildStack<*, Child>> = childStack(
+        source = navigation,
+        serializer = Config.serializer(),
+        initialConfiguration = Config.Feed,
+        handleBackButton = true,
+        childFactory = ::createChild
+    )
+    fun onBackClicked() {
+        navigation.pop()
+    }
+    private fun createChild(config: Config, context: ComponentContext): Child =
+        when (config) {
+            is Config.Feed -> Child.Feed(
+                HomeFeedComponent(
+                    componentContext = context,
+                    onNavigateToUpcoming = { navigation.pushNew(Config.UpcomingEvents) },
+                    onNavigateToUpcomingEventDetails = { id -> navigation.pushNew(Config.UpcomingEventDetails(id)) },
+                    onNavigateToAvailableEventDetails = { id -> navigation.pushNew(Config.AvailableEventDetails(id)) },
+                    onNavigateToFullScreen = onNavigateToFullScreen
+                )
+            )
+            // ВОЗВРАЩАЕМ ВЕТКУ UpcomingEvents
+            is Config.UpcomingEvents -> Child.UpcomingEvents(
+                UpcomingEventsComponent(
+                    componentContext = context,
+                    onGoBack = { navigation.pop() },
+                    onNavigateToUpcomingEventDetails = { id -> navigation.pushNew(Config.UpcomingEventDetails(id)) }
+                )
+            )
+            is Config.UpcomingEventDetails -> Child.UpcomingEventDetails(
+                UpcomingEventDetailsComponent(
+                    componentContext = context,
+                    eventId = config.eventId,
+                    onGoBack = { navigation.pop() }
+                )
+            )
+            is Config.AvailableEventDetails -> Child.AvailableEventDetails(
+                AvailableEventDetailsComponent(
+                    componentContext = context,
+                    eventId = config.eventId,
+                    onGoBack = { navigation.pop() }
+                )
+            )
+        }
+
+    sealed class Child {
+        class Feed(val component: HomeFeedComponent) : Child()
+        class UpcomingEvents(val component: UpcomingEventsComponent) : Child() // ВЕРНУЛИ СЮДА
+        class UpcomingEventDetails(val component: UpcomingEventDetailsComponent) : Child()
+        class AvailableEventDetails(val component: AvailableEventDetailsComponent) : Child()
+    }
+
+    @Serializable
+    private sealed interface Config {
+        @Serializable data object Feed : Config
+        @Serializable data object UpcomingEvents : Config // ВЕРНУЛИ СЮДА
+        @Serializable data class UpcomingEventDetails(val eventId: Int) : Config
+        @Serializable data class AvailableEventDetails(val eventId: Int) : Config
+    }
+}
+
+class HomeFeedComponent(
+    componentContext: ComponentContext,
+    val onNavigateToUpcoming: () -> Unit,
+    val onNavigateToUpcomingEventDetails: (Int) -> Unit,
+    val onNavigateToAvailableEventDetails: (Int) -> Unit,
+    val onNavigateToFullScreen: (FullScreenRoute) -> Unit
+) : ComponentContext by componentContext
+
+class UpcomingEventsComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit,
+    val onNavigateToUpcomingEventDetails: (Int) -> Unit
+) : ComponentContext by componentContext
+
+class UpcomingEventDetailsComponent(
+    componentContext: ComponentContext,
+    val eventId: Int,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+class AvailableEventDetailsComponent(
+    componentContext: ComponentContext,
+    val eventId: Int,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

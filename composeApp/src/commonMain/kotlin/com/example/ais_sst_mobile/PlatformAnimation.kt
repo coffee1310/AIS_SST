@@ -9,3 +9,7 @@ expect fun <C : Any, T : Any> platformBackAnimation(
     backHandler: BackHandler,
     onBack: () -> Unit
 ): StackAnimation<C, T>
+
+
+@Composable
+expect fun <C : Any, T : Any> platformTransitionAnimation(): StackAnimation<C, T>?

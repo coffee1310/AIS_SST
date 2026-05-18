@@ -169,6 +169,7 @@ class DefaultRootComponent(
             is Config.EditRole -> RootComponent.Child.EditRole(
                 EditRoleComponent(componentContext = context, roleId = config.roleId, onGoBack = { navigation.pop() })
             )
+
         }
 
     @Serializable

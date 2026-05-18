@@ -13,7 +13,6 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.example.ais_sst_mobile.navigation.MainComponent
 import com.example.ais_sst_mobile.navigation.SectorsComponent
-import com.example.ais_sst_mobile.presentation.components.AppBackground
 import com.example.ais_sst_mobile.presentation.components.CustomBackButton
 import com.example.ais_sst_mobile.presentation.home.HomeScreen
 import com.example.ais_sst_mobile.presentation.profile.ProfileScreen
@@ -26,6 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.domain.repository.UserRepository
+import com.example.ais_sst_mobile.navigation.HomeComponent
+import com.example.ais_sst_mobile.presentation.components.AppBackground
 import org.koin.compose.getKoin
 
 @Composable
@@ -75,6 +76,30 @@ fun MainScreen(component: MainComponent) {
                 }
             }
         }
+    } else if (activeComponent is MainComponent.Child.Home) {
+        val homeStack by activeComponent.component.stack.subscribeAsState()
+        val homeActive = homeStack.active.instance
+
+        when (homeActive) {
+            is HomeComponent.Child.UpcomingEvents -> {
+                title = "Ближайшие мероприятия"
+                showBackButton = true
+                onBackClick = { homeActive.component.onGoBack() }
+            }
+            is HomeComponent.Child.UpcomingEventDetails -> {
+                title = "Мероприятие"
+                showBackButton = true
+                onBackClick = { homeActive.component.onGoBack() }
+            }
+            is HomeComponent.Child.AvailableEventDetails -> {
+                title = "Регистрация на мероприятие"
+                showBackButton = true
+                onBackClick = { homeActive.component.onGoBack() }
+            }
+            else -> {
+                title = "Главная"
+            }
+        }
     } else {
         title = when (activeComponent) {
             is MainComponent.Child.Home -> "Главная"
@@ -113,7 +138,7 @@ fun MainScreen(component: MainComponent) {
                     .padding(paddingValues),
             ) { child ->
                 when (val instance = child.instance) {
-                    is MainComponent.Child.Home -> HomeScreen()
+                    is MainComponent.Child.Home -> HomeScreen(instance.component)
                     is MainComponent.Child.Tasks -> Box(Modifier.fillMaxSize()) { Text("Задачи", color = Color.White) }
                     is MainComponent.Child.Calendar -> Box(Modifier.fillMaxSize()) { Text("Календарь", color = Color.White) }
                     is MainComponent.Child.Sectors -> SectorsTab(instance.component)

@@ -1,5 +1,7 @@
-package com.example.ais_sst_mobile.presentation.components
+package com.example.ais_sst_mobile.presentation.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,10 +11,13 @@ import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -96,6 +101,63 @@ fun EventCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomTabRow(
+    tabs: List<Pair<String, ImageVector>>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(53.dp)
+            .padding(horizontal = 16.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.onBackground)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        tabs.forEachIndexed { index, (title, icon) ->
+            val isSelected = selectedTab == index
+            val weight by animateFloatAsState(targetValue = if (isSelected) 4f else 1f, label = "tabWidth")
+
+            Box(
+                modifier = Modifier
+                    .weight(weight)
+                    .fillMaxHeight()
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                    .clickable { onTabSelected(index) },
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSelected) Color.White else Color(0xFFCBCBCB),
+                        modifier = Modifier.size(20.dp)
+                    )
+
+                    AnimatedVisibility(visible = isSelected) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 6.dp)
+                        )
+                    }
+                }
             }
         }
     }

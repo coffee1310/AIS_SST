@@ -11,11 +11,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.stack.Children
-import com.arkivanov.decompose.extensions.compose.stack.animation.slide
-import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.navigation.SectorsComponent
+import com.example.ais_sst_mobile.platformTransitionAnimation
 import org.koin.compose.getKoin
 
 @Composable
@@ -38,7 +37,7 @@ fun SectorsTab(component: SectorsComponent) {
     Children(
         stack = childStack,
         modifier = Modifier.fillMaxSize(),
-        animation = stackAnimation(slide())
+        animation = platformTransitionAnimation()
     ) { child ->
         when (val instance = child.instance) {
             is SectorsComponent.Child.List -> SectorsScreen(

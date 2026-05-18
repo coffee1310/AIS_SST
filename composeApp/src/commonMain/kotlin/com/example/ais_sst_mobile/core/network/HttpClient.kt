@@ -43,14 +43,14 @@ fun createHttpClient(sessionManager: SessionManager): HttpClient {
             level = LogLevel.ALL
         }
         // мб удалить, если будут случайные вылеты
-        HttpResponseValidator {
-            validateResponse { response ->
-                val statusCode = response.status.value
-                if (statusCode == 401 || statusCode == 403) {
-                    sessionManager.logout()
-                }
-            }
-        }
+//        HttpResponseValidator {
+//            validateResponse { response ->
+//                val statusCode = response.status.value
+//                if (statusCode == 401 || statusCode == 403) {
+//                    sessionManager.logout()
+//                }
+//            }
+//        }
         defaultRequest {
             url(BASE_URL)
             contentType(ContentType.Application.Json)
