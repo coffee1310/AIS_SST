@@ -17,5 +17,4 @@ public class SectorIntroductionRequestDTOSummary {
 
     @NotNull
     private SectorIntroductionStatus status;
-
 }

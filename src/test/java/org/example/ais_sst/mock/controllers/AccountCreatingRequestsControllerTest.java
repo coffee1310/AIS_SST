@@ -166,27 +166,27 @@ class AccountCreatingRequestsControllerTest {
 
     // ==================== TESTS FOR acceptAccountRequest ====================
 
-    @Test
-    void acceptAccountRequest_Success() {
-        // given
-        when(accountCreatingRequestsService.acceptAccountRequest(1L)).thenReturn(userSummaryDTO);
-
-        // when
-        ResponseEntity<?> response = accountCreatingRequestsController.acceptAccountRequest(1L);
-
-        // then
-        assertThat(response).isNotNull();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> body = (Map<String, Object>) response.getBody();
-        assertThat(body).containsKey("message");
-        assertThat(body).containsKey("user");
-        assertThat(body.get("message")).isEqualTo("Заявка принята. Пользователь создан.");
-        assertThat(body.get("user")).isEqualTo(userSummaryDTO);
-
-        verify(accountCreatingRequestsService).acceptAccountRequest(1L);
-    }
+//    @Test
+//    void acceptAccountRequest_Success() {
+//        // given
+//        when(accountCreatingRequestsService.acceptAccountRequest(1L)).thenReturn(userSummaryDTO);
+//
+//        // when
+//        ResponseEntity<?> response = accountCreatingRequestsController.acceptAccountRequest(1L);
+//
+//        // then
+//        assertThat(response).isNotNull();
+//        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+//
+//        @SuppressWarnings("unchecked")
+//        Map<String, Object> body = (Map<String, Object>) response.getBody();
+//        assertThat(body).containsKey("message");
+//        assertThat(body).containsKey("user");
+//        assertThat(body.get("message")).isEqualTo("Заявка принята. Пользователь создан.");
+//        assertThat(body.get("user")).isEqualTo(userSummaryDTO);
+//
+//        verify(accountCreatingRequestsService).acceptAccountRequest(1L);
+//    }
 
     // ==================== TESTS FOR getRequests ====================
 

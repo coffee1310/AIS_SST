@@ -55,8 +55,8 @@ public class AccountCreatingRequestsController extends BaseController {
 
     @PutMapping("/accept/{id}")
     public ResponseEntity<?> acceptAccountRequest(@PathVariable Long id) {
-        UserSummaryDTO createdUser = accountCreatingRequestsService.acceptAccountRequest(id);
-        return createSuccessResponse("Заявка принята. Пользователь создан.", createdUser);
+        accountCreatingRequestsService.acceptAccountRequest(id);
+        return createSuccessResponse("Заявка принята. Пользователь создан.");
     }
 
     @GetMapping

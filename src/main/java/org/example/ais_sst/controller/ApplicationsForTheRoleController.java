@@ -79,7 +79,7 @@ public class ApplicationsForTheRoleController extends BaseController {
     }
 
     @GetMapping
-    @Operation(summary = "Получить все заявки с фильтрами")
+    @Operation(summary = "Получить все заявки с фильтрацией")
     public ResponseEntity<Page<RoleApplicationResponseDTO>> getAllApplications(
             @RequestParam(required = false) Long id,
             @RequestParam(required = false) Long sectorParticipantId,
@@ -90,11 +90,12 @@ public class ApplicationsForTheRoleController extends BaseController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTo,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDirection) {
+            @RequestParam(defaultValue = "DESC") String sortDirection,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        logInfo("/api/role-applications", "Getting applications with filters");
+        log.info("GET /api/role-applications - Getting all applications with filters");
 
         RoleApplicationFilterDTO filter = RoleApplicationFilterDTO.builder()
                 .id(id)
@@ -107,7 +108,7 @@ public class ApplicationsForTheRoleController extends BaseController {
                 .dateTo(dateTo)
                 .build();
 
-        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
         Page<RoleApplicationResponseDTO> applications = roleApplicationService.getAllApplications(filter, pageable);
 
         return ResponseEntity.ok(applications);

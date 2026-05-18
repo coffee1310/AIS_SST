@@ -34,8 +34,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
+        String method = request.getMethod();
 
-        if (isPublicEndpoint(path)) {
+        // Проверяем, является ли эндпоинт публичным
+        if (isPublicEndpoint(path, method)) {
+            log.debug("Public endpoint: {} {}, skipping authentication", method, path);
             filterChain.doFilter(request, response);
             return;
         }
@@ -109,14 +112,43 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private boolean isPublicEndpoint(String path) {
-        return path.startsWith("/api/auth/") ||
-                path.startsWith("/api/test/") ||
-                path.equals("/api/social_status") ||
-                path.equals("/api/specialities") ||
-                path.equals("/api/group") ||
-                path.startsWith("/h2-console/") ||
-                path.equals("/error") ||
-                path.equals("/favicon.ico");
+    private boolean isPublicEndpoint(String path, String method) {
+        // Публичные эндпоинты без аутентификации
+        if (path.startsWith("/api/auth/")) {
+            return true;
+        }
+        if (path.startsWith("/api/test/")) {
+            return true;
+        }
+        if (path.equals("/api/social_status")) {
+            return true;
+        }
+        if (path.equals("/api/specialities")) {
+            return true;
+        }
+        if (path.equals("/api/group") && "GET".equals(method)) {
+            return true;
+        }
+        if (path.startsWith("/h2-console/")) {
+            return true;
+        }
+        if (path.equals("/error")) {
+            return true;
+        }
+        if (path.equals("/favicon.ico")) {
+            return true;
+        }
+
+        // ВАЖНО: разрешаем POST запросы на /api/account_requests без токена
+        if (path.equals("/api/account_requests") && "POST".equals(method)) {
+            return true;
+        }
+
+        // Разрешаем OPTIONS запросы для CORS
+        if ("OPTIONS".equals(method)) {
+            return true;
+        }
+
+        return false;
     }
 }

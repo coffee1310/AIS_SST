@@ -3,6 +3,7 @@ package org.example.ais_sst.dto.event_roles_application;
 import lombok.Builder;
 import lombok.Data;
 import org.example.ais_sst.entity.enums.RoleApplicationStatuses;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -15,8 +16,14 @@ public class RoleApplicationFilterDTO {
     private Long eventId;
     private RoleApplicationStatuses status;
     private Boolean isReserve;
-    private LocalDateTime dateFrom;
-    private LocalDateTime dateTo;
     private Long sectorParticipantId;
     private String description;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime dateFrom;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime dateTo;
+
+    private Long currentUserId;
 }

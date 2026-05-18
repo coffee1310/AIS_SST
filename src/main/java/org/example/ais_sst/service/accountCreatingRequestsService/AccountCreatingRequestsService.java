@@ -124,7 +124,7 @@ public class AccountCreatingRequestsService extends BaseEntityService {
         }, "rejectAccountRequest", id);
     }
 
-    public UserSummaryDTO acceptAccountRequest(Long id) {
+    public AccountCreatingRequestResponseDTO acceptAccountRequest(Long id) {
         return executeWithLogging(() -> {
             AccountCreatingRequest request = findEntityOrThrow(id, accountCreatingRequestsRepository::findAccountCreatingRequestById,
                     () -> new AccountCreatingRequestDoesNotExistException("Заявка не найдена"), "Request");
@@ -146,7 +146,7 @@ public class AccountCreatingRequestsService extends BaseEntityService {
             request.setStatus(AccountCreatingRequestStatus.ОДОБРЕНА);
             accountCreatingRequestsRepository.save(request);
 
-            return userMapper.toDto(savedUser);
+            return requestMapper.toResponseDto(request, accountRequestPhotoService);
         }, "acceptAccountRequest", id);
     }
 

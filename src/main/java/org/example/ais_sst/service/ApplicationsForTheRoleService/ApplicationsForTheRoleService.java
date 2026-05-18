@@ -17,8 +17,10 @@ import org.example.ais_sst.mapper.RoleApplicationMapper;
 import org.example.ais_sst.repository.EventRoleRepository;
 import org.example.ais_sst.repository.ApplicationsForTheRoleRepository;
 import org.example.ais_sst.repository.SectorParticipantRepository;
+import org.example.ais_sst.specification.RoleApplicationSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -156,27 +158,6 @@ public class ApplicationsForTheRoleService {
     }
 
     /**
-     * Получение всех заявок с фильтрами
-     */
-    @Transactional(readOnly = true)
-    public Page<RoleApplicationResponseDTO> getAllApplications(RoleApplicationFilterDTO filter, Pageable pageable) {
-        log.info("Getting applications with filters: {}", filter);
-
-        Page<ApplicationsForTheRole> applications = roleApplicationRepository.findAllWithFilters(
-                filter.getId(),
-                filter.getSectorParticipantId(),
-                filter.getEventRoleId(),
-                filter.getEventId(),
-                filter.getStatus(),
-                filter.getIsReserve(),
-                filter.getDateFrom(),
-                filter.getDateTo(),
-                pageable);
-
-        return applications.map(roleApplicationMapper::toResponseDto);
-    }
-
-    /**
      * Получение заявок текущего пользователя
      */
     @Transactional(readOnly = true)
@@ -193,6 +174,17 @@ public class ApplicationsForTheRoleService {
         }
 
         Page<ApplicationsForTheRole> applications = roleApplicationRepository.findBySectorParticipantIdIn(sectorParticipantIds, pageable);
+        return applications.map(roleApplicationMapper::toResponseDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RoleApplicationResponseDTO> getAllApplications(RoleApplicationFilterDTO filter, Pageable pageable) {
+        log.info("Getting applications with filters: {}", filter);
+
+        Specification<ApplicationsForTheRole> spec = RoleApplicationSpecification.withFilter(filter);
+
+        Page<ApplicationsForTheRole> applications = roleApplicationRepository.findAll(spec, pageable);
+
         return applications.map(roleApplicationMapper::toResponseDto);
     }
 }
