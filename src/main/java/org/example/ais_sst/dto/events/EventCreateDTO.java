@@ -37,10 +37,8 @@ public class EventCreateDTO {
 
     private String referenceToPosition;
 
-    @Builder.Default
     private Boolean isPublic = true;
 
-    @Builder.Default
     private Boolean isDraft = true;
 
     private List<Long> organizerIds;

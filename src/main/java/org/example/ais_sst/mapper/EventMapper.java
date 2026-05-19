@@ -45,7 +45,7 @@ public interface EventMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "isActive", constant = "true")
-    @Mapping(target = "isDraft", constant = "true")
+    @Mapping(target = "isDraft", source = "isDraft")
     @Mapping(target = "isCompleted", constant = "false")
     @Mapping(target = "title", source = "title")
     @Mapping(target = "description", source = "description")
