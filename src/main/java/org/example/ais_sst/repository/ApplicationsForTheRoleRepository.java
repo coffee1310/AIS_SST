@@ -59,6 +59,6 @@ public interface ApplicationsForTheRoleRepository extends
 
     boolean existsBySectorParticipantIdAndEventRoleId(Long sectorParticipantId, Long eventRoleId);
 
-    @Query("SELECT COUNT(a) FROM ApplicationsForTheRole a WHERE a.eventRole.id = :eventRoleId AND a.status = 'ОДОБРЕНА'")
+    @Query("SELECT COUNT(a) FROM ApplicationsForTheRole a WHERE a.eventRole.id = :eventRoleId AND a.status = 'Одобрена'")
     long countApprovedByEventRoleId(@Param("eventRoleId") Long eventRoleId);
 }
