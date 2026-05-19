@@ -1,0 +1,95 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-event-organizer-requests-table
+      author: coffee13102006
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: event_organizer_requests
+      changes:
+        - createTable:
+            tableName: event_organizer_requests
+            remarks: "Таблица заявок пользователей на роль организатора мероприятия"
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  remarks: "Первичный ключ"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  remarks: "ID пользователя, подавшего заявку"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  remarks: "ID мероприятия, на которое подаётся заявка"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  remarks: "Дата и время создания заявки"
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+              - column:
+                  name: status
+                  type: application_status
+                  remarks: "Статус заявки (использует enum application_status)"
+                  constraints:
+                    nullable: false
+                  defaultValue: "На рассмотрении"
+        - addUniqueConstraint:
+            tableName: event_organizer_requests
+            constraintName: uk_event_organizer_requests_event_user
+            columnNames: event_id, user_id
+            remarks: "Уникальное ограничение: один пользователь может подать только одну заявку на мероприятие"
+
+  - changeSet:
+      id: add-indexes-event-organizer-requests
+      author: coffee13102006
+      changes:
+        - createIndex:
+            tableName: event_organizer_requests
+            indexName: idx_event_organizer_requests_user
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: event_organizer_requests
+            indexName: idx_event_organizer_requests_event
+            columns:
+              - column:
+                  name: event_id
+        - createIndex:
+            tableName: event_organizer_requests
+            indexName: idx_event_organizer_requests_status
+            columns:
+              - column:
+                  name: status
+
+  - changeSet:
+      id: add-foreign-keys-event-organizer-requests
+      author: coffee13102006
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: event_organizer_requests
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_event_organizer_requests_user
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: event_organizer_requests
+            baseColumnNames: event_id
+            referencedTableName: events
+            referencedColumnNames: id
+            constraintName: fk_event_organizer_requests_event
+            onDelete: CASCADE

@@ -79,3 +79,5 @@ databaseChangeLog:
       file: db/changelog/changes/041-add-indexes-for-performance.yaml
   - include:
       file: db/changelog/changes/042-add-description-to-applications-for-the-role.yaml
+  - include:
+      file: db/changelog/changes/043-create-event-organizer-requests-table.yaml

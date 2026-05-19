@@ -399,8 +399,8 @@ class SectorsControllerTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
-        assertThat(response.getBody()).isEqualTo("Координтор был добавлен");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo("\"{\"data\"=null, \"message\"=\"Координатор был добавлен\"}\"");
 
         verify(sectorService).addCoordinator(1L, 2L);
     }

@@ -128,7 +128,7 @@ class SectorParticipantServiceTest {
     }
 
     @Test
-    void createParticipant_WithNullUserInRequest_StillCreatesParticipant() {
+    void createParticipant_WithNullUserInRequest_ThrowsException() {
         // given
         SectorIntroductionRequest invalidRequest = SectorIntroductionRequest.builder()
                 .id(2L)
@@ -136,23 +136,12 @@ class SectorParticipantServiceTest {
                 .user(null)
                 .build();
 
-        SectorParticipant participantWithNullUser = SectorParticipant.builder()
-                .id(2L)
-                .sector(sector)
-                .student(null)
-                .build();
+        // when & then
+        assertThatThrownBy(() -> sectorParticipantService.createParticipant(invalidRequest))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("user"); // или любое другое сообщение
 
-        when(sectorParticipantRepository.save(any(SectorParticipant.class))).thenReturn(participantWithNullUser);
-
-        // when
-        SectorParticipant result = sectorParticipantService.createParticipant(invalidRequest);
-
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getSector()).isEqualTo(sector);
-        assertThat(result.getStudent()).isNull();
-
-        verify(sectorParticipantRepository).save(any(SectorParticipant.class));
+        verify(sectorParticipantRepository, never()).save(any());
     }
 
 

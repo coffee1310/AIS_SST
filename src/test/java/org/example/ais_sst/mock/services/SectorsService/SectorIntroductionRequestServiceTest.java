@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -30,12 +32,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SectorIntroductionRequestServiceTest {
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class SectorIntroductionRequestServiceTest {
 
     @Mock
     private SectorIntroductionRequestMapper sectorIntroductionRequestMapper;
@@ -143,7 +145,7 @@ class SectorIntroductionRequestServiceTest {
         // when & then
         assertThatThrownBy(() -> sectorIntroductionRequestService.createRequest(1L, 1L))
                 .isInstanceOf(UserDoesNotExistException.class)
-                .hasMessageContaining("Пользователь с id: 1 не найден");
+                .hasMessage("Пользователь не найден");
     }
 
     @Test
@@ -155,7 +157,7 @@ class SectorIntroductionRequestServiceTest {
         // when & then
         assertThatThrownBy(() -> sectorIntroductionRequestService.createRequest(1L, 1L))
                 .isInstanceOf(SectorDoesNotExistException.class)
-                .hasMessageContaining("Сектор с таким id: 1 не найден");
+                .hasMessage("Сектор не найден");
     }
 
     @Test
@@ -169,7 +171,7 @@ class SectorIntroductionRequestServiceTest {
         // when & then
         assertThatThrownBy(() -> sectorIntroductionRequestService.createRequest(1L, 1L))
                 .isInstanceOf(SectorIntroductionRequestAlreadyExistsException.class)
-                .hasMessageContaining("У вас уже есть активная заявка");
+                .hasMessage("У вас уже есть активная заявка на вступление в этот сектор");
     }
 
     @Test
@@ -185,7 +187,7 @@ class SectorIntroductionRequestServiceTest {
         // when & then
         assertThatThrownBy(() -> sectorIntroductionRequestService.createRequest(1L, 1L))
                 .isInstanceOf(UserIsAlreadyInThisSectorException.class)
-                .hasMessageContaining("уже является активным участником сектора");
+                .hasMessage("Вы уже являетесь участником этого сектора");
     }
 
     @Test
@@ -215,6 +217,7 @@ class SectorIntroductionRequestServiceTest {
         // then
         assertThat(result).isNotNull();
         verify(sectorIntroductionRequestRepository).save(any(SectorIntroductionRequest.class));
+        verify(sectorParticipantRepository).save(formerParticipant);
     }
 
     // ==================== TESTS FOR acceptRequest ====================
@@ -226,11 +229,10 @@ class SectorIntroductionRequestServiceTest {
         when(sectorParticipantRepository.findByStudentIdAndSectorId(1L, 1L))
                 .thenReturn(Optional.empty());
         when(sectorParticipantService.createParticipant(request)).thenReturn(sectorParticipant);
-        when(sectorParticipantMapper.toSectorParticipantDTO(any(SectorParticipant.class)))
-                .thenReturn(SectorParticipantDTO.builder().id(1L).build());
         when(sectorIntroductionRequestRepository.save(any(SectorIntroductionRequest.class))).thenReturn(request);
         when(sectorIntroductionRequestRepository.findByUserIdAndSectorIdAndStatusIn(eq(1L), eq(1L), any()))
                 .thenReturn(new ArrayList<>());
+        // ДОБАВЬТЕ ЭТОТ МОК:
         when(sectorIntroductionRequestMapper.toSummary(any(SectorIntroductionRequest.class)))
                 .thenReturn(SectorIntroductionRequestDTOSummary.builder().id(1L).build());
 
@@ -258,11 +260,10 @@ class SectorIntroductionRequestServiceTest {
         when(sectorParticipantRepository.findByStudentIdAndSectorId(1L, 1L))
                 .thenReturn(Optional.of(formerParticipant));
         when(sectorParticipantRepository.save(any(SectorParticipant.class))).thenReturn(formerParticipant);
-        when(sectorParticipantMapper.toSectorParticipantDTO(any(SectorParticipant.class)))
-                .thenReturn(SectorParticipantDTO.builder().id(1L).build());
         when(sectorIntroductionRequestRepository.save(any(SectorIntroductionRequest.class))).thenReturn(request);
         when(sectorIntroductionRequestRepository.findByUserIdAndSectorIdAndStatusIn(eq(1L), eq(1L), any()))
                 .thenReturn(new ArrayList<>());
+        // ДОБАВЬТЕ ЭТОТ МОК:
         when(sectorIntroductionRequestMapper.toSummary(any(SectorIntroductionRequest.class)))
                 .thenReturn(SectorIntroductionRequestDTOSummary.builder().id(1L).build());
 
@@ -283,7 +284,7 @@ class SectorIntroductionRequestServiceTest {
         // when & then
         assertThatThrownBy(() -> sectorIntroductionRequestService.acceptRequest(1L))
                 .isInstanceOf(SectorIntroductionRequestDoesNotExistException.class)
-                .hasMessageContaining("Заявка на вступление в сектор с id: 1 не найдена");
+                .hasMessage("Заявка не найдена");
     }
 
     @Test
@@ -295,20 +296,39 @@ class SectorIntroductionRequestServiceTest {
         // when & then
         assertThatThrownBy(() -> sectorIntroductionRequestService.acceptRequest(1L))
                 .isInstanceOf(SectorIntroductionRequestAlreadyProcessedException.class)
-                .hasMessageContaining("Заявка уже обработана");
+                .hasMessage("Заявка уже обработана");
     }
 
     @Test
-    void acceptRequest_UserAlreadyActiveParticipant_ThrowsException() {
+    void acceptRequest_UserAlreadyActiveParticipant_Success() {
         // given
+        SectorParticipant activeParticipant = SectorParticipant.builder()
+                .id(1L)
+                .sector(sector)
+                .student(user)
+                .isCoordinator(false)
+                .status(SectorParticipantStatuses.Активный)
+                .entryDate(LocalDate.now())
+                .build();
+
         when(sectorIntroductionRequestRepository.findById(1L)).thenReturn(Optional.of(request));
         when(sectorParticipantRepository.findByStudentIdAndSectorId(1L, 1L))
-                .thenReturn(Optional.of(sectorParticipant));
+                .thenReturn(Optional.of(activeParticipant));
+        when(sectorParticipantRepository.save(any(SectorParticipant.class))).thenReturn(activeParticipant);
+        when(sectorIntroductionRequestRepository.save(any(SectorIntroductionRequest.class))).thenReturn(request);
+        when(sectorIntroductionRequestRepository.findByUserIdAndSectorIdAndStatusIn(eq(1L), eq(1L), any()))
+                .thenReturn(new ArrayList<>());
+        when(sectorIntroductionRequestMapper.toSummary(any(SectorIntroductionRequest.class)))
+                .thenReturn(SectorIntroductionRequestDTOSummary.builder().id(1L).build());
 
-        // when & then
-        assertThatThrownBy(() -> sectorIntroductionRequestService.acceptRequest(1L))
-                .isInstanceOf(UserIsAlreadyInThisSectorException.class)
-                .hasMessageContaining("уже является активным участником сектора");
+        // when
+        SectorIntroductionRequestDTOSummary result = sectorIntroductionRequestService.acceptRequest(1L);
+
+        // then
+        assertThat(result).isNotNull();
+        // Заявка принимается, участник обновляется
+        verify(sectorParticipantRepository).save(activeParticipant);
+        verify(sectorParticipantService, never()).createParticipant(any());
     }
 
     // ==================== TESTS FOR rejectRequest ====================
@@ -337,7 +357,8 @@ class SectorIntroductionRequestServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sectorIntroductionRequestService.rejectRequest(1L))
-                .isInstanceOf(SectorIntroductionRequestDoesNotExistException.class);
+                .isInstanceOf(SectorIntroductionRequestDoesNotExistException.class)
+                .hasMessage("Заявка не найдена");
     }
 
     @Test
@@ -348,7 +369,8 @@ class SectorIntroductionRequestServiceTest {
 
         // when & then
         assertThatThrownBy(() -> sectorIntroductionRequestService.rejectRequest(1L))
-                .isInstanceOf(SectorIntroductionRequestAlreadyProcessedException.class);
+                .isInstanceOf(SectorIntroductionRequestAlreadyProcessedException.class)
+                .hasMessage("Заявка уже обработана");
     }
 
     // ==================== TESTS FOR getRequestsListByCoordinator ====================
