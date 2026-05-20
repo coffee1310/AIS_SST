@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,15 +65,20 @@ class GroupControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(expectedGroups);
+
+        assertThat(response.getBody()).isInstanceOf(Map.class);
 
         @SuppressWarnings("unchecked")
-        List<Group> body = (List<Group>) response.getBody();
-        assertThat(body).hasSize(2);
-        assertThat(body.get(0).getId()).isEqualTo(1L);
-        assertThat(body.get(0).getTitle()).isEqualTo("ПИ-101");
-        assertThat(body.get(1).getId()).isEqualTo(2L);
-        assertThat(body.get(1).getTitle()).isEqualTo("ПИ-102");
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<Group> data = (List<Group>) body.get("data");
+        assertThat(data).hasSize(2);
+        assertThat(data.get(0).getId()).isEqualTo(1L);
+        assertThat(data.get(0).getTitle()).isEqualTo("ПИ-101");
+        assertThat(data.get(1).getId()).isEqualTo(2L);
+        assertThat(data.get(1).getTitle()).isEqualTo("ПИ-102");
 
         verify(groupService).getGroups();
         verify(groupService, times(1)).getGroups();
@@ -89,11 +95,14 @@ class GroupControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
 
         @SuppressWarnings("unchecked")
-        List<Group> body = (List<Group>) response.getBody();
-        assertThat(body).isEmpty();
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<Group> data = (List<Group>) body.get("data");
+        assertThat(data).isEmpty();
 
         verify(groupService).getGroups();
     }
@@ -109,7 +118,11 @@ class GroupControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNull();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+        assertThat(body.get("data")).isNull();
 
         verify(groupService).getGroups();
     }
@@ -131,28 +144,30 @@ class GroupControllerTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isEqualTo(savedGroup);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);  // Изменено на 200 OK
 
-        Group body = (Group) response.getBody();
-        assertThat(body.getId()).isEqualTo(3L);
-        assertThat(body.getTitle()).isEqualTo("ИС-201");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+        assertThat(body).containsKey("message");
+        assertThat(body.get("message")).isEqualTo("Группа успешно создана");
+
+        Group data = (Group) body.get("data");
+        assertThat(data.getId()).isEqualTo(3L);
+        assertThat(data.getTitle()).isEqualTo("ИС-201");
 
         verify(groupService).createGroup(newGroup);
         verify(groupService, times(1)).createGroup(any(Group.class));
     }
 
     @Test
-    void createGroup_WithNullGroup_StillPassesToService() {
-        // given
-        when(groupService.createGroup(null)).thenThrow(new IllegalArgumentException("Group cannot be null"));
-
+    void createGroup_WithNullGroup_ThrowsNullPointerException() {
         // when & then
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+        org.junit.jupiter.api.Assertions.assertThrows(NullPointerException.class, () -> {
             groupController.createGroup(null);
         });
 
-        verify(groupService).createGroup(null);
+        verify(groupService, never()).createGroup(any());
     }
 
     @Test
@@ -174,11 +189,13 @@ class GroupControllerTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);  // Изменено на 200 OK
 
-        Group body = (Group) response.getBody();
-        assertThat(body.getId()).isEqualTo(4L);
-        assertThat(body.getTitle()).isEmpty();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        Group data = (Group) body.get("data");
+        assertThat(data.getId()).isEqualTo(4L);
+        assertThat(data.getTitle()).isEmpty();
 
         verify(groupService).createGroup(emptyTitleGroup);
     }
@@ -202,11 +219,13 @@ class GroupControllerTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);  // Изменено на 200 OK
 
-        Group body = (Group) response.getBody();
-        assertThat(body.getId()).isEqualTo(5L);
-        assertThat(body.getTitle()).isNull();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        Group data = (Group) body.get("data");
+        assertThat(data.getId()).isEqualTo(5L);
+        assertThat(data.getTitle()).isNull();
 
         verify(groupService).createGroup(nullTitleGroup);
     }
@@ -231,11 +250,13 @@ class GroupControllerTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);  // Изменено на 200 OK
 
-        Group body = (Group) response.getBody();
-        assertThat(body.getId()).isEqualTo(6L);
-        assertThat(body.getTitle()).isEqualTo(longTitle);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        Group data = (Group) body.get("data");
+        assertThat(data.getId()).isEqualTo(6L);
+        assertThat(data.getTitle()).isEqualTo(longTitle);
 
         verify(groupService).createGroup(longTitleGroup);
     }
@@ -267,7 +288,14 @@ class GroupControllerTest {
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(expectedGroups);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<Group> data = (List<Group>) body.get("data");
+        assertThat(data).hasSize(2);
     }
 
     @Test
@@ -284,8 +312,11 @@ class GroupControllerTest {
         ResponseEntity<?> response = groupController.createGroup(newGroup);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isEqualTo(savedGroup);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);  // Изменено на 200 OK
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body.get("message")).isEqualTo("Группа успешно создана");
     }
 
     // ==================== EDGE CASES ====================
@@ -323,8 +354,15 @@ class GroupControllerTest {
         ResponseEntity<?> responseB = groupController.createGroup(groupB);
 
         // then
-        assertThat(((Group) responseA.getBody()).getId()).isEqualTo(10L);
-        assertThat(((Group) responseB.getBody()).getId()).isEqualTo(11L);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> bodyA = (Map<String, Object>) responseA.getBody();
+        Group dataA = (Group) bodyA.get("data");
+        assertThat(dataA.getId()).isEqualTo(10L);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> bodyB = (Map<String, Object>) responseB.getBody();
+        Group dataB = (Group) bodyB.get("data");
+        assertThat(dataB.getId()).isEqualTo(11L);
 
         verify(groupService).createGroup(groupA);
         verify(groupService).createGroup(groupB);

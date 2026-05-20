@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -77,7 +78,7 @@ class AccountCreatingRequestsServiceTest {
     private UserMapper userMapper;
 
     @Mock
-    private AccountRequestPhotoService accountRequestPhotoService; // Добавлено
+    private AccountRequestPhotoService accountRequestPhotoService;
 
     @InjectMocks
     private AccountCreatingRequestsService accountCreatingRequestsService;
@@ -161,7 +162,7 @@ class AccountCreatingRequestsServiceTest {
     }
 
     @Test
-    void createAccountRequest_Success() {
+    void createAccountRequest_Success() throws Exception {
         // given
         when(userRepository.existsByStudentEmail(anyString())).thenReturn(false);
         when(userRepository.existsByPhoneNumber(anyString())).thenReturn(false);
@@ -169,12 +170,16 @@ class AccountCreatingRequestsServiceTest {
         when(specialityRepository.findSpecialityById(1L)).thenReturn(Optional.of(speciality));
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(requestMapper.toEntity(any(AccountCreatingRequestsSummaryDTO.class))).thenReturn(accountCreatingRequest);
-        when(accountCreatingRequestsRepository.save(any(AccountCreatingRequest.class))).thenReturn(accountCreatingRequest);
 
-        // Исправление: используем when().thenReturn() вместо doNothing()
-        // Предполагаем, что метод возвращает какой-то объект (например, созданный объект)
+        // Используем thenAnswer для обработки нескольких вызовов save
+        when(accountCreatingRequestsRepository.save(any(AccountCreatingRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
         when(accountCreatingRequestsSocialStatusService.createAccountCreatingRequestSocialStatus(any()))
-                .thenReturn(null); // или .thenReturn(someObject)
+                .thenReturn(null);
+
+        when(accountRequestPhotoService.savePhotoFromBase64(anyString(), anyLong()))
+                .thenReturn("/uploads/account_requests/1.png");
 
         // when
         AccountCreatingRequest result = accountCreatingRequestsService.createAccountRequest(summaryDto);
@@ -189,8 +194,10 @@ class AccountCreatingRequestsServiceTest {
         verify(groupRepository).findGroupById(1L);
         verify(specialityRepository).findSpecialityById(1L);
         verify(passwordEncoder).encode("password123");
-        verify(accountCreatingRequestsRepository).save(any(AccountCreatingRequest.class));
+        // Проверяем, что save вызван 2 раза
+        verify(accountCreatingRequestsRepository, times(2)).save(any(AccountCreatingRequest.class));
         verify(accountCreatingRequestsSocialStatusService).createAccountCreatingRequestSocialStatus(any());
+        verify(accountRequestPhotoService).savePhotoFromBase64(eq("base64photo"), eq(1L));
     }
 
     @Test
@@ -234,7 +241,9 @@ class AccountCreatingRequestsServiceTest {
         // when & then
         assertThatThrownBy(() -> accountCreatingRequestsService.createAccountRequest(summaryDto))
                 .isInstanceOf(GroupDoesNotExistException.class)
-                .hasMessageContaining("Группа с id: 1 не существует");
+                .hasMessageContaining("Группа не найдена");
+
+        verify(groupRepository).findGroupById(1L);
     }
 
     @Test
@@ -248,7 +257,7 @@ class AccountCreatingRequestsServiceTest {
         // when & then
         assertThatThrownBy(() -> accountCreatingRequestsService.createAccountRequest(summaryDto))
                 .isInstanceOf(SpecialityDoesNotExistException.class)
-                .hasMessageContaining("Специальность с id: 1 не существует");
+                .hasMessageContaining("Специальность не найдена");
     }
 
     @Test
@@ -282,7 +291,7 @@ class AccountCreatingRequestsServiceTest {
         // when & then
         assertThatThrownBy(() -> accountCreatingRequestsService.rejectAccountRequest(1L, rejectDto))
                 .isInstanceOf(AccountCreatingRequestDoesNotExistException.class)
-                .hasMessageContaining("Заявка с id: 1 не существует");
+                .hasMessageContaining("Заявка не найдена");
     }
 
     @Test
@@ -295,39 +304,8 @@ class AccountCreatingRequestsServiceTest {
         // when & then
         assertThatThrownBy(() -> accountCreatingRequestsService.rejectAccountRequest(1L, rejectDto))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Заявка с id: 1 уже обработана");
+                .hasMessageContaining("Заявка уже обработана");
     }
-
-//    @Test
-//    void acceptAccountRequest_Success() {
-//        // given
-//        when(accountCreatingRequestsRepository.findAccountCreatingRequestById(1L))
-//                .thenReturn(Optional.of(accountCreatingRequest));
-//        when(roleRepository.findByTitle("Activist")).thenReturn(Optional.of(role));
-//        when(userRepository.save(any(User.class))).thenReturn(user);
-//        when(accountCreatingRequestsSocialStatusService.getSocialStatusIdsByRequestId(1L))
-//                .thenReturn(Arrays.asList(1L, 2L));
-//
-//        // Исправление: используем when().thenReturn() вместо doNothing()
-//        when(socialStatusService.createUserSocialStatuses(any())).thenReturn(null);
-//
-//        when(accountCreatingRequestsRepository.save(any(AccountCreatingRequest.class)))
-//                .thenReturn(accountCreatingRequest);
-//        when(userMapper.toDto(any(User.class))).thenReturn(UserSummaryDTO.builder().id(1L).build());
-//
-//        // when
-//        UserSummaryDTO result = accountCreatingRequestsService.acceptAccountRequest(1L);
-//
-//        // then
-//        assertThat(result).isNotNull();
-//        assertThat(accountCreatingRequest.getStatus()).isEqualTo(AccountCreatingRequestStatus.ОДОБРЕНА);
-//
-//        verify(accountCreatingRequestsRepository).findAccountCreatingRequestById(1L);
-//        verify(roleRepository).findByTitle("Activist");
-//        verify(userRepository).save(any(User.class));
-//        verify(socialStatusService).createUserSocialStatuses(any());
-//        verify(accountCreatingRequestsRepository).save(accountCreatingRequest);
-//    }
 
     @Test
     void getRequests_Success() {
@@ -384,13 +362,14 @@ class AccountCreatingRequestsServiceTest {
                 .status(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ)
                 .build();
 
+        // Исправлено: photo как String
         Object[] row = new Object[]{
                 1L, "Иван", "Иванов", "Иванович", "Мужчина",
                 java.sql.Date.valueOf("2000-01-01"), 3, 12345,
-                "ivan@test.com", "+79991234567", null, "На рассмотрении",
-                java.sql.Timestamp.valueOf(LocalDateTime.now()),
-                java.sql.Timestamp.valueOf(LocalDateTime.now()),
-                1L, "ПИ-101", 1L, "Программная инженерия", new byte[0]
+                "ivan@test.com", "+79991234567", "base64photo", "На рассмотрении",
+                Timestamp.valueOf(LocalDateTime.now()),
+                Timestamp.valueOf(LocalDateTime.now()),
+                1L, "ПИ-101", 1L, "Программная инженерия"
         };
 
         List<Object[]> rowList = new java.util.ArrayList<>();

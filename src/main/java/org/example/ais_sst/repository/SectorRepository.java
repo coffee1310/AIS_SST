@@ -65,6 +65,4 @@ public interface SectorRepository extends JpaRepository<Sector, Long> {
     // Новый метод для загрузки всех секторов с инициализацией
     @Query("SELECT DISTINCT s FROM Sector s LEFT JOIN FETCH s.sectorParticipants p LEFT JOIN FETCH p.student")
     List<Sector> findAllWithParticipants();
-
-
 }

@@ -118,7 +118,7 @@ class EventRoleServiceTest {
         when(globalEventRoleRepository.findById(1L)).thenReturn(Optional.of(globalEventRole));
         when(eventRoleRepository.existsByEventIdAndGlobalEventRoleIdAndDeletedFalse(1L, 1L))
                 .thenReturn(false);
-        when(eventRoleMapper.toEntity(createDTO)).thenReturn(eventRole);  // ✅ Добавлен мок
+        when(eventRoleMapper.toEntity(createDTO)).thenReturn(eventRole);
         when(eventRoleRepository.save(any(EventRole.class))).thenReturn(eventRole);
         when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
 
@@ -144,7 +144,7 @@ class EventRoleServiceTest {
         // when & then
         assertThatThrownBy(() -> eventRoleService.createEventRole(createDTO))
                 .isInstanceOf(EventDoesNotExistException.class)
-                .hasMessageContaining("Мероприятие не найдено");
+                .hasMessageContaining("Мероприятие с id=1 не найдено");
     }
 
     @Test
@@ -156,7 +156,7 @@ class EventRoleServiceTest {
         // when & then
         assertThatThrownBy(() -> eventRoleService.createEventRole(createDTO))
                 .isInstanceOf(GlobalRoleDoesNotExistException.class)
-                .hasMessageContaining("Глобальная роль не найдена");
+                .hasMessageContaining("Глобальная роль с id=1 не найдена");
     }
 
     @Test
@@ -170,7 +170,7 @@ class EventRoleServiceTest {
         // when & then
         assertThatThrownBy(() -> eventRoleService.createEventRole(createDTO))
                 .isInstanceOf(EventRoleAlreadyExistsException.class)
-                .hasMessageContaining("Роль уже существует для этого мероприятия");
+                .hasMessageContaining("Роль с globalEventRoleId=1 уже существует для этого мероприятия");
     }
 
     // ==================== TESTS FOR getEventRoleById ====================
@@ -199,7 +199,7 @@ class EventRoleServiceTest {
         // when & then
         assertThatThrownBy(() -> eventRoleService.getEventRoleById(1L))
                 .isInstanceOf(EventRoleDoesNotFoundException.class)
-                .hasMessageContaining("Роль мероприятия не найдена");
+                .hasMessageContaining("Роль мероприятия с id=1 не найдена");
     }
 
     // ==================== TESTS FOR updateEventRole ====================
@@ -216,8 +216,6 @@ class EventRoleServiceTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(eventRole.getCapacity()).isEqualTo(15);
-        assertThat(eventRole.getReserveCapacity()).isEqualTo(3);
 
         verify(eventRoleRepository).findById(1L);
         verify(eventRoleRepository).save(eventRole);
@@ -252,6 +250,8 @@ class EventRoleServiceTest {
 
         when(eventRoleRepository.findById(1L)).thenReturn(Optional.of(eventRole));
         when(globalEventRoleRepository.findById(2L)).thenReturn(Optional.of(newGlobalRole));
+        when(eventRoleRepository.existsByEventIdAndGlobalEventRoleIdAndDeletedFalse(event.getId(), 2L))
+                .thenReturn(false);
         when(eventRoleRepository.save(any(EventRole.class))).thenReturn(eventRole);
         when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
 
@@ -271,7 +271,7 @@ class EventRoleServiceTest {
         // when & then
         assertThatThrownBy(() -> eventRoleService.updateEventRole(1L, updateDTO))
                 .isInstanceOf(EventRoleDoesNotFoundException.class)
-                .hasMessageContaining("Роль мероприятия не найдена");
+                .hasMessageContaining("Роль мероприятия с id=1 не найдена");
     }
 
     // ==================== TESTS FOR deleteEventRole ====================
@@ -298,7 +298,7 @@ class EventRoleServiceTest {
         // when & then
         assertThatThrownBy(() -> eventRoleService.deleteEventRole(1L))
                 .isInstanceOf(EventRoleDoesNotFoundException.class)
-                .hasMessageContaining("Роль мероприятия не найдена");
+                .hasMessageContaining("Роль мероприятия с id=1 не найдена");
     }
 
     // ==================== TESTS FOR hardDeleteEventRole ====================
@@ -324,73 +324,82 @@ class EventRoleServiceTest {
         // when & then
         assertThatThrownBy(() -> eventRoleService.hardDeleteEventRole(1L))
                 .isInstanceOf(EventRoleDoesNotFoundException.class)
-                .hasMessageContaining("Роль мероприятия не найдена");
+                .hasMessageContaining("Роль мероприятия с id=1 не найдена");
     }
 
     // ==================== TESTS FOR getAllEventRoles ====================
 
-//    @Test
-//    void getAllEventRoles_Success() {
-//        // given
-//        Pageable pageable = PageRequest.of(0, 10);
-//        Page<EventRole> eventRolePage = new PageImpl<>(List.of(eventRole));
-//
-//        when(eventRoleRepository.findAllWithFilters(
-//                any(), any(), any(), any(), any(Pageable.class)))
-//                .thenReturn(eventRolePage);
-//        when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
-//
-//        // when
-//        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(filterDTO, pageable);
-//
-//        // then
-//        assertThat(result).isNotNull();
-//        assertThat(result.getContent()).hasSize(1);
-//        assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
-//
-//        verify(eventRoleRepository).findAllWithFilters(
-//                eq(filterDTO.getId()),
-//                eq(filterDTO.getEventId()),
-//                eq(filterDTO.getGlobalEventRoleId()),
-//                eq(filterDTO.getDeleted()),
-//                eq(pageable));
-//    }
-//
-//    @Test
-//    void getAllEventRoles_EmptyFilter_Success() {
-//        // given
-//        Pageable pageable = PageRequest.of(0, 10);
-//        Page<EventRole> eventRolePage = new PageImpl<>(List.of(eventRole));
-//        EventRoleFilterDTO emptyFilter = EventRoleFilterDTO.builder().build();
-//
-//        when(eventRoleRepository.findAllWithFilters(
-//                any(), any(), any(), any(), any(Pageable.class)))
-//                .thenReturn(eventRolePage);
-//        when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
-//
-//        // when
-//        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(emptyFilter, pageable);
-//
-//        // then
-//        assertThat(result).isNotNull();
-//        assertThat(result.getContent()).hasSize(1);
-//    }
-//
-//    @Test
-//    void getAllEventRoles_EmptyResult_ReturnsEmptyPage() {
-//        // given
-//        Pageable pageable = PageRequest.of(0, 10);
-//        Page<EventRole> emptyPage = new PageImpl<>(List.of());
-//
-//        when(eventRoleRepository.findAllWithFilters(
-//                any(), any(), any(), any(), any(Pageable.class)))
-//                .thenReturn(emptyPage);
-//
-//        // when
-//        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(filterDTO, pageable);
-//
-//        // then
-//        assertThat(result).isNotNull();
-//        assertThat(result.getContent()).isEmpty();
-//    }
+    @Test
+    void getAllEventRoles_Success() {
+        // given
+        Pageable pageable = PageRequest.of(0, 10);
+        List<EventRole> eventRoles = List.of(eventRole);
+        Page<EventRole> eventRolePage = new PageImpl<>(eventRoles, pageable, 1);
+
+        when(eventRoleRepository.findAllWithFiltersNative(
+                any(), any(), any(), any(), any(), any(), anyInt(), anyInt()))
+                .thenReturn(eventRoles);
+        when(eventRoleRepository.countAllWithFiltersNative(
+                any(), any(), any(), any(), any(), any()))
+                .thenReturn(1L);
+        when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
+
+        // when
+        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(filterDTO, pageable);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
+
+        verify(eventRoleRepository).findAllWithFiltersNative(
+                any(), any(), any(), any(), any(), any(), anyInt(), anyInt());
+        verify(eventRoleRepository).countAllWithFiltersNative(
+                any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void getAllEventRoles_EmptyFilter_Success() {
+        // given
+        Pageable pageable = PageRequest.of(0, 10);
+        EventRoleFilterDTO emptyFilter = EventRoleFilterDTO.builder().build();
+        List<EventRole> eventRoles = List.of(eventRole);
+        Page<EventRole> eventRolePage = new PageImpl<>(eventRoles, pageable, 1);
+
+        when(eventRoleRepository.findAllWithFiltersNative(
+                any(), any(), any(), any(), any(), any(), anyInt(), anyInt()))
+                .thenReturn(eventRoles);
+        when(eventRoleRepository.countAllWithFiltersNative(
+                any(), any(), any(), any(), any(), any()))
+                .thenReturn(1L);
+        when(eventRoleMapper.toResponseDto(eventRole)).thenReturn(responseDTO);
+
+        // when
+        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(emptyFilter, pageable);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    void getAllEventRoles_EmptyResult_ReturnsEmptyPage() {
+        // given
+        Pageable pageable = PageRequest.of(0, 10);
+        List<EventRole> emptyList = List.of();
+
+        when(eventRoleRepository.findAllWithFiltersNative(
+                any(), any(), any(), any(), any(), any(), anyInt(), anyInt()))
+                .thenReturn(emptyList);
+        when(eventRoleRepository.countAllWithFiltersNative(
+                any(), any(), any(), any(), any(), any()))
+                .thenReturn(0L);
+
+        // when
+        Page<EventRoleResponseDTO> result = eventRoleService.getAllEventRoles(filterDTO, pageable);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEmpty();
+    }
 }

@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -60,15 +61,18 @@ class SocialStatusControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(socialStatusList);
 
         @SuppressWarnings("unchecked")
-        List<SocialStatus> body = (List<SocialStatus>) response.getBody();
-        assertThat(body).hasSize(2);
-        assertThat(body.get(0).getId()).isEqualTo(1L);
-        assertThat(body.get(0).getTitle()).isEqualTo("Студент");
-        assertThat(body.get(1).getId()).isEqualTo(2L);
-        assertThat(body.get(1).getTitle()).isEqualTo("Активист");
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<SocialStatus> data = (List<SocialStatus>) body.get("data");
+        assertThat(data).hasSize(2);
+        assertThat(data.get(0).getId()).isEqualTo(1L);
+        assertThat(data.get(0).getTitle()).isEqualTo("Студент");
+        assertThat(data.get(1).getId()).isEqualTo(2L);
+        assertThat(data.get(1).getTitle()).isEqualTo("Активист");
 
         verify(socialStatusService).getSocialStatuses();
         verify(socialStatusService, times(1)).getSocialStatuses();
@@ -85,11 +89,15 @@ class SocialStatusControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
 
         @SuppressWarnings("unchecked")
-        List<SocialStatus> body = (List<SocialStatus>) response.getBody();
-        assertThat(body).isEmpty();
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).isNotNull();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<SocialStatus> data = (List<SocialStatus>) body.get("data");
+        assertThat(data).isEmpty();
 
         verify(socialStatusService).getSocialStatuses();
     }
@@ -105,7 +113,10 @@ class SocialStatusControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNull();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsEntry("data", null);
 
         verify(socialStatusService).getSocialStatuses();
     }
@@ -124,10 +135,12 @@ class SocialStatusControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<SocialStatus> body = (List<SocialStatus>) response.getBody();
-        assertThat(body).hasSize(1);
-        assertThat(body.get(0).getId()).isEqualTo(1L);
-        assertThat(body.get(0).getTitle()).isEqualTo("Студент");
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<SocialStatus> data = (List<SocialStatus>) body.get("data");
+        assertThat(data).hasSize(1);
+        assertThat(data.get(0).getId()).isEqualTo(1L);
+        assertThat(data.get(0).getTitle()).isEqualTo("Студент");
 
         verify(socialStatusService).getSocialStatuses();
     }
@@ -151,11 +164,13 @@ class SocialStatusControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<SocialStatus> body = (List<SocialStatus>) response.getBody();
-        assertThat(body).hasSize(3);
-        assertThat(body.get(0).getTitle()).isEqualTo("Студент");
-        assertThat(body.get(1).getTitle()).isEqualTo("Активист");
-        assertThat(body.get(2).getTitle()).isEqualTo("Волонтер");
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<SocialStatus> data = (List<SocialStatus>) body.get("data");
+        assertThat(data).hasSize(3);
+        assertThat(data.get(0).getTitle()).isEqualTo("Студент");
+        assertThat(data.get(1).getTitle()).isEqualTo("Активист");
+        assertThat(data.get(2).getTitle()).isEqualTo("Волонтер");
 
         verify(socialStatusService).getSocialStatuses();
     }
@@ -195,11 +210,15 @@ class SocialStatusControllerTest {
         ResponseEntity<?> response = socialStatusController.getSocialStatuses();
 
         // then
-        assertThat(response.getBody()).isInstanceOf(List.class);
+        assertThat(response.getBody()).isInstanceOf(Map.class);
 
         @SuppressWarnings("unchecked")
-        List<SocialStatus> body = (List<SocialStatus>) response.getBody();
-        assertThat(body.get(0)).isInstanceOf(SocialStatus.class);
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body.get("data")).isInstanceOf(List.class);
+
+        @SuppressWarnings("unchecked")
+        List<SocialStatus> data = (List<SocialStatus>) body.get("data");
+        assertThat(data.get(0)).isInstanceOf(SocialStatus.class);
     }
 
     @Test
@@ -232,8 +251,12 @@ class SocialStatusControllerTest {
         assertThat(response.getBody()).isNotNull();
 
         @SuppressWarnings("unchecked")
-        List<SocialStatus> result = (List<SocialStatus>) response.getBody();
-        assertThat(result).allMatch(status -> status instanceof SocialStatus);
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<SocialStatus> data = (List<SocialStatus>) body.get("data");
+        assertThat(data).allMatch(status -> status instanceof SocialStatus);
     }
 
     @Test
@@ -255,8 +278,10 @@ class SocialStatusControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<SocialStatus> body = (List<SocialStatus>) response.getBody();
-        assertThat(body.get(0).getTitle()).isEqualTo(longTitleStatus.getTitle());
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<SocialStatus> data = (List<SocialStatus>) body.get("data");
+        assertThat(data.get(0).getTitle()).isEqualTo(longTitleStatus.getTitle());
 
         verify(socialStatusService).getSocialStatuses();
     }
@@ -275,11 +300,13 @@ class SocialStatusControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<SocialStatus> body = (List<SocialStatus>) response.getBody();
-        assertThat(body).hasSize(3);
-        assertThat(body.get(0)).isNotNull();
-        assertThat(body.get(1)).isNull();
-        assertThat(body.get(2)).isNotNull();
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<SocialStatus> data = (List<SocialStatus>) body.get("data");
+        assertThat(data).hasSize(3);
+        assertThat(data.get(0)).isNotNull();
+        assertThat(data.get(1)).isNull();
+        assertThat(data.get(2)).isNotNull();
 
         verify(socialStatusService).getSocialStatuses();
     }

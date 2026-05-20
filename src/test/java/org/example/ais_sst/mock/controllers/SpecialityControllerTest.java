@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -43,20 +44,18 @@ class SpecialityControllerTest {
 
         speciality2 = Speciality.builder()
                 .id(2L)
-                .title("Программная инженерия")
-                .shortTitle("ПИ")
+                .title("Экономика и бухгалтерский учет")
+                .shortTitle("ЭБУ")
                 .build();
 
         speciality3 = Speciality.builder()
                 .id(3L)
-                .title("Прикладная математика и информатика")
-                .shortTitle("ПМИ")
+                .title("Право и организация социального обеспечения")
+                .shortTitle("ПСО")
                 .build();
 
         specialityList = Arrays.asList(speciality1, speciality2, speciality3);
     }
-
-    // ==================== TESTS FOR getSpecialities ====================
 
     @Test
     void getSpecialities_Success() {
@@ -69,20 +68,20 @@ class SpecialityControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(specialityList);
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body).hasSize(3);
-        assertThat(body.get(0).getId()).isEqualTo(1L);
-        assertThat(body.get(0).getTitle()).isEqualTo("Информационные системы и программирование");
-        assertThat(body.get(0).getShortTitle()).isEqualTo("ИСП");
-        assertThat(body.get(1).getId()).isEqualTo(2L);
-        assertThat(body.get(1).getTitle()).isEqualTo("Программная инженерия");
-        assertThat(body.get(1).getShortTitle()).isEqualTo("ПИ");
-        assertThat(body.get(2).getId()).isEqualTo(3L);
-        assertThat(body.get(2).getTitle()).isEqualTo("Прикладная математика и информатика");
-        assertThat(body.get(2).getShortTitle()).isEqualTo("ПМИ");
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data).hasSize(3);
+        assertThat(data.get(0).getId()).isEqualTo(1L);
+        assertThat(data.get(0).getTitle()).isEqualTo("Информационные системы и программирование");
+        assertThat(data.get(1).getId()).isEqualTo(2L);
+        assertThat(data.get(1).getTitle()).isEqualTo("Экономика и бухгалтерский учет");
+        assertThat(data.get(2).getId()).isEqualTo(3L);
+        assertThat(data.get(2).getTitle()).isEqualTo("Право и организация социального обеспечения");
 
         verify(specialityService).getSpecialities();
         verify(specialityService, times(1)).getSpecialities();
@@ -99,11 +98,14 @@ class SpecialityControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body).isEmpty();
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data).isEmpty();
 
         verify(specialityService).getSpecialities();
     }
@@ -119,7 +121,10 @@ class SpecialityControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNull();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsEntry("data", null);
 
         verify(specialityService).getSpecialities();
     }
@@ -138,11 +143,12 @@ class SpecialityControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body).hasSize(1);
-        assertThat(body.get(0).getId()).isEqualTo(1L);
-        assertThat(body.get(0).getTitle()).isEqualTo("Информационные системы и программирование");
-        assertThat(body.get(0).getShortTitle()).isEqualTo("ИСП");
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data).hasSize(1);
+        assertThat(data.get(0).getId()).isEqualTo(1L);
+        assertThat(data.get(0).getTitle()).isEqualTo("Информационные системы и программирование");
 
         verify(specialityService).getSpecialities();
     }
@@ -150,13 +156,13 @@ class SpecialityControllerTest {
     @Test
     void getSpecialities_WithSpecialitiesHavingNullShortTitle_HandlesCorrectly() {
         // given
-        Speciality specialityWithoutShortTitle = Speciality.builder()
+        Speciality specialityWithNullShortTitle = Speciality.builder()
                 .id(4L)
-                .title("Бизнес-информатика")
+                .title("Дизайн")
                 .shortTitle(null)
                 .build();
 
-        List<Speciality> specialities = Arrays.asList(speciality1, specialityWithoutShortTitle);
+        List<Speciality> specialities = List.of(specialityWithNullShortTitle);
         when(specialityService.getSpecialities()).thenReturn(specialities);
 
         // when
@@ -167,10 +173,10 @@ class SpecialityControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body).hasSize(2);
-        assertThat(body.get(0).getShortTitle()).isEqualTo("ИСП");
-        assertThat(body.get(1).getShortTitle()).isNull();
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data.get(0).getShortTitle()).isNull();
 
         verify(specialityService).getSpecialities();
     }
@@ -210,11 +216,15 @@ class SpecialityControllerTest {
         ResponseEntity<?> response = specialityController.getSpecialities();
 
         // then
-        assertThat(response.getBody()).isInstanceOf(List.class);
+        assertThat(response.getBody()).isInstanceOf(Map.class);
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body.get(0)).isInstanceOf(Speciality.class);
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body.get("data")).isInstanceOf(List.class);
+
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data.get(0)).isInstanceOf(Speciality.class);
     }
 
     @Test
@@ -232,8 +242,6 @@ class SpecialityControllerTest {
         verify(specialityService, times(2)).getSpecialities();
     }
 
-    // ==================== INTEGRATION STYLE TESTS ====================
-
     @Test
     void getSpecialities_EndpointReturnsListOfSpecialities() {
         // given
@@ -247,18 +255,22 @@ class SpecialityControllerTest {
         assertThat(response.getBody()).isNotNull();
 
         @SuppressWarnings("unchecked")
-        List<Speciality> result = (List<Speciality>) response.getBody();
-        assertThat(result).allMatch(speciality -> speciality instanceof Speciality);
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertThat(body).containsKey("data");
+
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data).allMatch(speciality -> speciality instanceof Speciality);
     }
 
     @Test
     void getSpecialities_WithSpecialitiesHavingVeryLongTitles_HandlesCorrectly() {
         // given
-        String longTitle = "Очень длинное название специальности которая может быть больше обычного лимита в несколько раз для проверки обработки длинных строк";
+        String longTitle = "Очень длинное название специальности которое может быть значительно больше обычного и содержать много символов для проверки обработки длинных строк";
         Speciality longTitleSpeciality = Speciality.builder()
                 .id(10L)
                 .title(longTitle)
-                .shortTitle("ДЛН")
+                .shortTitle("Длинная")
                 .build();
 
         List<Speciality> specialities = List.of(longTitleSpeciality);
@@ -272,8 +284,10 @@ class SpecialityControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body.get(0).getTitle()).isEqualTo(longTitle);
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data.get(0).getTitle()).isEqualTo(longTitle);
 
         verify(specialityService).getSpecialities();
     }
@@ -292,11 +306,13 @@ class SpecialityControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body).hasSize(3);
-        assertThat(body.get(0)).isNotNull();
-        assertThat(body.get(1)).isNull();
-        assertThat(body.get(2)).isNotNull();
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data).hasSize(3);
+        assertThat(data.get(0)).isNotNull();
+        assertThat(data.get(1)).isNull();
+        assertThat(data.get(2)).isNotNull();
 
         verify(specialityService).getSpecialities();
     }
@@ -304,13 +320,13 @@ class SpecialityControllerTest {
     @Test
     void getSpecialities_WithEmptyShortTitle_HandlesCorrectly() {
         // given
-        Speciality emptyShortTitleSpeciality = Speciality.builder()
+        Speciality specialityWithEmptyShortTitle = Speciality.builder()
                 .id(5L)
-                .title("Информатика и вычислительная техника")
+                .title("Менеджмент")
                 .shortTitle("")
                 .build();
 
-        List<Speciality> specialities = List.of(emptyShortTitleSpeciality);
+        List<Speciality> specialities = List.of(specialityWithEmptyShortTitle);
         when(specialityService.getSpecialities()).thenReturn(specialities);
 
         // when
@@ -321,8 +337,10 @@ class SpecialityControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body.get(0).getShortTitle()).isEmpty();
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data.get(0).getShortTitle()).isEmpty();
 
         verify(specialityService).getSpecialities();
     }
@@ -330,7 +348,7 @@ class SpecialityControllerTest {
     @Test
     void getSpecialities_LargeListPerformance_ShouldHandle() {
         // given
-        List<Speciality> largeList = Collections.nCopies(100, speciality1);
+        List<Speciality> largeList = Collections.nCopies(1000, speciality1);
         when(specialityService.getSpecialities()).thenReturn(largeList);
 
         // when
@@ -341,8 +359,10 @@ class SpecialityControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         @SuppressWarnings("unchecked")
-        List<Speciality> body = (List<Speciality>) response.getBody();
-        assertThat(body).hasSize(100);
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        @SuppressWarnings("unchecked")
+        List<Speciality> data = (List<Speciality>) body.get("data");
+        assertThat(data).hasSize(1000);
 
         verify(specialityService).getSpecialities();
     }

@@ -50,7 +50,7 @@ class UserServiceTest {
     private SectorParticipantRepository sectorParticipantRepository;
 
     @Mock
-    private AccountRequestPhotoService accountRequestPhotoService; // Добавлено
+    private AccountRequestPhotoService accountRequestPhotoService;
 
     @Mock
     private UserPhotoService userPhotoService;
@@ -137,7 +137,7 @@ class UserServiceTest {
         when(userRepository.findUserById(1L)).thenReturn(Optional.of(user));
         when(socialStatusStudentRepository.findSocialStatusTitlesByStudentId(1L))
                 .thenReturn(List.of("Студент", "Активист"));
-        when(userPhotoService.getPhotoAsBase64(any())).thenReturn(null); // Добавлено
+        when(userPhotoService.getPhotoAsBase64(any())).thenReturn(null);
 
         List<Object[]> coordinatorInfo = new ArrayList<>();
         coordinatorInfo.add(new Object[]{1L, "Спортивный сектор"});
@@ -279,7 +279,6 @@ class UserServiceTest {
         when(userRepository.findByRole("Activist", pageable)).thenReturn(userPage);
         when(userMapper.toResponseDto(any(User.class))).thenReturn(responseDTO);
 
-        // ИСПРАВЛЕНО: создаем список Object[] правильно
         List<Object[]> coordinatorInfo = new ArrayList<>();
         coordinatorInfo.add(new Object[]{1L, "Сектор"});
         when(sectorParticipantRepository.findCoordinatorSectorInfoByUserId(1L))
@@ -335,7 +334,7 @@ class UserServiceTest {
                 "ПИ-101",                                                 // group_name
                 1L,                                                       // speciality_id
                 "Информационные системы и программирование",              // speciality_name
-                new byte[]{1, 2, 3},                                      // photo
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", // photo - строка Base64, а не byte[]
                 "ИСП"                                                     // short_title
         };
     }

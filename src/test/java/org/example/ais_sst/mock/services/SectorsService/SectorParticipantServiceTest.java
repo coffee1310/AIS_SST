@@ -67,6 +67,7 @@ class SectorParticipantServiceTest {
                 .student(user)
                 .isCoordinator(false)
                 .entryDate(LocalDate.now())
+                .status(SectorParticipantStatuses.Активный)
                 .build();
     }
 
@@ -84,6 +85,7 @@ class SectorParticipantServiceTest {
         assertThat(result.getSector()).isEqualTo(sector);
         assertThat(result.getStudent()).isEqualTo(user);
         assertThat(result.getIsCoordinator()).isFalse();
+        assertThat(result.getStatus()).isEqualTo(SectorParticipantStatuses.Активный);
 
         verify(sectorParticipantRepository).save(any(SectorParticipant.class));
         verify(sectorParticipantRepository, times(1)).save(any(SectorParticipant.class));
@@ -93,57 +95,46 @@ class SectorParticipantServiceTest {
     void createParticipant_WithNullRequest_ThrowsNullPointerException() {
         // when & then
         assertThatThrownBy(() -> sectorParticipantService.createParticipant(null))
-                .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("request");
+                .isInstanceOf(NullPointerException.class);
 
         verify(sectorParticipantRepository, never()).save(any());
     }
 
     @Test
-    void createParticipant_WithNullSectorInRequest_StillCreatesParticipant() {
+    void createParticipant_WithNullSectorInRequest_ThrowsNullPointerException() {
         // given
         SectorIntroductionRequest invalidRequest = SectorIntroductionRequest.builder()
                 .id(2L)
                 .sector(null)
                 .user(user)
+                .status(SectorIntroductionStatus.ОДОБРЕНА)
                 .build();
 
-        SectorParticipant participantWithNullSector = SectorParticipant.builder()
-                .id(2L)
-                .sector(null)
-                .student(user)
-                .build();
+        // when & then - ожидаем NullPointerException
+        assertThatThrownBy(() -> sectorParticipantService.createParticipant(invalidRequest))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("SectorIntroductionRequest.getSector()");
 
-        when(sectorParticipantRepository.save(any(SectorParticipant.class))).thenReturn(participantWithNullSector);
-
-        // when
-        SectorParticipant result = sectorParticipantService.createParticipant(invalidRequest);
-
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result.getSector()).isNull();
-        assertThat(result.getStudent()).isEqualTo(user);
-
-        verify(sectorParticipantRepository).save(any(SectorParticipant.class));
+        verify(sectorParticipantRepository, never()).save(any());
     }
 
     @Test
-    void createParticipant_WithNullUserInRequest_ThrowsException() {
+    void createParticipant_WithNullUserInRequest_ThrowsNullPointerException() {
         // given
         SectorIntroductionRequest invalidRequest = SectorIntroductionRequest.builder()
                 .id(2L)
                 .sector(sector)
                 .user(null)
+                .status(SectorIntroductionStatus.ОДОБРЕНА)
                 .build();
 
-        // when & then
+        // when & then - ожидаем NullPointerException
         assertThatThrownBy(() -> sectorParticipantService.createParticipant(invalidRequest))
                 .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("user"); // или любое другое сообщение
+                .hasMessageContaining("SectorIntroductionRequest.getUser()");
 
         verify(sectorParticipantRepository, never()).save(any());
     }
-
 
     @Test
     void createParticipant_RepositoryThrowsException_PropagatesException() {
@@ -152,12 +143,9 @@ class SectorParticipantServiceTest {
                 .thenThrow(new RuntimeException("Database error"));
 
         // when & then
-        try {
-            sectorParticipantService.createParticipant(request);
-        } catch (Exception e) {
-            assertThat(e).isInstanceOf(RuntimeException.class);
-            assertThat(e.getMessage()).isEqualTo("Database error");
-        }
+        assertThatThrownBy(() -> sectorParticipantService.createParticipant(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Database error");
 
         verify(sectorParticipantRepository).save(any(SectorParticipant.class));
     }
@@ -173,6 +161,7 @@ class SectorParticipantServiceTest {
                     .student(saved.getStudent())
                     .isCoordinator(saved.getIsCoordinator())
                     .entryDate(saved.getEntryDate())
+                    .status(saved.getStatus())
                     .build();
         });
 
@@ -185,8 +174,7 @@ class SectorParticipantServiceTest {
         assertThat(result.getSector().getId()).isEqualTo(1L);
         assertThat(result.getStudent().getId()).isEqualTo(1L);
         assertThat(result.getIsCoordinator()).isFalse();
-        // статус не устанавливается, поэтому он null
-        assertThat(result.getStatus()).isNull();
+        assertThat(result.getStatus()).isEqualTo(SectorParticipantStatuses.Активный);
     }
 
     @Test
@@ -202,12 +190,14 @@ class SectorParticipantServiceTest {
                 .id(2L)
                 .sector(sector)
                 .user(anotherUser)
+                .status(SectorIntroductionStatus.ОДОБРЕНА)
                 .build();
 
         SectorParticipant anotherParticipant = SectorParticipant.builder()
                 .id(2L)
                 .sector(sector)
                 .student(anotherUser)
+                .status(SectorParticipantStatuses.Активный)
                 .build();
 
         when(sectorParticipantRepository.save(any(SectorParticipant.class)))

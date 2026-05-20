@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import javax.management.relation.RoleNotFoundException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -400,7 +401,13 @@ class SectorsControllerTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo("\"{\"data\"=null, \"message\"=\"Координатор был добавлен\"}\"");
+
+        // Вариант 1: Используем HashMap вместо Map.of()
+        Map<String, Object> expectedBody = new HashMap<>();
+        expectedBody.put("data", null);
+        expectedBody.put("message", "Координатор был добавлен");
+
+        assertThat(response.getBody()).isEqualTo(expectedBody);
 
         verify(sectorService).addCoordinator(1L, 2L);
     }

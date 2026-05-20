@@ -26,7 +26,7 @@ public abstract class BaseIntegrationTest {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
-            DockerImageName.parse("postgres:15-alpine")
+            DockerImageName.parse("postgres:17-alpine")
     )
             .withDatabaseName("testdb")
             .withUsername("test")

@@ -114,8 +114,6 @@ class AccountCreatingRequestsControllerTest {
                 .thenThrow(new RuntimeException("Invalid data"));
 
         // when & then
-        // Контроллер выбросит исключение, которое будет перехвачено глобальным обработчиком
-        // В тесте мы просто проверяем, что исключение было выброшено
         org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> {
             accountCreatingRequestsController.createAccountRequest(invalidDTO);
         });
@@ -141,10 +139,14 @@ class AccountCreatingRequestsControllerTest {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> body = (Map<String, Object>) response.getBody();
+
         assertThat(body).containsKey("message");
-        assertThat(body).containsKey("request");
+        assertThat(body).containsKey("data");
         assertThat(body.get("message")).isEqualTo("Заявка отклонена");
-        assertThat(body.get("request")).isEqualTo(responseDTO);
+
+        AccountCreatingRequestResponseDTO data = (AccountCreatingRequestResponseDTO) body.get("data");
+        assertThat(data.getId()).isEqualTo(1L);
+        assertThat(data.getStatus()).isEqualTo(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ);
 
         verify(accountCreatingRequestsService).rejectAccountRequest(eq(1L), any(AccountCreatingRequestRejectDTO.class));
     }
@@ -169,7 +171,7 @@ class AccountCreatingRequestsControllerTest {
 //    @Test
 //    void acceptAccountRequest_Success() {
 //        // given
-//        when(accountCreatingRequestsService.acceptAccountRequest(1L)).thenReturn(userSummaryDTO);
+//        when(accountCreatingRequestsService.acceptAccountRequest(1L)).thenReturn("Пользователь успешно создан");
 //
 //        // when
 //        ResponseEntity<?> response = accountCreatingRequestsController.acceptAccountRequest(1L);
@@ -178,12 +180,9 @@ class AccountCreatingRequestsControllerTest {
 //        assertThat(response).isNotNull();
 //        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 //
-//        @SuppressWarnings("unchecked")
-//        Map<String, Object> body = (Map<String, Object>) response.getBody();
-//        assertThat(body).containsKey("message");
-//        assertThat(body).containsKey("user");
-//        assertThat(body.get("message")).isEqualTo("Заявка принята. Пользователь создан.");
-//        assertThat(body.get("user")).isEqualTo(userSummaryDTO);
+//        // Проверяем, что ответ - это просто строка (без обёртки)
+//        assertThat(response.getBody()).isInstanceOf(String.class);
+//        assertThat(response.getBody()).isEqualTo("Пользователь успешно создан");
 //
 //        verify(accountCreatingRequestsService).acceptAccountRequest(1L);
 //    }
@@ -271,7 +270,7 @@ class AccountCreatingRequestsControllerTest {
                 any(AccountCreatingRequestFilterDTO.class), eq(0), eq(20), eq("createdAt"), eq("DESC")))
                 .thenReturn(responsePage);
 
-        // when - вызываем без параметров, используем значения по умолчанию
+        // when
         Page<AccountCreatingRequestResponseDTO> result = accountCreatingRequestsController.getRequestsWithFilters(
                 null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, 0, 20, "createdAt", "DESC");
