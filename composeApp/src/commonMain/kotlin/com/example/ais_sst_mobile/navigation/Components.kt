@@ -76,9 +76,11 @@ class SectorsComponent(
         handleBackButton = true,
         childFactory = ::createChild
     )
+
     fun resetToRoot() {
         navigation.replaceAll(Config.List)
     }
+
     private fun createChild(config: Config, context: ComponentContext): Child =
         when (config) {
             is Config.List -> Child.List(
@@ -211,9 +213,11 @@ class HomeComponent(
         handleBackButton = true,
         childFactory = ::createChild
     )
+
     fun onBackClicked() {
         navigation.pop()
     }
+
     private fun createChild(config: Config, context: ComponentContext): Child =
         when (config) {
             is Config.Feed -> Child.Feed(
@@ -221,11 +225,11 @@ class HomeComponent(
                     componentContext = context,
                     onNavigateToUpcoming = { navigation.pushNew(Config.UpcomingEvents) },
                     onNavigateToUpcomingEventDetails = { id -> navigation.pushNew(Config.UpcomingEventDetails(id)) },
+                    onNavigateToCoordinatorEventDetails = { id -> navigation.pushNew(Config.CoordinatorEventDetails(id)) },
                     onNavigateToAvailableEventDetails = { id -> navigation.pushNew(Config.AvailableEventDetails(id)) },
                     onNavigateToFullScreen = onNavigateToFullScreen
                 )
             )
-            // ВОЗВРАЩАЕМ ВЕТКУ UpcomingEvents
             is Config.UpcomingEvents -> Child.UpcomingEvents(
                 UpcomingEventsComponent(
                     componentContext = context,
@@ -247,21 +251,30 @@ class HomeComponent(
                     onGoBack = { navigation.pop() }
                 )
             )
+            is Config.CoordinatorEventDetails -> Child.CoordinatorEventDetails(
+                CoordinatorEventDetailsComponent(
+                    componentContext = context,
+                    eventId = config.eventId,
+                    onGoBack = { navigation.pop() }
+                )
+            )
         }
 
     sealed class Child {
         class Feed(val component: HomeFeedComponent) : Child()
-        class UpcomingEvents(val component: UpcomingEventsComponent) : Child() // ВЕРНУЛИ СЮДА
+        class UpcomingEvents(val component: UpcomingEventsComponent) : Child()
         class UpcomingEventDetails(val component: UpcomingEventDetailsComponent) : Child()
         class AvailableEventDetails(val component: AvailableEventDetailsComponent) : Child()
+        class CoordinatorEventDetails(val component: CoordinatorEventDetailsComponent) : Child()
     }
 
     @Serializable
     private sealed interface Config {
         @Serializable data object Feed : Config
-        @Serializable data object UpcomingEvents : Config // ВЕРНУЛИ СЮДА
+        @Serializable data object UpcomingEvents : Config
         @Serializable data class UpcomingEventDetails(val eventId: Int) : Config
         @Serializable data class AvailableEventDetails(val eventId: Int) : Config
+        @Serializable data class CoordinatorEventDetails(val eventId: Int) : Config
     }
 }
 
@@ -270,6 +283,7 @@ class HomeFeedComponent(
     val onNavigateToUpcoming: () -> Unit,
     val onNavigateToUpcomingEventDetails: (Int) -> Unit,
     val onNavigateToAvailableEventDetails: (Int) -> Unit,
+    val onNavigateToCoordinatorEventDetails: (Int) -> Unit,
     val onNavigateToFullScreen: (FullScreenRoute) -> Unit
 ) : ComponentContext by componentContext
 
@@ -290,7 +304,14 @@ class AvailableEventDetailsComponent(
     val eventId: Int,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
+
 class CreateEventComponent(
     componentContext: ComponentContext,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+class CoordinatorEventDetailsComponent(
+    componentContext: ComponentContext,
+    val eventId: Int,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

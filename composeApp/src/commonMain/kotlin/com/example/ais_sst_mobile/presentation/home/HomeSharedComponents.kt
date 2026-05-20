@@ -3,6 +3,7 @@ package com.example.ais_sst_mobile.presentation.home
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,34 +13,64 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
-data class EventUiModel(
-    val id: Int,
-    val title: String,
-    val dateStr: String,
-    val venue: String,
-    val imageUrl: String? = null
-)
+import androidx.compose.ui.unit.sp
+import com.example.ais_sst_mobile.domain.model.Event
+import com.preat.peekaboo.image.picker.toImageBitmap
+import io.ktor.util.decodeBase64Bytes
 
 @Composable
 fun EventCard(
-    event: EventUiModel,
+    event: Event,
     isHorizontal: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val imageBitmap = remember(event.photoBase64) {
+        try {
+            event.photoBase64?.let { rawString ->
+                var textToDecode = rawString.trim()
+
+                if (textToDecode.startsWith("ZGF0Y")) {
+                    val decodedText = textToDecode.decodeBase64Bytes().decodeToString()
+                    if (decodedText.startsWith("data:image")) {
+                        textToDecode = decodedText
+                    }
+                }
+                if (textToDecode.contains("base64,")) {
+                    textToDecode = textToDecode.substringAfter("base64,").trim()
+                }
+                val bytes = textToDecode.decodeBase64Bytes()
+                if (bytes.isNotEmpty()) bytes.toImageBitmap() else null
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            null
+        }
+    }
+    val bgColor = when {
+        event.isDraft -> Color.Gray.copy(alpha = 0.5f)
+        event.isOverdue -> Color.Red.copy(alpha = 0.5f)
+        else -> MaterialTheme.colorScheme.onPrimaryContainer.copy(0.15f)
+    }
+
+    val borderColor = when {
+        event.isOverdue -> Color.Red.copy(alpha = 0.5f)
+        else -> MaterialTheme.colorScheme.outline
+    }
     Card(
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(0.15f)),
-        border = BorderStroke(0.2.dp, MaterialTheme.colorScheme.outline),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        border = BorderStroke(0.5.dp, borderColor),
         modifier = modifier
             .height(254.dp)
             .clickable { onClick() }
@@ -55,7 +86,39 @@ fun EventCard(
                     .weight(1f)
                     .clip(MaterialTheme.shapes.medium)
                     .background(Color(0xFF2A2346))
-            )
+            ) {
+                if (imageBitmap != null) {
+                    Image(
+                        bitmap = imageBitmap,
+                        contentDescription = event.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                if (event.relationBadge != null) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(
+                                color = Color(0xFFA28BFF).copy(0.7f),
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = event.relationBadge,
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -78,7 +141,7 @@ fun EventCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = event.dateStr,
+                    text = event.dateStrCard,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )

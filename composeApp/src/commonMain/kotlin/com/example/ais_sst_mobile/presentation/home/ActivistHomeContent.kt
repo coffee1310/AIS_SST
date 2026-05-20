@@ -9,7 +9,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.FlashOn
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,13 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
-import androidx.compose.material.icons.outlined.Event
-import androidx.compose.material.icons.outlined.FlashOn
-import androidx.compose.material.icons.outlined.Folder
 
 @Composable
 fun ActivistHomeContent(
@@ -40,8 +42,9 @@ fun ActivistHomeContent(
     onNavigateToAvailableEventDetails: (Int) -> Unit
 ) {
     val selectedTab by screenModel.selectedTab.collectAsState()
-    val upcomingEvents by screenModel.upcomingEvents.collectAsState()
-    val availableEvents by screenModel.availableEvents.collectAsState()
+
+    val state by screenModel.state.collectAsState()
+
     val focusManager = LocalFocusManager.current
     val activistTabs = listOf(
         Pair("Мероприятия", Icons.Outlined.Event),
@@ -54,6 +57,8 @@ fun ActivistHomeContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .clearFocusOnTap(focusManager)
+            .clearFocusOnScroll(focusManager)
     ) {
         Spacer(modifier = Modifier.height(5.dp))
 
@@ -65,82 +70,136 @@ fun ActivistHomeContent(
         Spacer(modifier = Modifier.height(5.dp))
 
         if (selectedTab == 0) {
-            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .clickable { onNavigateToUpcoming() },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Ближайшие мероприятия",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = upcomingTextSize),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                            onTextLayout = { textLayoutResult ->
-                                if (textLayoutResult.hasVisualOverflow) {
-                                    upcomingTextSize *= 0.95f
-                                }
-                            }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.AutoMirrored.Outlined.ArrowForward, "Все", tint = Color.White, modifier = Modifier.size(18.dp))
-                        }
-                    }
-
-                    LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(upcomingEvents) { event ->
-                            EventCard(event = event, isHorizontal = true, modifier = Modifier.fillParentMaxWidth(0.93f), onClick = { onNavigateToUpcomingEventDetails(event.id) })
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Мероприятия, доступные для регистрации",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = availableTextSize),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 2,
-                            onTextLayout = { textLayoutResult ->
-                                if (textLayoutResult.hasVisualOverflow) {
-                                    availableTextSize *= 0.95f
-                                }
-                            }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickable { /* TODO: Поиск */ },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Outlined.Search, "Поиск", tint = Color.White, modifier = Modifier.size(18.dp))
-                        }
+            when (val currentState = state) {
+                is ActivistHomeState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
                     }
                 }
+                is ActivistHomeState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = currentState.message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+                }
+                is ActivistHomeState.Success -> {
+                    val upcomingEvents = currentState.upcoming
+                    val availableEvents = currentState.available
 
-                items(availableEvents) { event ->
-                    EventCard(event = event, isHorizontal = false, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), onClick = { onNavigateToAvailableEventDetails(event.id) })
+                    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    .clickable { onNavigateToUpcoming() },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Ближайшие мероприятия",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontSize = upcomingTextSize),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 1,
+                                    onTextLayout = { textLayoutResult ->
+                                        if (textLayoutResult.hasVisualOverflow) {
+                                            upcomingTextSize *= 0.95f
+                                        }
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.AutoMirrored.Outlined.ArrowForward, "Все", tint = Color.White, modifier = Modifier.size(18.dp))
+                                }
+                            }
+
+                            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                items(upcomingEvents) { event ->
+                                    val cardWidth = if (upcomingEvents.size == 1) Modifier.fillParentMaxWidth() else Modifier.fillParentMaxWidth(0.9f)
+
+                                    EventCard(
+                                        event = event,
+                                        isHorizontal = true,
+                                        modifier = cardWidth,
+                                        onClick = { onNavigateToUpcomingEventDetails(event.id) }
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(20.dp))
+                        }
+
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Мероприятия, доступные для регистрации",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontSize = availableTextSize),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 2,
+                                    onTextLayout = { textLayoutResult ->
+                                        if (textLayoutResult.hasVisualOverflow) {
+                                            availableTextSize *= 0.95f
+                                        }
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                        .clickable { /* TODO: Поиск */ },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Outlined.Search, "Поиск", tint = Color.White, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+
+                        if (availableEvents.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillParentMaxWidth()
+                                        .fillParentMaxHeight(0.3f)
+                                        .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Пока нет доступных мероприятий :(\nВступайте в сектора, чтобы видеть больше!",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        } else {
+                            items(availableEvents) { event ->
+                                EventCard(
+                                    event = event,
+                                    isHorizontal = false,
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                                    onClick = { onNavigateToAvailableEventDetails(event.id) }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         } else {

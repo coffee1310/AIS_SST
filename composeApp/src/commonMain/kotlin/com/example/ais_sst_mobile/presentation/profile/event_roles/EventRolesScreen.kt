@@ -100,7 +100,7 @@ fun EventRolesScreen(
                                 previousRoleCount = currentState.roles.size
                             }
                         }
-
+                        val alphabetizedRoles = currentState.roles.sortedBy { it.title }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -152,7 +152,7 @@ fun EventRolesScreen(
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 100.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                items(currentState.roles) { role ->
+                                items(alphabetizedRoles) { role ->
                                     EventRoleCard(
                                         role = role,
                                         onEditClick = { component.onNavigateToFullScreen(FullScreenRoute.EditRole(role.id)) },

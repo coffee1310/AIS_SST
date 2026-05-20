@@ -16,6 +16,7 @@ import com.example.ais_sst_mobile.navigation.FullScreenRoute
 import com.example.ais_sst_mobile.navigation.HomeComponent
 import com.example.ais_sst_mobile.navigation.HomeFeedComponent
 import com.example.ais_sst_mobile.platformTransitionAnimation
+import com.example.ais_sst_mobile.presentation.home.details.EventDetailsScreen
 import com.example.ais_sst_mobile.presentation.home.details.UpcomingEventDetailsScreen
 import com.example.ais_sst_mobile.presentation.home.upcoming.UpcomingEventsScreen
 import org.koin.compose.getKoin
@@ -32,6 +33,7 @@ fun HomeScreen(component: HomeComponent) {
             is HomeComponent.Child.Feed -> HomeFeedScreen(instance.component)
             is HomeComponent.Child.UpcomingEvents -> UpcomingEventsScreen(instance.component)
             is HomeComponent.Child.UpcomingEventDetails -> UpcomingEventDetailsScreen(instance.component)
+            is HomeComponent.Child.CoordinatorEventDetails -> EventDetailsScreen(instance.component)
             is HomeComponent.Child.AvailableEventDetails -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Детали доступного мероприятия (скоро)", color = MaterialTheme.colorScheme.onSurface)
@@ -55,7 +57,8 @@ fun HomeFeedScreen(component: HomeFeedComponent) {
             onNavigateToAvailableEventDetails = component.onNavigateToAvailableEventDetails
         )
         AppRole.SECTOR_COORDINATOR -> CoordinatorHomeContent(
-            onNavigateToCreateEvent = { component.onNavigateToFullScreen(FullScreenRoute.CreateEvent) }
+            onNavigateToCreateEvent = { component.onNavigateToFullScreen(FullScreenRoute.CreateEvent) },
+            onNavigateToEventDetails = { eventId -> component.onNavigateToCoordinatorEventDetails(eventId) }
         )
         AppRole.CHAIRMAN -> ChairmanHomeContent(screenModel)
         AppRole.CURATOR -> CuratorHomeContent(screenModel)

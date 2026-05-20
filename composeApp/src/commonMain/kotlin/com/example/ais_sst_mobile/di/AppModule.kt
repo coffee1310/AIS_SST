@@ -5,7 +5,9 @@ import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.data.repository.*
 import com.example.ais_sst_mobile.domain.repository.*
 import com.example.ais_sst_mobile.presentation.auth.*
+import com.example.ais_sst_mobile.presentation.events.create.CreateEventScreenModel
 import com.example.ais_sst_mobile.presentation.home.*
+import com.example.ais_sst_mobile.presentation.home.details.EventDetailsScreenModel
 import com.example.ais_sst_mobile.presentation.home.details.UpcomingEventDetailsScreenModel
 import com.example.ais_sst_mobile.presentation.profile.*
 import com.example.ais_sst_mobile.presentation.profile.activist.ActivistProfileScreenModel
@@ -35,11 +37,12 @@ val appModule = module {
     single<DictionaryRepository> { DictionaryRepositoryImpl(get()) }
     single<UserRepository> { UserRepositoryImpl(get()) }
     single<SectorsRepository> { SectorsRepositoryImpl(get()) }
+    single<EventsRepository> { EventsRepositoryImpl(get()) }
 
     // ScreenModels
     factory { LoginScreenModel(get(), get()) }
     factory { RegisterScreenModel(get(), get()) }
-    factory { HomeScreenModel(get()) }
+    factory { HomeScreenModel(get(), get()) }
     factory { ProfileScreenModel(get(), get()) }
     factory { AccountRequestsScreenModel(get()) }
     factory { MyDataScreenModel(get()) }
@@ -53,8 +56,10 @@ val appModule = module {
     factory { EventRolesScreenModel(get()) }
     factory { CreateRoleScreenModel(get(), get()) }
     factory { EditRoleScreenModel(get(), get()) }
-    factory { CoordinatorHomeScreenModel() }
-    factory { UpcomingEventDetailsScreenModel() }
+    factory { CoordinatorHomeScreenModel(get(), get()) }
+    factory { UpcomingEventDetailsScreenModel(get()) }
+    factory { EventDetailsScreenModel(get()) }
+    factory { CreateEventScreenModel(get(), get()) }
 }
 
 private var isKoinInitialized = false

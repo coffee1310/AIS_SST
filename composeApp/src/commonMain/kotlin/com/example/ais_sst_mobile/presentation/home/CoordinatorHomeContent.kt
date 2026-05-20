@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
@@ -29,13 +30,13 @@ import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
 import org.koin.compose.getKoin
 
 @Composable
-fun CoordinatorHomeContent(onNavigateToCreateEvent: () -> Unit) {
+fun CoordinatorHomeContent(onNavigateToCreateEvent: () -> Unit,
+                           onNavigateToEventDetails: (Int) -> Unit) {
     val koin = getKoin()
     val screenModel = remember { koin.get<CoordinatorHomeScreenModel>() }
 
     val selectedTab by screenModel.selectedTab.collectAsState()
     val searchQuery by screenModel.searchQuery.collectAsState()
-    val events by screenModel.coordinatorEvents.collectAsState()
     val focusManager = LocalFocusManager.current
 
     val coordinatorTabs = listOf(
@@ -73,53 +74,72 @@ fun CoordinatorHomeContent(onNavigateToCreateEvent: () -> Unit) {
                         value = searchQuery,
                         onValueChange = { screenModel.updateSearchQuery(it) },
                         placeholder = "Название мероприятия",
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
+                        modifier = Modifier.weight(1f).height(52.dp)
                     )
-
                     Spacer(modifier = Modifier.width(12.dp))
-
                     Box(
                         modifier = Modifier
                             .size(52.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.02f),
-                                shape = MaterialTheme.shapes.medium
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                                shape = MaterialTheme.shapes.medium
-                            )
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.02f), MaterialTheme.shapes.medium)
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), MaterialTheme.shapes.medium)
                             .clip(MaterialTheme.shapes.medium)
                             .clickable { /* TODO: Фильтры */ },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Tune,
-                            contentDescription = "Фильтр",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+                        Icon(Icons.Default.Tune, "Фильтр", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(events) { event ->
-                        EventCard(
-                            event = event,
-                            isHorizontal = false,
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = { /* TODO: Детали мероприятия */ }
-                        )
+                val state by screenModel.state.collectAsState()
+
+                when (val currentState = state) {
+                    is CoordinatorEventsState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+                        }
                     }
-                    item { Spacer(modifier = Modifier.height(100.dp)) }
+                    is CoordinatorEventsState.Error -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = currentState.message,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+                    is CoordinatorEventsState.Success -> {
+                        val filteredEvents = currentState.events.filter { it.title.contains(searchQuery, ignoreCase = true) }
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            if (filteredEvents.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier.fillParentMaxWidth().fillParentMaxHeight(0.6f),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "У вас пока нет ни одного созданного мероприятия.\nНажмите '+' чтобы создать!",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            } else {
+                                items(filteredEvents) { event ->
+                                    EventCard(event = event, isHorizontal = false, modifier = Modifier.fillMaxWidth()) {
+                                        onNavigateToEventDetails(event.id)                                    }
+                                }
+                            }
+                            item { Spacer(modifier = Modifier.height(100.dp)) }
+                        }
+                    }
                 }
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

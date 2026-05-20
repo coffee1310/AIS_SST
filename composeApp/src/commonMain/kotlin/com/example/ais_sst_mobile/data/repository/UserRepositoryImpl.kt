@@ -67,6 +67,17 @@ class UserRepositoryImpl(
             }
         }.body()
     }
+    override suspend fun getAllUsers(page: Int, size: Int, searchQuery: String): Result<UserPageResponseDto> = runCatching {
+        httpClient.get("http://185.246.66.164:8080/api/users/all") {
+            parameter("page", page)
+            parameter("size", size)
+            parameter("sortBy", "surname")
+            parameter("sortDirection", "ASC")
+            if (searchQuery.isNotBlank()) {
+                parameter("search", searchQuery)
+            }
+        }.body()
+    }
     override suspend fun getUsersByRole(role: String): Result<List<UserProfileDto>> = runCatching {
         val response = httpClient.get("users/all") {
             parameter("page", 0)
