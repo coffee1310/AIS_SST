@@ -63,11 +63,7 @@ namespace Diplom_Stud.Pages.Coordinator
         public string RolesCountText
         {
             get => _rolesCountText;
-            set
-            {
-                _rolesCountText = value;
-                OnPropertyChanged(nameof(RolesCountText));
-            }
+            set { _rolesCountText = value; OnPropertyChanged(nameof(RolesCountText)); }
         }
 
         public CreateEvent()
@@ -202,7 +198,6 @@ namespace Diplom_Stud.Pages.Coordinator
                     if (string.IsNullOrEmpty(text)) return true;
                     var cbi = item as ComboBoxItem;
                     if (cbi == null) return true;
-
                     return cbi.Content.ToString().IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0;
                 };
                 cb.IsDropDownOpen = true;
@@ -248,6 +243,7 @@ namespace Diplom_Stud.Pages.Coordinator
                 SelectedOrganizers.Remove(user);
             }
         }
+
         private void Roles_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             UpdateRolesCount();
@@ -299,22 +295,23 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
+                string startDateTime = $"{EventDate.Value:yyyy-MM-dd}T{StartTime}:00";
+                string endDateTime = $"{EventDate.Value:yyyy-MM-dd}T{EndTime}:00";
+
+                var organizerIds = SelectedOrganizers.Select(u => u.id).ToList();
                 var eventPayload = new
                 {
                     title = EventTitle,
                     description = EventDescription ?? "",
+                    photo = _newBase64Image ?? "",
                     dateOfEvent = EventDate.Value.ToString("yyyy-MM-dd"),
-                    startTime = StartTime + ":00",
-                    endTime = EndTime + ":00",
+                    startTime = startDateTime,
+                    endTime = endDateTime,
                     venue = Venue,
+                    organizerIds = organizerIds,
                     referenceToPosition = string.IsNullOrWhiteSpace(EventDescription) ? "Описание отсутствует" : EventDescription,
                     isPublic = IsPublic,
-                    @public = IsPublic,
-                    isDraft = IsDraft,
-                    draft = IsDraft,
-                    organizer_id = App.CurrentUser?.Id ?? 0,
-                    organizerId = App.CurrentUser?.Id ?? 0,
-                    photo = _newBase64Image ?? "" 
+                    isDraft = IsDraft
                 };
 
                 string eventJson = JsonSerializer.Serialize(eventPayload);
@@ -343,7 +340,7 @@ namespace Diplom_Stud.Pages.Coordinator
                 int rolesAdded = 0;
                 foreach (var role in Roles)
                 {
-                    string deadlineFormatted = $"{role.DeadlineDate.Value.ToString("yyyy-MM-dd")}T{role.DeadlineTime}:00";
+                    string deadlineFormatted = $"{role.DeadlineDate.Value:yyyy-MM-dd}T{role.DeadlineTime}:00";
 
                     var rolePayload = new
                     {
@@ -370,7 +367,7 @@ namespace Diplom_Stud.Pages.Coordinator
                     if (orgResponse.IsSuccessStatusCode) organizersAdded++;
                 }
 
-                CustomMessageBox.Show($"Мероприятие успешно создано!\nДобавлено ролей: {rolesAdded}/{Roles.Count}\nДобавлено доп. организаторов: {organizersAdded}/{SelectedOrganizers.Count}", "Успех", CustomMessageBox.MessageType.Success);
+                CustomMessageBox.Show($"Мероприятие успешно создано!\nID: {newEventId}\nДобавлено ролей: {rolesAdded}/{Roles.Count}\nДобавлено организаторов: {organizersAdded}/{SelectedOrganizers.Count}", "Успех", CustomMessageBox.MessageType.Success);
                 this.NavigationService.GoBack();
             }
             catch (Exception ex)
@@ -436,17 +433,12 @@ namespace Diplom_Stud.Pages.Coordinator
         public string patronymic { get; set; }
         public string groupName { get; set; }
         public string specialityShortTitle { get; set; }
-
         public string role { get; set; }
 
         public string FullName => $"{surname} {name} {patronymic}".Trim();
-        public UserDto() { }
-
         public string DisplayName => string.IsNullOrEmpty(groupName)
             ? FullName
             : $"{FullName} ({specialityShortTitle}-{groupName})";
-
-        public override string ToString() => DisplayName;
     }
 
     public class EventResponseDto
@@ -461,13 +453,8 @@ namespace Diplom_Stud.Pages.Coordinator
         public string description { get; set; }
         public int sectorId { get; set; }
         public string sectorTitle { get; set; }
-        public string createdAt { get; set; }
-        public string updatedAt { get; set; }
 
-        public override string ToString()
-        {
-            return title;
-        }
+        public override string ToString() => title;
     }
 
     public class RoleItem : INotifyPropertyChanged
@@ -507,10 +494,7 @@ namespace Diplom_Stud.Pages.Coordinator
                 if (_selectedRole != null && AvailableSectors != null)
                 {
                     var sector = AvailableSectors.FirstOrDefault(s => s.id == _selectedRole.sectorId);
-                    if (sector != null)
-                    {
-                        SelectedSector = sector;
-                    }
+                    if (sector != null) SelectedSector = sector;
                 }
             }
         }
@@ -546,7 +530,6 @@ namespace Diplom_Stud.Pages.Coordinator
     public class PageResponse_Temp
     {
         public List<UserDto> content { get; set; }
-        public int totalPages { get; set; }
-        public int totalElements { get; set; }
     }
+
 }

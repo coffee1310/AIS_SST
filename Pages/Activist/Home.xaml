@@ -69,8 +69,16 @@
                                             <ImageBrush ImageSource="{Binding Image}" Stretch="UniformToFill"/>
                                         </Border.Background>
                                         <Grid>
-                                            <Border Background="#A084FB" CornerRadius="8" Padding="12,6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,10,0" Visibility="{Binding OrganizerBadgeVisibility}">
+                                            <Border Background="#A084FB" CornerRadius="8" Padding="12,6" 
+                                                HorizontalAlignment="Right" VerticalAlignment="Top" 
+                                                Margin="0,10,10,0" Visibility="{Binding OrganizerBadgeVisibility}">
                                                 <TextBlock Text="Вы организатор" Foreground="White" FontSize="10" FontFamily="Montserrat" FontWeight="Bold"/>
+                                            </Border>
+
+                                            <Border Background="#02B3BA" CornerRadius="8" Padding="12,6" 
+                                                    HorizontalAlignment="Left" VerticalAlignment="Top" 
+                                                    Margin="10,10,0,0" Visibility="{Binding ParticipantBadgeVisibility}">
+                                                <TextBlock Text="Вы участник" Foreground="White" FontSize="10" FontFamily="Montserrat" FontWeight="Bold"/>
                                             </Border>
                                         </Grid>
                                     </Border>

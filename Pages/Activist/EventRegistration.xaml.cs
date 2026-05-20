@@ -63,15 +63,12 @@ namespace Diplom_Stud.Pages.Activist
             try
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-
                 HttpResponseMessage response = await _httpClient.GetAsync($"/api/events/{_eventId}");
-
                 if (response.IsSuccessStatusCode)
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     var ev = JsonSerializer.Deserialize<EventDetailDto>(responseBody, options);
-
                     if (ev != null)
                     {
                         EventTitleText.Text = ev.title;
@@ -100,28 +97,58 @@ namespace Diplom_Stud.Pages.Activist
 
                     if (rolesPage?.content != null && rolesPage.content.Count > 0)
                     {
+                        var userApplications = await GetUserApplicationsAsync();
+
                         var rolesList = new List<RegistrationRoleViewModel>();
 
                         foreach (var role in rolesPage.content)
                         {
+                            bool deadlinePassed = IsDeadlinePassed(role.deadline);
+                            var app = userApplications.FirstOrDefault(a => a.eventRoleId == role.id);
+
+                            string statusText = "";
+                            bool canApply = !deadlinePassed && app == null;
+
+                            if (app != null)
+                            {
+                                if (app.status == "ОДОБРЕНА")
+                                {
+                                    statusText = "Вы уже участник";
+                                    canApply = false;
+                                }
+                                else if (app.status == "На рассмотрении")
+                                {
+                                    statusText = "Заявка на рассмотрении";
+                                    canApply = false;
+                                }
+                            }
+                            else if (deadlinePassed)
+                            {
+                                statusText = "Дедлайн прошёл";
+                            }
+
                             rolesList.Add(new RegistrationRoleViewModel
                             {
                                 Id = role.id,
                                 Title = role.globalEventRoleTitle ?? "Роль",
                                 Description = string.IsNullOrEmpty(role.description) ? "Описание не указано" : role.description,
-                                DeadlineText = FormatDeadline(role.deadline)
+                                DeadlineText = FormatDeadline(role.deadline),
+                                CanApply = canApply,
+                                ApplicationStatus = statusText
                             });
                         }
 
                         RolesItemsControl.ItemsSource = rolesList;
                         EmptyRolesText.Visibility = Visibility.Collapsed;
+
+                        SubmitBtn.IsEnabled = true;
+                        SubmitBtn.Opacity = 1.0;
                     }
                     else
                     {
                         RolesItemsControl.ItemsSource = null;
                         EmptyRolesText.Visibility = Visibility.Visible;
                         SubmitBtn.IsEnabled = false;
-                        SubmitBtn.Opacity = 0.5;
                     }
                 }
                 else
@@ -139,14 +166,41 @@ namespace Diplom_Stud.Pages.Activist
             }
         }
 
+        private async Task<List<RoleApplicationDto>> GetUserApplicationsAsync()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"/api/role-applications?eventId={_eventId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    string json = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var page = JsonSerializer.Deserialize<RoleApplicationPageResponse>(json, options);
+                    return page?.content ?? new List<RoleApplicationDto>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Не удалось загрузить заявки пользователя: {ex.Message}");
+            }
+            return new List<RoleApplicationDto>();
+        }
+
+        private bool IsDeadlinePassed(string deadlineStr)
+        {
+            if (string.IsNullOrEmpty(deadlineStr)) return false;
+            return DateTime.TryParse(deadlineStr, out DateTime dl) && dl < DateTime.Now;
+        }
+
         private void Role_Checked(object sender, RoutedEventArgs e)
         {
-            if (sender is CheckBox cb && cb.Tag is int roleId)
+            if (sender is CheckBox cb &&
+                cb.Tag is int roleId &&
+                cb.DataContext is RegistrationRoleViewModel vm &&
+                vm.CanApply)
             {
                 if (!_selectedRoleIds.Contains(roleId))
-                {
                     _selectedRoleIds.Add(roleId);
-                }
             }
         }
 
@@ -173,30 +227,37 @@ namespace Diplom_Stud.Pages.Activist
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                var payload = new
+                string commentText = tbComment.Text.Trim();
+                int successCount = 0;
+                string lastError = string.Empty;
+
+                foreach (int roleId in _selectedRoleIds)
                 {
-                    eventRoleIds = _selectedRoleIds,
-                    comment = tbComment.Text.Trim()
-                };
+                    var payload = new { description = commentText };
+                    string jsonPayload = JsonSerializer.Serialize(payload);
+                    var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-                string jsonPayload = JsonSerializer.Serialize(payload);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                    HttpResponseMessage response = await _httpClient.PostAsync($"/api/role-applications/{roleId}", content);
 
-                HttpResponseMessage response = await _httpClient.PostAsync($"/api/role-applications/{_eventId}", content);
+                    if (response.IsSuccessStatusCode)
+                        successCount++;
+                    else
+                        lastError = await response.Content.ReadAsStringAsync();
+                }
 
-                if (response.IsSuccessStatusCode)
+                if (successCount == _selectedRoleIds.Count)
                 {
-                    CustomMessageBox.Show("Ваша заявка на мероприятие успешно отправлена!", "Успех", CustomMessageBox.MessageType.Success);
-
+                    CustomMessageBox.Show("Ваши заявки успешно отправлены!", "Успех", CustomMessageBox.MessageType.Success);
                     if (this.NavigationService.CanGoBack)
-                    {
                         this.NavigationService.GoBack();
-                    }
+                }
+                else if (successCount > 0)
+                {
+                    CustomMessageBox.Show($"Часть заявок отправлена ({successCount} из {_selectedRoleIds.Count}).\nОшибка остальных: {lastError}", "Внимание", CustomMessageBox.MessageType.Warning);
                 }
                 else
                 {
-                    string err = await response.Content.ReadAsStringAsync();
-                    CustomMessageBox.Show($"Ошибка при отправке заявки: {response.StatusCode}\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    CustomMessageBox.Show($"Ошибка при отправке заявки:\n{lastError}", "Ошибка", CustomMessageBox.MessageType.Error);
                 }
             }
             catch (Exception ex)
@@ -213,17 +274,13 @@ namespace Diplom_Stud.Pages.Activist
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             if (this.NavigationService.CanGoBack)
-            {
                 this.NavigationService.GoBack();
-            }
         }
 
         private string FormatDeadline(string deadlineStr)
         {
             if (!string.IsNullOrEmpty(deadlineStr) && DateTime.TryParse(deadlineStr, out DateTime date))
-            {
                 return date.ToString("d MMMM, HH:mm", new CultureInfo("ru-RU"));
-            }
             return "Не указан";
         }
     }
@@ -234,5 +291,18 @@ namespace Diplom_Stud.Pages.Activist
         public string Title { get; set; }
         public string Description { get; set; }
         public string DeadlineText { get; set; }
+        public bool CanApply { get; set; } = true;
+        public string ApplicationStatus { get; set; } = "";
+    }
+
+    public class RoleApplicationPageResponse
+    {
+        public List<RoleApplicationDto> content { get; set; }
+    }
+
+    public class RoleApplicationDto
+    {
+        public int eventRoleId { get; set; }
+        public string status { get; set; } = "";
     }
 }

@@ -78,41 +78,51 @@ namespace Diplom_Stud.Pages.Activist
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                // 1. Мероприятия, где активист является ОРГАНИЗАТОРОМ (приоритет №1)
                 var orgEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isOrganizer=true&page=0&size=50");
 
-                // 2. Мероприятия его сектора
                 var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isResponsibleSector=true&page=0&size=50");
 
-                // 3. Все публичные мероприятия
                 var publicEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isPublic=true&page=0&size=50");
 
-                // Собираем всё в один словарь по ID, чтобы избежать дубликатов.
+                var approvedApplications = await GetApprovedApplicationsAsync();
+
                 var activeEventsDict = new Dictionary<int, EventViewModelLocal>();
 
-                // Сначала добавляем те, где он организатор (чтобы флаг IsUserOrganizer установился в true)
                 foreach (var ev in orgEventsDto)
                 {
-                    activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
+                    activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true, isParticipant: false);
                 }
 
-                // Затем добавляем остальные, если их еще нет в словаре
                 foreach (var ev in sectorEventsDto.Concat(publicEventsDto))
                 {
                     if (!activeEventsDict.ContainsKey(ev.id))
                     {
-                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
+                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false, isParticipant: false);
                     }
                 }
 
-                // СОРТИРОВКА: Сначала просроченные, затем будущие (внутри групп сортируем по дате)
-                var sortedEventsVm = activeEventsDict.Values
-                    .OrderByDescending(v => v.IsOverdue)
-                    .ThenBy(v => v.EventDate)
+                var approvedEventIds = new HashSet<int>(approvedApplications.Select(a => a.eventId));
+
+                foreach (var vm in activeEventsDict.Values)
+                {
+                    if (approvedEventIds.Contains(vm.Id))
+                    {
+                        vm.IsParticipant = true;
+                        vm.ParticipantBadgeVisibility = Visibility.Visible;
+                    }
+                }
+
+                var futureEventsVm = activeEventsDict.Values
+                    .Where(v => v.EventDate.Date >= DateTime.Today)
+                    .OrderBy(v => v.EventDate)
                     .ToList();
 
-                EventsItemsControl.ItemsSource = sortedEventsVm;
-                if (sortedEventsVm.Count == 0) EmptyEventsText.Visibility = Visibility.Visible;
+                EventsItemsControl.ItemsSource = futureEventsVm;
+
+                if (futureEventsVm.Count == 0)
+                    EmptyEventsText.Visibility = Visibility.Visible;
+                else
+                    EmptyEventsText.Visibility = Visibility.Collapsed;
 
             }
             catch (Exception ex)
@@ -123,6 +133,27 @@ namespace Diplom_Stud.Pages.Activist
             {
                 LoadingOverlay.Visibility = Visibility.Collapsed;
             }
+        }
+
+        private async Task<List<ApplicationDto>> GetApprovedApplicationsAsync()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("/api/role-applications?status=ОДОБРЕНА");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string json = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var page = JsonSerializer.Deserialize<ApplicationPageResponse>(json, options);
+                    return page?.content ?? new List<ApplicationDto>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Не удалось загрузить одобренные заявки: {ex.Message}");
+            }
+            return new List<ApplicationDto>();
         }
 
         private async Task<List<EventDtoLocal>> FetchEventsFromApi(string url)
@@ -144,7 +175,7 @@ namespace Diplom_Stud.Pages.Activist
             return new List<EventDtoLocal>();
         }
 
-        private EventViewModelLocal MapToViewModel(EventDtoLocal ev, bool isOrganizer)
+        private EventViewModelLocal MapToViewModel(EventDtoLocal ev, bool isOrganizer, bool isParticipant)
         {
             string dateDisplay = "Дата не указана";
             DateTime parsedDate = DateTime.MaxValue;
@@ -159,15 +190,12 @@ namespace Diplom_Stud.Pages.Activist
                 dateDisplay += $", {ev.startTime.Substring(0, 5)}";
             }
 
-            BitmapImage bmp = new BitmapImage(new Uri("pack://application:,,,/Resources/event1.png")); // Заглушка
+            BitmapImage bmp = new BitmapImage(new Uri("pack://application:,,,/Resources/event1.png"));
             if (!string.IsNullOrEmpty(ev.photo))
             {
                 var decodedBmp = GetImageFromBase64(ev.photo);
                 if (decodedBmp != null) bmp = decodedBmp;
             }
-
-            // Проверка просроченности
-            bool isOverdue = !ev.isCompleted && parsedDate < DateTime.Now.Date;
 
             return new EventViewModelLocal
             {
@@ -177,10 +205,11 @@ namespace Diplom_Stud.Pages.Activist
                 Venue = ev.venue ?? "Место не указано",
                 Image = bmp,
                 EventDate = parsedDate,
-                IsOverdue = isOverdue,
                 OrganizerBadgeVisibility = isOrganizer ? Visibility.Visible : Visibility.Collapsed,
-                CardBorderBrush = isOverdue ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E81123")) : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A283C")),
-                CardBorderThickness = isOverdue ? new Thickness(2) : new Thickness(1)
+                ParticipantBadgeVisibility = Visibility.Collapsed, 
+                IsParticipant = isParticipant,
+                CardBorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A283C")),
+                CardBorderThickness = new Thickness(1)
             };
         }
 
@@ -269,9 +298,21 @@ namespace Diplom_Stud.Pages.Activist
         public ImageSource Image { get; set; }
 
         public Visibility OrganizerBadgeVisibility { get; set; }
+        public Visibility ParticipantBadgeVisibility { get; set; } = Visibility.Collapsed;
         public DateTime EventDate { get; set; }
-        public bool IsOverdue { get; set; }
+        public bool IsParticipant { get; set; }
         public Brush CardBorderBrush { get; set; }
         public Thickness CardBorderThickness { get; set; }
+    }
+
+    public class ApplicationPageResponse
+    {
+        public List<ApplicationDto> content { get; set; }
+    }
+
+    public class ApplicationDto
+    {
+        public int eventId { get; set; }
+        public string status { get; set; } = "";
     }
 }

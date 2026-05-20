@@ -46,7 +46,7 @@
                     <RadioButton x:Name="TabFinalize" Content="Завершение" Style="{StaticResource TabRadioButtonStyle}" Checked="Tab_Checked"/>
                 </StackPanel>
 
-                <Frame x:Name="EventMainFrame" NavigationUIVisibility="Hidden" />
+                <Frame x:Name="EventMainFrame" NavigationUIVisibility="Hidden" PreviewMouseWheel="EventMainFrame_PreviewMouseWheel" />
 
             </StackPanel>
         </ScrollViewer>

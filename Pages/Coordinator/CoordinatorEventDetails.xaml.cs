@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace Diplom_Stud.Pages.Coordinator
 {
@@ -30,6 +31,21 @@ namespace Diplom_Stud.Pages.Coordinator
                 EventMainFrame.Navigate(new EventParticipantsPage(_eventId));
             else if (TabFinalize.IsChecked == true)
                 EventMainFrame.Navigate(new EventFinalizePage(_eventId));
+        }
+
+        private void EventMainFrame_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (!e.Handled)
+            {
+                e.Handled = true;
+                var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
+                {
+                    RoutedEvent = UIElement.MouseWheelEvent,
+                    Source = sender
+                };
+                var parent = ((Control)sender).Parent as UIElement;
+                parent?.RaiseEvent(eventArg);
+            }
         }
     }
 }
