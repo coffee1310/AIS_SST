@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -452,7 +453,76 @@ public class GlobalExceptionHandler {
         body.put("path", request.getDescription(false));
 
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<?> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex, WebRequest request) {
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", "Data Integrity Violation");
+
+        String message = "Нарушение целостности данных";
+
+        // Извлекаем информацию о конкретном нарушении из сообщения об ошибке
+        String exMessage = ex.getMostSpecificCause().getMessage();
+
+        if (exMessage.contains("student_id_number")) {
+            message = "Студент с таким номером студенческого билета уже существует";
+        } else if (exMessage.contains("student_email")) {
+            message = "Студент с таким email уже существует";
+        } else if (exMessage.contains("phone_number")) {
+            message = "Студент с таким номером телефона уже существует";
+        } else if (exMessage.contains("constraint")) {
+            // Извлекаем название constraint
+            String constraint = extractConstraintName(exMessage);
+            if (constraint != null && !constraint.isEmpty()) {
+                message = String.format("Нарушение уникальности: %s", constraint);
+            }
+        }
+
+        body.put("message", message);
+        body.put("path", request.getDescription(false));
+
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
+    // Вспомогательный метод для извлечения названия constraint
+    private String extractConstraintName(String message) {
+        if (message.contains("constraint \"")) {
+            int start = message.indexOf("constraint \"") + 11;
+            int end = message.indexOf("\"", start);
+            if (start > 0 && end > start) {
+                String constraint = message.substring(start, end);
+                // Преобразуем имя constraint в человеко-читаемый вид
+                return mapConstraintToReadableName(constraint);
+            }
+        }
+        return null;
+    }
+
+    // Преобразование имен constraint в понятные сообщения
+    private String mapConstraintToReadableName(String constraint) {
+        if (constraint == null) return "неизвестное ограничение";
+
+        switch (constraint) {
+            case "account_creating_requests_student_id_number_key":
+                return "номер студенческого билета уже существует";
+            case "account_creating_requests_student_email_key":
+                return "email уже существует";
+            case "account_creating_requests_phone_number_key":
+                return "номер телефона уже существует";
+            case "users_student_email_key":
+                return "email пользователя уже существует";
+            case "users_phone_number_key":
+                return "номер телефона пользователя уже существует";
+            case "users_student_id_number_key":
+                return "номер студенческого билета пользователя уже существует";
+            default:
+                return constraint;
+        }
     }
 
 }
