@@ -23,9 +23,8 @@ namespace Diplom_Stud.Pages.Coordinator
         private static readonly HttpClient _httpClient = new HttpClient();
         private int _eventId;
 
-        private int _currentPage = 0;
-        private int _pageSize = 10;
-        private int _totalPages = 1;
+        // Для отклонения с причиной
+        private int _rejectingApplicationId = 0;
 
         public EventRequestsPage(int eventId)
         {
@@ -50,14 +49,15 @@ namespace Diplom_Stud.Pages.Coordinator
         {
             LoadingOverlay.Visibility = Visibility.Visible;
             EmptyAllText.Visibility = Visibility.Collapsed;
-            PaginationPanel.Visibility = Visibility.Collapsed;
             RolesWithRequestsList.ItemsSource = null;
 
             try
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                HttpResponseMessage response = await _httpClient.GetAsync($"/api/role-applications?eventId={_eventId}&status=НА_РАССМОТРЕНИИ&page={_currentPage}&size={_pageSize}");
+                // Загружаем все заявки на рассмотрении (без пагинации)
+                HttpResponseMessage response = await _httpClient.GetAsync(
+                    $"/api/role-applications?eventId={_eventId}&status=НА_РАССМОТРЕНИИ&size=100");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -66,13 +66,9 @@ namespace Diplom_Stud.Pages.Coordinator
 
                     if (pageData?.content != null && pageData.content.Count > 0)
                     {
-                        _totalPages = pageData.totalPages > 0 ? pageData.totalPages : 1;
-                        TxtPageInfo.Text = $"Страница {_currentPage + 1} из {_totalPages}";
-                        BtnPrevPage.IsEnabled = _currentPage > 0;
-                        BtnNextPage.IsEnabled = _currentPage < _totalPages - 1;
-                        PaginationPanel.Visibility = Visibility.Visible;
+                        var groupedApps = pageData.content.GroupBy(a =>
+                            string.IsNullOrEmpty(a.eventRoleName) ? "Роль не указана" : a.eventRoleName);
 
-                        var groupedApps = pageData.content.GroupBy(a => string.IsNullOrEmpty(a.eventRoleName) ? "Роль не указана" : a.eventRoleName);
                         var roleBlocks = new List<RequestRoleBlockViewModel>();
 
                         foreach (var group in groupedApps)
@@ -126,16 +122,67 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
-        private async void PrevPage_Click(object sender, RoutedEventArgs e)
+        // ==================== ОТКЛОНЕНИЕ С ПРИЧИНОЙ ====================
+        private void RejectRequest_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentPage > 0) { _currentPage--; await LoadRequestsAsync(); }
+            if (sender is Button btn && btn.Tag is int appId)
+            {
+                _rejectingApplicationId = appId;
+                TbRejectionReason.Text = "";
+                ErrRejectionReason.Visibility = Visibility.Collapsed;
+                RejectionOverlay.Visibility = Visibility.Visible;
+            }
         }
 
-        private async void NextPage_Click(object sender, RoutedEventArgs e)
+        private void CancelRejection_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentPage < _totalPages - 1) { _currentPage++; await LoadRequestsAsync(); }
+            RejectionOverlay.Visibility = Visibility.Collapsed;
         }
 
+        private async void ConfirmRejection_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TbRejectionReason.Text))
+            {
+                ErrRejectionReason.Visibility = Visibility.Visible;
+                return;
+            }
+
+            RejectionOverlay.Visibility = Visibility.Collapsed;
+            LoadingOverlay.Visibility = Visibility.Visible;
+
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                var payload = new { rejectionReason = TbRejectionReason.Text.Trim() };
+                string jsonPayload = JsonSerializer.Serialize(payload);
+                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await _httpClient.PutAsync(
+                    $"/api/role-applications/{_rejectingApplicationId}/reject", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    CustomMessageBox.Show("Заявка успешно отклонена", "Успех", CustomMessageBox.MessageType.Success);
+                    await LoadRequestsAsync();
+                }
+                else
+                {
+                    string err = await response.Content.ReadAsStringAsync();
+                    CustomMessageBox.Show($"Не удалось отклонить заявку:\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+            }
+            finally
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        // ==================== ОДОБРЕНИЕ ====================
         private async void ApproveRequest_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int appId)
@@ -144,11 +191,35 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
-        private async void RejectRequest_Click(object sender, RoutedEventArgs e)
+        private async Task HandleApplicationActionAsync(int applicationId, string action, string successMessage)
         {
-            if (sender is Button btn && btn.Tag is int appId)
+            LoadingOverlay.Visibility = Visibility.Visible;
+            try
             {
-                await HandleApplicationActionAsync(appId, "reject", "Заявка отклонена.");
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                var content = new StringContent("", Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await _httpClient.PutAsync(
+                    $"/api/role-applications/{applicationId}/{action}", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    CustomMessageBox.Show(successMessage, "Успех", CustomMessageBox.MessageType.Success);
+                    await LoadRequestsAsync();
+                }
+                else
+                {
+                    string err = await response.Content.ReadAsStringAsync();
+                    CustomMessageBox.Show($"Ошибка: {response.StatusCode}\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+            }
+            finally
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -165,47 +236,13 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
-        private async Task HandleApplicationActionAsync(int applicationId, string action, string successMessage)
-        {
-            LoadingOverlay.Visibility = Visibility.Visible;
-            try
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-                var content = new StringContent("", Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = await _httpClient.PutAsync($"/api/role-applications/{applicationId}/{action}", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    CustomMessageBox.Show(successMessage, "Успех", CustomMessageBox.MessageType.Success);
-
-                    if (_currentPage > 0 && RolesWithRequestsList.Items.Count <= 1)
-                        _currentPage--;
-
-                    await LoadRequestsAsync();
-                }
-                else
-                {
-                    string err = await response.Content.ReadAsStringAsync();
-                    CustomMessageBox.Show($"Ошибка выполнения действия:\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
-            }
-            finally
-            {
-                LoadingOverlay.Visibility = Visibility.Collapsed;
-            }
-        }
-
         private BitmapImage GetImageFromBase64(string base64String)
         {
             try
             {
                 string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
                 byte[] imageBytes = null;
+
                 try
                 {
                     byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
@@ -243,10 +280,10 @@ namespace Diplom_Stud.Pages.Coordinator
         }
     }
 
+    // ====================== DTO ======================
     public class ReqPageResponseLocal
     {
         public List<ReqAppDtoLocal> content { get; set; }
-        public int totalPages { get; set; }
     }
 
     public class ReqAppDtoLocal
@@ -270,14 +307,15 @@ namespace Diplom_Stud.Pages.Coordinator
     public class RequestRoleBlockViewModel : INotifyPropertyChanged
     {
         public string RoleTitle { get; set; }
+
         private bool _isExpanded = true;
         public bool IsExpanded
         {
             get => _isExpanded;
             set { _isExpanded = value; OnPropertyChanged(nameof(IsExpanded)); }
         }
+
         public List<RequestAppViewModel> Applications { get; set; }
-        public Visibility EmptyTextVisibility => (Applications == null || Applications.Count == 0) ? Visibility.Visible : Visibility.Collapsed;
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

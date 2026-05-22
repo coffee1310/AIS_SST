@@ -89,36 +89,42 @@ namespace Diplom_Stud.Pages.General
             {
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
+                // Загрузка социальных статусов
                 var statResp = await _httpClient.GetAsync("/api/social_status");
                 if (statResp.IsSuccessStatusCode)
                 {
                     var statJson = await statResp.Content.ReadAsStringAsync();
-                    var statuses = JsonSerializer.Deserialize<List<SocialStatusDto>>(statJson, options);
-                    icStatusList.ItemsSource = statuses;
+                    var statusResponse = JsonSerializer.Deserialize<ApiResponse<SocialStatusDto>>(statJson, options);
+                    if (statusResponse?.data != null)
+                    {
+                        icStatusList.ItemsSource = statusResponse.data;
+                    }
                 }
 
+                // Загрузка специальностей
                 var specResp = await _httpClient.GetAsync("/api/specialities");
                 if (specResp.IsSuccessStatusCode)
                 {
                     var specJson = await specResp.Content.ReadAsStringAsync();
-                    var specialities = JsonSerializer.Deserialize<List<SpecialityDto>>(specJson, options);
-                    if (specialities != null)
+                    var specResponse = JsonSerializer.Deserialize<ApiResponse<SpecialityDto>>(specJson, options);
+                    if (specResponse?.data != null)
                     {
-                        foreach (var spec in specialities)
+                        foreach (var spec in specResponse.data)
                         {
                             cbSpeciality.Items.Add(new ComboBoxItem { Content = spec.title, Tag = spec.id, Foreground = Brushes.White });
                         }
                     }
                 }
 
+                // Загрузка групп
                 var groupResp = await _httpClient.GetAsync("/api/group");
                 if (groupResp.IsSuccessStatusCode)
                 {
                     var groupJson = await groupResp.Content.ReadAsStringAsync();
-                    var groups = JsonSerializer.Deserialize<List<GroupDto>>(groupJson, options);
-                    if (groups != null)
+                    var groupResponse = JsonSerializer.Deserialize<ApiResponse<GroupDto>>(groupJson, options);
+                    if (groupResponse?.data != null)
                     {
-                        foreach (var group in groups)
+                        foreach (var group in groupResponse.data)
                         {
                             cbGroup.Items.Add(new ComboBoxItem { Content = group.title, Tag = group.id, Foreground = Brushes.White });
                         }
@@ -443,13 +449,10 @@ namespace Diplom_Stud.Pages.General
             }
 
             if (dpBirthDate.SelectedDate == null) { errBirthDate.Visibility = Visibility.Visible; hasError = true; }
-
             if (cbGender.SelectedIndex <= 0) { errGender.Visibility = Visibility.Visible; hasError = true; }
             if (cbCourse.SelectedIndex <= 0) { errCourse.Visibility = Visibility.Visible; hasError = true; }
-
             if (cbGroup.SelectedItem == null) { errGroup.Visibility = Visibility.Visible; hasError = true; }
             if (cbSpeciality.SelectedIndex <= 0) { errSpeciality.Visibility = Visibility.Visible; hasError = true; }
-
             if (tbStudentId.Text.Length < 6) { errStudentId.Visibility = Visibility.Visible; hasError = true; }
             if (cbAgreement.IsChecked != true) { errAgreement.Visibility = Visibility.Visible; hasError = true; }
 
@@ -497,7 +500,6 @@ namespace Diplom_Stud.Pages.General
                     phoneNumber = tbPhone.Text.Trim().Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", ""),
                     password = pbPassword.Password,
                     vkLink = tbVkLink.Text.Trim(),
-                    // ИСПРАВЛЕНИЕ: Теперь всегда отправляем массив (даже если он пустой [])
                     social_statuses_id = _selectedStatuses.ToArray(),
                     photo = photoBase64
                 };
@@ -533,6 +535,12 @@ namespace Diplom_Stud.Pages.General
         {
             NavigationService?.Navigate(new Auth());
         }
+    }
+
+    // Универсальный класс-обертка для ответов вида {"data": [...]}
+    public class ApiResponse<T>
+    {
+        public List<T> data { get; set; }
     }
 
     public class SpecialityDto

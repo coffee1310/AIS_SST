@@ -78,40 +78,43 @@ namespace Diplom_Stud.Pages.Activist
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
+                // 1. Организатор
                 var orgEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isOrganizer=true&page=0&size=50");
-
+                // 2. Сектор
                 var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isResponsibleSector=true&page=0&size=50");
-
+                // 3. Публичные
                 var publicEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isPublic=true&page=0&size=50");
 
+                // 4. Только одобренные заявки текущего пользователя
                 var approvedApplications = await GetApprovedApplicationsAsync();
 
                 var activeEventsDict = new Dictionary<int, EventViewModelLocal>();
 
                 foreach (var ev in orgEventsDto)
                 {
-                    activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true, isParticipant: false);
+                    activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
                 }
 
                 foreach (var ev in sectorEventsDto.Concat(publicEventsDto))
                 {
                     if (!activeEventsDict.ContainsKey(ev.id))
                     {
-                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false, isParticipant: false);
+                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
                     }
                 }
 
+                // Бейдж "Вы участник" только по одобренным заявкам
                 var approvedEventIds = new HashSet<int>(approvedApplications.Select(a => a.eventId));
 
                 foreach (var vm in activeEventsDict.Values)
                 {
                     if (approvedEventIds.Contains(vm.Id))
                     {
-                        vm.IsParticipant = true;
                         vm.ParticipantBadgeVisibility = Visibility.Visible;
                     }
                 }
 
+                // Только будущие мероприятия
                 var futureEventsVm = activeEventsDict.Values
                     .Where(v => v.EventDate.Date >= DateTime.Today)
                     .OrderBy(v => v.EventDate)
@@ -123,7 +126,6 @@ namespace Diplom_Stud.Pages.Activist
                     EmptyEventsText.Visibility = Visibility.Visible;
                 else
                     EmptyEventsText.Visibility = Visibility.Collapsed;
-
             }
             catch (Exception ex)
             {
@@ -135,17 +137,28 @@ namespace Diplom_Stud.Pages.Activist
             }
         }
 
+        /// <summary>
+        /// Получает заявки текущего пользователя (используем currentUserId как в твоём примере)
+        /// </summary>
         private async Task<List<ApplicationDto>> GetApprovedApplicationsAsync()
         {
             try
             {
-                var response = await _httpClient.GetAsync("/api/role-applications?status=ОДОБРЕНА");
+                int currentUserId = App.CurrentUserProfile?.id ?? 0;   // или App.CurrentUser?.Id
+
+                if (currentUserId == 0) return new List<ApplicationDto>();
+
+                // Запрос точно по твоему примеру
+                var url = $"/api/role-applications?currentUserId={currentUserId}&status=ОДОБРЕНА";
+
+                var response = await _httpClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     var page = JsonSerializer.Deserialize<ApplicationPageResponse>(json, options);
+
                     return page?.content ?? new List<ApplicationDto>();
                 }
             }
@@ -175,7 +188,7 @@ namespace Diplom_Stud.Pages.Activist
             return new List<EventDtoLocal>();
         }
 
-        private EventViewModelLocal MapToViewModel(EventDtoLocal ev, bool isOrganizer, bool isParticipant)
+        private EventViewModelLocal MapToViewModel(EventDtoLocal ev, bool isOrganizer)
         {
             string dateDisplay = "Дата не указана";
             DateTime parsedDate = DateTime.MaxValue;
@@ -206,8 +219,7 @@ namespace Diplom_Stud.Pages.Activist
                 Image = bmp,
                 EventDate = parsedDate,
                 OrganizerBadgeVisibility = isOrganizer ? Visibility.Visible : Visibility.Collapsed,
-                ParticipantBadgeVisibility = Visibility.Collapsed, 
-                IsParticipant = isParticipant,
+                ParticipantBadgeVisibility = Visibility.Collapsed,
                 CardBorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A283C")),
                 CardBorderThickness = new Thickness(1)
             };
@@ -273,6 +285,7 @@ namespace Diplom_Stud.Pages.Activist
         }
     }
 
+    // ====================== DTO ======================
     public class EventPageResponseLocal
     {
         public List<EventDtoLocal> content { get; set; }
@@ -300,7 +313,6 @@ namespace Diplom_Stud.Pages.Activist
         public Visibility OrganizerBadgeVisibility { get; set; }
         public Visibility ParticipantBadgeVisibility { get; set; } = Visibility.Collapsed;
         public DateTime EventDate { get; set; }
-        public bool IsParticipant { get; set; }
         public Brush CardBorderBrush { get; set; }
         public Thickness CardBorderThickness { get; set; }
     }
