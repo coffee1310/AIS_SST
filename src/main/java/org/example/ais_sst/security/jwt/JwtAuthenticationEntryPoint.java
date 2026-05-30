@@ -1,18 +1,16 @@
 package org.example.ais_sst.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.io.IOException;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,7 +25,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
-                         AuthenticationException authException) throws IOException, java.io.IOException {
+                         AuthenticationException authException) throws IOException {
 
         log.error("Unauthorized error: {}", authException.getMessage());
 
@@ -35,19 +33,19 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         String errorMessage = "Authentication required";
         String errorType = "Unauthorized";
-        int status = HttpStatus.UNAUTHORIZED.value();
+        int status = HttpServletResponse.SC_UNAUTHORIZED;
 
         if (jwtException instanceof io.jsonwebtoken.ExpiredJwtException) {
             errorMessage = "Token has expired. Please login again.";
             errorType = "Token Expired";
-            log.warn("JWT token expired for request: {}", request.getRequestURI());
         } else if (jwtException instanceof io.jsonwebtoken.MalformedJwtException) {
             errorMessage = "Invalid token format.";
             errorType = "Invalid Token";
         } else if (jwtException instanceof io.jsonwebtoken.security.SignatureException) {
             errorMessage = "Invalid token signature.";
             errorType = "Invalid Signature";
-        } else if (jwtException instanceof IllegalArgumentException && jwtException.getMessage().contains("Token not found")) {
+        } else if (jwtException instanceof IllegalArgumentException &&
+                jwtException.getMessage().contains("Token not found")) {
             errorMessage = "No token provided.";
             errorType = "Missing Token";
         }
@@ -63,6 +61,13 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         body.put("message", errorMessage);
         body.put("path", request.getRequestURI());
 
-        objectMapper.writeValue(response.getOutputStream(), body);
+        // Исправление: используем getWriter() вместо getOutputStream()
+        try {
+            objectMapper.writeValue(response.getWriter(), body);
+        } catch (Exception e) {
+            log.error("Failed to write error response", e);
+            // Fallback
+            response.getWriter().write("{\"error\": \"Authentication failed\"}");
+        }
     }
 }
