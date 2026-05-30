@@ -23,7 +23,7 @@ import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-internal const val BASE_URL = "http://185.246.66.164:8080/api/"
+internal const val BASE_URL = "https://185.246.66.164/api/"
 
 fun createHttpClient(sessionManager: SessionManager): HttpClient {
     return HttpClient {
