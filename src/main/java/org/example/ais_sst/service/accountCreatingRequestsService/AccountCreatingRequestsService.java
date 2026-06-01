@@ -306,4 +306,10 @@ public class AccountCreatingRequestsService extends BaseEntityService {
             }
         };
     }
+
+    public AccountCreatingRequestResponseDTO getRequestById(Long id) {
+        AccountCreatingRequest request = accountCreatingRequestsRepository.findAccountCreatingRequestById(id)
+                .orElseThrow(() -> new AccountCreatingRequestDoesNotExistException(String.format("Заявки на создание аккаунта с id: %s не существует", id)));
+        return requestMapper.toResponseDto(request, accountRequestPhotoService);
+    }
 }

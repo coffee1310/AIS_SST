@@ -24,4 +24,15 @@ public class EventRoleResponseDTO {
     private Boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Поля для информации о занятости мест
+    private Integer occupiedMainSlots;
+    private Integer occupiedReserveSlots;
+    private Integer availableMainSlots;
+    private Integer availableReserveSlots;
+    private Integer totalOccupiedSlots;
+    private Integer totalAvailableSlots;
+    private Boolean isMainFull;
+    private Boolean isReserveFull;
+    private Boolean isFullyFull;
 }

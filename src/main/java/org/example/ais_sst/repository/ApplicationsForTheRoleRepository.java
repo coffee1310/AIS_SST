@@ -61,4 +61,25 @@ public interface ApplicationsForTheRoleRepository extends
 
     @Query("SELECT COUNT(a) FROM ApplicationsForTheRole a WHERE a.eventRole.id = :eventRoleId AND a.status = 'Одобрена'")
     long countApprovedByEventRoleId(@Param("eventRoleId") Long eventRoleId);
+
+    @Query("SELECT " +
+            "COUNT(CASE WHEN a.isReserve = false THEN 1 END) as mainCount, " +
+            "COUNT(CASE WHEN a.isReserve = true THEN 1 END) as reserveCount " +
+            "FROM ApplicationsForTheRole a " +
+            "WHERE a.eventRole.id = :eventRoleId " +
+            "AND a.status = :status")
+    Object[] getCountsByEventRoleAndStatus(@Param("eventRoleId") Long eventRoleId,
+                                           @Param("status") RoleApplicationStatuses status);
+
+    long countByEventRoleIdAndStatusAndIsReserve(Long eventRoleId,
+                                                 RoleApplicationStatuses status,
+                                                 boolean isReserve);
+
+    // Все принятые заявки по списку ролей
+    List<ApplicationsForTheRole> findByEventRoleIdInAndStatus(List<Long> eventRoleIds,
+                                                              RoleApplicationStatuses status);
+
+    // Проверка существования заявки
+    boolean existsByEventRoleIdAndSectorParticipantIdAndStatus(
+            Long eventRoleId, Long sectorParticipantId, RoleApplicationStatuses status);
 }

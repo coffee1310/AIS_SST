@@ -242,11 +242,13 @@ public class ApplicationsForTheRoleService {
      * Получение заявки на роль организатора по ID
      */
     @Transactional(readOnly = true)
-    public EventOrganizerRequest getOrganizerApplicationById(Long applicationId) {
+    public EventOrganizerRequestResponseDTO getOrganizerApplicationById(Long applicationId) {
         log.info("Getting organizer application by id: {}", applicationId);
 
-        return eventOrganizerRequestRepository.findById(applicationId)
+        EventOrganizerRequest request = eventOrganizerRequestRepository.findById(applicationId)
                 .orElseThrow(() -> new ApplicationDoesNotExistException("Заявка на роль организатора не найдена с id: " + applicationId));
+
+        return roleApplicationMapper.toResponseDto(request);
     }
 
     /**

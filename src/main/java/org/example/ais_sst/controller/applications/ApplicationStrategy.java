@@ -3,10 +3,10 @@ package org.example.ais_sst.controller.applications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface ApplicationStrategy <T, C, R, F> {
-    T createApplication(C CreateDto);
-    T rejectApplication(Long id, R RejectDto);
+public interface ApplicationStrategy<T, C, R, F> {
+    T createApplication(C createDto);
+    T rejectApplication(Long id, R rejectDto);
     T acceptApplication(Long id);
-    T getById(Long id);
-    Page<T> getAll(F filter, Pageable page);
+    T getApplicationById(Long id);
+    Page<T> getAllApplications(F filter, Pageable pageable);
 }

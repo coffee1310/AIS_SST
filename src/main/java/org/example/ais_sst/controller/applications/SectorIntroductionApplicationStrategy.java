@@ -13,35 +13,44 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class SectorIntroductionApplicationStrategy implements
-        ApplicationStrategy <SectorIntroductionRequestDTO,
+        ApplicationStrategy<SectorIntroductionRequestDTOSummary,  // Изменено с SectorIntroductionRequestDTO
                 SectorIntroductionRequestDTOSummary,
                 SectorIntroductionRequestDTOSummary,
-                Void>{
+                Void> {
 
     private final SectorIntroductionRequestService sectorIntroductionRequestService;
 
     @Override
-    public SectorIntroductionRequestDTO createApplication(SectorIntroductionRequestDTOSummary CreateDto) {
-        return null;
+    public SectorIntroductionRequestDTOSummary createApplication(SectorIntroductionRequestDTOSummary createDto) {
+        log.info("Creating sector introduction application");
+        throw new UnsupportedOperationException("Use createApplication with userId and sectorId");
+    }
+
+    // Этот метод возвращает SectorIntroductionRequestDTO, а не SectorIntroductionRequestDTOSummary
+    public SectorIntroductionRequestDTO createApplication(Long userId, Long sectorId) {
+        return sectorIntroductionRequestService.createRequest(userId, sectorId);
     }
 
     @Override
-    public SectorIntroductionRequestDTO rejectApplication(Long id, SectorIntroductionRequestDTOSummary RejectDto) {
-        return null;
+    public SectorIntroductionRequestDTOSummary rejectApplication(Long id, SectorIntroductionRequestDTOSummary rejectDto) {
+        log.info("Sector introduction request with id: {} was rejected", id);
+        return sectorIntroductionRequestService.rejectRequest(id);  // Возвращает SectorIntroductionRequestDTOSummary
     }
 
     @Override
-    public SectorIntroductionRequestDTO acceptApplication(Long id) {
-        return null;
+    public SectorIntroductionRequestDTOSummary acceptApplication(Long id) {
+        log.info("Sector introduction request with id: {} was accepted", id);
+        return sectorIntroductionRequestService.acceptRequest(id);  // Возвращает SectorIntroductionRequestDTOSummary
     }
 
     @Override
-    public SectorIntroductionRequestDTO getById(Long id) {
-        return null;
+    public SectorIntroductionRequestDTOSummary getApplicationById(Long id) {
+        log.info("Getting sector introduction request with id: {}", id);
+        throw new UnsupportedOperationException("Method not implemented yet");
     }
 
     @Override
-    public Page<SectorIntroductionRequestDTO> getAll(Void filter, Pageable page) {
-        return null;
+    public Page<SectorIntroductionRequestDTOSummary> getAllApplications(Void filter, Pageable pageable) {
+        throw new UnsupportedOperationException("Use getRequestsListByCoordinator instead");
     }
 }

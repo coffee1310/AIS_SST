@@ -154,8 +154,8 @@ public class ApplicationsForTheRoleController extends BaseController {
     public ResponseEntity<EventOrganizerRequestResponseDTO> getOrganizerApplicationById(@PathVariable Long id) {
         logInfo("/api/role-applications/organizer/{}", "Getting organizer application", id);
 
-        EventOrganizerRequest request = roleApplicationService.getOrganizerApplicationById(id);
-        return ResponseEntity.ok(eventOrganizerRequestMapper.toResponseDto(request));
+        EventOrganizerRequestResponseDTO request = roleApplicationService.getOrganizerApplicationById(id);
+        return ResponseEntity.ok(request);
     }
 
     @PutMapping("/organizer/{id}/approve")
