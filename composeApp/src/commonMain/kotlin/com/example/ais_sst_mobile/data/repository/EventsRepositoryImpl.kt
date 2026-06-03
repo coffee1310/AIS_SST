@@ -87,7 +87,6 @@ class EventsRepositoryImpl(
         }.body<PagedEventRoleResponse>().content
     }
 
-    // Обнови getEventById, чтобы он передавал isPublic и organizers:
     override suspend fun getEventById(id: Int): Result<Event> = runCatching {
         val dto = httpClient.get("events/$id").body<EventDto>()
 
@@ -103,7 +102,6 @@ class EventsRepositoryImpl(
             isDraft = dto.isDraft,
             isCompleted = dto.isCompleted,
             isOverdue = false,
-            // ДОБАВИЛИ:
             isPublic = dto.isPublic ?: false,
             organizers = dto.organizers ?: emptyList()
         )

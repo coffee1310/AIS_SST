@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
+import com.example.ais_sst_mobile.presentation.home.tasks.QuickTasksContent
 
 @Composable
 fun ActivistHomeContent(
@@ -202,6 +203,8 @@ fun ActivistHomeContent(
                     }
                 }
             }
+        } else if (selectedTab == 1) { // <-- Вкладка "Быстрые задачи"
+            QuickTasksContent() // <-- ПРОСТО ВСТАВЬ ЭТОТ ВЫЗОВ СЮДА
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Контент вкладки $selectedTab", color = MaterialTheme.colorScheme.onSurface)
