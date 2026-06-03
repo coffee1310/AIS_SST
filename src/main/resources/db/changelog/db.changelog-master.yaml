@@ -81,3 +81,7 @@ databaseChangeLog:
       file: db/changelog/changes/042-add-description-to-applications-for-the-role.yaml
   - include:
       file: db/changelog/changes/043-create-event-organizer-requests-table.yaml
+  - include:
+      file: db/changelog/changes/044-add-event-participants-table-simple.yaml
+  - include:
+      file: db/changelog/changes/045-add-timestamp-fields-to-event-participants.yaml

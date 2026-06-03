@@ -70,6 +70,10 @@ public class Event {
     @Column(name = "date_of_event")  // Добавлено поле
     private LocalDate dateOfEvent;
 
+    @Column(name = "max_participants_count", nullable = false)
+    @Builder.Default
+    private Integer maxParticipantsCount = 0;
+
     @Column(name = "is_draft")
     @Builder.Default
     private Boolean isDraft = true;
@@ -85,4 +89,8 @@ public class Event {
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
     @Builder.Default
     private List<EventRole> eventRoles = new ArrayList<>();
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<EventParticipant> participants = new ArrayList<>();
 }

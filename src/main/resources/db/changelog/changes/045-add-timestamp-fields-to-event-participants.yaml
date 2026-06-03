@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20240602-add-timestamp-fields-to-event-participants
+      author: coffee13102006
+      labels: event-participants-timestamps
+      comment: "Добавление полей created_at и updated_at в таблицу event_participants"
+      runOnChange: true
+      changes:
+        - addColumn:
+            tableName: event_participants
+            columns:
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            indexName: idx_event_participants_created_at
+            tableName: event_participants
+            columns:
+              - column:
+                  name: created_at
+
+        - createIndex:
+            indexName: idx_event_participants_updated_at
+            tableName: event_participants
+            columns:
+              - column:
+                  name: updated_at
