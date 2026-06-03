@@ -30,7 +30,7 @@ class EventsRepositoryImpl(
 ) : EventsRepository {
 
     override suspend fun getUpcomingEvents(dateFrom: String, dateTo: String): Result<List<Event>> = runCatching {
-        val response = httpClient.get("http://185.246.66.164:8080/api/events") {
+        val response = httpClient.get("events") {
             parameter("dateFrom", dateFrom)
             parameter("dateTo", dateTo)
             parameter("size", 150)
@@ -82,14 +82,14 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun getEventRoles(eventId: Int): Result<List<EventRoleDto>> = runCatching {
-        httpClient.get("http://185.246.66.164:8080/api/event-roles") {
+        httpClient.get("event-roles") {
             parameter("eventId", eventId)
         }.body<PagedEventRoleResponse>().content
     }
 
     // Обнови getEventById, чтобы он передавал isPublic и organizers:
     override suspend fun getEventById(id: Int): Result<Event> = runCatching {
-        val dto = httpClient.get("http://185.246.66.164:8080/api/events/$id").body<EventDto>()
+        val dto = httpClient.get("events/$id").body<EventDto>()
 
         Event(
             id = dto.id,
@@ -111,7 +111,7 @@ class EventsRepositoryImpl(
     override suspend fun getAvailableEvents(): Result<List<Event>> = runCatching {
         coroutineScope {
             val publicDeferred = async {
-                httpClient.get("http://185.246.66.164:8080/api/events") {
+                httpClient.get("events") {
                     parameter("isPublic", true)
                     parameter("isDraft", false)
                     parameter("size", 150)
@@ -119,7 +119,7 @@ class EventsRepositoryImpl(
             }
 
             val sectorDeferred = async {
-                httpClient.get("http://185.246.66.164:8080/api/events") {
+                httpClient.get("events") {
                     parameter("isResponsibleSector", true)
                     parameter("isDraft", false)
                     parameter("size", 150)
@@ -148,14 +148,14 @@ class EventsRepositoryImpl(
     override suspend fun getCoordinatorDashboardEvents(userId: Int): Result<List<Event>> = runCatching {
         coroutineScope {
             val createdDeferred = async {
-                httpClient.get("http://185.246.66.164:8080/api/events") {
+                httpClient.get("events") {
                     parameter("creatorId", userId)
                     parameter("size", 150)
                 }.body<PagedEventResponse>().content
             }
 
             val organizerDeferred = async {
-                httpClient.get("http://185.246.66.164:8080/api/events") {
+                httpClient.get("events") {
                     parameter("isOrganizer", true)
                     parameter("isDraft", false)
                     parameter("size", 150)
@@ -163,7 +163,7 @@ class EventsRepositoryImpl(
             }
 
             val sectorDeferred = async {
-                httpClient.get("http://185.246.66.164:8080/api/events") {
+                httpClient.get("events") {
                     parameter("isResponsibleSector", true)
                     parameter("isDraft", false)
                     parameter("size", 150)
@@ -205,10 +205,10 @@ class EventsRepositoryImpl(
         }
     }
     override suspend fun getGlobalRoles(): Result<List<RoleDto>> = runCatching {
-        httpClient.get("http://185.246.66.164:8080/api/roles").body()
+        httpClient.get("roles").body()
     }
     override suspend fun createEvent(request: CreateEventRequestDto): Result<EventDto> = runCatching {
-        val response = httpClient.post("http://185.246.66.164:8080/api/events") {
+        val response = httpClient.post("events") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
@@ -221,11 +221,11 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun addOrganizer(eventId: Int, userId: Int): Result<Unit> = runCatching {
-        httpClient.post("http://185.246.66.164:8080/api/events/$eventId/organizers/$userId")
+        httpClient.post("events/$eventId/organizers/$userId")
     }
 
     override suspend fun createEventRole(request: CreateEventRoleRequestDto): Result<Unit> = runCatching {
-        httpClient.post("http://185.246.66.164:8080/api/event-roles") {
+        httpClient.post("event-roles") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

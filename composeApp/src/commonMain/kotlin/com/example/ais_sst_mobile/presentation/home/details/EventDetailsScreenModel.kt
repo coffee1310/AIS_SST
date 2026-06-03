@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// ПЕРЕИМЕНОВАЛИ ИНТЕРФЕЙС, ЧТОБЫ НЕ БЫЛО КОНФЛИКТА
 sealed interface CoordinatorEventDetailsState {
     data object Loading : CoordinatorEventDetailsState
     data class Success(val event: Event, val roles: List<EventRoleDto>) : CoordinatorEventDetailsState
