@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20240603-add-is-free-event-to-events
+      author: coffee13102006
+      labels: events-free-event
+      comment: "Добавление поля is_free_event в таблицу events для контроля возможности участия"
+      changes:
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: is_free_event
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+                  remarks: "Флаг, определяющий свободный доступ к участию (true - можно участвовать, false - участие запрещено)"

@@ -93,4 +93,8 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<EventParticipant> participants = new ArrayList<>();
+
+    @Column(name = "is_free_event", nullable = false)
+    @Builder.Default
+    private Boolean isFreeEvent = true;  // true - можно участвовать, false - нельзя участвовать
 }

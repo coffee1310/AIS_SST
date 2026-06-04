@@ -56,6 +56,8 @@ public interface EventMapper {
     @Mapping(target = "referenceToPosition", source = "referenceToPosition")
     @Mapping(target = "isPublic", source = "isPublic")
     @Mapping(target = "photo", source = "photo")
+    @Mapping(target = "maxParticipantsCount", source = "maxParticipantsCount")
+    @Mapping(target = "isFreeEvent", source = "isFreeEvent")
     Event toEntity(EventCreateDTO dto);
 
     @Mapping(target = "id", ignore = true)
@@ -75,5 +77,7 @@ public interface EventMapper {
     @Mapping(target = "isActive", source = "isActive")
     @Mapping(target = "isCompleted", ignore = true)
     @Mapping(target = "photo", source = "photo")
+    @Mapping(target = "maxParticipantsCount", source = "maxParticipantsCount")
+    @Mapping(target = "isFreeEvent", source = "isFreeEvent")
     Event toEntity(EventUpdateDTO dto);
 }

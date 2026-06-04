@@ -6,12 +6,13 @@ import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.event_participant.EventParticipantResponseDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.service.eventService.EventParticipantService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/events/participants")
@@ -64,9 +65,17 @@ public class EventParticipantController extends BaseController {
     }
 
     @GetMapping("/{eventId}/slots")
-    @Operation(summary = "Количество свободных мест")
-    public ResponseEntity<Long> getAvailableSlots(@PathVariable Long eventId) {
+    @Operation(summary = "Информация о свободных местах")
+    public ResponseEntity<Map<String, Object>> getAvailableSlots(@PathVariable Long eventId) {
         long participantsCount = eventParticipantService.getParticipantsCount(eventId);
-        return ResponseEntity.ok(participantsCount);
+        int availableSlots = eventParticipantService.getAvailableSlots(eventId);
+        String info = eventParticipantService.getAvailableSlotsInfo(eventId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("currentParticipants", participantsCount);
+        response.put("availableSlots", availableSlots);
+        response.put("info", info);
+
+        return ResponseEntity.ok(response);
     }
 }

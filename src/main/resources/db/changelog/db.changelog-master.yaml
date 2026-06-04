@@ -85,3 +85,5 @@ databaseChangeLog:
       file: db/changelog/changes/044-add-event-participants-table-simple.yaml
   - include:
       file: db/changelog/changes/045-add-timestamp-fields-to-event-participants.yaml
+  - include:
+      file: db/changelog/changes/046-add-is-free-event-to-events.yaml

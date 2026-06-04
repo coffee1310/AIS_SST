@@ -42,4 +42,8 @@ public class EventCreateDTO {
     private Boolean isDraft = true;
 
     private List<Long> organizerIds;
+
+    private Boolean isFreeEvent = true;  // true - можно участвовать, false - нельзя участвовать
+
+    private Integer maxParticipantsCount = 0;
 }

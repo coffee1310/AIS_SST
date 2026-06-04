@@ -41,4 +41,8 @@ public class EventUpdateDTO {
     private Boolean isActive;
 
     private List<Long> organizerIds;
+
+    private Boolean isFreeEvent = true;  // true - можно участвовать, false - нельзя участвовать
+
+    private Integer maxParticipantsCount = 0;
 }

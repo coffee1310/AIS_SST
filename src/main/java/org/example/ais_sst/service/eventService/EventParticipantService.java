@@ -29,12 +29,15 @@ public class EventParticipantService {
     private final UserRepository userRepository;
     private final EventParticipantMapper eventParticipantMapper;
 
+    private static final int UNLIMITED_PARTICIPANTS = 0;
+
     @Transactional
     public EventParticipantResponseDTO becomeEventParticipant(Long eventId, Long userId) {
         Event event = getEventById(eventId);
         User user = getUserById(userId);
 
         validateParticipantNotExists(eventId, userId);
+        validateParticipantsAllowed(event);
         validateParticipantLimit(event);
         validateEventActive(event);
         validateEventNotStarted(event);
@@ -94,13 +97,36 @@ public class EventParticipantService {
     @Transactional(readOnly = true)
     public int getAvailableSlots(Long eventId) {
         Event event = getEventById(eventId);
+
+        if (!Boolean.TRUE.equals(event.getIsFreeEvent())) {
+            return 0;
+        }
+
         long currentParticipants = eventParticipantsRepository.countByEventId(eventId);
 
-        if (event.getMaxParticipantsCount() <= 0) {
+        if (event.getMaxParticipantsCount() <= UNLIMITED_PARTICIPANTS) {
             return Integer.MAX_VALUE;
         }
 
         return (int) Math.max(0, event.getMaxParticipantsCount() - currentParticipants);
+    }
+
+    @Transactional(readOnly = true)
+    public String getAvailableSlotsInfo(Long eventId) {
+        Event event = getEventById(eventId);
+
+        if (!Boolean.TRUE.equals(event.getIsFreeEvent())) {
+            return "Участие в мероприятии запрещено";
+        }
+
+        long currentParticipants = eventParticipantsRepository.countByEventId(eventId);
+
+        if (event.getMaxParticipantsCount() <= UNLIMITED_PARTICIPANTS) {
+            return "Неограниченное количество участников (текущее: " + currentParticipants + ")";
+        }
+
+        int available = Math.max(0, event.getMaxParticipantsCount() - (int) currentParticipants);
+        return String.valueOf(available);
     }
 
     @Transactional(readOnly = true)
@@ -139,10 +165,21 @@ public class EventParticipantService {
         }
     }
 
+    private void validateParticipantsAllowed(Event event) {
+        if (!Boolean.TRUE.equals(event.getIsFreeEvent())) {
+            throw new ParticipantsForbiddenException(
+                    String.format("Участие в мероприятии '%s' запрещено", event.getTitle()));
+        }
+    }
+
     private void validateParticipantLimit(Event event) {
+        if (event.getMaxParticipantsCount() <= UNLIMITED_PARTICIPANTS) {
+            return;
+        }
+
         long currentParticipants = eventParticipantsRepository.countByEventId(event.getId());
 
-        if (event.getMaxParticipantsCount() > 0 && currentParticipants >= event.getMaxParticipantsCount()) {
+        if (currentParticipants >= event.getMaxParticipantsCount()) {
             throw new ParticipantLimitExceededException(
                     String.format("Participant limit reached for event %d. Max: %d",
                             event.getId(), event.getMaxParticipantsCount()));
