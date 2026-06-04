@@ -10,10 +10,12 @@ import org.example.ais_sst.entity.Event;
 import org.example.ais_sst.entity.EventOrganizer;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.exception.EventDoesNotExistException;
+import org.example.ais_sst.exception.OrganizerLimitExceededException;
 import org.example.ais_sst.exception.UnauthorizedException;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.EventMapper;
 import org.example.ais_sst.repository.EventOrganizerRepository;
+import org.example.ais_sst.repository.EventParticipantsRepository;
 import org.example.ais_sst.repository.EventRepository;
 import org.example.ais_sst.repository.UserRepository;
 import org.example.ais_sst.service.base.BaseEntityService;
@@ -39,6 +41,7 @@ public class EventService extends BaseEntityService {
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
     private final EventPhotoService eventPhotoService;
+    private final EventParticipantsRepository eventParticipantsRepository;
 
     private static final Set<String> ALLOWED_ROLES = Set.of(
             "Administrator", "Curator", "Deputy_chairman",
@@ -53,10 +56,17 @@ public class EventService extends BaseEntityService {
 
             EventResponseDTO response = eventMapper.toResponseDto(event);
 
+            // Добавляем текущее количество участников и организаторов
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+
             if (event.getPhoto() != null && !event.getPhoto().isEmpty()) {
                 String base64Photo = eventPhotoService.getPhotoAsBase64(event.getPhoto());
                 response.setPhoto(base64Photo);
             }
+
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
 
             return response;
         }, "getEventById", eventId);
@@ -76,10 +86,19 @@ public class EventService extends BaseEntityService {
             event.setPhoto(savePhoto(dto.getPhoto()));
             event.setEventCreator(creator);
 
+            if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");}
+
+            if (event.getMaxOrganizersCount() == null) {event.setMaxOrganizersCount(event.getOrganizers().size());}
+
             Event savedEvent = eventRepository.save(event);
             addOrganizersToEvent(savedEvent, dto.getOrganizerIds());
 
-            return eventMapper.toResponseDto(savedEvent);
+            EventResponseDTO response = eventMapper.toResponseDto(savedEvent);
+
+            response.setCurrentParticipantsCount(0L);
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(savedEvent.getId()));
+
+            return response;
         }, "createEvent", dto.getTitle(), creatorId);
     }
 
@@ -150,11 +169,21 @@ public class EventService extends BaseEntityService {
                 updateOrganizers(event, dto.getOrganizerIds());
             }
 
+            if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");}
+
+            if (event.getMaxOrganizersCount() == null) {event.setMaxOrganizersCount(event.getOrganizers().size());}
+
             log.info("Saving event with title: '{}'", event.getTitle());
             Event updatedEvent = eventRepository.save(event);
             log.info("Event saved successfully with ID: {}", updatedEvent.getId());
 
-            return eventMapper.toResponseDto(updatedEvent);
+            EventResponseDTO response = eventMapper.toResponseDto(updatedEvent);
+
+            // Добавляем текущее количество участников и организаторов
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+
+            return response;
         }, "updateEvent", eventId, userId);
     }
 
@@ -173,7 +202,14 @@ public class EventService extends BaseEntityService {
             event.setIsCompleted(true);
             event.setIsActive(false);
 
-            return eventMapper.toResponseDto(eventRepository.save(event));
+            Event savedEvent = eventRepository.save(event);
+            EventResponseDTO response = eventMapper.toResponseDto(savedEvent);
+
+            // Добавляем текущее количество участников и организаторов
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+
+            return response;
         }, "completeEvent", eventId, userId);
     }
 
@@ -196,7 +232,13 @@ public class EventService extends BaseEntityService {
                     .event(event).user(organizer).build();
             eventOrganizerRepository.save(eventOrganizer);
 
-            return eventMapper.toResponseDto(event);
+            EventResponseDTO response = eventMapper.toResponseDto(event);
+
+            // Добавляем текущее количество участников и организаторов
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+
+            return response;
         }, "addOrganizer", eventId, organizerId, userId);
     }
 
@@ -213,8 +255,13 @@ public class EventService extends BaseEntityService {
                     () -> new IllegalArgumentException("Нельзя удалить единственного организатора"),
                     "Cannot remove last organizer");
 
-            eventOrganizerRepository.deleteByEventIdAndUserId(eventId, organizerId);
-            return eventMapper.toResponseDto(event);
+            EventResponseDTO response = eventMapper.toResponseDto(event);
+
+            // Добавляем текущее количество участников и организаторов
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+
+            return response;
         }, "removeOrganizer", eventId, organizerId, userId);
     }
 
@@ -240,7 +287,12 @@ public class EventService extends BaseEntityService {
     @Transactional(readOnly = true)
     public Page<EventResponseDTO> getEventsByCreator(Long creatorId, Pageable pageable) {
         return eventRepository.findByEventCreatorId(creatorId, pageable)
-                .map(eventMapper::toResponseDto);
+                .map(event -> {
+                    EventResponseDTO dto = eventMapper.toResponseDto(event);
+                    dto.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(event.getId()));
+                    dto.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(event.getId()));
+                    return dto;
+                });
     }
 
     @Transactional(readOnly = true)
@@ -249,6 +301,8 @@ public class EventService extends BaseEntityService {
         return eventRepository.findAll(spec, pageable)
                 .map(event -> {
                     EventResponseDTO dto = eventMapper.toResponseDto(event);
+                    dto.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(event.getId()));
+                    dto.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(event.getId()));
                     if (event.getPhoto() != null) {
                         dto.setPhoto(eventPhotoService.getPhotoAsBase64(event.getPhoto()));
                     }

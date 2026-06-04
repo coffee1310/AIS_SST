@@ -93,11 +93,16 @@ public class ApplicationsForTheRoleService {
         User user = userRepository.findUserById(userId)
                 .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователя с id %s не существует", userId)));
 
+        // Проверка, не является ли пользователь уже организатором
         if (eventOrganizerRepository.existsByUser_IdAndEvent_Id(userId, eventId))
             throw new UserAlreadyOrganizerException("Пользователь уже является организатором мероприятия");
 
+        // Проверка, не подана ли уже заявка
         if (eventOrganizerRequestRepository.existsByUser_IdAndEvent_Id(userId, eventId))
             throw new EventOrganizerRequestAlreadyExistsException("Пользователь уже подал заявку на роль организатора для этого мероприятия");
+
+        // Проверка лимита организаторов
+        validateOrganizerLimit(event);
 
         EventOrganizerRequest request = EventOrganizerRequest.builder()
                 .user(user)
@@ -166,6 +171,9 @@ public class ApplicationsForTheRoleService {
             throw new IllegalStateException("Заявка уже обработана. Текущий статус: " + request.getStatus());
         }
 
+        // Проверка лимита организаторов ПЕРЕД одобрением
+        validateOrganizerLimit(request.getEvent());
+
         // Проверяем, не существует ли уже запись в event_organizers
         if (eventOrganizerRepository.existsByEventAndUser(request.getEvent(), request.getUser())) {
             throw new IllegalStateException("Пользователь уже является организатором этого мероприятия");
@@ -187,6 +195,26 @@ public class ApplicationsForTheRoleService {
 
         log.info("Organizer application approved: {}", applicationId);
         return savedRequest;
+    }
+
+    /**
+     * Проверка лимита организаторов мероприятия
+     */
+    private void validateOrganizerLimit(Event event) {
+        int maxOrganizers = event.getMaxOrganizersCount() != null ? event.getMaxOrganizersCount() : 0;
+
+        // Если maxOrganizersCount = 0, значит безлимит
+        if (maxOrganizers == 0) {
+            return;
+        }
+
+        long currentOrganizersCount = eventOrganizerRepository.countByEventId(event.getId());
+
+        if (currentOrganizersCount >= maxOrganizers) {
+            throw new OrganizerLimitExceededException(
+                    String.format("Достигнут лимит организаторов для мероприятия \"%s\". Максимум: %d",
+                            event.getTitle(), maxOrganizers));
+        }
     }
 
         /**

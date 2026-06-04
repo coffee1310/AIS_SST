@@ -87,3 +87,5 @@ databaseChangeLog:
       file: db/changelog/changes/045-add-timestamp-fields-to-event-participants.yaml
   - include:
       file: db/changelog/changes/046-add-is-free-event-to-events.yaml
+  - include:
+      file: db/changelog/changes/047-add-max-organizers-count-and-remove-location.yaml

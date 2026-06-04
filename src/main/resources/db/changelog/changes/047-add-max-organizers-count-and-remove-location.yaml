@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20240604-add-max-organizers-count-and-remove-location
+      author: coffee13102006
+      labels: events-organizers
+      comment: "Добавление поля max_organizers_count и удаление поля location в таблице events"
+      changes:
+        # Добавление поля max_organizers_count
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: max_organizers_count
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+                  remarks: "Максимальное количество организаторов мероприятия (0 - неограниченно)"
+
+        # Удаление поля location
+        - dropColumn:
+            tableName: events
+            columnName: location
+            remarks: "Удаление устаревшего поля location"

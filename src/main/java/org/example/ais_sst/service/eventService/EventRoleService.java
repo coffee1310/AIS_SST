@@ -162,17 +162,6 @@ public class EventRoleService {
         return new PageImpl<>(dtos, pageable, total);
     }
 
-    @Transactional(readOnly = true)
-    public boolean hasAvailableSpots(Long eventRoleId, int requestedSpots) {
-        return occupancyService.hasAvailableSpots(eventRoleId, requestedSpots);
-    }
-
-    @Transactional(readOnly = true)
-    public boolean isDeadlineExpired(Long eventRoleId) {
-        EventRole eventRole = getEventRoleByIdOrThrow(eventRoleId);
-        return eventRole.getDeadline() != null && eventRole.getDeadline().isBefore(LocalDateTime.now());
-    }
-
     // ==================== Private Helper Methods ====================
 
     private void validateCapacity(Integer capacity, Integer reserveCapacity) {

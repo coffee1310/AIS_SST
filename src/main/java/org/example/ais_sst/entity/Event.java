@@ -97,4 +97,8 @@ public class Event {
     @Column(name = "is_free_event", nullable = false)
     @Builder.Default
     private Boolean isFreeEvent = true;  // true - можно участвовать, false - нельзя участвовать
+
+    @Column(name = "max_organizers_count", nullable = false)
+    @Builder.Default
+    private Integer maxOrganizersCount = 0;
 }

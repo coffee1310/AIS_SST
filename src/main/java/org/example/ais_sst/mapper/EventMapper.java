@@ -4,16 +4,10 @@ import org.example.ais_sst.dto.events.EventCreateDTO;
 import org.example.ais_sst.dto.events.EventResponseDTO;
 import org.example.ais_sst.dto.events.EventUpdateDTO;
 import org.example.ais_sst.entity.Event;
-import org.example.ais_sst.service.eventService.EventPhotoService;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Mapper(componentModel = "spring", uses = {EventOrganizerMapper.class})
 public interface EventMapper {
@@ -37,6 +31,11 @@ public interface EventMapper {
     @Mapping(target = "eventCreatorName", source = "eventCreator.name")
     @Mapping(target = "eventCreatorSurname", source = "eventCreator.surname")
     @Mapping(target = "photo", ignore = true)
+    @Mapping(target = "maxParticipantsCount", source = "maxParticipantsCount")
+    @Mapping(target = "isFreeEvent", source = "isFreeEvent")
+    @Mapping(target = "maxOrganizersCount", source = "maxOrganizersCount")
+    @Mapping(target = "currentParticipantsCount", ignore = true)
+    @Mapping(target = "currentOrganizersCount", ignore = true)
     EventResponseDTO toResponseDto(Event event);
 
     @Mapping(target = "id", ignore = true)
@@ -58,6 +57,7 @@ public interface EventMapper {
     @Mapping(target = "photo", source = "photo")
     @Mapping(target = "maxParticipantsCount", source = "maxParticipantsCount")
     @Mapping(target = "isFreeEvent", source = "isFreeEvent")
+    @Mapping(target = "maxOrganizersCount", source = "maxOrganizersCount")
     Event toEntity(EventCreateDTO dto);
 
     @Mapping(target = "id", ignore = true)
@@ -79,5 +79,6 @@ public interface EventMapper {
     @Mapping(target = "photo", source = "photo")
     @Mapping(target = "maxParticipantsCount", source = "maxParticipantsCount")
     @Mapping(target = "isFreeEvent", source = "isFreeEvent")
+    @Mapping(target = "maxOrganizersCount", source = "maxOrganizersCount")
     Event toEntity(EventUpdateDTO dto);
 }
