@@ -1,5 +1,7 @@
 package com.example.ais_sst_mobile.presentation.sectors
 
+import ais_sst_mobile.composeapp.generated.resources.Res
+import ais_sst_mobile.composeapp.generated.resources.default_sector
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,6 +23,7 @@ import com.example.ais_sst_mobile.data.network.dto.SectorDto
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.preat.peekaboo.image.picker.toImageBitmap
 import io.ktor.util.decodeBase64Bytes
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun SectorCard(
@@ -134,6 +137,13 @@ fun SectorCard(
                     Image(
                         bitmap = imageBitmap,
                         contentDescription = sector.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(Res.drawable.default_sector),
+                        contentDescription = "Заглушка",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
