@@ -26,6 +26,7 @@ import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.domain.repository.UserRepository
 import com.example.ais_sst_mobile.navigation.HomeComponent
+import com.example.ais_sst_mobile.presentation.calendar.CalendarScreen
 import com.example.ais_sst_mobile.presentation.components.AppBackground
 import org.koin.compose.getKoin
 
@@ -140,7 +141,7 @@ fun MainScreen(component: MainComponent) {
                 when (val instance = child.instance) {
                     is MainComponent.Child.Home -> HomeScreen(instance.component)
                     is MainComponent.Child.Tasks -> Box(Modifier.fillMaxSize()) { Text("Задачи", color = Color.White) }
-                    is MainComponent.Child.Calendar -> Box(Modifier.fillMaxSize()) { Text("Календарь", color = Color.White) }
+                    is MainComponent.Child.Calendar -> CalendarScreen(instance.component)
                     is MainComponent.Child.Sectors -> SectorsTab(instance.component)
                     is MainComponent.Child.Profile -> ProfileScreen(instance.component)
                 }

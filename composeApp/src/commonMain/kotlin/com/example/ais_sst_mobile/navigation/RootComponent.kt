@@ -34,6 +34,7 @@ interface RootComponent {
         class CreateRole(val component: CreateRoleComponent) : Child()
         class EditRole(val component: EditRoleComponent) : Child()
         class CreateEvent(val component: CreateEventComponent) : Child()
+        class Rating(val component: RatingComponent) : Child()
     }
 }
 
@@ -97,6 +98,8 @@ class DefaultRootComponent(
                             is FullScreenRoute.CreateRole -> navigation.pushNew(Config.CreateRole)
                             is FullScreenRoute.EditRole -> navigation.pushNew(Config.EditRole(route.roleId))
                             is FullScreenRoute.CreateEvent -> navigation.pushNew(Config.CreateEvent)
+                            is FullScreenRoute.Rating -> navigation.pushNew(Config.Rating)
+
                         }
                     }
                 )
@@ -174,6 +177,9 @@ class DefaultRootComponent(
             is Config.CreateEvent -> RootComponent.Child.CreateEvent(
                 CreateEventComponent(componentContext = context, onGoBack = { navigation.pop() })
             )
+            is Config.Rating -> RootComponent.Child.Rating(
+                RatingComponent(componentContext = context, onGoBack = { navigation.pop() })
+            )
         }
 
     @Serializable
@@ -192,5 +198,6 @@ class DefaultRootComponent(
         @Serializable data object CreateRole : Config
         @Serializable data class EditRole(val roleId: Int) : Config
         @Serializable data object CreateEvent : Config
+        @Serializable data object Rating : Config
     }
 }

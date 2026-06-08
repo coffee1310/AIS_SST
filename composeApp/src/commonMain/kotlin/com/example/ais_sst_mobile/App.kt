@@ -30,6 +30,7 @@ import com.example.ais_sst_mobile.presentation.sectors.edit.EditSectorScreen
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.example.ais_sst_mobile.presentation.events.create.CreateEventScreen
+import com.example.ais_sst_mobile.presentation.profile.rating.RatingScreen
 
 @OptIn(ExperimentalDecomposeApi::class)
 @Composable
@@ -88,6 +89,10 @@ fun App(root: RootComponent) {
                             component = instance.component
                         )
                         is RootComponent.Child.CreateEvent -> CreateEventScreen(
+                            component = instance.component
+                        )
+                        is RootComponent.Child.Rating -> RatingScreen(
+                            onBackClick = { instance.component.onGoBack() },
                             component = instance.component
                         )
                     }

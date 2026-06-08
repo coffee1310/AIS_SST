@@ -48,7 +48,9 @@ fun CuratorProfileContent(component: ProfileComponent, screenModel: ProfileScree
 
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ProfileMenuRow(icon = Icons.Outlined.Folder, title = "Архив мероприятий", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = {
+                        component.onNavigateToFullScreen(FullScreenRoute.Rating)
+                    })
                     ProfileMenuRow(icon = Icons.Outlined.PersonAdd, title = "Регистрация активиста", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Заявки на вступление", onClick = {
                         component.onNavigateToFullScreen(FullScreenRoute.AccountRequests)})

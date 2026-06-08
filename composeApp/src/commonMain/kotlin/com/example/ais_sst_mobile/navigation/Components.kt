@@ -22,6 +22,7 @@ sealed interface FullScreenRoute {
     data object CreateRole : FullScreenRoute
     data class EditRole(val roleId: Int) : FullScreenRoute
     data object CreateEvent : FullScreenRoute
+    data object Rating : FullScreenRoute
 }
 
 class LoginComponent(
@@ -313,5 +314,10 @@ class CreateEventComponent(
 class CoordinatorEventDetailsComponent(
     componentContext: ComponentContext,
     val eventId: Int,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+class RatingComponent(
+    componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext
