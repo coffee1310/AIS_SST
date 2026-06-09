@@ -81,7 +81,7 @@
                                     <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="3 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
                             </DockPanel>
                         </Grid>
                     </Border>
@@ -100,7 +100,7 @@
                                     <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="10 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
                             </DockPanel>
                         </Grid>
                     </Border>
@@ -119,7 +119,7 @@
                                     <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="18 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
                             </DockPanel>
                         </Grid>
                     </Border>
@@ -138,7 +138,7 @@
                                     <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="18 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
                             </DockPanel>
                         </Grid>
                     </Border>
@@ -157,7 +157,7 @@
                                     <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="19 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
                             </DockPanel>
                         </Grid>
                     </Border>
@@ -176,7 +176,7 @@
                                     <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="1 сентября" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
                             </DockPanel>
                         </Grid>
                     </Border>

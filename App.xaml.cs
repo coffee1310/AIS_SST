@@ -8,7 +8,7 @@ namespace Diplom_Stud
 {
     public partial class App : Application
     {
-        public static string ApiBaseUrl = "http://185.246.66.164:8080/";
+        public static string ApiBaseUrl = "https://ais-sst.ru/";
 
         public static bool IsActivistMode = false; 
         public static string AuthToken { get; set; }

@@ -89,7 +89,6 @@ namespace Diplom_Stud.Pages.General
             {
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                // Загрузка социальных статусов
                 var statResp = await _httpClient.GetAsync("/api/social_status");
                 if (statResp.IsSuccessStatusCode)
                 {
@@ -101,7 +100,6 @@ namespace Diplom_Stud.Pages.General
                     }
                 }
 
-                // Загрузка специальностей
                 var specResp = await _httpClient.GetAsync("/api/specialities");
                 if (specResp.IsSuccessStatusCode)
                 {
@@ -116,7 +114,6 @@ namespace Diplom_Stud.Pages.General
                     }
                 }
 
-                // Загрузка групп
                 var groupResp = await _httpClient.GetAsync("/api/group");
                 if (groupResp.IsSuccessStatusCode)
                 {
@@ -537,7 +534,6 @@ namespace Diplom_Stud.Pages.General
         }
     }
 
-    // Универсальный класс-обертка для ответов вида {"data": [...]}
     public class ApiResponse<T>
     {
         public List<T> data { get; set; }

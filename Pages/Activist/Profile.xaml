@@ -92,8 +92,8 @@
                 </UniformGrid>
 
                 <Grid x:Name="ActionButtonsGrid" Grid.Row="3" Margin="0,0,0,30">
-                    <Button Content="Редактировать" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Left" Width="180" FontFamily="Digital Pixel" FontSize="12"/>
-                    <Button Content="История баллов" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" Width="182" Click="Button_Click" FontFamily="Digital Pixel" FontSize="12"/>
+                    <Button Content="Редактировать" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Left" Width="180" FontFamily="Digital Pixel" FontSize="11"/>
+                    <Button Content="История баллов" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" Width="182" Click="Button_Click" FontFamily="Digital Pixel" FontSize="11"/>
                 </Grid>
 
                 <Grid Grid.Row="4" Margin="0,0,0,20">
