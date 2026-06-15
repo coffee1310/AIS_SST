@@ -85,6 +85,8 @@ public class EventController extends BaseController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection,
 
+            @RequestParam(required = false) Long sectorId,  // НОВЫЙ ПАРАМЕТР
+
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         logInfo("/api/events", "Getting events with filters");
@@ -109,6 +111,7 @@ public class EventController extends BaseController {
                 .isResponsibleSector(isResponsibleSector)  // Добавляем\
                 .currentUserId(userDetails != null ? userDetails.getId() : null)
                 .isOrganizer(isOrganizer)
+                .sectorId(sectorId)  // НОВОЕ ПОЛЕ
                 .build();
 
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);

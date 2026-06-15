@@ -63,4 +63,6 @@ public class EventDTO {
     @ColumnDefault("false")
     @Column(name = "is_deleted")
     private Boolean isDeleted;
+
+    private Long sectorId;
 }

@@ -48,4 +48,6 @@ public class EventCreateDTO {
     private Integer maxParticipantsCount = 0;
 
     private Integer maxOrganizersCount = 0;
+
+    private Long sectorId;
 }

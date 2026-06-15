@@ -8,16 +8,14 @@ import org.example.ais_sst.dto.events.EventResponseDTO;
 import org.example.ais_sst.dto.events.EventUpdateDTO;
 import org.example.ais_sst.entity.Event;
 import org.example.ais_sst.entity.EventOrganizer;
+import org.example.ais_sst.entity.Sector;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.exception.EventDoesNotExistException;
 import org.example.ais_sst.exception.OrganizerLimitExceededException;
 import org.example.ais_sst.exception.UnauthorizedException;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.EventMapper;
-import org.example.ais_sst.repository.EventOrganizerRepository;
-import org.example.ais_sst.repository.EventParticipantsRepository;
-import org.example.ais_sst.repository.EventRepository;
-import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.base.BaseEntityService;
 import org.example.ais_sst.specification.EventSpecification;
 import org.springframework.data.domain.Page;
@@ -42,6 +40,7 @@ public class EventService extends BaseEntityService {
     private final EventMapper eventMapper;
     private final EventPhotoService eventPhotoService;
     private final EventParticipantsRepository eventParticipantsRepository;
+    private final SectorRepository sectorRepository;
 
     private static final Set<String> ALLOWED_ROLES = Set.of(
             "Administrator", "Curator", "Deputy_chairman",
@@ -75,6 +74,9 @@ public class EventService extends BaseEntityService {
     @Transactional
     public EventResponseDTO createEvent(EventCreateDTO dto, Long creatorId) {
         return executeWithLogging(() -> {
+            // Валидация sector_id
+            validateSectorRequired(dto);
+
             User creator = findEntityOrThrow(creatorId, userRepository::findById,
                     () -> new UserDoesNotExistException("Пользователь не найден"), "User");
 
@@ -86,9 +88,20 @@ public class EventService extends BaseEntityService {
             event.setPhoto(savePhoto(dto.getPhoto()));
             event.setEventCreator(creator);
 
-            if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");}
+            // Устанавливаем сектор
+            if (dto.getSectorId() != null) {
+                Sector sector = findEntityOrThrow(dto.getSectorId(), sectorRepository::findById,
+                        () -> new IllegalArgumentException("Сектор не найден"), "Sector");
+                event.setSector(sector);
+            }
 
-            if (event.getMaxOrganizersCount() == null) {event.setMaxOrganizersCount(event.getOrganizers().size());}
+            if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {
+                throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");
+            }
+
+            if (event.getMaxOrganizersCount() == null) {
+                event.setMaxOrganizersCount(event.getOrganizers().size());
+            }
 
             Event savedEvent = eventRepository.save(event);
             addOrganizersToEvent(savedEvent, dto.getOrganizerIds());
@@ -114,6 +127,9 @@ public class EventService extends BaseEntityService {
 
             Event event = findEntityOrThrow(eventId, eventRepository::findById,
                     () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
+
+            // Валидация sector_id
+            validateSectorRequired(dto, event);
 
             log.info("Existing event - ID: {}, Title: '{}'", event.getId(), event.getTitle());
 
@@ -169,7 +185,15 @@ public class EventService extends BaseEntityService {
                 updateOrganizers(event, dto.getOrganizerIds());
             }
 
-            if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");}
+            if (dto.getSectorId() != null) {
+                Sector sector = findEntityOrThrow(dto.getSectorId(), sectorRepository::findById,
+                        () -> new IllegalArgumentException("Сектор не найден"), "Sector");
+                event.setSector(sector);
+            } else if (dto.getSectorId() == null && dto.getIsPublic() != null && Boolean.FALSE.equals(dto.getIsPublic())) {
+                // Если isPublic = false и sectorId не указан - ошибка уже выброшена в validateSectorRequired
+            }
+
+                if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");}
 
             if (event.getMaxOrganizersCount() == null) {event.setMaxOrganizersCount(event.getOrganizers().size());}
 
@@ -279,12 +303,6 @@ public class EventService extends BaseEntityService {
     }
 
     @Transactional(readOnly = true)
-    public Page<EventResponseDTO> getAllEvents(Pageable pageable) {
-        return eventRepository.findByIsActiveTrue(pageable)
-                .map(eventMapper::toResponseDto);
-    }
-
-    @Transactional(readOnly = true)
     public Page<EventResponseDTO> getEventsByCreator(Long creatorId, Pageable pageable) {
         return eventRepository.findByEventCreatorId(creatorId, pageable)
                 .map(event -> {
@@ -337,19 +355,6 @@ public class EventService extends BaseEntityService {
         }
     }
 
-    private void updateEventFields(Event event, EventUpdateDTO dto) {
-        if (dto.getTitle() != null) event.setTitle(dto.getTitle());
-        if (dto.getDescription() != null) event.setDescription(dto.getDescription());
-        if (dto.getDateOfEvent() != null) event.setDateOfEvent(dto.getDateOfEvent());
-        if (dto.getStartTime() != null) event.setStartTime(dto.getStartTime());
-        if (dto.getEndTime() != null) event.setEndTime(dto.getEndTime());
-        if (dto.getVenue() != null) event.setVenue(dto.getVenue());
-        if (dto.getReferenceToPosition() != null) event.setReferenceToPosition(dto.getReferenceToPosition());
-        if (dto.getIsPublic() != null) event.setIsPublic(dto.getIsPublic());
-        if (dto.getIsDraft() != null) event.setIsDraft(dto.getIsDraft());
-        if (dto.getIsActive() != null) event.setIsActive(dto.getIsActive());
-    }
-
     private void updateEventPhoto(Event event, String newPhotoBase64) {
         deletePhoto(event.getPhoto());
         event.setPhoto(savePhoto(newPhotoBase64));
@@ -387,5 +392,21 @@ public class EventService extends BaseEntityService {
     private boolean isAllowedOrganizerRole(User user) {
         return ALLOWED_ROLES.contains(user.getRole().getTitle())
                 || "Activist".equals(user.getRole().getTitle());
+    }
+
+    private void validateSectorRequired(EventCreateDTO dto) {
+        if (Boolean.FALSE.equals(dto.getIsPublic()) && dto.getSectorId() == null) {
+            throw new IllegalArgumentException("Для закрытого мероприятия необходимо указать сектор");
+        }
+    }
+
+    private void validateSectorRequired(EventUpdateDTO dto, Event existingEvent) {
+        Boolean isPublic = dto.getIsPublic() != null ? dto.getIsPublic() : existingEvent.getIsPublic();
+        Long sectorId = dto.getSectorId() != null ? dto.getSectorId() :
+                (existingEvent.getSector() != null ? existingEvent.getSector().getId() : null);
+
+        if (Boolean.FALSE.equals(isPublic) && sectorId == null) {
+            throw new IllegalArgumentException("Для закрытого мероприятия необходимо указать сектор");
+        }
     }
 }

@@ -101,4 +101,8 @@ public class Event {
     @Column(name = "max_organizers_count", nullable = false)
     @Builder.Default
     private Integer maxOrganizersCount = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sector_id")
+    private Sector sector;
 }

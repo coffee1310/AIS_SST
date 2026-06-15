@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20240614-add-sector-id-to-events
+      author: coffee13102006
+      labels: events-sector
+      comment: "Добавление поля sector_id в таблицу events с внешним ключом на sectors"
+      changes:
+        # Добавление колонки sector_id
+        - addColumn:
+            tableName: events
+            columns:
+              - column:
+                  name: sector_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_events_sector
+                    references: sectors(id)
+                  remarks: "ID сектора (обязателен если мероприятие не публичное)"
+
+      rollback:
+        - dropForeignKeyConstraint:
+            constraintName: fk_events_sector
+            tableName: events
+        - dropColumn:
+            tableName: events
+            columnName: sector_id
+
+  - changeSet:
+      id: 20240614-add-sector-id-check-constraint
+      author: coffee13102006
+      labels: events-sector-constraint
+      comment: "Добавление проверки: если is_public = false, то sector_id обязателен"
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE events
+              ADD CONSTRAINT chk_events_private_sector_required
+              CHECK (
+                (is_public = true AND sector_id IS NULL) OR
+                (is_public = false AND sector_id IS NOT NULL)
+              );
+
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE events DROP CONSTRAINT IF EXISTS chk_events_private_sector_required;

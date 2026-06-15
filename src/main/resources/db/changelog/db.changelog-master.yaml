@@ -89,3 +89,5 @@ databaseChangeLog:
       file: db/changelog/changes/046-add-is-free-event-to-events.yaml
   - include:
       file: db/changelog/changes/047-add-max-organizers-count-and-remove-location.yaml
+  - include:
+      file: db/changelog/changes/048-add-sector-id-to-events.yaml

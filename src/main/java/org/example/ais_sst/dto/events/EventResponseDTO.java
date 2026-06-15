@@ -43,4 +43,7 @@ public class EventResponseDTO {
 
     private Long currentParticipantsCount;   // Текущее количество участников
     private Long currentOrganizersCount;     // Текущее количество организаторов
+
+    private Long sectorId;
+    private String sectorTitle;
 }
