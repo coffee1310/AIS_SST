@@ -176,11 +176,11 @@ public class SectorsController extends BaseController {
             @PathVariable Long userId,
             @AuthenticationPrincipal CustomUserDetails userDetails) throws RoleNotFoundException {
 
-        Long coordinatorId = userDetails.getId();
-        logInfo("/api/sector/{}/kick/{}", "Coordinator {} kicking participant {} from sector",
-                sectorId, userId, coordinatorId, userId);
+        Long kick_user_id = userDetails.getId();
+        logInfo("/api/sector/{}/kick/{}", "User {} kicking participant {} from sector",
+                sectorId, userId, kick_user_id, userId);
 
-        sectorService.kickParticipantFromSector(sectorId, coordinatorId, userId);
+        sectorService.kickParticipantFromSector(sectorId, kick_user_id, userId);
 
         return ResponseEntity.noContent().build();
     }

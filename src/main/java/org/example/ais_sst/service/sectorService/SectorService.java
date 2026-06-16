@@ -31,10 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.management.relation.RoleNotFoundException;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -540,15 +537,18 @@ public class SectorService {
     }
 
     @Transactional
-    public void kickParticipantFromSector(Long sectorId, Long coordinatorId, Long userId) {
-        log.info("Kicking user {} from sector {} by coordinator {}", userId, sectorId, coordinatorId);
+    public void kickParticipantFromSector(Long sectorId, Long kick_user_id, Long userId) {
+        log.info("Kicking user {} from sector {} by user {}", userId, sectorId, kick_user_id);
 
-        SectorParticipant coordinatorParticipant = sectorParticipantRepository
-                .findBySectorIdAndStudentId(sectorId, coordinatorId)
-                .orElseThrow(() -> new UserDoesNotExistException("Координатор не является участником сектора"));
+        User user = userRepository.findUserById(kick_user_id)
+                .orElseThrow(() -> new UserDoesNotExistException(String.format("Пользователь с id: %s не найден", kick_user_id)));
 
-        if (!coordinatorParticipant.getIsCoordinator()) {
+        if (user.getRole().getTitle().equals("Coordinator") && !sectorParticipantRepository.existsBySectorIdAndStudentId(sectorId, kick_user_id)) {
             throw new SecurityException("Пользователь не является координатором сектора");
+        }
+
+        if (user.getRole().getTitle().equals("Activist") || user.getRole().getTitle().equals("Secretary")) {
+            throw new SecurityException("Пользователь не имеет прав выгонять пользователя из сектора");
         }
 
         SectorParticipant participantEntry = sectorParticipantRepository
