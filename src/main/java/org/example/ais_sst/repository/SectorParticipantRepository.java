@@ -48,6 +48,8 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     @Query("UPDATE SectorParticipant sp SET sp.isCoordinator = true WHERE sp.sector.id = :sectorId AND sp.student.id = :userId")
     void setCoordinatorFlag(@Param("sectorId") Long sectorId, @Param("userId") Long userId);
 
+    List<SectorParticipant> findBySectorId(Long sectorId);
+
     boolean existsBySectorIdAndStudentId(Long sectorId, Long studentId);
 
     @Query("SELECT sp.sector.title FROM SectorParticipant sp WHERE sp.student.id = :userId AND sp.status = :status")
@@ -58,4 +60,8 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     List<Object[]> findSectorDetailsByUserIdAndStatus(@Param("userId") Long userId, @Param("status") SectorParticipantStatuses status);
 
     List<SectorParticipant> findByStudentIdAndStatus(Long studentId, SectorParticipantStatuses status);
+
+    List<SectorParticipant> findAllBySector_IdAndIsCoordinator(Long sectorId, Boolean isCoordinator);
+
+    List<SectorParticipant> findBySectorIdAndIsCoordinator(Long id, boolean b);
 }

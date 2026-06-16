@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +35,8 @@ public class GlobalEventRolesService {
                 .orElseThrow(() -> new RuntimeException("Сектор с id " + dto.getSector_id() + " не найден"));
 
         // Проверяем, существует ли роль с таким названием
-        if (globalEventRolesRepository.existsByTitle(dto.getTitle())) {
+        Optional<GlobalEventRole> globalEventRole = globalEventRolesRepository.findByTitle(dto.getTitle());
+        if (!globalEventRole.isEmpty() && globalEventRole.get().getIsDeleted() == false) {
             throw new RuntimeException("Роль с названием '" + dto.getTitle() + "' уже существует");
         }
 

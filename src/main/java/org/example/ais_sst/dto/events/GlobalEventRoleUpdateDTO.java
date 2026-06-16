@@ -24,4 +24,6 @@ public class GlobalEventRoleUpdateDTO {
     private String description;
 
     private Boolean isDefaultRole;
+
+    private Boolean isDeleted;
 }

@@ -31,4 +31,6 @@ public class GlobalEventRoleDTO {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    private Boolean isDeleted;
 }

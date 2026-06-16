@@ -12,7 +12,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "global_event_roles")
+@Table(name = "global_event_roles",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_global_event_roles_title_deleted",
+                        columnNames = {"title", "is_deleted"})
+        })
 public class GlobalEventRole {
 
     @Id
@@ -37,4 +41,8 @@ public class GlobalEventRole {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
 }

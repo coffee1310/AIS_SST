@@ -251,16 +251,41 @@ public class SectorService {
 
     @CacheEvict(value = {"sector", "allSectors", "activeSectors"}, allEntries = true)
     @Transactional
-    public void deactivateSector(Long id) {
-        log.info("🟢 Deactivating sector {} - clearing caches", id);
+    public void deactivateSector(Long id) throws RoleNotFoundException {
+        log.info("Deactivating sector {}", id);
 
-        sectorRepository.findById(id)
+        // Проверяем существование сектора
+        Sector sector = sectorRepository.findById(id)
                 .orElseThrow(() -> new SectorDoesNotExistException("Сектор с id " + id + " не существует"));
+
+        // Деактивируем сектор
         sectorRepository.deactivateSector(id);
 
-        sectorListCache.invalidateAll();
+        // Обновляем статус всех участников сектора
+        List<SectorParticipant> sectorParticipants = sectorParticipantRepository.findBySectorId(id);
+        if (!sectorParticipants.isEmpty()) {
+            sectorParticipants.forEach(participant ->
+                    participant.setStatus(SectorParticipantStatuses.Вышедший)
+            );
+            sectorParticipantRepository.saveAll(sectorParticipants);
+        }
 
-        log.info("✅ Sector {} deactivated", id);
+        // Снимаем роль координатора у всех координаторов сектора
+        List<SectorParticipant> coordinators = sectorParticipantRepository.findBySectorIdAndIsCoordinator(id, true);
+        if (!coordinators.isEmpty()) {
+            Role activistRole = roleRepository.findByTitle("Activist")
+                    .orElseThrow(() -> new RoleNotFoundException("Роль 'Активист' не найдена"));
+
+            coordinators.forEach(coordinator -> {
+                coordinator.setIsCoordinator(false);
+                User user = coordinator.getStudent();
+                user.setRole(activistRole);
+                sectorParticipantRepository.save(coordinator);
+                userRepository.save(user);
+            });
+        }
+
+        log.info("Sector {} deactivated successfully", id);
     }
 
     @CacheEvict(value = {"sector", "allSectors", "activeSectors"}, allEntries = true)
@@ -515,8 +540,8 @@ public class SectorService {
     }
 
     @Transactional
-    public void kickParticipantFromSector(Long sectorId, Long coordinatorId, Long participantId) {
-        log.info("Kicking participant {} from sector {} by coordinator {}", participantId, sectorId, coordinatorId);
+    public void kickParticipantFromSector(Long sectorId, Long coordinatorId, Long userId) {
+        log.info("Kicking user {} from sector {} by coordinator {}", userId, sectorId, coordinatorId);
 
         SectorParticipant coordinatorParticipant = sectorParticipantRepository
                 .findBySectorIdAndStudentId(sectorId, coordinatorId)
@@ -527,7 +552,7 @@ public class SectorService {
         }
 
         SectorParticipant participantEntry = sectorParticipantRepository
-                .findBySectorIdAndStudentId(sectorId, participantId)
+                .findBySectorIdAndStudentId(sectorId, userId)
                 .orElseThrow(() -> new UserDoesNotExistException("Участник не найден в секторе"));
 
         if (participantEntry.getIsCoordinator()) {
@@ -541,7 +566,7 @@ public class SectorService {
         // Инвалидируем кэш
         sectorListCache.invalidateAll();
 
-        log.info("User {} kicked from sector {} (status: Вышедший)", participantId, sectorId);
+        log.info("User {} kicked from sector {} (status: Вышедший)", userId, sectorId);
     }
 
     @Transactional

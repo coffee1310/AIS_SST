@@ -170,17 +170,17 @@ public class SectorsController extends BaseController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{sectorId}/kick/{participantId}")
+    @DeleteMapping("/{sectorId}/kick/{userId}")
     public ResponseEntity<Void> kickParticipantFromSector(
             @PathVariable Long sectorId,
-            @PathVariable Long participantId,
+            @PathVariable Long userId,
             @AuthenticationPrincipal CustomUserDetails userDetails) throws RoleNotFoundException {
 
         Long coordinatorId = userDetails.getId();
         logInfo("/api/sector/{}/kick/{}", "Coordinator {} kicking participant {} from sector",
-                sectorId, participantId, coordinatorId, participantId);
+                sectorId, userId, coordinatorId, userId);
 
-        sectorService.kickParticipantFromSector(sectorId, coordinatorId, participantId);
+        sectorService.kickParticipantFromSector(sectorId, coordinatorId, userId);
 
         return ResponseEntity.noContent().build();
     }
@@ -210,7 +210,7 @@ public class SectorsController extends BaseController {
     }
 
     @DeleteMapping("/deactivate/{id}")
-    public ResponseEntity<?> deactivateSector(@PathVariable Long id) {
+    public ResponseEntity<?> deactivateSector(@PathVariable Long id) throws RoleNotFoundException {
         sectorService.deactivateSector(id);
         return ResponseEntity.noContent().build();
     }

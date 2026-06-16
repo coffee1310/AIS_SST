@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20240615-add-is-deleted-to-global-event-roles
+      author: coffee13102006
+      labels: global-event-roles-deleted
+      comment: "Добавление поля is_deleted в таблицу global_event_roles для мягкого удаления"
+      changes:
+        - addColumn:
+            tableName: global_event_roles
+            columns:
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                  remarks: "Флаг мягкого удаления (false - активна, true - удалена)"
+
+      rollback:
+        - dropColumn:
+            tableName: global_event_roles
+            columnName: is_deleted
