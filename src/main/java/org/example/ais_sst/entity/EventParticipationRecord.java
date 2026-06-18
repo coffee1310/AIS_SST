@@ -1,0 +1,51 @@
+package org.example.ais_sst.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "event_participation_records",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_participation_record_sector_participant_role",
+                        columnNames = {"sector_participant_id", "event_role_id"})
+        })
+public class EventParticipationRecord {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sector_participant_id", nullable = false)
+    private SectorParticipant sectorParticipant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_role_id", nullable = false)
+    private EventRole eventRole;
+
+    @Column(name = "was_present", nullable = false)
+    @Builder.Default
+    private Boolean wasPresent = false;
+
+    @Column(name = "comment", length = 500)
+    private String comment;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+}

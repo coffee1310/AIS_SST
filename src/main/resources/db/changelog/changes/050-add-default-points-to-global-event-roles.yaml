@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20240617-add-default-points-to-global-event-roles
+      author: coffee13102006
+      labels: global-event-roles-points
+      comment: "Добавление поля default_points в таблицу global_event_roles"
+      changes:
+        - addColumn:
+            tableName: global_event_roles
+            columns:
+              - column:
+                  name: default_points
+                  type: INT
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+                    check: default_points > 0
+                  remarks: "Количество баллов по умолчанию за роль на мероприятии"
+
+      rollback:
+        - dropColumn:
+            tableName: global_event_roles
+            columnName: default_points

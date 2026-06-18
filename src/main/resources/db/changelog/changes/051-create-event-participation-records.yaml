@@ -1,0 +1,106 @@
+databaseChangeLog:
+  # Создание таблицы event_participation_records
+  - changeSet:
+      id: 20240617-create-event-participation-records-v3
+      author: coffee13102006
+      labels: event-participation-records
+      comment: "Создание таблицы записей об участии в мероприятиях"
+      changes:
+        - createTable:
+            tableName: event_participation_records
+            remarks: "Таблица для учета фактического участия в мероприятиях"
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_event_participation_records
+                    nullable: false
+                  remarks: "Первичный ключ"
+
+              - column:
+                  name: sector_participant_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_participation_record_sector_participant
+                    references: sector_participants(id)
+                  remarks: "Внешний ключ на участника сектора"
+
+              - column:
+                  name: event_role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_participation_record_event_role
+                    references: event_roles(id)
+                  remarks: "Внешний ключ на роль в мероприятии"
+
+              - column:
+                  name: was_present
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+                  remarks: "Был ли участник присутствовал на мероприятии"
+
+              - column:
+                  name: comment
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: true
+                  remarks: "Комментарий к записи об участии"
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+                  remarks: "Дата и время создания записи"
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+                  remarks: "Дата и время последнего обновления"
+
+  # Добавление индексов
+  - changeSet:
+      id: 20240617-add-participation-records-indexes-v3
+      author: coffee13102006
+      labels: event-participation-records-indexes
+      comment: "Добавление индексов для таблицы event_participation_records"
+      changes:
+        - createIndex:
+            indexName: idx_participation_record_sector_participant
+            tableName: event_participation_records
+            columns:
+              - column:
+                  name: sector_participant_id
+            remarks: "Индекс для поиска по участнику сектора"
+
+        - createIndex:
+            indexName: idx_participation_record_event_role
+            tableName: event_participation_records
+            columns:
+              - column:
+                  name: event_role_id
+            remarks: "Индекс для поиска по роли мероприятия"
+
+  # Добавление уникального ограничения
+  - changeSet:
+      id: 20240617-add-participation-record-unique-constraint-v3
+      author: coffee13102006
+      labels: event-participation-record-unique
+      comment: "Уникальное ограничение - одна запись на участника сектора для роли"
+      changes:
+        - addUniqueConstraint:
+            constraintName: uk_participation_record_sector_participant_role
+            tableName: event_participation_records
+            columnNames: sector_participant_id, event_role_id
+            remarks: "Участник сектора может иметь только одну запись на роль"

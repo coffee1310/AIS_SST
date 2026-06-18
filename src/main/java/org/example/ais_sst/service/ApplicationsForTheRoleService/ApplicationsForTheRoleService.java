@@ -34,6 +34,8 @@ public class ApplicationsForTheRoleService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
+    private final EventParticipationRecordRepository eventParticipationRecordRepository;
+
     /**
      * Подача заявки на роль
      */
@@ -77,12 +79,6 @@ public class ApplicationsForTheRoleService {
                 savedApplication.getId(), isReserve, description);
 
         return roleApplicationMapper.toResponseDto(savedApplication);
-    }
-
-    // Перегруженный метод для обратной совместимости
-    @Transactional
-    public RoleApplicationResponseDTO createApplication(Long eventRoleId, Long userId) {
-        return createApplication(eventRoleId, userId, null);
     }
 
     @Transactional
@@ -157,7 +153,52 @@ public class ApplicationsForTheRoleService {
         }
 
         ApplicationsForTheRole savedApplication = roleApplicationRepository.save(application);
+
+        createParticipationRecord(savedApplication);
+
         return roleApplicationMapper.toResponseDto(savedApplication);
+    }
+
+    @Transactional
+    public void createParticipationRecord(ApplicationsForTheRole application) {
+        log.info("Creating participation record for approved application: {}", application.getId());
+
+        // Проверяем, не существует ли уже запись
+        boolean exists = eventParticipationRecordRepository.existsBySectorParticipantAndEventRole(
+                application.getSectorParticipant(),
+                application.getEventRole()
+        );
+
+        if (exists) {
+            log.warn("Participation record already exists for sectorParticipant: {} and eventRole: {}",
+                    application.getSectorParticipant().getId(),
+                    application.getEventRole().getId());
+            throw new DuplicateParticipationRecordException(
+                    "Запись об участии уже существует для данного участника и роли"
+            );
+        }
+
+        // Проверяем, было ли уже мероприятие
+        boolean wasPresent = false;
+        Event event = application.getEventRole().getEvent();
+        if (event.getDateOfEvent() != null && event.getStartTime() != null) {
+            LocalDateTime eventDateTime = LocalDateTime.of(event.getDateOfEvent(), event.getStartTime());
+            // Если мероприятие уже прошло, считаем что человек присутствовал
+            if (eventDateTime.isBefore(LocalDateTime.now())) {
+                wasPresent = true;
+                log.info("Event has already passed, setting wasPresent = true");
+            }
+        }
+
+        EventParticipationRecord record = EventParticipationRecord.builder()
+                .sectorParticipant(application.getSectorParticipant())
+                .eventRole(application.getEventRole())
+                .wasPresent(wasPresent) // Устанавливаем правильное значение
+                .comment("Создано на основе одобренной заявки #" + application.getId())
+                .build();
+
+        eventParticipationRecordRepository.save(record);
+        log.info("Participation record created with id: {}, wasPresent: {}", record.getId(), record.getWasPresent());
     }
 
     @Transactional

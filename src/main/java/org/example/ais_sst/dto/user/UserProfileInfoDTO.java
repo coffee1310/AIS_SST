@@ -32,15 +32,15 @@ public class UserProfileInfoDTO {
 
     @Min(0)
     @NotNull
-    private Integer events_count;
+    private Integer eventsCount;
 
     @Min(0)
     @NotNull
-    private Integer points_count;
+    private Integer pointsCount;
 
     @Min(1)
     @NotNull
-    private Integer rank;
+    private Integer ratingPosition;
 
     @Past
     private LocalDate dateOfBirth;
@@ -81,6 +81,7 @@ public class UserProfileInfoDTO {
 
     // НОВОЕ ПОЛЕ: список секторов, в которых состоит пользователь
     private List<String> userSectors;  // Список названий секторов
+
 
     public void validate(Validator validator) {
         Set<ConstraintViolation<UserProfileInfoDTO>> violations = validator.validate(this);

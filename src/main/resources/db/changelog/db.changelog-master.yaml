@@ -93,3 +93,7 @@ databaseChangeLog:
       file: db/changelog/changes/048-add-sector-id-to-events.yaml
   - include:
       file: db/changelog/changes/049-add-is-deleted-to-global-event-roles.yaml
+  - include:
+      file: db/changelog/changes/050-add-default-points-to-global-event-roles.yaml
+  - include:
+      file: db/changelog/changes/051-create-event-participation-records.yaml

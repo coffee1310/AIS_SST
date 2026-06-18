@@ -6,6 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -45,4 +47,12 @@ public class GlobalEventRole {
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     private Boolean isDeleted = false;
+
+    @Column(name = "default_points", nullable = false)
+    @Builder.Default
+    private Integer defaultPoints = 1;
+
+    @OneToMany(mappedBy = "globalEventRole", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<EventRole> eventRoles = new ArrayList<>();
 }
