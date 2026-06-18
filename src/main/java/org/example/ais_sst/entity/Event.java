@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -41,7 +42,7 @@ public class Event {
     @Column(name = "end_time")
     private LocalTime endTime;
 
-    @Column(name = "venue")  // Изменено с location на venue
+    @Column(name = "venue")
     private String venue;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,7 +53,7 @@ public class Event {
     @Builder.Default
     private Boolean isActive = true;
 
-    @Column(name = "is_public")  // Добавлено поле is_public
+    @Column(name = "is_public")
     @Builder.Default
     private Boolean isPublic = true;
 
@@ -64,10 +65,10 @@ public class Event {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "reference_to_position")  // Добавлено поле
+    @Column(name = "reference_to_position")
     private String referenceToPosition;
 
-    @Column(name = "date_of_event")  // Добавлено поле
+    @Column(name = "date_of_event")
     private LocalDate dateOfEvent;
 
     @Column(name = "max_participants_count", nullable = false)
@@ -100,13 +101,44 @@ public class Event {
 
     @Column(name = "is_free_event", nullable = false)
     @Builder.Default
-    private Boolean isFreeEvent = true;  // true - можно участвовать, false - нельзя участвовать
+    private Boolean isFreeEvent = true;
 
     @Column(name = "max_organizers_count", nullable = false)
     @Builder.Default
     private Integer maxOrganizersCount = 0;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sector_id")
-    private Sector sector;
+    // УДАЛЯЕМ поле sector_id
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "sector_id")
+    // private Sector sector;
+
+    // ДОБАВЛЯЕМ связь с секторами через связующую таблицу
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<EventSector> eventSectors = new ArrayList<>();
+
+    // Вспомогательные методы для работы с секторами
+    public void addSector(Sector sector) {
+        EventSector eventSector = EventSector.builder()
+                .event(this)
+                .sector(sector)
+                .build();
+        eventSectors.add(eventSector);
+    }
+
+    public void removeSector(Sector sector) {
+        eventSectors.removeIf(es -> es.getSector().equals(sector));
+    }
+
+    public List<Sector> getSectors() {
+        return eventSectors.stream()
+                .map(EventSector::getSector)
+                .collect(Collectors.toList());
+    }
+
+    public List<Long> getSectorIds() {
+        return eventSectors.stream()
+                .map(es -> es.getSector().getId())
+                .collect(Collectors.toList());
+    }
 }

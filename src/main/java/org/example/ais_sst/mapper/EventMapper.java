@@ -36,8 +36,7 @@ public interface EventMapper {
     @Mapping(target = "maxOrganizersCount", source = "maxOrganizersCount")
     @Mapping(target = "currentParticipantsCount", ignore = true)
     @Mapping(target = "currentOrganizersCount", ignore = true)
-    @Mapping(target = "sectorId", source = "sector.id")
-    @Mapping(target = "sectorTitle", source = "sector.title")
+    @Mapping(target = "sectors", ignore = true) // Игнорируем, заполняем в сервисе
     @Mapping(target = "isDeleted", source = "isDeleted")
     EventResponseDTO toResponseDto(Event event);
 
@@ -61,7 +60,7 @@ public interface EventMapper {
     @Mapping(target = "maxParticipantsCount", source = "maxParticipantsCount")
     @Mapping(target = "isFreeEvent", source = "isFreeEvent")
     @Mapping(target = "maxOrganizersCount", source = "maxOrganizersCount")
-    @Mapping(target = "sector", ignore = true)
+    @Mapping(target = "eventSectors", ignore = true)
     Event toEntity(EventCreateDTO dto);
 
     @Mapping(target = "id", ignore = true)
@@ -84,6 +83,6 @@ public interface EventMapper {
     @Mapping(target = "maxParticipantsCount", source = "maxParticipantsCount")
     @Mapping(target = "isFreeEvent", source = "isFreeEvent")
     @Mapping(target = "maxOrganizersCount", source = "maxOrganizersCount")
-    @Mapping(target = "sector", ignore = true)
+    @Mapping(target = "eventSectors", ignore = true)
     Event toEntity(EventUpdateDTO dto);
 }

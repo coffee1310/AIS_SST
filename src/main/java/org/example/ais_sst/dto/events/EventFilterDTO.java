@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -45,7 +46,7 @@ public class EventFilterDTO {
 
     private Boolean isOrganizer;
 
-    private Long sectorId;
+    private List<Long> sectorIds;
 
     private Boolean isDeleted;
 }

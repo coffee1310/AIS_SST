@@ -47,9 +47,9 @@ public class EventController extends BaseController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Получить мероприятие по ID")
-    public ResponseEntity<EventResponseDTO> getEventById(@PathVariable Long id) {
+    public ResponseEntity<EventResponseDTO> getEventById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("GET /api/events/{} - Getting event by id", id);
-        EventResponseDTO event = eventService.getEventById(id);
+        EventResponseDTO event = eventService.getEventById(id, userDetails.getId());
         return ResponseEntity.ok(event);
     }
 
@@ -85,7 +85,6 @@ public class EventController extends BaseController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection,
 
-            @RequestParam(required = false) Long sectorId,  // НОВЫЙ ПАРАМЕТР
 
             @RequestParam(required = false) Boolean isDeleted,
 
@@ -113,7 +112,6 @@ public class EventController extends BaseController {
                 .isResponsibleSector(isResponsibleSector)  // Добавляем\
                 .currentUserId(userDetails != null ? userDetails.getId() : null)
                 .isOrganizer(isOrganizer)
-                .sectorId(sectorId)  // НОВОЕ ПОЛЕ
                 .isDeleted(isDeleted)
                 .build();
 

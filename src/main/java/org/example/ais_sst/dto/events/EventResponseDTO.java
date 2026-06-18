@@ -46,6 +46,10 @@ public class EventResponseDTO {
     private Long currentParticipantsCount;   // Текущее количество участников
     private Long currentOrganizersCount;     // Текущее количество организаторов
 
-    private Long sectorId;
+    private List<EventSectorResponseDTO> sectors;
     private String sectorTitle;
+
+    // НОВОЕ ПОЛЕ - есть ли у пользователя сектор, связанный с этим мероприятием
+    private Boolean isMySector;
+
 }

@@ -49,5 +49,5 @@ public class EventCreateDTO {
 
     private Integer maxOrganizersCount = 0;
 
-    private Long sectorId;
+    private List<Long> sectorIds;
 }

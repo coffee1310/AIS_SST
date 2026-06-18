@@ -1,0 +1,90 @@
+databaseChangeLog:
+  # Удаление поля sector_id из таблицы events
+  - changeSet:
+      id: 20240618-drop-sector-id-from-events
+      author: coffee13102006
+      labels: events-drop-sector
+      comment: "Удаление поля sector_id из таблицы events"
+      changes:
+        - dropColumn:
+            tableName: events
+            columnName: sector_id
+
+  # Создание таблицы event_sectors
+  - changeSet:
+      id: 20240618-create-event-sectors-table
+      author: coffee13102006
+      labels: event-sectors
+      comment: "Создание таблицы для связи мероприятий и секторов"
+      changes:
+        - createTable:
+            tableName: event_sectors
+            remarks: "Таблица для связи мероприятий и секторов"
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_event_sectors
+                    nullable: false
+                  remarks: "Первичный ключ"
+
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_event_sectors_event
+                    references: events(id)
+                  remarks: "Внешний ключ на мероприятие"
+
+              - column:
+                  name: sector_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_event_sectors_sector
+                    references: sectors(id)
+                  remarks: "Внешний ключ на сектор"
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+                  remarks: "Дата и время создания записи"
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+                  remarks: "Дата и время последнего обновления"
+
+        # Добавление уникального ограничения
+        - addUniqueConstraint:
+            constraintName: uk_event_sector
+            tableName: event_sectors
+            columnNames: event_id, sector_id
+            remarks: "Уникальное ограничение - один сектор для мероприятия один раз"
+
+        # Добавление индексов
+        - createIndex:
+            indexName: idx_event_sectors_event_id
+            tableName: event_sectors
+            columns:
+              - column:
+                  name: event_id
+            remarks: "Индекс для поиска по мероприятию"
+
+        - createIndex:
+            indexName: idx_event_sectors_sector_id
+            tableName: event_sectors
+            columns:
+              - column:
+                  name: sector_id
+            remarks: "Индекс для поиска по сектору"

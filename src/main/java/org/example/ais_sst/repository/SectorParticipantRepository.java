@@ -64,4 +64,12 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
     List<SectorParticipant> findAllBySector_IdAndIsCoordinator(Long sectorId, Boolean isCoordinator);
 
     List<SectorParticipant> findBySectorIdAndIsCoordinator(Long id, boolean b);
+
+
+    @Query("SELECT sp.sector.id FROM SectorParticipant sp WHERE sp.student.id = :userId")
+    List<Long> findSectorIdsByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT sp.sector.id FROM SectorParticipant sp WHERE sp.student.id = :userId AND sp.status = :status")
+    List<Long> findSectorIdsByUserIdAndStatus(@Param("userId") Long userId,
+                                              @Param("status") SectorParticipantStatuses status);
 }
