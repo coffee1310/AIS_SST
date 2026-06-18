@@ -6,10 +6,7 @@ import org.example.ais_sst.dto.events.EventCreateDTO;
 import org.example.ais_sst.dto.events.EventFilterDTO;
 import org.example.ais_sst.dto.events.EventResponseDTO;
 import org.example.ais_sst.dto.events.EventUpdateDTO;
-import org.example.ais_sst.entity.Event;
-import org.example.ais_sst.entity.EventOrganizer;
-import org.example.ais_sst.entity.Sector;
-import org.example.ais_sst.entity.User;
+import org.example.ais_sst.entity.*;
 import org.example.ais_sst.exception.EventDoesNotExistException;
 import org.example.ais_sst.exception.OrganizerLimitExceededException;
 import org.example.ais_sst.exception.UnauthorizedException;
@@ -41,6 +38,7 @@ public class EventService extends BaseEntityService {
     private final EventPhotoService eventPhotoService;
     private final EventParticipantsRepository eventParticipantsRepository;
     private final SectorRepository sectorRepository;
+    private final EventRoleRepository eventRoleRepository;
 
     private static final Set<String> ALLOWED_ROLES = Set.of(
             "Administrator", "Curator", "Deputy_chairman",
@@ -297,9 +295,33 @@ public class EventService extends BaseEntityService {
             Event event = findEntityOrThrow(eventId, eventRepository::findById,
                     () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
+            // Мягкое удаление всех ролей мероприятия
+            softDeleteEventRoles(eventId);
+
+            // Мягкое удаление самого мероприятия
             event.setIsActive(false);
+            event.setIsDeleted(true);
             eventRepository.save(event);
+
+            log.info("Event {} and all its roles soft deleted by user {}", eventId, userId);
         }, "deleteEvent", eventId, userId);
+    }
+
+    /**
+     * Мягкое удаление всех ролей мероприятия
+     */
+    private void softDeleteEventRoles(Long eventId) {
+        List<EventRole> eventRoles = eventRoleRepository.findByEventIdAndDeletedFalse(eventId);
+
+        if (eventRoles.isEmpty()) {
+            log.debug("No active roles found for event {}", eventId);
+            return;
+        }
+
+        eventRoles.forEach(role -> role.setDeleted(true));
+        eventRoleRepository.saveAll(eventRoles);
+
+        log.info("Soft deleted {} roles for event {}", eventRoles.size(), eventId);
     }
 
     @Transactional(readOnly = true)

@@ -87,6 +87,8 @@ public class EventController extends BaseController {
 
             @RequestParam(required = false) Long sectorId,  // НОВЫЙ ПАРАМЕТР
 
+            @RequestParam(required = false) Boolean isDeleted,
+
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         logInfo("/api/events", "Getting events with filters");
@@ -112,6 +114,7 @@ public class EventController extends BaseController {
                 .currentUserId(userDetails != null ? userDetails.getId() : null)
                 .isOrganizer(isOrganizer)
                 .sectorId(sectorId)  // НОВОЕ ПОЛЕ
+                .isDeleted(isDeleted)
                 .build();
 
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);

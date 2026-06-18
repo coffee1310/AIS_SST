@@ -46,4 +46,6 @@ public class EventFilterDTO {
     private Boolean isOrganizer;
 
     private Long sectorId;
+
+    private Boolean isDeleted;
 }

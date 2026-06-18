@@ -38,6 +38,7 @@ public interface EventMapper {
     @Mapping(target = "currentOrganizersCount", ignore = true)
     @Mapping(target = "sectorId", source = "sector.id")
     @Mapping(target = "sectorTitle", source = "sector.title")
+    @Mapping(target = "isDeleted", source = "isDeleted")
     EventResponseDTO toResponseDto(Event event);
 
     @Mapping(target = "id", ignore = true)

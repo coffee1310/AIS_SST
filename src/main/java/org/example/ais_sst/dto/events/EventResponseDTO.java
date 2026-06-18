@@ -36,6 +36,8 @@ public class EventResponseDTO {
     private LocalDateTime updatedAt;
     private List<EventOrganizerResponseDTO> organizers;
     private Boolean isFreeEvent = true;  // true - можно участвовать, false - нельзя участвовать
+    private Boolean isDeleted = false;
+
 
     private Integer maxParticipantsCount = 0;
 

@@ -74,6 +74,10 @@ public class Event {
     @Builder.Default
     private Integer maxParticipantsCount = 0;
 
+    @Column(name = "is_deleted")
+    @Builder.Default
+    private Boolean isDeleted = false;
+
     @Column(name = "is_draft")
     @Builder.Default
     private Boolean isDraft = true;

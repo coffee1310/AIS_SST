@@ -4,6 +4,7 @@ import org.example.ais_sst.entity.EventRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -65,4 +66,13 @@ public interface EventRoleRepository extends JpaRepository<EventRole, Long> {
 
     @Query("SELECT er FROM EventRole er WHERE er.deadline < :now AND er.deleted = false")
     List<EventRole> findExpiredRoles(@Param("now") LocalDateTime now);
+
+    @Modifying
+    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.event.id = :eventId AND er.deleted = false")
+    void softDeleteAllByEventId(@Param("eventId") Long eventId);
+
+    Optional<EventRole> findByIdAndDeletedFalse(Long id);
+
+    List<EventRole> findByEventIdAndDeletedFalse(Long eventId);
+
 }

@@ -62,6 +62,9 @@ public class EventSpecification {
             if (filter.getCreatorId() != null) {
                 predicates.add(cb.equal(root.get("eventCreator").get("id"), filter.getCreatorId()));
             }
+            if (filter.getIsDeleted() != null) {
+                predicates.add(cb.equal(root.get("isDeleted"), filter.getIsDeleted()));
+            }
 
             if (filter.getIsOrganizer() != null && filter.getIsOrganizer() && filter.getCurrentUserId() != null) {
                 System.out.println("Applying organizer filter for user: " + filter.getCurrentUserId());
