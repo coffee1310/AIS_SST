@@ -29,6 +29,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
         public ObservableCollection<RoleItem> Roles { get; set; } = new ObservableCollection<RoleItem>();
         public ObservableCollection<UserDto> SelectedOrganizers { get; set; } = new ObservableCollection<UserDto>();
+        public ObservableCollection<SectorSelectionItem> TargetSectors { get; set; } = new ObservableCollection<SectorSelectionItem>();
 
         private string _newBase64Image = null;
 
@@ -137,6 +138,15 @@ namespace Diplom_Stud.Pages.Coordinator
                     }
                 }
 
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    TargetSectors.Clear();
+                    foreach (var s in _apiSectors)
+                    {
+                        TargetSectors.Add(new SectorSelectionItem { Sector = s, IsSelected = false });
+                    }
+                });
+
                 if (Roles.Count == 0)
                 {
                     Roles.Add(new RoleItem { IsExpanded = true, AvailableRoles = _apiRoles, AvailableSectors = _apiSectors });
@@ -154,6 +164,61 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 CustomMessageBox.Show($"Ошибка сети при загрузке справочников: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
+        }
+
+        private void cbIsPublic_Checked(object sender, RoutedEventArgs e)
+        {
+            if (TargetSectorsPanel != null) TargetSectorsPanel.Visibility = Visibility.Collapsed;
+        }
+
+        private void cbIsPublic_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (TargetSectorsPanel != null) TargetSectorsPanel.Visibility = Visibility.Visible;
+        }
+
+        private void cbIsFree_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!Roles.Any(r => r.RoleType == RoleItem.RoleTypeEnum.Participant))
+            {
+                Roles.Add(new RoleItem
+                {
+                    RoleType = RoleItem.RoleTypeEnum.Participant,
+                    RoleTitleDisplay = "Участник (Свободное)",
+                    Tasks = "Участие в мероприятии",
+                    Points = "10",
+                    PeopleCount = "0",
+                    IsExpanded = true,
+                    AvailableSectors = _apiSectors,
+                    AvailableRoles = _apiRoles
+                });
+            }
+        }
+
+        private void cbIsFree_Unchecked(object sender, RoutedEventArgs e)
+        {
+            var participantRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Participant);
+            if (participantRole != null) Roles.Remove(participantRole);
+        }
+
+        private void AddOrganizerRole_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (Roles.Any(r => r.RoleType == RoleItem.RoleTypeEnum.Organizer))
+            {
+                CustomMessageBox.Show("Набор организаторов уже добавлен в список ролей.", "Информация", CustomMessageBox.MessageType.Info);
+                return;
+            }
+
+            Roles.Add(new RoleItem
+            {
+                RoleType = RoleItem.RoleTypeEnum.Organizer,
+                RoleTitleDisplay = "Организатор (Набор)",
+                Tasks = "Организация и помощь в проведении",
+                Points = "15",
+                PeopleCount = "0",
+                IsExpanded = true,
+                AvailableSectors = _apiSectors,
+                AvailableRoles = _apiRoles
+            });
         }
 
         private void UploadImage_Click(object sender, MouseButtonEventArgs e)
@@ -283,9 +348,23 @@ namespace Diplom_Stud.Pages.Coordinator
 
             foreach (var role in Roles)
             {
-                if (role.SelectedRole == null) { CustomMessageBox.Show("В одной из добавленных карточек не выбрана роль.", "Ошибка валидации", CustomMessageBox.MessageType.Error); return; }
-                if (role.DeadlineDate == null) { CustomMessageBox.Show($"Для роли '{role.SelectedRole.title}' не выбран дедлайн (дата).", "Ошибка валидации", CustomMessageBox.MessageType.Error); return; }
-                if (string.IsNullOrWhiteSpace(role.DeadlineTime) || role.DeadlineTime.Length < 5) { CustomMessageBox.Show($"Для роли '{role.SelectedRole.title}' укажите время дедлайна (ЧЧ:ММ).", "Ошибка валидации", CustomMessageBox.MessageType.Error); return; }
+                if (role.RoleType == RoleItem.RoleTypeEnum.Custom && role.SelectedRole == null)
+                {
+                    CustomMessageBox.Show("В одной из добавленных кастомных карточек не выбрана роль.", "Ошибка валидации", CustomMessageBox.MessageType.Error);
+                    return;
+                }
+                if (role.DeadlineDate == null)
+                {
+                    string rName = role.RoleType == RoleItem.RoleTypeEnum.Custom ? role.SelectedRole?.title : role.RoleTitleDisplay;
+                    CustomMessageBox.Show($"Для роли '{rName}' не выбран дедлайн (дата).", "Ошибка валидации", CustomMessageBox.MessageType.Error);
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(role.DeadlineTime) || role.DeadlineTime.Length < 5)
+                {
+                    string rName = role.RoleType == RoleItem.RoleTypeEnum.Custom ? role.SelectedRole?.title : role.RoleTitleDisplay;
+                    CustomMessageBox.Show($"Для роли '{rName}' укажите время дедлайна (ЧЧ:ММ).", "Ошибка валидации", CustomMessageBox.MessageType.Error);
+                    return;
+                }
             }
 
             btnCreate.IsEnabled = false;
@@ -297,22 +376,41 @@ namespace Diplom_Stud.Pages.Coordinator
 
                 string startDateTime = $"{EventDate.Value:yyyy-MM-dd}T{StartTime}:00";
                 string endDateTime = $"{EventDate.Value:yyyy-MM-dd}T{EndTime}:00";
-
                 var organizerIds = SelectedOrganizers.Select(u => u.id).ToList();
-                var eventPayload = new
+
+                var eventPayload = new Dictionary<string, object>
                 {
-                    title = EventTitle,
-                    description = EventDescription ?? "",
-                    photo = _newBase64Image ?? "",
-                    dateOfEvent = EventDate.Value.ToString("yyyy-MM-dd"),
-                    startTime = startDateTime,
-                    endTime = endDateTime,
-                    venue = Venue,
-                    organizerIds = organizerIds,
-                    referenceToPosition = string.IsNullOrWhiteSpace(EventDescription) ? "Описание отсутствует" : EventDescription,
-                    isPublic = IsPublic,
-                    isDraft = IsDraft
+                    { "title", EventTitle },
+                    { "description", EventDescription ?? "" },
+                    { "photo", _newBase64Image ?? "" },
+                    { "dateOfEvent", EventDate.Value.ToString("yyyy-MM-dd") },
+                    { "startTime", startDateTime },
+                    { "endTime", endDateTime },
+                    { "venue", Venue },
+                    { "organizerIds", organizerIds },
+                    { "referenceToPosition", string.IsNullOrWhiteSpace(EventDescription) ? "Описание отсутствует" : EventDescription },
+                    { "isPublic", IsPublic },
+                    { "isDraft", IsDraft },
+                    { "isFreeEvent", IsFree }
                 };
+
+                var partRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Participant);
+                if (partRole != null && int.TryParse(partRole.PeopleCount, out int pCount))
+                {
+                    eventPayload.Add("maxParticipantsCount", pCount);
+                }
+
+                var orgRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Organizer);
+                if (orgRole != null && int.TryParse(orgRole.PeopleCount, out int oCount))
+                {
+                    eventPayload.Add("maxOrganizersCount", oCount);
+                }
+
+                if (!IsPublic)
+                {
+                    var selectedSectors = TargetSectors.Where(s => s.IsSelected).Select(s => s.Sector.id).ToList();
+                    eventPayload.Add("sectorIds", selectedSectors);
+                }
 
                 string eventJson = JsonSerializer.Serialize(eventPayload);
                 var eventContent = new StringContent(eventJson, Encoding.UTF8, "application/json");
@@ -331,14 +429,15 @@ namespace Diplom_Stud.Pages.Coordinator
 
                 if (createdEvent == null || createdEvent.id == 0)
                 {
-                    CustomMessageBox.Show("Мероприятие создано, но сервер не вернул его ID. Роли не добавлены.", "Ошибка", CustomMessageBox.MessageType.Error);
+                    CustomMessageBox.Show("Мероприятие создано, но сервер не вернул его ID. Кастомные роли не добавлены.", "Ошибка", CustomMessageBox.MessageType.Error);
                     return;
                 }
 
                 int newEventId = createdEvent.id;
 
                 int rolesAdded = 0;
-                foreach (var role in Roles)
+                var customRoles = Roles.Where(r => r.RoleType == RoleItem.RoleTypeEnum.Custom).ToList();
+                foreach (var role in customRoles)
                 {
                     string deadlineFormatted = $"{role.DeadlineDate.Value:yyyy-MM-dd}T{role.DeadlineTime}:00";
 
@@ -347,7 +446,7 @@ namespace Diplom_Stud.Pages.Coordinator
                         eventId = newEventId,
                         globalEventRoleId = role.SelectedRole.id,
                         capacity = int.TryParse(role.PeopleCount, out int cap) ? cap : 1,
-                        reserveCapacity = int.TryParse(role.ReserveCount, out int res) ? res : 0,
+                        reserveCapacity = 0, 
                         deadline = deadlineFormatted,
                         description = role.Tasks ?? ""
                     };
@@ -367,7 +466,7 @@ namespace Diplom_Stud.Pages.Coordinator
                     if (orgResponse.IsSuccessStatusCode) organizersAdded++;
                 }
 
-                CustomMessageBox.Show($"Мероприятие успешно создано!\nID: {newEventId}\nДобавлено ролей: {rolesAdded}/{Roles.Count}\nДобавлено организаторов: {organizersAdded}/{SelectedOrganizers.Count}", "Успех", CustomMessageBox.MessageType.Success);
+                CustomMessageBox.Show($"Мероприятие успешно создано!\nID: {newEventId}\nКастомных ролей: {rolesAdded}/{customRoles.Count}\nОрганизаторов-личностей: {organizersAdded}/{SelectedOrganizers.Count}", "Успех", CustomMessageBox.MessageType.Success);
                 this.NavigationService.GoBack();
             }
             catch (Exception ex)
@@ -457,8 +556,48 @@ namespace Diplom_Stud.Pages.Coordinator
         public override string ToString() => title;
     }
 
+    public class SectorSelectionItem : INotifyPropertyChanged
+    {
+        public SectorDto Sector { get; set; }
+
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     public class RoleItem : INotifyPropertyChanged
     {
+        public enum RoleTypeEnum { Custom, Participant, Organizer }
+
+        private RoleTypeEnum _roleType = RoleTypeEnum.Custom;
+        public RoleTypeEnum RoleType
+        {
+            get => _roleType;
+            set
+            {
+                _roleType = value;
+                OnPropertyChanged(nameof(RoleType));
+                OnPropertyChanged(nameof(CustomRoleVisibility));
+                OnPropertyChanged(nameof(SpecialRoleVisibility));
+            }
+        }
+
+        public Visibility CustomRoleVisibility => RoleType == RoleTypeEnum.Custom ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility SpecialRoleVisibility => RoleType != RoleTypeEnum.Custom ? Visibility.Visible : Visibility.Collapsed;
+
+        private string _roleTitleDisplay;
+        public string RoleTitleDisplay
+        {
+            get => _roleTitleDisplay;
+            set { _roleTitleDisplay = value; OnPropertyChanged(nameof(RoleTitleDisplay)); }
+        }
+
         public int RoleId { get; set; }
 
         private bool _isExpanded = false;
@@ -509,7 +648,6 @@ namespace Diplom_Stud.Pages.Coordinator
         public string Tasks { get; set; }
         public string PeopleCount { get; set; } = "1";
         public string Points { get; set; } = "10";
-        public string ReserveCount { get; set; } = "0";
 
         private DateTime? _deadlineDate;
         public DateTime? DeadlineDate
@@ -531,5 +669,4 @@ namespace Diplom_Stud.Pages.Coordinator
     {
         public List<UserDto> content { get; set; }
     }
-
 }

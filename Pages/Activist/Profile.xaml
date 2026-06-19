@@ -20,6 +20,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <Button x:Name="BackButton" Content="&lt; Назад" Style="{StaticResource GhostButtonStyle}" Foreground="#A084FB" FontFamily="Montserrat" FontSize="14" HorizontalAlignment="Left" Margin="0,0,0,20" Visibility="Collapsed" Click="BackButton_Click"/>
@@ -68,7 +69,7 @@
                     </StackPanel>
                 </Grid>
 
-                <UniformGrid Grid.Row="2" Columns="3" Margin="0,0,0,20">
+                <UniformGrid x:Name="RatingGrid" Grid.Row="2" Columns="3" Margin="0,0,0,20">
                     <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,10,0" Padding="10,15">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="Всего мероприятий:" Foreground="#02B3BA" FontSize="12" Margin="0,0,0,5" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
@@ -240,7 +241,50 @@
                     </StackPanel>
                 </Border>
 
-                <Border x:Name="UserSectorsGrid" Grid.Row="6" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                <Border x:Name="AdminPanelGrid" Grid.Row="6" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20" Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock Text="Дополнительно" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18"/>
+                        <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>
+
+                        <Grid Margin="0,0,0,15" Cursor="Hand" MouseLeftButtonUp="Archive_Click">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Path Grid.Column="0" Data="M3 3 L21 3 L21 7 L3 7 Z M4 7 L4 21 L20 21 L20 7 M9 12 L15 12" 
+                  Stroke="#02B3BA" StrokeThickness="1.5" Fill="Transparent" Width="16" Height="16" Stretch="Uniform" Margin="0,0,15,0"/>
+                            <TextBlock Grid.Column="1" Text="Архив мероприятий" Foreground="White" VerticalAlignment="Center" FontFamily="Montserrat"/>
+                            <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,15" Cursor="Hand" MouseLeftButtonUp="Board_Click">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Path Grid.Column="0" Data="M15 10 A3 3 0 1 0 15 4 A3 3 0 0 0 15 10 Z M20 19 C20 16 17.5 14 15 14 M9 12 A4 4 0 1 0 9 4 A4 4 0 0 0 9 12 Z M3 21 C3 16 6 13 9 13 C12 13 15 16 15 21" 
+                  Stroke="#02B3BA" StrokeThickness="1.5" Fill="Transparent" Width="18" Height="14" Stretch="Uniform" Margin="0,0,15,0"/>
+                            <TextBlock Grid.Column="1" Text="Правление студсовета" Foreground="White" VerticalAlignment="Center" FontFamily="Montserrat"/>
+                            <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10" Cursor="Hand" MouseLeftButtonUp="About_Click">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Path Grid.Column="0" Data="M12 22 C17.5 22 22 17.5 22 12 C22 6.5 17.5 2 12 2 C6.5 2 2 6.5 2 12 C2 17.5 6.5 22 12 22 Z M12 7 L12.01 7 M12 11 L12 17" 
+                  Stroke="#02B3BA" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Fill="Transparent" Width="16" Height="16" Stretch="Uniform" Margin="0,0,15,0"/>
+                            <TextBlock Grid.Column="1" Text="О приложении" Foreground="White" VerticalAlignment="Center" FontFamily="Montserrat"/>
+                            <TextBlock Grid.Column="2" Text=">" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="UserSectorsGrid" Grid.Row="7" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
                     <StackPanel>
                         <TextBlock Text="Состоит в секторах" Foreground="White" FontWeight="Medium" Margin="0,0,0,20" FontFamily="Digital Pixel" FontSize="18"/>
                         <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,15"/>

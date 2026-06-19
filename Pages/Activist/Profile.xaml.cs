@@ -187,10 +187,13 @@ namespace Diplom_Stud.Pages.Activist
                 if (isCurator)
                 {
                     GroupTextBlock.Visibility = Visibility.Collapsed;
+                    RatingGrid.Visibility = Visibility.Collapsed;
+                    UserSectorsGrid.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
                     GroupTextBlock.Visibility = Visibility.Visible;
+                    RatingGrid.Visibility = Visibility.Visible;
                     string course = data.courseNumber?.ToString() ?? "";
                     string specAcronym = data.shortSpecialityTitle ?? "";
                     string group = data.groupTitle ?? "";
@@ -281,6 +284,16 @@ namespace Diplom_Stud.Pages.Activist
                     {
                         UserSectorsList.ItemsSource = null;
                         NoSectorsText.Visibility = Visibility.Visible;
+                    }
+
+                    bool isBoardMember = data.roleTitle != "Activist";
+                    if (isBoardMember && !App.IsActivistMode && !IsViewMode)
+                    {
+                        AdminPanelGrid.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        AdminPanelGrid.Visibility = Visibility.Collapsed;
                     }
                 }
 
@@ -429,6 +442,23 @@ namespace Diplom_Stud.Pages.Activist
             }
         }
 
+        private void Archive_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // NavigationService?.Navigate(new ArchiveEventsPage()); // Раскомментируй, когда создашь страницу архива
+            CustomMessageBox.Show("Раздел 'Архив мероприятий' находится в разработке.", "Информация", CustomMessageBox.MessageType.Info);
+        }
+
+        private void Board_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // NavigationService?.Navigate(new BoardPage()); // Раскомментируй, когда создашь страницу правления
+            CustomMessageBox.Show("Раздел 'Правление студсовета' находится в разработке.", "Информация", CustomMessageBox.MessageType.Info);
+        }
+
+        private void About_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // NavigationService?.Navigate(new AboutPage()); // Раскомментируй, когда создашь страницу "О приложении"
+            CustomMessageBox.Show("Раздел 'О приложении' находится в разработке.", "Информация", CustomMessageBox.MessageType.Info);
+        }
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             if (NavigationService.CanGoBack)

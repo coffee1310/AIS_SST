@@ -51,18 +51,31 @@ namespace Diplom_Stud
                     var nameText = panel.Children[1] as TextBlock;
                     var emailText = panel.Children[2] as TextBlock;
 
+                    bool isCuratorMenu = data.roleTitle == "Curator" || data.roleTitle == "Admin_curator";
+
                     if (nameText != null)
-                        nameText.Text = $"{data.surname} {data.name}";
+                    {
+                        if (isCuratorMenu)
+                            nameText.Text = $"{data.name} {data.patronymic}".Trim();
+                        else
+                            nameText.Text = $"{data.surname} {data.name}".Trim();
+                    }
 
                     if (emailText != null)
                         emailText.Text = data.studentEmail ?? "";
 
-                    if (ellipse != null && !string.IsNullOrEmpty(data.photo))
+                    if (ellipse != null)
                     {
-                        BitmapImage bmp = GetImageFromBase64(data.photo);
-                        if (bmp != null)
+                        if (!string.IsNullOrEmpty(data.photo))
                         {
-                            ellipse.Fill = new ImageBrush(bmp) { Stretch = Stretch.UniformToFill };
+                            BitmapImage bmp = GetImageFromBase64(data.photo);
+                            ellipse.Fill = bmp != null
+                                ? new ImageBrush(bmp) { Stretch = Stretch.UniformToFill }
+                                : new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))) { Stretch = Stretch.UniformToFill };
+                        }
+                        else
+                        {
+                            ellipse.Fill = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))) { Stretch = Stretch.UniformToFill };
                         }
                     }
                 }
