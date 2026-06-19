@@ -24,12 +24,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventService extends BaseEntityService {
 
+    private static final Integer UNLIMITED_ORGANIZERS = 0;
     private final EventRepository eventRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
     private final UserRepository userRepository;
@@ -255,7 +255,7 @@ public class EventService extends BaseEntityService {
         }
 
         // Получаем ID секторов, в которых состоит пользователь (без фильтра по статусу)
-        List<Long> userSectorIds = sectorParticipantRepository.findSectorIdsByUserId(userId);
+        List<Long> userSectorIds = sectorParticipantRepository.findSectorIdsByUserIdAndStatus(userId, SectorParticipantStatuses.Активный);
 
         log.debug("User {} sectors: {}", userId, userSectorIds);
 
@@ -498,5 +498,52 @@ public class EventService extends BaseEntityService {
     private boolean isAllowedOrganizerRole(User user) {
         return ALLOWED_ROLES.contains(user.getRole().getTitle())
                 || "Activist".equals(user.getRole().getTitle());
+    }
+
+    @Transactional(readOnly = true)
+    public long getOrganizersCount(Long eventId) {
+        return eventOrganizerRepository.countByEventId(eventId);
+    }
+
+    @Transactional(readOnly = true)
+    public Event getEventById(Long eventId) {
+        return findEntityOrThrow(eventId, eventRepository::findById,
+                () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
+    }
+
+    @Transactional(readOnly = true)
+    public int getAvailableOrganizerSlots(Long eventId) {
+        Event event = getEventById(eventId);
+
+        long currentOrganizers = eventOrganizerRepository.countByEventId(eventId);
+
+        if (event.getMaxOrganizersCount() <= UNLIMITED_ORGANIZERS) {
+            return Integer.MAX_VALUE;
+        }
+
+        return (int) Math.max(0, event.getMaxOrganizersCount() - currentOrganizers);
+    }
+
+    @Transactional(readOnly = true)
+    public String getAvailableOrganizerSlotsInfo(Long eventId) {
+        Event event = getEventById(eventId);
+
+        long currentOrganizers = eventOrganizerRepository.countByEventId(eventId);
+
+        if (event.getMaxOrganizersCount() <= UNLIMITED_ORGANIZERS) {
+            return "Неограниченное количество организаторов (текущее: " + currentOrganizers + ")";
+        }
+
+        int available = Math.max(0, event.getMaxOrganizersCount() - (int) currentOrganizers);
+        int maxOrganizers = event.getMaxOrganizersCount();
+
+        return "Свободно мест: " + available + " из " + maxOrganizers +
+                " (занято: " + currentOrganizers + ")";
+    }
+
+    @Transactional(readOnly = true)
+    public Integer getMaxOrganizersCount(Long eventId) {
+        Event event = getEventById(eventId);
+        return event.getMaxOrganizersCount() != null ? event.getMaxOrganizersCount() : 0;
     }
 }

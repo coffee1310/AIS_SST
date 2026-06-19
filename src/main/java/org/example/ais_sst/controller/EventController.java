@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -191,6 +193,22 @@ public class EventController extends BaseController {
 
         log.info("POST /api/events/{}/complete - Completing event", id);
         EventResponseDTO response = eventService.completeEvent(id, userDetails.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{eventId}/organizers-slots")
+    @Operation(summary = "Информация о свободных местах организаторов")
+    public ResponseEntity<Map<String, Object>> getAvailableOrganizerSlots(@PathVariable Long eventId) {
+        long organizersCount = eventService.getOrganizersCount(eventId);
+        int availableSlots = eventService.getAvailableOrganizerSlots(eventId);
+        String info = eventService.getAvailableOrganizerSlotsInfo(eventId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("currentOrganizers", organizersCount);
+        response.put("maxOrganizers", eventService.getMaxOrganizersCount(eventId));
+        response.put("availableSlots", availableSlots);
+        response.put("info", info);
+
         return ResponseEntity.ok(response);
     }
 }
