@@ -80,7 +80,9 @@ namespace Diplom_Stud.Pages.Activist
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
                 var orgEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isOrganizer=true&isDeleted=false&page=0&size=50");
-                var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isResponsibleSector=true&isDeleted=false&page=0&size=50");
+
+                var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isMySector=true&isDeleted=false&page=0&size=50");
+
                 var publicEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isPublic=true&isDeleted=false&page=0&size=50");
 
                 var userApplications = await GetUserApplicationsAsync();
@@ -292,7 +294,9 @@ namespace Diplom_Stud.Pages.Activist
     }
 
     public class EventPageResponseLocal { public List<EventDtoLocal> content { get; set; } }
-    public class EventDtoLocal { public int id { get; set; } public string title { get; set; } public string photo { get; set; } public string dateOfEvent { get; set; } public string startTime { get; set; } public string venue { get; set; } public bool isCompleted { get; set; } public bool isDeleted { get; set; } }
+
+    public class EventDtoLocal { public int id { get; set; } public string title { get; set; } public string photo { get; set; } public string dateOfEvent { get; set; } public string startTime { get; set; } public string venue { get; set; } public bool isCompleted { get; set; } public bool isDeleted { get; set; } public bool isMySector { get; set; } public bool isFreeEvent { get; set; } }
+
     public class EventViewModelLocal { public int Id { get; set; } public string Title { get; set; } public string DateTimeDisplay { get; set; } public string Venue { get; set; } public ImageSource Image { get; set; } public Visibility OrganizerBadgeVisibility { get; set; } public Visibility ParticipantBadgeVisibility { get; set; } = Visibility.Collapsed; public DateTime EventDate { get; set; } public Brush CardBorderBrush { get; set; } public Thickness CardBorderThickness { get; set; } }
     public class ApplicationPageResponse { public List<ApplicationDto> content { get; set; } }
     public class ApplicationDto { public int eventId { get; set; } public string status { get; set; } = ""; }

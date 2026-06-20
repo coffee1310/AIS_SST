@@ -34,6 +34,9 @@
                                 <Setter TargetName="checkIndicator" Property="Background" Value="#02B3BA"/>
                                 <Setter TargetName="checkMark" Property="Visibility" Value="Visible"/>
                             </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#4B3D80"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -86,12 +89,23 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <StackPanel Grid.Row="1" Margin="0,0,0,10">
-                                        <TextBlock Text="{Binding Description}" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <StackPanel Grid.Row="1" Margin="0,0,0,0">
+                                        <TextBlock Text="{Binding Description}" Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
-                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                            <TextBlock Text="{Binding ApplicationStatus}" Foreground="#E81123" FontSize="11" FontFamily="Montserrat" FontWeight="SemiBold" Margin="0,0,10,0"/>
-                                            <TextBlock Text="{Binding SlotsInfo}" Foreground="#02B3BA" FontSize="11" FontFamily="Montserrat" FontWeight="SemiBold"/>
+                                        <StackPanel Orientation="Vertical" Margin="0,0,30,0">
+                                            <TextBlock Text="{Binding ApplicationStatus}" Foreground="#E81123" FontSize="11" FontFamily="Montserrat" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,4">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ApplicationStatus}" Value="">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding SlotsInfo}" Foreground="#02B3BA" FontSize="11" FontFamily="Montserrat" FontWeight="SemiBold" TextWrapping="Wrap"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
