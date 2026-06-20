@@ -9,9 +9,52 @@
       Title="Events"
       Loaded="Page_Loaded">
 
+    <Page.Resources>
+        <Style x:Key="PaginationButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#1C1B29"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#2A283C"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2A283C"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PaginationActiveButtonStyle" TargetType="Button" BasedOn="{StaticResource PaginationButtonStyle}">
+            <Setter Property="Background" Value="#02B3BA"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderBrush" Value="#02B3BA"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#029A9F"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
     <Grid Background="Transparent">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel HorizontalAlignment="Center" MaxWidth="1000" Margin="40,50,40,50">
+            <StackPanel HorizontalAlignment="Center" MaxWidth="1050" Margin="40,50,40,50">
 
                 <TextBlock Text="Все мероприятия" FontSize="48" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,50"/>
 
@@ -22,29 +65,20 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="#12101C" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="8" Height="50">
+                    <Border Grid.Column="0" Background="#12101C" BorderBrush="#2A283C" BorderThickness="1.5" CornerRadius="12" Padding="15,0">
                         <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="50"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Path Grid.Column="0" Data="M10,3 A7,7 0 1,0 17,10 A7,7 0 0,0 10,3 Z M15,15 L20,20" Stroke="#7A7886" StrokeThickness="1.5" Stretch="Uniform" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Transparent"/>
-
-                            <TextBox x:Name="tbSearch" Grid.Column="1" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="14" VerticalContentAlignment="Center" FontFamily="Montserrat Thin" TextChanged="tbSearch_TextChanged"/>
-
-                            <TextBlock Grid.Column="1" Text="Название или место проведения..." Foreground="#7A7886" FontSize="14" VerticalAlignment="Center" IsHitTestVisible="False" FontFamily="Montserrat Thin">
+                            <Path Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" 
+                                  Fill="#7A7886" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                            <TextBox x:Name="tbSearch" Background="Transparent" BorderThickness="0" Foreground="White" FontFamily="Montserrat" FontSize="14" 
+                                     VerticalContentAlignment="Center" Margin="30,0,0,0" Padding="0,15" TextChanged="tbSearch_TextChanged"/>
+                            <TextBlock Text="Поиск мероприятий..." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" VerticalAlignment="Center" Margin="30,0,0,0" IsHitTestVisible="False">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding Text, ElementName=tbSearch}" Value=""/>
-                                                    <Condition Binding="{Binding IsFocused, ElementName=tbSearch}" Value="False"/>
-                                                </MultiDataTrigger.Conditions>
+                                            <DataTrigger Binding="{Binding Text, ElementName=tbSearch}" Value="">
                                                 <Setter Property="Visibility" Value="Visible"/>
-                                            </MultiDataTrigger>
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </TextBlock.Style>
@@ -52,20 +86,12 @@
                         </Grid>
                     </Border>
 
-                    <Button Grid.Column="2" Style="{StaticResource FilterButtonStyle}" Width="50" Height="50">
-                        <Canvas Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <Rectangle Canvas.Left="1" Canvas.Top="3" Width="14" Height="12" RadiusX="2" RadiusY="2" Stroke="White" StrokeThickness="1.5" Fill="Transparent"/>
-                            <Line X1="1" Y1="7" X2="15" Y2="7" Stroke="White" StrokeThickness="1.5"/>
-                            <Line X1="4" Y1="1" X2="4" Y2="4" Stroke="White" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            <Line X1="12" Y1="1" X2="12" Y2="4" Stroke="White" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            <Rectangle Canvas.Left="4" Canvas.Top="10" Width="2" Height="2" Fill="White" RadiusX="0.5" RadiusY="0.5"/>
-                            <Rectangle Canvas.Left="7" Canvas.Top="10" Width="2" Height="2" Fill="White" RadiusX="0.5" RadiusY="0.5"/>
-                            <Rectangle Canvas.Left="10" Canvas.Top="10" Width="2" Height="2" Fill="White" RadiusX="0.5" RadiusY="0.5"/>
-                        </Canvas>
+                    <Button Grid.Column="2" Style="{StaticResource OutlineButtonStyle}" Width="50" Height="50" Padding="0">
+                        <Path Data="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" Fill="#02B3BA" Stretch="Uniform" Width="20" Height="20"/>
                     </Button>
                 </Grid>
 
-                <ItemsControl x:Name="EventsItemsControl" Margin="-10,0,-10,40">
+                <ItemsControl x:Name="EventsList" Margin="-10,0,-10,0">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="3"/>
@@ -73,7 +99,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource EventCardStyle}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="{Binding CardBorderThickness}" Cursor="Hand" MouseLeftButtonUp="EventCard_Click" Tag="{Binding Id}">
+                            <Border Style="{StaticResource EventCardStyle}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="{Binding CardBorderThickness}" Cursor="Hand" MouseLeftButtonUp="EventCard_Click" Tag="{Binding Id}" Margin="10,0,10,20">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -85,21 +111,29 @@
                                             <ImageBrush ImageSource="{Binding Image}" Stretch="UniformToFill"/>
                                         </Border.Background>
                                         <Grid>
-                                            <Border Background="#A084FB" CornerRadius="8" Padding="12,6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,10,0" Visibility="{Binding OrganizerBadgeVisibility}">
+                                            <Border Background="#A084FB" CornerRadius="8" Padding="12,6" 
+                                                HorizontalAlignment="Right" VerticalAlignment="Top" 
+                                                Margin="0,10,10,0" Visibility="{Binding OrganizerBadgeVisibility}">
                                                 <TextBlock Text="Вы организатор" Foreground="White" FontSize="10" FontFamily="Montserrat" FontWeight="Bold"/>
+                                            </Border>
+
+                                            <Border Background="#02B3BA" CornerRadius="8" Padding="12,6" 
+                                                    HorizontalAlignment="Left" VerticalAlignment="Top" 
+                                                    Margin="10,10,0,0" Visibility="{Binding ParticipantBadgeVisibility}">
+                                                <TextBlock Text="Вы зарегистрированы" Foreground="Black" FontSize="10" FontFamily="Montserrat" FontWeight="Bold"/>
                                             </Border>
                                         </Grid>
                                     </Border>
 
                                     <StackPanel Grid.Row="1" Margin="15,15,15,20">
-                                        <TextBlock Text="{Binding Title}" Foreground="{Binding TitleColor}" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Title}" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap" Height="35"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                             <Path Data="M8,0 A8,8 0 1,0 8,16 A8,8 0 0,0 8,0 Z M8,2 V8 L12,10" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
                                             <TextBlock Text="{Binding DateTimeDisplay}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="M8,0 C3.5,0 0,3.5 0,8 C0,13.5 8,16 8,16 C8,16 16,13.5 16,8 C16,3.5 12.5,0 8,0 Z M8,11 A3,3 0 1,1 8,5 A3,3 0 0,1 8,11 Z" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
-                                            <TextBlock Text="{Binding Venue}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Venue}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" MaxHeight="30"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
@@ -108,43 +142,12 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock x:Name="EmptyEventsText" Text="Мероприятий пока нет." Foreground="#7A7886" FontFamily="Montserrat" FontSize="16" HorizontalAlignment="Center" Margin="0,20,0,0" Visibility="Collapsed"/>
+                <TextBlock x:Name="EmptyEventsText" Text="Мероприятия не найдены." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,20,0,40" Visibility="Collapsed"/>
+
+                <StackPanel x:Name="PaginationPanel" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,20"/>
 
             </StackPanel>
         </ScrollViewer>
-
-        <Button x:Name="btnCreateEvent" Width="64" Height="64" Margin="0,0,40,40" HorizontalAlignment="Right" VerticalAlignment="Bottom" Cursor="Hand" Click="CreateEvent_Click">
-            <Button.Template>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="fabBorder" Background="#615292" CornerRadius="32">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="15" Opacity="0.4" ShadowDepth="5" Color="Black"/>
-                        </Border.Effect>
-                        <TextBlock Text="+" Foreground="White" FontSize="40" FontFamily="Montserrat" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,-4,0,0"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <EventTrigger RoutedEvent="MouseEnter">
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <ColorAnimation Storyboard.TargetName="fabBorder" 
-                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
-                                                    To="#7363A8" Duration="0:0:0.15"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
-                        <EventTrigger RoutedEvent="MouseLeave">
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <ColorAnimation Storyboard.TargetName="fabBorder" 
-                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" 
-                                                    To="#615292" Duration="0:0:0.15"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Button.Template>
-        </Button>
 
         <Grid x:Name="LoadingOverlay" Background="#E61A1A2E" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
