@@ -25,4 +25,7 @@ public class GlobalEventRoleCreateDTO {
 
     @Builder.Default
     private Boolean isDefaultRole = false;
+
+    @NotNull
+    private Long defaultPoints;
 }

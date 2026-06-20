@@ -13,12 +13,14 @@ public interface GlobalEventRolesMapper {
     @Mapping(target = "sectorId", source = "sector.id")
     @Mapping(target = "sectorTitle", source = "sector.title")
     @Mapping(target = "isDeleted", source = "isDeleted")
+    @Mapping(target = "defaultPoints", source = "defaultPoints")
     GlobalEventRoleDTO toDto(GlobalEventRole entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "sector", ignore = true)
+    @Mapping(target = "defaultPoints", source = "defaultPoints")
     GlobalEventRole toEntity(GlobalEventRoleCreateDTO dto);
 
     @Mapping(target = "id", ignore = true)

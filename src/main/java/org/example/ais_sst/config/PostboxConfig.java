@@ -28,7 +28,7 @@ public class PostboxConfig {
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)))
                 .endpointOverride(URI.create("https://postbox.cloud.yandex.net"))
-                .region(Region.of("ru-central-1"))
+                .region(Region.of("ru-central1"))   // без дефиса!
                 .build();
     }
 }

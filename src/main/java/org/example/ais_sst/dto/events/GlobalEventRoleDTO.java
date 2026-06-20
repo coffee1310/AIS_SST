@@ -33,4 +33,6 @@ public class GlobalEventRoleDTO {
     private LocalDateTime updatedAt;
 
     private Boolean isDeleted;
+
+    private Long defaultPoints;
 }
