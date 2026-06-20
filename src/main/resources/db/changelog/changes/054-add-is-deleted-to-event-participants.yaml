@@ -1,0 +1,38 @@
+databaseChangeLog:
+  # Добавление поля is_deleted в таблицу event_participants
+  - changeSet:
+      id: 20240620-add-is-deleted-to-event-participants
+      author: coffee13102006
+      labels: event-participants-deleted
+      comment: "Добавление поля is_deleted в таблицу event_participants"
+      changes:
+        - addColumn:
+            tableName: event_participants
+            columns:
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                  remarks: "Флаг мягкого удаления участника"
+
+  # Добавление поля is_deleted в таблицу event_organizers
+  - changeSet:
+      id: 20240620-add-is-deleted-to-event-organizers
+      author: coffee13102006
+      labels: event-organizers-deleted
+      comment: "Добавление поля is_deleted в таблицу event_organizers"
+      changes:
+        - addColumn:
+            tableName: event_organizers
+            columns:
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                  remarks: "Флаг мягкого удаления организатора"
+
+  # Пропускаем добавление для event_roles, так как поле уже существует

@@ -14,4 +14,7 @@ public class EventRoleFilterDTO {
     private Boolean deleted;
     private LocalDateTime deadlineFrom;
     private LocalDateTime deadlineTo;
+
+    private Long currentUserId;     // ID текущего пользователя
+    private Boolean isMySector;     // Фильтр по секторам пользователя
 }

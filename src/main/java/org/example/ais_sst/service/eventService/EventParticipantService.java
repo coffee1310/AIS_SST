@@ -140,6 +140,43 @@ public class EventParticipantService {
         return eventParticipantMapper.toResponseDto(participant);
     }
 
+    @Transactional
+    public void softDeleteParticipant(Long participantId) {
+        EventParticipant participant = eventParticipantsRepository.findById(participantId)
+                .orElseThrow(() -> new ValidationException("Участник не найден: " + participantId));
+
+        participant.setIsDeleted(true);
+        eventParticipantsRepository.save(participant);
+        log.info("Participant {} soft deleted", participantId);
+    }
+
+    /**
+     * Восстановление участника
+     */
+    @Transactional
+    public void restoreParticipant(Long participantId) {
+        EventParticipant participant = eventParticipantsRepository.findById(participantId)
+                .orElseThrow(() -> new ValidationException("Участник не найден: " + participantId));
+
+        participant.setIsDeleted(false);
+        eventParticipantsRepository.save(participant);
+        log.info("Participant {} restored", participantId);
+    }
+
+    /**
+     * Массовое мягкое удаление участников
+     */
+    @Transactional
+    public void softDeleteParticipants(List<Long> participantIds) {
+        for (Long participantId : participantIds) {
+            try {
+                softDeleteParticipant(participantId);
+            } catch (Exception e) {
+                log.error("Failed to delete participant {}: {}", participantId, e.getMessage());
+            }
+        }
+    }
+
     // ==================== Private Validation Methods ====================
 
     private Event getEventById(Long eventId) {

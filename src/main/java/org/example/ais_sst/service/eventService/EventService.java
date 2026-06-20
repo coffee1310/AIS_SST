@@ -5,10 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.events.*;
 import org.example.ais_sst.entity.*;
 import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
-import org.example.ais_sst.exception.EventDoesNotExistException;
-import org.example.ais_sst.exception.OrganizerLimitExceededException;
-import org.example.ais_sst.exception.UnauthorizedException;
-import org.example.ais_sst.exception.UserDoesNotExistException;
+import org.example.ais_sst.exception.*;
 import org.example.ais_sst.mapper.EventMapper;
 import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.base.BaseEntityService;
@@ -434,7 +431,84 @@ public class EventService extends BaseEntityService {
                 });
     }
 
-    // ==================== Private Helper Methods ====================
+    @Transactional
+    public void softDeleteOrganizer(Long organizerId) {
+        EventOrganizer organizer = eventOrganizerRepository.findById(organizerId)
+                .orElseThrow(() -> new ValidationException("Организатор не найден: " + organizerId));
+
+        organizer.setIsDeleted(true);
+        eventOrganizerRepository.save(organizer);
+        log.info("Organizer {} soft deleted", organizerId);
+    }
+
+    /**
+     * Восстановление организатора
+     */
+    @Transactional
+    public void restoreOrganizer(Long organizerId) {
+        EventOrganizer organizer = eventOrganizerRepository.findById(organizerId)
+                .orElseThrow(() -> new ValidationException("Организатор не найден: " + organizerId));
+
+        organizer.setIsDeleted(false);
+        eventOrganizerRepository.save(organizer);
+        log.info("Organizer {} restored", organizerId);
+    }
+
+    /**
+     * Мягкое удаление роли
+     */
+    @Transactional
+    public void softDeleteEventRole(Long roleId) {
+        EventRole role = eventRoleRepository.findById(roleId)
+                .orElseThrow(() -> new ValidationException("Роль не найдена: " + roleId));
+
+        role.setDeleted(true);
+        eventRoleRepository.save(role);
+        log.info("Event role {} soft deleted", roleId);
+    }
+
+    /**
+     * Восстановление роли
+     */
+    @Transactional
+    public void restoreEventRole(Long roleId) {
+        EventRole role = eventRoleRepository.findById(roleId)
+                .orElseThrow(() -> new ValidationException("Роль не найдена: " + roleId));
+
+        role.setDeleted(false);
+        eventRoleRepository.save(role);
+        log.info("Event role {} restored", roleId);
+    }
+
+    /**
+     * Массовое мягкое удаление организаторов
+     */
+    @Transactional
+    public void softDeleteOrganizers(List<Long> organizerIds) {
+        for (Long organizerId : organizerIds) {
+            try {
+                softDeleteOrganizer(organizerId);
+            } catch (Exception e) {
+                log.error("Failed to delete organizer {}: {}", organizerId, e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Массовое мягкое удаление ролей
+     */
+    @Transactional
+    public void softDeleteEventRoles(List<Long> roleIds) {
+        for (Long roleId : roleIds) {
+            try {
+                softDeleteEventRole(roleId);
+            } catch (Exception e) {
+                log.error("Failed to delete role {}: {}", roleId, e.getMessage());
+            }
+        }
+    }
+
+        // ==================== Private Helper Methods ====================
 
     private void validateIsEventCreator(Long eventId, Long userId) {
         validateState(eventRepository.existsByIdAndEventCreatorId(eventId, userId),

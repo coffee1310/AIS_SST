@@ -2,6 +2,7 @@ package org.example.ais_sst.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.event_participant.EventParticipantResponseDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/events/participants")
 @RequiredArgsConstructor
@@ -77,5 +79,29 @@ public class EventParticipantController extends BaseController {
         response.put("info", info);
 
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{participantId}/soft")
+    @Operation(summary = "Мягкое удаление участника")
+    public ResponseEntity<Void> softDeleteParticipant(@PathVariable Long participantId) {
+        log.info("DELETE /api/events/participants/{}/soft - Soft deleting participant", participantId);
+        eventParticipantService.softDeleteParticipant(participantId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{participantId}/restore")
+    @Operation(summary = "Восстановление участника")
+    public ResponseEntity<Void> restoreParticipant(@PathVariable Long participantId) {
+        log.info("POST /api/events/participants/{}/restore - Restoring participant", participantId);
+        eventParticipantService.restoreParticipant(participantId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/soft/bulk")
+    @Operation(summary = "Массовое мягкое удаление участников")
+    public ResponseEntity<Void> softDeleteParticipants(@RequestParam List<Long> ids) {
+        log.info("DELETE /api/events/participants/soft/bulk - Soft deleting {} participants", ids.size());
+        eventParticipantService.softDeleteParticipants(ids);
+        return ResponseEntity.noContent().build();
     }
 }

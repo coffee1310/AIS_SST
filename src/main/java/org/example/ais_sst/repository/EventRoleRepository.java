@@ -58,6 +58,111 @@ public interface EventRoleRepository extends JpaRepository<EventRole, Long> {
             @Param("deadlineFrom") LocalDateTime deadlineFrom,
             @Param("deadlineTo") LocalDateTime deadlineTo);
 
+    @Query(value = """
+        SELECT DISTINCT er.* FROM event_roles er
+        INNER JOIN global_event_roles ger ON er.global_event_role_id = ger.id
+        INNER JOIN sector_participants sp ON ger.sector_id = sp.sector_id
+        WHERE sp.student_id = :userId
+        AND sp.status = 'Активный'
+        AND (CAST(:id AS bigint) IS NULL OR er.id = CAST(:id AS bigint))
+        AND (CAST(:eventId AS bigint) IS NULL OR er.event_id = CAST(:eventId AS bigint))
+        AND (CAST(:globalEventRoleId AS bigint) IS NULL OR er.global_event_role_id = CAST(:globalEventRoleId AS bigint))
+        AND (CAST(:deleted AS boolean) IS NULL OR er.is_deleted = CAST(:deleted AS boolean))
+        AND (CAST(:deadlineFrom AS timestamp) IS NULL OR er.deadline >= CAST(:deadlineFrom AS timestamp))
+        AND (CAST(:deadlineTo AS timestamp) IS NULL OR er.deadline <= CAST(:deadlineTo AS timestamp))
+        ORDER BY er.id
+        OFFSET :offset LIMIT :limit
+        """, nativeQuery = true)
+    List<EventRole> findAllWithFiltersAndMySectorNative(
+            @Param("id") Long id,
+            @Param("eventId") Long eventId,
+            @Param("globalEventRoleId") Long globalEventRoleId,
+            @Param("deleted") Boolean deleted,
+            @Param("deadlineFrom") LocalDateTime deadlineFrom,
+            @Param("deadlineTo") LocalDateTime deadlineTo,
+            @Param("userId") Long userId,
+            @Param("offset") int offset,
+            @Param("limit") int limit);
+
+    // ИСПРАВЛЕННЫЙ МЕТОД - подсчет через global_event_roles.sector_id
+    @Query(value = """
+        SELECT COUNT(DISTINCT er.id) FROM event_roles er
+        INNER JOIN global_event_roles ger ON er.global_event_role_id = ger.id
+        INNER JOIN sector_participants sp ON ger.sector_id = sp.sector_id
+        WHERE sp.student_id = :userId
+        AND sp.status = 'Активный'
+        AND (CAST(:id AS bigint) IS NULL OR er.id = CAST(:id AS bigint))
+        AND (CAST(:eventId AS bigint) IS NULL OR er.event_id = CAST(:eventId AS bigint))
+        AND (CAST(:globalEventRoleId AS bigint) IS NULL OR er.global_event_role_id = CAST(:globalEventRoleId AS bigint))
+        AND (CAST(:deleted AS boolean) IS NULL OR er.is_deleted = CAST(:deleted AS boolean))
+        AND (CAST(:deadlineFrom AS timestamp) IS NULL OR er.deadline >= CAST(:deadlineFrom AS timestamp))
+        AND (CAST(:deadlineTo AS timestamp) IS NULL OR er.deadline <= CAST(:deadlineTo AS timestamp))
+        """, nativeQuery = true)
+    long countAllWithFiltersAndMySectorNative(
+            @Param("id") Long id,
+            @Param("eventId") Long eventId,
+            @Param("globalEventRoleId") Long globalEventRoleId,
+            @Param("deleted") Boolean deleted,
+            @Param("deadlineFrom") LocalDateTime deadlineFrom,
+            @Param("deadlineTo") LocalDateTime deadlineTo,
+            @Param("userId") Long userId);
+
+    @Query(value = """
+    SELECT DISTINCT er.* FROM event_roles er
+    WHERE er.is_deleted = false
+    AND er.id NOT IN (
+        SELECT DISTINCT er2.id FROM event_roles er2
+        INNER JOIN global_event_roles ger ON er2.global_event_role_id = ger.id
+        INNER JOIN sector_participants sp ON ger.sector_id = sp.sector_id
+        WHERE sp.student_id = :userId
+        AND sp.status = 'Активный'
+    )
+    AND (CAST(:id AS bigint) IS NULL OR er.id = CAST(:id AS bigint))
+    AND (CAST(:eventId AS bigint) IS NULL OR er.event_id = CAST(:eventId AS bigint))
+    AND (CAST(:globalEventRoleId AS bigint) IS NULL OR er.global_event_role_id = CAST(:globalEventRoleId AS bigint))
+    AND (CAST(:deleted AS boolean) IS NULL OR er.is_deleted = CAST(:deleted AS boolean))
+    AND (CAST(:deadlineFrom AS timestamp) IS NULL OR er.deadline >= CAST(:deadlineFrom AS timestamp))
+    AND (CAST(:deadlineTo AS timestamp) IS NULL OR er.deadline <= CAST(:deadlineTo AS timestamp))
+    ORDER BY er.id
+    OFFSET :offset LIMIT :limit
+    """, nativeQuery = true)
+    List<EventRole> findAllWithFiltersAndNotMySectorNative(
+            @Param("id") Long id,
+            @Param("eventId") Long eventId,
+            @Param("globalEventRoleId") Long globalEventRoleId,
+            @Param("deleted") Boolean deleted,
+            @Param("deadlineFrom") LocalDateTime deadlineFrom,
+            @Param("deadlineTo") LocalDateTime deadlineTo,
+            @Param("userId") Long userId,
+            @Param("offset") int offset,
+            @Param("limit") int limit);
+
+    @Query(value = """
+    SELECT COUNT(DISTINCT er.id) FROM event_roles er
+    WHERE er.is_deleted = false
+    AND er.id NOT IN (
+        SELECT DISTINCT er2.id FROM event_roles er2
+        INNER JOIN global_event_roles ger ON er2.global_event_role_id = ger.id
+        INNER JOIN sector_participants sp ON ger.sector_id = sp.sector_id
+        WHERE sp.student_id = :userId
+        AND sp.status = 'Активный'
+    )
+    AND (CAST(:id AS bigint) IS NULL OR er.id = CAST(:id AS bigint))
+    AND (CAST(:eventId AS bigint) IS NULL OR er.event_id = CAST(:eventId AS bigint))
+    AND (CAST(:globalEventRoleId AS bigint) IS NULL OR er.global_event_role_id = CAST(:globalEventRoleId AS bigint))
+    AND (CAST(:deleted AS boolean) IS NULL OR er.is_deleted = CAST(:deleted AS boolean))
+    AND (CAST(:deadlineFrom AS timestamp) IS NULL OR er.deadline >= CAST(:deadlineFrom AS timestamp))
+    AND (CAST(:deadlineTo AS timestamp) IS NULL OR er.deadline <= CAST(:deadlineTo AS timestamp))
+    """, nativeQuery = true)
+    long countAllWithFiltersAndNotMySectorNative(
+            @Param("id") Long id,
+            @Param("eventId") Long eventId,
+            @Param("globalEventRoleId") Long globalEventRoleId,
+            @Param("deleted") Boolean deleted,
+            @Param("deadlineFrom") LocalDateTime deadlineFrom,
+            @Param("deadlineTo") LocalDateTime deadlineTo,
+            @Param("userId") Long userId);
+
     boolean existsByEventIdAndGlobalEventRoleIdAndDeletedFalse(Long eventId, Long globalEventRoleId);
 
     Optional<EventRole> findByEventIdAndGlobalEventRoleIdAndDeletedFalse(Long eventId, Long globalEventRoleId);
@@ -80,9 +185,6 @@ public interface EventRoleRepository extends JpaRepository<EventRole, Long> {
 
     List<EventRole> findByEventIdAndWasPresentTrue(Long eventId);
 
-    @Query("SELECT SUM(er.totalPoints) FROM EventRole er WHERE er.event.id = :eventId AND er.wasPresent = true")
-    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
-
     @Modifying
     @Transactional
     @Query("UPDATE EventRole er SET er.wasPresent = :wasPresent WHERE er.id = :id")
@@ -93,9 +195,26 @@ public interface EventRoleRepository extends JpaRepository<EventRole, Long> {
     @Query("UPDATE EventRole er SET er.totalPoints = :points WHERE er.id = :id")
     void updateTotalPoints(@Param("id") Long id, @Param("points") Integer points);
 
+
+    // НОВЫЕ МЕТОДЫ - используем "deleted"
+    List<EventRole> findByEventIdAndWasPresentTrueAndDeletedFalse(Long eventId);
+
+    @Query("SELECT SUM(er.totalPoints) FROM EventRole er WHERE er.event.id = :eventId AND er.wasPresent = true AND er.deleted = false")
+    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
+
     @Modifying
     @Transactional
-    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.event.id = :eventId AND er.deleted = false")
+    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.id = :id")
+    void softDeleteById(@Param("id") Long id);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventRole er SET er.deleted = false WHERE er.id = :id")
+    void restoreById(@Param("id") Long id);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.event.id = :eventId")
     void softDeleteAllByEventId(@Param("eventId") Long eventId);
 
 }

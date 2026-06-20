@@ -49,4 +49,8 @@ public class EventParticipant {
     @Column(name = "total_points", nullable = false)
     @Builder.Default
     private Integer totalPoints = 2;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
 }

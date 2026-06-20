@@ -9,11 +9,13 @@ import org.example.ais_sst.dto.event_roles.EventRoleCreateDTO;
 import org.example.ais_sst.dto.event_roles.EventRoleFilterDTO;
 import org.example.ais_sst.dto.event_roles.EventRoleResponseDTO;
 import org.example.ais_sst.dto.event_roles.EventRoleUpdateDTO;
+import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.service.eventService.EventRoleService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import org.example.ais_sst.controller.base.BaseController;
@@ -77,10 +79,12 @@ public class EventRoleController extends BaseController {
             @RequestParam(required = false) Long eventId,
             @RequestParam(required = false) Long globalEventRoleId,
             @RequestParam(required = false) Boolean isDeleted,
+            @RequestParam(required = false) Boolean isMySector,  // НОВЫЙ ПАРАМЕТР
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "ASC") String sortDirection) {
+            @RequestParam(defaultValue = "ASC") String sortDirection,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {  // Добавляем userDetails
 
         logInfo("/api/event-roles", "Getting event roles with filters");
 
@@ -89,6 +93,8 @@ public class EventRoleController extends BaseController {
                 .eventId(eventId)
                 .globalEventRoleId(globalEventRoleId)
                 .deleted(isDeleted)
+                .currentUserId(userDetails != null ? userDetails.getId() : null)  // Устанавливаем userId
+                .isMySector(isMySector)  // Устанавливаем флаг
                 .build();
 
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);

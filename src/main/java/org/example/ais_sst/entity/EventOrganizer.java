@@ -42,4 +42,8 @@ public class EventOrganizer {
     @Column(name = "was_present", nullable = false)
     @Builder.Default
     private Boolean wasPresent = false;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
 }

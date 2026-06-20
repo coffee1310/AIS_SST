@@ -124,23 +124,96 @@ public class EventRoleService {
         int offset = (int) pageable.getOffset();
         int limit = pageable.getPageSize();
 
-        List<EventRole> eventRoles = eventRoleRepository.findAllWithFiltersNative(
-                filter.getId(),
-                filter.getEventId(),
-                filter.getGlobalEventRoleId(),
-                filter.getDeleted(),
-                filter.getDeadlineFrom(),
-                filter.getDeadlineTo(),
-                offset,
-                limit);
+        List<EventRole> eventRoles;
+        long total;
 
-        long total = eventRoleRepository.countAllWithFiltersNative(
-                filter.getId(),
-                filter.getEventId(),
-                filter.getGlobalEventRoleId(),
-                filter.getDeleted(),
-                filter.getDeadlineFrom(),
-                filter.getDeadlineTo());
+        if (filter.getCurrentUserId() != null) {
+            if (Boolean.TRUE.equals(filter.getIsMySector())) {
+                // Только роли из секторов пользователя
+                eventRoles = eventRoleRepository.findAllWithFiltersAndMySectorNative(
+                        filter.getId(),
+                        filter.getEventId(),
+                        filter.getGlobalEventRoleId(),
+                        filter.getDeleted(),
+                        filter.getDeadlineFrom(),
+                        filter.getDeadlineTo(),
+                        filter.getCurrentUserId(),
+                        offset,
+                        limit
+                );
+                total = eventRoleRepository.countAllWithFiltersAndMySectorNative(
+                        filter.getId(),
+                        filter.getEventId(),
+                        filter.getGlobalEventRoleId(),
+                        filter.getDeleted(),
+                        filter.getDeadlineFrom(),
+                        filter.getDeadlineTo(),
+                        filter.getCurrentUserId()
+                );
+            } else if (Boolean.FALSE.equals(filter.getIsMySector())) {
+                // Только роли НЕ из секторов пользователя
+                eventRoles = eventRoleRepository.findAllWithFiltersAndNotMySectorNative(
+                        filter.getId(),
+                        filter.getEventId(),
+                        filter.getGlobalEventRoleId(),
+                        filter.getDeleted(),
+                        filter.getDeadlineFrom(),
+                        filter.getDeadlineTo(),
+                        filter.getCurrentUserId(),
+                        offset,
+                        limit
+                );
+                total = eventRoleRepository.countAllWithFiltersAndNotMySectorNative(
+                        filter.getId(),
+                        filter.getEventId(),
+                        filter.getGlobalEventRoleId(),
+                        filter.getDeleted(),
+                        filter.getDeadlineFrom(),
+                        filter.getDeadlineTo(),
+                        filter.getCurrentUserId()
+                );
+            } else {
+                // isMySector = null - все роли
+                eventRoles = eventRoleRepository.findAllWithFiltersNative(
+                        filter.getId(),
+                        filter.getEventId(),
+                        filter.getGlobalEventRoleId(),
+                        filter.getDeleted(),
+                        filter.getDeadlineFrom(),
+                        filter.getDeadlineTo(),
+                        offset,
+                        limit
+                );
+                total = eventRoleRepository.countAllWithFiltersNative(
+                        filter.getId(),
+                        filter.getEventId(),
+                        filter.getGlobalEventRoleId(),
+                        filter.getDeleted(),
+                        filter.getDeadlineFrom(),
+                        filter.getDeadlineTo()
+                );
+            }
+        } else {
+            // userId = null - все роли
+            eventRoles = eventRoleRepository.findAllWithFiltersNative(
+                    filter.getId(),
+                    filter.getEventId(),
+                    filter.getGlobalEventRoleId(),
+                    filter.getDeleted(),
+                    filter.getDeadlineFrom(),
+                    filter.getDeadlineTo(),
+                    offset,
+                    limit
+            );
+            total = eventRoleRepository.countAllWithFiltersNative(
+                    filter.getId(),
+                    filter.getEventId(),
+                    filter.getGlobalEventRoleId(),
+                    filter.getDeleted(),
+                    filter.getDeadlineFrom(),
+                    filter.getDeadlineTo()
+            );
+        }
 
         List<Long> eventRoleIds = eventRoles.stream()
                 .map(EventRole::getId)

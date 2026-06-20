@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -215,5 +216,53 @@ public class EventController extends BaseController {
         response.put("info", info);
 
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/organizers/{organizerId}/soft")
+    @Operation(summary = "Мягкое удаление организатора")
+    public ResponseEntity<Void> softDeleteOrganizer(@PathVariable Long organizerId) {
+        log.info("DELETE /api/events/organizers/{}/soft - Soft deleting organizer", organizerId);
+        eventService.softDeleteOrganizer(organizerId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/organizers/{organizerId}/restore")
+    @Operation(summary = "Восстановление организатора")
+    public ResponseEntity<Void> restoreOrganizer(@PathVariable Long organizerId) {
+        log.info("POST /api/events/organizers/{}/restore - Restoring organizer", organizerId);
+        eventService.restoreOrganizer(organizerId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/organizers/soft/bulk")
+    @Operation(summary = "Массовое мягкое удаление организаторов")
+    public ResponseEntity<Void> softDeleteOrganizers(@RequestParam List<Long> ids) {
+        log.info("DELETE /api/events/organizers/soft/bulk - Soft deleting {} organizers", ids.size());
+        eventService.softDeleteOrganizers(ids);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/roles/{roleId}/soft")
+    @Operation(summary = "Мягкое удаление роли")
+    public ResponseEntity<Void> softDeleteEventRole(@PathVariable Long roleId) {
+        log.info("DELETE /api/events/roles/{}/soft - Soft deleting role", roleId);
+        eventService.softDeleteEventRole(roleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/roles/{roleId}/restore")
+    @Operation(summary = "Восстановление роли")
+    public ResponseEntity<Void> restoreEventRole(@PathVariable Long roleId) {
+        log.info("POST /api/events/roles/{}/restore - Restoring role", roleId);
+        eventService.restoreEventRole(roleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/roles/soft/bulk")
+    @Operation(summary = "Массовое мягкое удаление ролей")
+    public ResponseEntity<Void> softDeleteEventRoles(@RequestParam List<Long> ids) {
+        log.info("DELETE /api/events/roles/soft/bulk - Soft deleting {} roles", ids.size());
+        eventService.softDeleteEventRoles(ids);
+        return ResponseEntity.noContent().build();
     }
 }

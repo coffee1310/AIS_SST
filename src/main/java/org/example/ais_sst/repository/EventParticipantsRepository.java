@@ -29,10 +29,7 @@ public interface EventParticipantsRepository extends JpaRepository<EventParticip
     void deleteByEventIdAndUserId(@Param("eventId") Long eventId, @Param("userId") Long userId);
 
     List<EventParticipant> findByEventIdAndWasPresentTrue(Long eventId);
-
-    @Query("SELECT SUM(ep.totalPoints) FROM EventParticipant ep WHERE ep.event.id = :eventId AND ep.wasPresent = true")
-    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
-
+    
     @Query("SELECT ep FROM EventParticipant ep WHERE ep.user.id = :userId AND ep.wasPresent = true")
     List<EventParticipant> findByUserIdAndWasPresentTrue(@Param("userId") Long userId);
 
@@ -45,4 +42,35 @@ public interface EventParticipantsRepository extends JpaRepository<EventParticip
     @Transactional
     @Query("UPDATE EventParticipant ep SET ep.totalPoints = :points WHERE ep.id = :id")
     void updateTotalPoints(@Param("id") Long id, @Param("points") Integer points);
+
+    List<EventParticipant> findByEventIdAndIsDeletedFalse(Long eventId);
+
+    long countByEventIdAndIsDeletedFalse(Long eventId);
+
+    boolean existsByEventIdAndUserIdAndIsDeletedFalse(Long eventId, Long userId);
+
+    Optional<EventParticipant> findByEventIdAndUserIdAndIsDeletedFalse(Long eventId, Long userId);
+
+    List<EventParticipant> findByEventIdAndWasPresentTrueAndIsDeletedFalse(Long eventId);
+
+    @Query("SELECT SUM(ep.totalPoints) FROM EventParticipant ep WHERE ep.event.id = :eventId AND ep.wasPresent = true AND ep.isDeleted = false")
+    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
+
+    @Query("SELECT ep FROM EventParticipant ep WHERE ep.user.id = :userId AND ep.wasPresent = true AND ep.isDeleted = false")
+    List<EventParticipant> findByUserIdAndWasPresentTrueAndIsDeletedFalse(@Param("userId") Long userId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventParticipant ep SET ep.isDeleted = true WHERE ep.id = :id")
+    void softDeleteById(@Param("id") Long id);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventParticipant ep SET ep.isDeleted = false WHERE ep.id = :id")
+    void restoreById(@Param("id") Long id);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventParticipant ep SET ep.isDeleted = true WHERE ep.event.id = :eventId")
+    void softDeleteAllByEventId(@Param("eventId") Long eventId);
 }
