@@ -3,14 +3,9 @@ package org.example.ais_sst.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.email.EmailRequest;
-import org.example.ais_sst.service.notificationService.EmailNotificationService;
 import org.example.ais_sst.service.notificationService.EmailService;
-import org.example.ais_sst.service.notificationService.SubscriberManagementService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
