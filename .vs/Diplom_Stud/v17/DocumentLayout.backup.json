@@ -3,15 +3,15 @@
   "WorkspaceRootPath": "C:\\Users\\danii\\source\\repos\\AIS_SST\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|C:\\Users\\danii\\source\\repos\\AIS_SST\\pages\\activist\\eventregistration.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\eventregistration.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|C:\\Users\\danii\\source\\repos\\AIS_SST\\pages\\activist\\eventregistration.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\eventregistration.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\home.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\eventregistration.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\eventregistration.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|C:\\Users\\danii\\source\\repos\\AIS_SST\\pages\\activist\\home.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\home.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -26,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 240,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -54,25 +54,24 @@
               "RelativeToolTip": "Pages\\Activist\\Home.xaml.cs",
               "ViewState": "AgIAABkBAAAAAAAAAAAYwC4BAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-20T17:31:31.287Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-20T17:31:31.287Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "EventRegistration.xaml.cs",
               "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventRegistration.xaml.cs",
               "RelativeDocumentMoniker": "Pages\\Activist\\EventRegistration.xaml.cs",
               "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventRegistration.xaml.cs",
               "RelativeToolTip": "Pages\\Activist\\EventRegistration.xaml.cs",
-              "ViewState": "AgIAACMBAAAAAAAAAAAAwA8AAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-20T19:05:48.13Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "EventRegistration.xaml",
               "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\EventRegistration.xaml",
               "RelativeDocumentMoniker": "Pages\\Activist\\EventRegistration.xaml",

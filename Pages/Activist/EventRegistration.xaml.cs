@@ -87,6 +87,13 @@ namespace Diplom_Stud.Pages.Activist
                 var roleViewModels = new List<RegistrationRoleViewModel>();
                 var userApplications = await GetUserApplicationsAsync();
 
+                var userSectors = new List<string>(App.CurrentUserProfile?.userSectors ?? new List<string>());
+                if (!string.IsNullOrEmpty(App.CurrentUserProfile?.coordinatorSector))
+                {
+                    if (!userSectors.Contains(App.CurrentUserProfile.coordinatorSector))
+                        userSectors.Add(App.CurrentUserProfile.coordinatorSector);
+                }
+
                 if (_isFreeEvent)
                 {
                     HttpResponseMessage slotsRes = await _httpClient.GetAsync($"/api/events/participants/{_eventId}/slots");
@@ -108,11 +115,11 @@ namespace Diplom_Stud.Pages.Activist
                         }
                     }
 
-                    HttpResponseMessage participantsRes = await _httpClient.GetAsync($"/api/events/participants/{_eventId}");
-                    if (participantsRes.IsSuccessStatusCode)
+                    HttpResponseMessage myPartsRes = await _httpClient.GetAsync("/api/events/participants/my-events");
+                    if (myPartsRes.IsSuccessStatusCode)
                     {
-                        var participantsList = JsonSerializer.Deserialize<List<UserDtoLocal>>(await participantsRes.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                        if (participantsList != null && participantsList.Any(u => u.id == App.CurrentUserProfile?.id))
+                        var myParts = JsonSerializer.Deserialize<List<MyParticipantRecordDto>>(await myPartsRes.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (myParts != null && myParts.Any(p => p.eventId == _eventId))
                         {
                             participantActive = false;
                             participantStatus = "Вы уже участник";
@@ -142,6 +149,46 @@ namespace Diplom_Stud.Pages.Activist
                 {
                     bool orgActive = true;
                     string orgStatus = "";
+                    string orgSlotsInfo = "Свободно мест: ?";
+
+                    HttpResponseMessage orgSlotsRes = await _httpClient.GetAsync($"/api/events/{_eventId}/organizers-slots");
+                    if (orgSlotsRes.IsSuccessStatusCode)
+                    {
+                        var slots = JsonSerializer.Deserialize<ParticipantSlotsDto>(await orgSlotsRes.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (slots != null)
+                        {
+                            orgSlotsInfo = slots.availableSlots >= 2000000000 ? "Места не ограничены" : $"Свободно: {slots.availableSlots}";
+                            if (slots.availableSlots <= 0)
+                            {
+                                orgActive = false;
+                                orgStatus = "Свободных мест больше нет";
+                            }
+                        }
+                    }
+
+                    HttpResponseMessage myOrgAppsRes = await _httpClient.GetAsync("/api/role-applications/organizer/my");
+                    if (myOrgAppsRes.IsSuccessStatusCode)
+                    {
+                        string json = await myOrgAppsRes.Content.ReadAsStringAsync();
+                        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        List<RoleApplicationDto> myOrgAppsList = new List<RoleApplicationDto>();
+
+                        using (var doc = JsonDocument.Parse(json))
+                        {
+                            if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                                myOrgAppsList = JsonSerializer.Deserialize<List<RoleApplicationDto>>(json, options);
+                            else if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("content", out var contentEl))
+                                myOrgAppsList = JsonSerializer.Deserialize<List<RoleApplicationDto>>(contentEl.GetRawText(), options);
+                        }
+
+                        var myApp = myOrgAppsList?.FirstOrDefault(a => a.eventId == _eventId);
+                        if (myApp != null)
+                        {
+                            orgActive = false;
+                            if (myApp.status == "ОДОБРЕНА" || myApp.status == "ОДОБРЕНО") orgStatus = "Вы уже организатор";
+                            else if (myApp.status == "На рассмотрении" || myApp.status == "НА_РАССМОТРЕНИИ") orgStatus = "Заявка на рассмотрении";
+                        }
+                    }
 
                     if (!_isPublicEvent && !_isMySector)
                     {
@@ -155,7 +202,7 @@ namespace Diplom_Stud.Pages.Activist
                         Title = "Организатор",
                         Description = "Помощь в организации и проведении мероприятия.",
                         DeadlineText = "Без дедлайна",
-                        SlotsInfo = "По результатам отбора",
+                        SlotsInfo = orgSlotsInfo,
                         IsActive = orgActive,
                         CardOpacity = orgActive ? 1.0 : 0.4,
                         ApplicationStatus = orgStatus
@@ -171,11 +218,10 @@ namespace Diplom_Stud.Pages.Activist
                         string allowedJson = await allowedRolesRes.Content.ReadAsStringAsync();
                         using (JsonDocument doc = JsonDocument.Parse(allowedJson))
                         {
-                            var contentProp = doc.RootElement.GetProperty("content");
-                            var allowedRoles = JsonSerializer.Deserialize<List<EventRoleDtoLocal>>(contentProp.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                            if (allowedRoles != null)
+                            if (doc.RootElement.TryGetProperty("content", out var contentProp))
                             {
-                                allowedRoleIds = allowedRoles.Select(r => r.id).ToList();
+                                var allowedRoles = JsonSerializer.Deserialize<List<EventRoleDtoLocal>>(contentProp.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                                if (allowedRoles != null) allowedRoleIds = allowedRoles.Select(r => r.id).ToList();
                             }
                         }
                     }
@@ -187,47 +233,49 @@ namespace Diplom_Stud.Pages.Activist
                     string json = await rolesRes.Content.ReadAsStringAsync();
                     using (JsonDocument doc = JsonDocument.Parse(json))
                     {
-                        var contentProp = doc.RootElement.GetProperty("content");
-                        var eventRoles = JsonSerializer.Deserialize<List<EventRoleDtoLocal>>(contentProp.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                        foreach (var role in eventRoles)
+                        if (doc.RootElement.TryGetProperty("content", out var contentProp))
                         {
-                            if (role.deleted) continue;
+                            var eventRoles = JsonSerializer.Deserialize<List<EventRoleDtoLocal>>(contentProp.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                            bool isActive = true;
-                            string statusText = "";
-                            var app = userApplications.FirstOrDefault(a => a.eventRoleId == role.id);
+                            foreach (var role in eventRoles)
+                            {
+                                if (role.deleted) continue;
 
-                            if (app != null)
-                            {
-                                isActive = false;
-                                if (app.status == "ОДОБРЕНА" || app.status == "ОДОБРЕНО") statusText = "Вы уже участник";
-                                else if (app.status == "На рассмотрении" || app.status == "НА_РАССМОТРЕНИИ") statusText = "Заявка на рассмотрении";
-                            }
-                            else if (IsDeadlinePassed(role.deadline))
-                            {
-                                isActive = false; statusText = "Дедлайн прошёл";
-                            }
-                            else if (role.isFullyFull || role.totalAvailableSlots <= 0)
-                            {
-                                isActive = false; statusText = "Свободных мест больше нет";
-                            }
-                            else if (!_isPublicEvent && !allowedRoleIds.Contains(role.id))
-                            {
-                                isActive = false; statusText = "Недоступно для вашего сектора";
-                            }
+                                bool isActive = true;
+                                string statusText = "";
+                                var app = userApplications.FirstOrDefault(a => a.eventRoleId == role.id);
 
-                            roleViewModels.Add(new RegistrationRoleViewModel
-                            {
-                                Id = role.id,
-                                Title = role.globalEventRoleTitle ?? "Роль",
-                                Description = string.IsNullOrEmpty(role.description) ? "Описание не указано" : role.description,
-                                DeadlineText = $"Дедлайн: {FormatDeadline(role.deadline)}",
-                                SlotsInfo = $"Свободно мест: {role.totalAvailableSlots}",
-                                IsActive = isActive,
-                                CardOpacity = isActive ? 1.0 : 0.4,
-                                ApplicationStatus = statusText
-                            });
+                                if (app != null)
+                                {
+                                    isActive = false;
+                                    if (app.status == "ОДОБРЕНА" || app.status == "ОДОБРЕНО") statusText = "Вы уже участник";
+                                    else if (app.status == "На рассмотрении" || app.status == "НА_РАССМОТРЕНИИ") statusText = "Заявка на рассмотрении";
+                                }
+                                else if (IsDeadlinePassed(role.deadline))
+                                {
+                                    isActive = false; statusText = "Дедлайн прошёл";
+                                }
+                                else if (role.isFullyFull || role.totalAvailableSlots <= 0)
+                                {
+                                    isActive = false; statusText = "Свободных мест больше нет";
+                                }
+                                else if (!_isPublicEvent && !allowedRoleIds.Contains(role.id))
+                                {
+                                    isActive = false; statusText = "Недоступно для вашего сектора";
+                                }
+
+                                roleViewModels.Add(new RegistrationRoleViewModel
+                                {
+                                    Id = role.id,
+                                    Title = role.globalEventRoleTitle ?? "Роль",
+                                    Description = string.IsNullOrEmpty(role.description) ? "Описание не указано" : role.description,
+                                    DeadlineText = $"Дедлайн: {FormatDeadline(role.deadline)}",
+                                    SlotsInfo = $"Свободно мест: {role.totalAvailableSlots}",
+                                    IsActive = isActive,
+                                    CardOpacity = isActive ? 1.0 : 0.4,
+                                    ApplicationStatus = statusText
+                                });
+                            }
                         }
                     }
                 }
@@ -254,8 +302,19 @@ namespace Diplom_Stud.Pages.Activist
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
-                    var page = JsonSerializer.Deserialize<RoleApplicationPageResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    return page?.content ?? new List<RoleApplicationDto>();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                    using (var doc = JsonDocument.Parse(json))
+                    {
+                        if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                        {
+                            return JsonSerializer.Deserialize<List<RoleApplicationDto>>(json, options);
+                        }
+                        else if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("content", out var contentEl))
+                        {
+                            return JsonSerializer.Deserialize<List<RoleApplicationDto>>(contentEl.GetRawText(), options);
+                        }
+                    }
                 }
             }
             catch (Exception ex) { Debug.WriteLine(ex.Message); }
@@ -303,39 +362,28 @@ namespace Diplom_Stud.Pages.Activist
 
                 foreach (int roleId in _selectedRoleIds)
                 {
-                    if (roleId == -1)
+                    if (roleId == -1) 
                     {
-                        HttpResponseMessage joinRes = await _httpClient.PostAsync($"/api/events/participants/{_eventId}/join", new StringContent(""));
+                        var emptyJson = new StringContent("{}", Encoding.UTF8, "application/json");
+                        HttpResponseMessage joinRes = await _httpClient.PostAsync($"/api/events/participants/{_eventId}/join", emptyJson);
                         if (joinRes.IsSuccessStatusCode) successCount++;
-                        else
-                        {
-                            string err = await joinRes.Content.ReadAsStringAsync();
-                            Debug.WriteLine($"Ошибка регистрации участником: {err}");
-                        }
+                        else Debug.WriteLine($"Ошибка регистрации участником: {await joinRes.Content.ReadAsStringAsync()}");
                     }
-                    else if (roleId == -2)
+                    else if (roleId == -2) 
                     {
-                        HttpResponseMessage orgRes = await _httpClient.PostAsync($"/api/role-applications/{_eventId}/orgainizer", new StringContent(""));
+                        var payload = new { description = commentText };
+                        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                        HttpResponseMessage orgRes = await _httpClient.PostAsync($"/api/role-applications/{_eventId}/orgainizer", content);
                         if (orgRes.IsSuccessStatusCode) successCount++;
-                        else
-                        {
-                            string err = await orgRes.Content.ReadAsStringAsync();
-                            Debug.WriteLine($"Ошибка регистрации организатором: {err}");
-                        }
+                        else Debug.WriteLine($"Ошибка регистрации организатором: {await orgRes.Content.ReadAsStringAsync()}");
                     }
                     else 
                     {
                         var payload = new { description = commentText };
                         var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-
                         HttpResponseMessage stdRes = await _httpClient.PostAsync($"/api/role-applications/{roleId}", content);
-
                         if (stdRes.IsSuccessStatusCode) successCount++;
-                        else
-                        {
-                            string err = await stdRes.Content.ReadAsStringAsync();
-                            Debug.WriteLine($"Ошибка заявки на кастомную роль {roleId}: {err}");
-                        }
+                        else Debug.WriteLine($"Ошибка заявки на кастомную роль {roleId}: {await stdRes.Content.ReadAsStringAsync()}");
                     }
                 }
 
@@ -346,7 +394,7 @@ namespace Diplom_Stud.Pages.Activist
                 }
                 else
                 {
-                    CustomMessageBox.Show("Не удалось отправить ни одной заявки.", "Ошибка", CustomMessageBox.MessageType.Error);
+                    CustomMessageBox.Show("Не удалось отправить ни одной заявки. Возможно, вы уже подали заявку.", "Ошибка", CustomMessageBox.MessageType.Error);
                 }
             }
             catch (Exception ex)
@@ -382,11 +430,9 @@ namespace Diplom_Stud.Pages.Activist
         public bool isMySector { get; set; }
         public int maxOrganizersCount { get; set; }
     }
-    public class UserDtoLocal { public int id { get; set; } }
     public class RegistrationRoleViewModel { public int Id { get; set; } public string Title { get; set; } public string Description { get; set; } public string DeadlineText { get; set; } public string SlotsInfo { get; set; } public bool IsActive { get; set; } = true; public double CardOpacity { get; set; } = 1.0; public string ApplicationStatus { get; set; } = ""; public bool IsSelected { get; set; } }
-    public class EventRolePageResponseLocal { public List<EventRoleDtoLocal> content { get; set; } }
     public class EventRoleDtoLocal { public int id { get; set; } public int eventId { get; set; } public string globalEventRoleTitle { get; set; } public string description { get; set; } public string deadline { get; set; } public int totalAvailableSlots { get; set; } public bool isFullyFull { get; set; } public string sectorTitle { get; set; } public bool deleted { get; set; } }
-    public class RoleApplicationPageResponse { public List<RoleApplicationDto> content { get; set; } }
-    public class RoleApplicationDto { public int eventRoleId { get; set; } public string status { get; set; } = ""; }
+    public class RoleApplicationDto { public int eventRoleId { get; set; } public int eventId { get; set; } public string status { get; set; } = ""; }
     public class ParticipantSlotsDto { public int currentParticipants { get; set; } public long availableSlots { get; set; } public string info { get; set; } }
+    public class MyParticipantRecordDto { public int eventId { get; set; } }
 }
