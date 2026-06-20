@@ -34,4 +34,12 @@ public class EventOrganizer {
     @CreationTimestamp
     @Column(name = "added_at", nullable = false, updatable = false)
     private LocalDateTime addedAt;
+
+    @Column(name = "total_points", nullable = false)
+    @Builder.Default
+    private Integer totalPoints = 5;  // По умолчанию 5 баллов
+
+    @Column(name = "was_present", nullable = false)
+    @Builder.Default
+    private Boolean wasPresent = false;
 }

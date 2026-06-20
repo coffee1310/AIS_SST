@@ -73,6 +73,7 @@ public class EventController extends BaseController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTimeTo,
 
             @RequestParam(required = false) Boolean isPublic,
+            @RequestParam(required = false) Boolean isFreeEvent,
             @RequestParam(required = false) Boolean isDraft,
             @RequestParam(required = false) Boolean isCompleted,
             @RequestParam(required = false) Boolean isActive,
@@ -89,6 +90,8 @@ public class EventController extends BaseController {
 
 
             @RequestParam(required = false) Boolean isDeleted,
+
+            @RequestParam(required = false) Boolean isMySector,
 
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -111,10 +114,12 @@ public class EventController extends BaseController {
                 .isCompleted(isCompleted)
                 .isActive(isActive)
                 .creatorId(creatorId)
-                .isResponsibleSector(isResponsibleSector)  // Добавляем\
+                .isResponsibleSector(isResponsibleSector)
                 .currentUserId(userDetails != null ? userDetails.getId() : null)
                 .isOrganizer(isOrganizer)
                 .isDeleted(isDeleted)
+                .isFreeEvent(isFreeEvent)
+                .isMySector(isMySector)
                 .build();
 
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);

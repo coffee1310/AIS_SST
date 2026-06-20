@@ -27,4 +27,22 @@ public interface EventParticipantsRepository extends JpaRepository<EventParticip
     @Transactional
     @Query("DELETE FROM EventParticipant ep WHERE ep.event.id = :eventId AND ep.user.id = :userId")
     void deleteByEventIdAndUserId(@Param("eventId") Long eventId, @Param("userId") Long userId);
+
+    List<EventParticipant> findByEventIdAndWasPresentTrue(Long eventId);
+
+    @Query("SELECT SUM(ep.totalPoints) FROM EventParticipant ep WHERE ep.event.id = :eventId AND ep.wasPresent = true")
+    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
+
+    @Query("SELECT ep FROM EventParticipant ep WHERE ep.user.id = :userId AND ep.wasPresent = true")
+    List<EventParticipant> findByUserIdAndWasPresentTrue(@Param("userId") Long userId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventParticipant ep SET ep.wasPresent = :wasPresent WHERE ep.id = :id")
+    void updateWasPresent(@Param("id") Long id, @Param("wasPresent") Boolean wasPresent);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventParticipant ep SET ep.totalPoints = :points WHERE ep.id = :id")
+    void updateTotalPoints(@Param("id") Long id, @Param("points") Integer points);
 }

@@ -41,4 +41,12 @@ public class EventParticipant {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "was_present", nullable = false)
+    @Builder.Default
+    private Boolean wasPresent = false;
+
+    @Column(name = "total_points", nullable = false)
+    @Builder.Default
+    private Integer totalPoints = 2;
 }

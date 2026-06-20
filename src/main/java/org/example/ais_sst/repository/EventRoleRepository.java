@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,12 +68,34 @@ public interface EventRoleRepository extends JpaRepository<EventRole, Long> {
     @Query("SELECT er FROM EventRole er WHERE er.deadline < :now AND er.deleted = false")
     List<EventRole> findExpiredRoles(@Param("now") LocalDateTime now);
 
-    @Modifying
-    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.event.id = :eventId AND er.deleted = false")
-    void softDeleteAllByEventId(@Param("eventId") Long eventId);
+//    @Modifying
+//    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.event.id = :eventId AND er.deleted = false")
+//    void softDeleteAllByEventId(@Param("eventId") Long eventId);
 
     Optional<EventRole> findByIdAndDeletedFalse(Long id);
 
     List<EventRole> findByEventIdAndDeletedFalse(Long eventId);
+
+    List<EventRole> findByEventId(Long eventId);
+
+    List<EventRole> findByEventIdAndWasPresentTrue(Long eventId);
+
+    @Query("SELECT SUM(er.totalPoints) FROM EventRole er WHERE er.event.id = :eventId AND er.wasPresent = true")
+    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventRole er SET er.wasPresent = :wasPresent WHERE er.id = :id")
+    void updateWasPresent(@Param("id") Long id, @Param("wasPresent") Boolean wasPresent);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventRole er SET er.totalPoints = :points WHERE er.id = :id")
+    void updateTotalPoints(@Param("id") Long id, @Param("points") Integer points);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.event.id = :eventId AND er.deleted = false")
+    void softDeleteAllByEventId(@Param("eventId") Long eventId);
 
 }

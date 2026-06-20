@@ -1,0 +1,100 @@
+databaseChangeLog:
+  # Добавление поля total_points в таблицу event_organizers
+  - changeSet:
+      id: 20240620-add-total-points-to-event-organizers
+      author: coffee13102006
+      labels: event-organizers-points
+      comment: "Добавление поля total_points в таблицу event_organizers"
+      changes:
+        - addColumn:
+            tableName: event_organizers
+            columns:
+              - column:
+                  name: total_points
+                  type: INT
+                  defaultValueNumeric: 5
+                  constraints:
+                    nullable: false
+                  remarks: "Фактические баллы организатора за мероприятие (по умолчанию 5)"
+
+        - addColumn:
+            tableName: event_organizers
+            columns:
+              - column:
+                  name: was_present
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                  remarks: "Флаг присутствия организатора на мероприятии"
+
+  # Добавление поля total_points в таблицу event_participants
+  - changeSet:
+      id: 20240620-add-total-points-to-event-participants
+      author: coffee13102006
+      labels: event-participants-points
+      comment: "Добавление поля total_points в таблицу event_participants"
+      changes:
+        - addColumn:
+            tableName: event_participants
+            columns:
+              - column:
+                  name: total_points
+                  type: INT
+                  defaultValueNumeric: 2
+                  constraints:
+                    nullable: false
+                  remarks: "Фактические баллы участника за мероприятие (по умолчанию 2)"
+
+        - addColumn:
+            tableName: event_participants
+            columns:
+              - column:
+                  name: was_present
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                  remarks: "Флаг присутствия участника на мероприятии"
+
+  # Добавление поля total_points в таблицу event_roles (сначала с DEFAULT, потом без)
+  - changeSet:
+      id: 20240620-add-total-points-to-event-roles
+      author: coffee13102006
+      labels: event-roles-points
+      comment: "Добавление поля total_points в таблицу event_roles"
+      changes:
+        - addColumn:
+            tableName: event_roles
+            columns:
+              - column:
+                  name: total_points
+                  type: INT
+                  defaultValue: 1
+                  remarks: "Фактические баллы за роль"
+
+        # Обновление total_points из default_points глобальной роли
+        - sql:
+            dbms: postgresql
+            sql: |
+              UPDATE event_roles er
+              SET total_points = ger.default_points
+              FROM global_event_roles ger
+              WHERE er.global_event_role_id = ger.id;
+
+        # Изменение поля на NOT NULL
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE event_roles ALTER COLUMN total_points SET NOT NULL;
+
+        - addColumn:
+            tableName: event_roles
+            columns:
+              - column:
+                  name: was_present
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+                  remarks: "Флаг присутствия для роли"

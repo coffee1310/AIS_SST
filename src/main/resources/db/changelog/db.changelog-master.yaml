@@ -99,3 +99,5 @@ databaseChangeLog:
       file: db/changelog/changes/051-create-event-participation-records.yaml
   - include:
       file: db/changelog/changes/052-drop-sector-id-from-events.yaml
+  - include:
+      file: db/changelog/changes/053-add-total-points-to-event-organizers.yaml

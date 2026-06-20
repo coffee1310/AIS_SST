@@ -4,6 +4,8 @@ import org.example.ais_sst.entity.Event;
 import org.example.ais_sst.entity.EventOrganizer;
 import org.example.ais_sst.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,4 +31,13 @@ public interface EventOrganizerRepository extends JpaRepository<EventOrganizer, 
     boolean existsByEventAndUser(Event event, User user);
 
     boolean existsByUser_IdAndEvent_Id(Long userId, Long eventId);
+
+
+    List<EventOrganizer> findByEventIdAndWasPresentTrue(Long eventId);
+
+    @Query("SELECT SUM(eo.totalPoints) FROM EventOrganizer eo WHERE eo.event.id = :eventId AND eo.wasPresent = true")
+    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
+
+    @Query("SELECT eo FROM EventOrganizer eo WHERE eo.user.id = :userId AND eo.wasPresent = true")
+    List<EventOrganizer> findByUserIdAndWasPresentTrue(@Param("userId") Long userId);
 }

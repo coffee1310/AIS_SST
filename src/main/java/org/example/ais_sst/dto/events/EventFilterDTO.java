@@ -35,6 +35,7 @@ public class EventFilterDTO {
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
     private LocalTime endTimeTo;
 
+    private Boolean isFreeEvent;
     private Boolean isPublic;
     private Boolean isDraft;
     private Boolean isCompleted;
@@ -49,4 +50,6 @@ public class EventFilterDTO {
     private List<Long> sectorIds;
 
     private Boolean isDeleted;
+
+    private Boolean isMySector;
 }
