@@ -8,16 +8,12 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 
 namespace Diplom_Stud.Pages.Activist
 {
@@ -25,6 +21,9 @@ namespace Diplom_Stud.Pages.Activist
     {
         private static readonly HttpClient _httpClient = new HttpClient();
         private int _eventId;
+
+        private bool _isFreeEvent = false;
+        private int _maxOrganizersCount = 0;
 
         public EventDetails(int eventId = 0)
         {
@@ -45,7 +44,7 @@ namespace Diplom_Stud.Pages.Activist
             {
                 From = 0.0,
                 To = 1.0,
-                Duration = TimeSpan.FromSeconds(0.8),
+                Duration = TimeSpan.FromSeconds(0.6),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
             this.BeginAnimation(Page.OpacityProperty, fadeInAnimation);
@@ -82,6 +81,9 @@ namespace Diplom_Stud.Pages.Activist
                         EventVenueText.Text = string.IsNullOrEmpty(ev.venue) ? "Место не указано" : ev.venue;
                         EventTimeText.Text = FormatEventDateTime(ev.dateOfEvent, ev.startTime, ev.endTime);
 
+                        _isFreeEvent = ev.isFreeEvent;
+                        _maxOrganizersCount = ev.maxOrganizersCount;
+
                         if (!string.IsNullOrEmpty(ev.photo))
                         {
                             var bmp = GetImageFromBase64(ev.photo);
@@ -89,14 +91,10 @@ namespace Diplom_Stud.Pages.Activist
                         }
                     }
                 }
-                else
-                {
-                    CustomMessageBox.Show($"Ошибка загрузки мероприятия: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
-                }
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Сбой сети при загрузке: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                Debug.WriteLine(ex.Message);
             }
         }
 
@@ -106,6 +104,28 @@ namespace Diplom_Stud.Pages.Activist
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
+                var rolesList = new List<EventRoleViewModel>();
+
+                if (_isFreeEvent)
+                {
+                    rolesList.Add(new EventRoleViewModel
+                    {
+                        Title = "Участник",
+                        Description = "Обычное участие в мероприятии",
+                        DeadlineText = "Без дедлайна"
+                    });
+                }
+
+                if (_maxOrganizersCount > 0)
+                {
+                    rolesList.Add(new EventRoleViewModel
+                    {
+                        Title = "Организатор",
+                        Description = "Помощь в организации и проведении мероприятия",
+                        DeadlineText = "По результатам отбора"
+                    });
+                }
+
                 HttpResponseMessage response = await _httpClient.GetAsync($"/api/event-roles?eventId={_eventId}&page=0&size=50");
 
                 if (response.IsSuccessStatusCode)
@@ -114,10 +134,8 @@ namespace Diplom_Stud.Pages.Activist
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     var rolesPage = JsonSerializer.Deserialize<EventRolePageResponse>(responseBody, options);
 
-                    if (rolesPage?.content != null && rolesPage.content.Count > 0)
+                    if (rolesPage?.content != null)
                     {
-                        var rolesList = new List<EventRoleViewModel>();
-
                         foreach (var role in rolesPage.content)
                         {
                             rolesList.Add(new EventRoleViewModel
@@ -125,27 +143,18 @@ namespace Diplom_Stud.Pages.Activist
                                 Id = role.id,
                                 Title = role.globalEventRoleTitle ?? "Роль",
                                 Description = string.IsNullOrEmpty(role.description) ? "Описание не указано" : role.description,
-                                DeadlineText = FormatDeadline(role.deadline)
+                                DeadlineText = $"Дедлайн: {FormatDeadline(role.deadline)}"
                             });
                         }
+                    }
+                }
 
-                        RolesItemsControl.ItemsSource = rolesList;
-                        EmptyRolesText.Visibility = Visibility.Collapsed;
-                    }
-                    else
-                    {
-                        RolesItemsControl.ItemsSource = null;
-                        EmptyRolesText.Visibility = Visibility.Visible;
-                    }
-                }
-                else
-                {
-                    CustomMessageBox.Show($"Ошибка загрузки ролей: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
-                }
+                RolesItemsControl.ItemsSource = rolesList;
+                EmptyRolesText.Visibility = rolesList.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Сбой сети при загрузке ролей: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                Debug.WriteLine(ex.Message);
             }
             finally
             {
@@ -156,28 +165,14 @@ namespace Diplom_Stud.Pages.Activist
         private string FormatEventDateTime(string dateStr, string startStr, string endStr)
         {
             string result = "Время не указано";
-
             if (!string.IsNullOrEmpty(dateStr) && DateTime.TryParse(dateStr, out DateTime date))
             {
                 result = date.ToString("d MMMM", new CultureInfo("ru-RU"));
-
                 string timePart = "";
-                if (!string.IsNullOrEmpty(startStr) && startStr.Length >= 5)
-                {
-                    timePart += startStr.Substring(0, 5);
-                }
-
-                if (!string.IsNullOrEmpty(endStr) && endStr.Length >= 5)
-                {
-                    timePart += " - " + endStr.Substring(0, 5);
-                }
-
-                if (!string.IsNullOrEmpty(timePart))
-                {
-                    result += $", {timePart}";
-                }
+                if (!string.IsNullOrEmpty(startStr) && startStr.Length >= 5) timePart += startStr.Substring(0, 5);
+                if (!string.IsNullOrEmpty(endStr) && endStr.Length >= 5) timePart += " - " + endStr.Substring(0, 5);
+                if (!string.IsNullOrEmpty(timePart)) result += $", {timePart}";
             }
-
             return result;
         }
 
@@ -185,53 +180,30 @@ namespace Diplom_Stud.Pages.Activist
         {
             if (!string.IsNullOrEmpty(deadlineStr) && DateTime.TryParse(deadlineStr, out DateTime date))
             {
-                return $"Дедлайн: {date.ToString("d MMMM, HH:mm", new CultureInfo("ru-RU"))}";
+                return date.ToString("d MMMM, HH:mm", new CultureInfo("ru-RU"));
             }
-            return "Дедлайн не указан";
+            return "Не указан";
         }
 
         private BitmapImage GetImageFromBase64(string base64String)
         {
+            if (string.IsNullOrEmpty(base64String)) return null;
             try
             {
-                string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
-                byte[] imageBytes = null;
-
-                try
+                string cleanBase64 = base64String.Contains(",") ? base64String.Split(',')[1] : base64String;
+                byte[] binaryData = Convert.FromBase64String(cleanBase64);
+                using (var ms = new MemoryStream(binaryData))
                 {
-                    byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
-                    string textInside = Encoding.UTF8.GetString(decodedFirstLevel);
-
-                    if (textInside.StartsWith("data:image"))
-                    {
-                        int commaIndex = textInside.IndexOf(',');
-                        if (commaIndex >= 0) imageBytes = Convert.FromBase64String(textInside.Substring(commaIndex + 1));
-                    }
-                    else { imageBytes = decodedFirstLevel; }
-                }
-                catch
-                {
-                    int commaIndex = cleanStr.IndexOf(',');
-                    if (commaIndex >= 0) cleanStr = cleanStr.Substring(commaIndex + 1);
-                    imageBytes = Convert.FromBase64String(cleanStr);
-                }
-
-                if (imageBytes != null)
-                {
-                    using (var ms = new MemoryStream(imageBytes))
-                    {
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.StreamSource = ms;
-                        bitmap.EndInit();
-                        bitmap.Freeze();
-                        return bitmap;
-                    }
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.StreamSource = ms;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    return bitmap;
                 }
             }
-            catch (Exception ex) { Debug.WriteLine($"Ошибка обработки фото: {ex.Message}"); }
-            return null;
+            catch { return null; }
         }
 
         private void RegisterButton_Click(object sender, RoutedEventArgs e)
@@ -251,26 +223,11 @@ namespace Diplom_Stud.Pages.Activist
         public string endTime { get; set; }
         public string venue { get; set; }
         public bool isDraft { get; set; }
-    }
 
-    public class EventRolePageResponse
-    {
-        public List<EventRoleDto> content { get; set; }
+        public bool isFreeEvent { get; set; }
+        public int maxOrganizersCount { get; set; }
     }
-
-    public class EventRoleDto
-    {
-        public int id { get; set; }
-        public string globalEventRoleTitle { get; set; }
-        public string description { get; set; }
-        public string deadline { get; set; }
-    }
-
-    public class EventRoleViewModel
-    {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string DeadlineText { get; set; }
-    }
+    public class EventRolePageResponse { public List<EventRoleDto> content { get; set; } }
+    public class EventRoleDto { public int id { get; set; } public string globalEventRoleTitle { get; set; } public string description { get; set; } public string deadline { get; set; } }
+    public class EventRoleViewModel { public int Id { get; set; } public string Title { get; set; } public string Description { get; set; } public string DeadlineText { get; set; } }
 }

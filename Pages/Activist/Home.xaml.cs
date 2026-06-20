@@ -16,13 +16,14 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 
 namespace Diplom_Stud.Pages.Activist
 {
     public partial class Home : Page
     {
         private static readonly HttpClient _httpClient = new HttpClient();
+        private List<EventViewModelLocal> _allEvents = new List<EventViewModelLocal>();
+        private int _currentEventIndex = 0;
 
         public Home()
         {
@@ -78,54 +79,50 @@ namespace Diplom_Stud.Pages.Activist
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                // 1. Организатор
-                var orgEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isOrganizer=true&page=0&size=50");
-                // 2. Сектор
-                var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isResponsibleSector=true&page=0&size=50");
-                // 3. Публичные
-                var publicEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isPublic=true&page=0&size=50");
+                var orgEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isOrganizer=true&isDeleted=false&page=0&size=50");
+                var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isResponsibleSector=true&isDeleted=false&page=0&size=50");
+                var publicEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isPublic=true&isDeleted=false&page=0&size=50");
 
-                // 4. Только одобренные заявки текущего пользователя
-                var approvedApplications = await GetApprovedApplicationsAsync();
+                var userApplications = await GetUserApplicationsAsync();
 
                 var activeEventsDict = new Dictionary<int, EventViewModelLocal>();
 
                 foreach (var ev in orgEventsDto)
                 {
-                    activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
+                    if (!ev.isDeleted)
+                    {
+                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
+                    }
                 }
 
                 foreach (var ev in sectorEventsDto.Concat(publicEventsDto))
                 {
-                    if (!activeEventsDict.ContainsKey(ev.id))
+                    if (!ev.isDeleted && !activeEventsDict.ContainsKey(ev.id))
                     {
                         activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
                     }
                 }
 
-                // Бейдж "Вы участник" только по одобренным заявкам
-                var approvedEventIds = new HashSet<int>(approvedApplications.Select(a => a.eventId));
-
                 foreach (var vm in activeEventsDict.Values)
                 {
-                    if (approvedEventIds.Contains(vm.Id))
+                    bool isApplied = userApplications.Any(a => a.eventId == vm.Id &&
+                                    (a.status == "ОДОБРЕНА" || a.status == "НА_РАССМОТРЕНИИ" || a.status == "НА РАССМОТРЕНИИ" || a.status == "ОДОБРЕНО"));
+                    if (isApplied)
                     {
                         vm.ParticipantBadgeVisibility = Visibility.Visible;
                     }
                 }
 
-                // Только будущие мероприятия
-                var futureEventsVm = activeEventsDict.Values
+                _allEvents = activeEventsDict.Values
                     .Where(v => v.EventDate.Date >= DateTime.Today)
                     .OrderBy(v => v.EventDate)
                     .ToList();
 
-                EventsItemsControl.ItemsSource = futureEventsVm;
+                _currentEventIndex = 0;
+                UpdateEventCarousel();
 
-                if (futureEventsVm.Count == 0)
+                if (_allEvents.Count == 0)
                     EmptyEventsText.Visibility = Visibility.Visible;
-                else
-                    EmptyEventsText.Visibility = Visibility.Collapsed;
             }
             catch (Exception ex)
             {
@@ -137,35 +134,51 @@ namespace Diplom_Stud.Pages.Activist
             }
         }
 
-        /// <summary>
-        /// Получает заявки текущего пользователя (используем currentUserId как в твоём примере)
-        /// </summary>
-        private async Task<List<ApplicationDto>> GetApprovedApplicationsAsync()
+        private void UpdateEventCarousel()
+        {
+            if (_allEvents == null || _allEvents.Count == 0) return;
+
+            var displayEvents = _allEvents.Skip(_currentEventIndex).Take(3).ToList();
+            EventsItemsControl.ItemsSource = displayEvents;
+
+            BtnPrevEvent.Visibility = _currentEventIndex > 0 ? Visibility.Visible : Visibility.Collapsed;
+            BtnNextEvent.Visibility = _currentEventIndex + 3 < _allEvents.Count ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BtnPrevEvent_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentEventIndex > 0)
+            {
+                _currentEventIndex--;
+                UpdateEventCarousel();
+            }
+        }
+
+        private void BtnNextEvent_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentEventIndex + 3 < _allEvents.Count)
+            {
+                _currentEventIndex++;
+                UpdateEventCarousel();
+            }
+        }
+
+        private async Task<List<ApplicationDto>> GetUserApplicationsAsync()
         {
             try
             {
-                int currentUserId = App.CurrentUserProfile?.id ?? 0;   // или App.CurrentUser?.Id
-
+                int currentUserId = App.CurrentUserProfile?.id ?? 0;
                 if (currentUserId == 0) return new List<ApplicationDto>();
 
-                // Запрос точно по твоему примеру
-                var url = $"/api/role-applications?currentUserId={currentUserId}&status=ОДОБРЕНА";
-
-                var response = await _httpClient.GetAsync(url);
-
+                var response = await _httpClient.GetAsync($"/api/applications/user/{currentUserId}");
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var page = JsonSerializer.Deserialize<ApplicationPageResponse>(json, options);
-
+                    var page = JsonSerializer.Deserialize<ApplicationPageResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     return page?.content ?? new List<ApplicationDto>();
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Не удалось загрузить одобренные заявки: {ex.Message}");
-            }
+            catch (Exception ex) { Debug.WriteLine($"Не удалось загрузить заявки: {ex.Message}"); }
             return new List<ApplicationDto>();
         }
 
@@ -181,10 +194,7 @@ namespace Diplom_Stud.Pages.Activist
                     return pageData?.content ?? new List<EventDtoLocal>();
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка FetchEventsFromApi ({url}): {ex.Message}");
-            }
+            catch { }
             return new List<EventDtoLocal>();
         }
 
@@ -244,7 +254,6 @@ namespace Diplom_Stud.Pages.Activist
             {
                 string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
                 byte[] imageBytes = null;
-
                 try
                 {
                     byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
@@ -277,54 +286,14 @@ namespace Diplom_Stud.Pages.Activist
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Ошибка обработки фото: {ex.Message}");
-            }
+            catch { }
             return null;
         }
     }
 
-    // ====================== DTO ======================
-    public class EventPageResponseLocal
-    {
-        public List<EventDtoLocal> content { get; set; }
-    }
-
-    public class EventDtoLocal
-    {
-        public int id { get; set; }
-        public string title { get; set; }
-        public string photo { get; set; }
-        public string dateOfEvent { get; set; }
-        public string startTime { get; set; }
-        public string venue { get; set; }
-        public bool isCompleted { get; set; }
-    }
-
-    public class EventViewModelLocal
-    {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string DateTimeDisplay { get; set; }
-        public string Venue { get; set; }
-        public ImageSource Image { get; set; }
-
-        public Visibility OrganizerBadgeVisibility { get; set; }
-        public Visibility ParticipantBadgeVisibility { get; set; } = Visibility.Collapsed;
-        public DateTime EventDate { get; set; }
-        public Brush CardBorderBrush { get; set; }
-        public Thickness CardBorderThickness { get; set; }
-    }
-
-    public class ApplicationPageResponse
-    {
-        public List<ApplicationDto> content { get; set; }
-    }
-
-    public class ApplicationDto
-    {
-        public int eventId { get; set; }
-        public string status { get; set; } = "";
-    }
+    public class EventPageResponseLocal { public List<EventDtoLocal> content { get; set; } }
+    public class EventDtoLocal { public int id { get; set; } public string title { get; set; } public string photo { get; set; } public string dateOfEvent { get; set; } public string startTime { get; set; } public string venue { get; set; } public bool isCompleted { get; set; } public bool isDeleted { get; set; } }
+    public class EventViewModelLocal { public int Id { get; set; } public string Title { get; set; } public string DateTimeDisplay { get; set; } public string Venue { get; set; } public ImageSource Image { get; set; } public Visibility OrganizerBadgeVisibility { get; set; } public Visibility ParticipantBadgeVisibility { get; set; } = Visibility.Collapsed; public DateTime EventDate { get; set; } public Brush CardBorderBrush { get; set; } public Thickness CardBorderThickness { get; set; } }
+    public class ApplicationPageResponse { public List<ApplicationDto> content { get; set; } }
+    public class ApplicationDto { public int eventId { get; set; } public string status { get; set; } = ""; }
 }

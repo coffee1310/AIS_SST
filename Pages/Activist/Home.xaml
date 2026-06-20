@@ -40,12 +40,15 @@
                     <TextBlock Text="Мероприятия" FontSize="24" FontFamily="Digital Pixel" Foreground="White" VerticalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Content="Все мероприятия" Style="{StaticResource PurpleOutlineButtonStyle}" Margin="0,0,15,0" Click="AllEvents_Click"/>
-                        <Button Style="{StaticResource PurpleArrowButtonStyle}" Margin="0,0,10,0">
+
+                        <Button x:Name="BtnPrevEvent" Click="BtnPrevEvent_Click" Style="{StaticResource PurpleArrowButtonStyle}" Margin="0,0,10,0" Visibility="Collapsed">
                             <Path Data="M10,1 L4,7 L10,13 M4,7 L16,7" Stroke="White" StrokeThickness="2" Stretch="Uniform" Width="14" Height="10"/>
                         </Button>
-                        <Button Style="{StaticResource PurpleArrowButtonStyle}">
+
+                        <Button x:Name="BtnNextEvent" Click="BtnNextEvent_Click" Style="{StaticResource PurpleArrowButtonStyle}" Visibility="Collapsed">
                             <Path Data="M6,1 L12,7 L6,13 M12,7 L0,7" Stroke="White" StrokeThickness="2" Stretch="Uniform" Width="14" Height="10"/>
                         </Button>
+
                     </StackPanel>
                 </Grid>
 

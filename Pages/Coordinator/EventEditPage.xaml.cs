@@ -209,7 +209,6 @@ namespace Diplom_Stud.Pages.Coordinator
                                 SelectedSector = globalSector,
                                 Tasks = roleDto.description,
                                 PeopleCount = roleDto.capacity.ToString(),
-                                ReserveCount = roleDto.reserveCapacity.ToString(),
                                 DeadlineDate = dlDate,
                                 DeadlineTime = dlTime
                             });
@@ -313,7 +312,6 @@ namespace Diplom_Stud.Pages.Coordinator
                         eventId = _eventId,
                         globalEventRoleId = role.SelectedRole.id,
                         capacity = int.TryParse(role.PeopleCount, out int cap) ? cap : 1,
-                        reserveCapacity = int.TryParse(role.ReserveCount, out int res) ? res : 0,
                         deadline = deadlineFormatted,
                         description = role.Tasks ?? ""
                     };
