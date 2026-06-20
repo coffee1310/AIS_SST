@@ -68,4 +68,16 @@ class SectorDetailsScreenModel(
                 }
         }
     }
+    fun deactivateSector(id: Int, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            repository.deactivateSector(id)
+                .onSuccess {
+                    _effect.emit("Сектор успешно удален")
+                    onSuccess()
+                }
+                .onFailure {
+                    _effect.emit("Ошибка при удалении сектора")
+                }
+        }
+    }
 }

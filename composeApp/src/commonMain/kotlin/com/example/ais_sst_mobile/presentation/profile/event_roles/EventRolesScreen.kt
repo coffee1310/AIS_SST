@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -220,12 +221,40 @@ fun EventRoleCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = role.title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = role.title,
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+
+                    if (role.defaultPoints != null) {
+                        Spacer(Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
+                                .border(BorderStroke(0.5.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+
+                        ) {
+                            val pointsText = when {
+                                role.defaultPoints % 100 in 11..14 -> "${role.defaultPoints} баллов"
+                                role.defaultPoints % 10 == 1 -> "${role.defaultPoints} балл"
+                                role.defaultPoints % 10 in 2..4 -> "${role.defaultPoints} балла"
+                                else -> "${role.defaultPoints} баллов"
+                            }
+                            Text(
+                                text = pointsText,
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    }
+                }
+
                 Spacer(Modifier.height(4.dp))
+
                 Text(
                     text = role.sectorTitle,
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 14.sp),

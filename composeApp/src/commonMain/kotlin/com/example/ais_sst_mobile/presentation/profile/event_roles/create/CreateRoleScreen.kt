@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.ais_sst_mobile.data.network.dto.SectorDto
@@ -34,6 +35,7 @@ fun CreateRoleScreen(component: CreateRoleComponent) {
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var points by remember { mutableStateOf("") }
     var selectedSector by remember { mutableStateOf<SectorDto?>(null) }
     var isSectorMenuExpanded by remember { mutableStateOf(false) }
 
@@ -98,7 +100,6 @@ fun CreateRoleScreen(component: CreateRoleComponent) {
 
                     CustomTextField(
                         value = title,
-                        // Ограничение ввода до 32 символов
                         onValueChange = { if (it.length <= 32) title = it },
                         placeholder = "* Название роли",
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
@@ -147,6 +148,15 @@ fun CreateRoleScreen(component: CreateRoleComponent) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    CustomTextField(
+                        value = points,
+                        onValueChange = { if (it.all { char -> char.isDigit() }) points = it },
+                        placeholder = "* Количество баллов по умолчанию",
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
@@ -179,7 +189,7 @@ fun CreateRoleScreen(component: CreateRoleComponent) {
                         text = if (isLoading) "Создание..." else "Создать роль",
                         onClick = {
                             if (!isLoading) {
-                                screenModel.createRole(title, description, selectedSector?.id)
+                                screenModel.createRole(title, description, selectedSector?.id, points)
                             }
                         },
                         modifier = Modifier.fillMaxWidth()

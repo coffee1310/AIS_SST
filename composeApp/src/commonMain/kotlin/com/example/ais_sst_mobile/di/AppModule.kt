@@ -58,8 +58,8 @@ val appModule = module {
     factory { EditRoleScreenModel(get(), get()) }
     factory { CoordinatorHomeScreenModel(get(), get()) }
     factory { UpcomingEventDetailsScreenModel(get()) }
-    factory { EventDetailsScreenModel(get()) }
-    factory { CreateEventScreenModel(get(), get()) }
+    factory { EventDetailsScreenModel(get(), get()) }
+    factory { CreateEventScreenModel(get(), get(), get()) }
 }
 
 private var isKoinInitialized = false

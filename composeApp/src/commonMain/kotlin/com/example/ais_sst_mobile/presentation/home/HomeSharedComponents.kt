@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -105,7 +106,13 @@ fun EventCard(
                                 color = Color(0xFFA28BFF).copy(0.7f),
                                 shape = MaterialTheme.shapes.medium
                             )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.5f),
+                                shape = MaterialTheme.shapes.medium
+                            )
                             .padding(horizontal = 12.dp, vertical = 6.dp),
+
                         contentAlignment = Alignment.Center
                     ) {
                         Text(

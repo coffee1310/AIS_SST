@@ -21,6 +21,7 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 
 class DictionaryRepositoryImpl(
     private val httpClient: HttpClient
@@ -40,22 +41,36 @@ class DictionaryRepositoryImpl(
         val response = httpClient.get("group").body<GroupsResponseWrapper>()
         response.data.map { it.toDomain() }
     }
+
     override suspend fun getEventRoles(): Result<List<EventGlobalRoleDto>> = runCatching {
         httpClient.get("roles").body()
     }
+
     override suspend fun getEventRoleById(id: Int): Result<EventGlobalRoleDto> = runCatching {
         httpClient.get("roles/$id").body<EventGlobalRoleDto>()
     }
+
     override suspend fun createEventRole(request: CreateRoleRequestDto): Result<EventGlobalRoleDto> = runCatching {
-        httpClient.post("roles") {
+        val response = httpClient.post("roles") {
             contentType(ContentType.Application.Json)
             setBody(request)
-        }.body()
+        }
+        if (response.status.isSuccess()) {
+            response.body<EventGlobalRoleDto>()
+        } else {
+            throw Exception("Ошибка сервера (${response.status.value}). Роль не создана.")
+        }
     }
+
     override suspend fun updateEventRole(id: Int, request: CreateRoleRequestDto): Result<EventGlobalRoleDto> = runCatching {
-        httpClient.put("roles/$id") {
+        val response = httpClient.put("roles/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
-        }.body()
+        }
+        if (response.status.isSuccess()) {
+            response.body<EventGlobalRoleDto>()
+        } else {
+            throw Exception("Ошибка сервера (${response.status.value}). Роль не обновлена.")
+        }
     }
 }

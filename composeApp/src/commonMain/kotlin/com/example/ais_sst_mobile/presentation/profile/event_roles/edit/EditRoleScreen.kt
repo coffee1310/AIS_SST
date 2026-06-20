@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.ais_sst_mobile.navigation.EditRoleComponent
@@ -31,6 +32,7 @@ fun EditRoleScreen(component: EditRoleComponent) {
 
     val title by screenModel.title.collectAsState()
     val description by screenModel.description.collectAsState()
+    val points by screenModel.points.collectAsState()
     val selectedSector by screenModel.selectedSector.collectAsState()
 
     val isLoading by screenModel.isLoading.collectAsState()
@@ -150,6 +152,15 @@ fun EditRoleScreen(component: EditRoleComponent) {
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        CustomTextField(
+                            value = points,
+                            onValueChange = { if (it.all { char -> char.isDigit() }) screenModel.points.value = it },
+                            placeholder = "* Количество баллов по умолчанию",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next)
+                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
 

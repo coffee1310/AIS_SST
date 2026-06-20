@@ -34,6 +34,7 @@ class EditRoleScreenModel(
     // Поля данных роли
     val title = MutableStateFlow("")
     val description = MutableStateFlow("")
+    val points = MutableStateFlow("")
     val selectedSector = MutableStateFlow<SectorDto?>(null)
 
     private val _effect = Channel<EditRoleEffect>()
@@ -53,6 +54,7 @@ class EditRoleScreenModel(
                         .onSuccess { role ->
                             title.value = role.title
                             description.value = role.description ?: ""
+                            points.value = role.defaultPoints?.toString() ?: ""
                             selectedSector.value = sectorList.firstOrNull { it.id == role.sectorId }
                             _isScreenLoading.value = false
                         }
@@ -71,6 +73,7 @@ class EditRoleScreenModel(
     fun saveChanges(roleId: Int) {
         val currentTitle = title.value
         val currentDescription = description.value
+        val currentPoints = points.value.toIntOrNull()
         val currentSector = selectedSector.value
 
         if (currentTitle.isBlank()) {
@@ -81,6 +84,10 @@ class EditRoleScreenModel(
             showError("Выберите сектор!")
             return
         }
+        if (currentPoints == null) {
+            showError("Укажите корректное количество баллов!")
+            return
+        }
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -88,7 +95,8 @@ class EditRoleScreenModel(
                 title = currentTitle.trim(),
                 description = currentDescription.trim(),
                 sectorId = currentSector.id,
-                isDefaultRole = true
+                isDefaultRole = true,
+                defaultPoints = currentPoints
             )
 
             dictionaryRepository.updateEventRole(roleId, request)

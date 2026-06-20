@@ -97,6 +97,12 @@ fun MainScreen(component: MainComponent) {
                 showBackButton = true
                 onBackClick = { homeActive.component.onGoBack() }
             }
+            // Добавили заголовок и кнопку назад для Координаторского окна
+            is HomeComponent.Child.CoordinatorEventDetails -> {
+                title = "Мероприятие"
+                showBackButton = true
+                onBackClick = { homeActive.component.onGoBack() }
+            }
             else -> {
                 title = "Главная"
             }

@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.ais_sst_mobile.data.network.dto.CreateEventRequestDto
 import com.example.ais_sst_mobile.data.network.dto.CreateEventRoleRequestDto
 import com.example.ais_sst_mobile.data.network.dto.RoleDto
+import com.example.ais_sst_mobile.data.network.dto.SectorDto
 import com.example.ais_sst_mobile.data.network.dto.UserProfileDto
 import com.example.ais_sst_mobile.domain.repository.EventsRepository
+import com.example.ais_sst_mobile.domain.repository.SectorsRepository
 import com.example.ais_sst_mobile.domain.repository.UserRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -14,10 +16,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import io.ktor.util.encodeBase64
+
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class CreateEventScreenModel(
     private val userRepository: UserRepository,
-    private val eventsRepository: EventsRepository
+    private val eventsRepository: EventsRepository,
+    private val sectorsRepository: SectorsRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -37,6 +41,9 @@ class CreateEventScreenModel(
     private val _globalRoles = MutableStateFlow<List<RoleDto>>(emptyList())
     val globalRoles = _globalRoles.asStateFlow()
 
+    private val _sectors = MutableStateFlow<List<SectorDto>>(emptyList())
+    val sectors = _sectors.asStateFlow()
+
     private val _eventPhotoBase64 = MutableStateFlow<String?>(null)
     val eventPhotoBase64 = _eventPhotoBase64.asStateFlow()
 
@@ -46,11 +53,12 @@ class CreateEventScreenModel(
     private val _effect = Channel<CreateEventEffect>()
     val effect = _effect.receiveAsFlow()
 
-    init { loadGlobalRoles() }
+    init { loadDictionaries() }
 
-    private fun loadGlobalRoles() {
+    private fun loadDictionaries() {
         viewModelScope.launch {
             eventsRepository.getGlobalRoles().onSuccess { _globalRoles.value = it }
+            sectorsRepository.getSectors().onSuccess { _sectors.value = it }
         }
     }
 
@@ -76,41 +84,84 @@ class CreateEventScreenModel(
         venue: String,
         isPublic: Boolean,
         isDraft: Boolean,
+        isFreeEvent: Boolean,
+        maxParticipantsStr: String,
+        selectedSectorIds: Set<Int>,
         roles: List<RoleUiModel>
     ) {
         if (title.isBlank() || venue.isBlank() || date.length != 8 || startTime.length != 4 || endTime.length != 4) {
             showError("Пожалуйста, корректно заполните все обязательные поля со звездочкой (*)")
             return
         }
+        if (description.isBlank()) {
+            showError("Пожалуйста, добавьте описание мероприятия")
+            return
+        }
         if (_eventPhotoBase64.value == null) {
             showError("Пожалуйста, прикрепите обложку (фото) мероприятия!")
             return
         }
-
         if (!isValidTime(startTime) || !isValidTime(endTime)) {
             showError("Некорректное время начала или конца мероприятия")
             return
         }
 
+        // ДОБАВЛЕННАЯ ПРОВЕРКА: Конец не может быть раньше начала
+        if (startTime.toInt() >= endTime.toInt()) {
+            showError("Время окончания должно быть позже времени начала")
+            return
+        }
+
+        if (isFreeEvent && !isPublic && selectedSectorIds.isEmpty()) {
+            showError("Для закрытого свободного мероприятия выберите хотя бы один доступный сектор")
+            return
+        }
+
+        // Фильтруем "настоящие" роли (убираем карточку заявки организатора)
         val customRoles = roles.filter { !it.isOrganizer }
 
-        val unselectedRole = customRoles.find { it.globalRoleId == null }
+        val unselectedRole = customRoles.find { it.globalRoleId == null && !it.isDeleted }
         if (unselectedRole != null) {
             val roleName = unselectedRole.name.ifBlank { "Новая роль" }
-            showError("Пожалуйста, выберите роль «$roleName» из выпадающего списка, чтобы привязать её к сектору!")
+            showError("Пожалуйста, выберите роль «$roleName» из списка, чтобы привязать её к сектору!")
             return
         }
 
         for (role in customRoles) {
+            if (role.isDeleted) continue
             if (role.deadlineDate.length != 8 || !isValidTime(role.deadlineTime) || role.peopleCount.isBlank()) {
                 showError("Пожалуйста, корректно заполните дедлайны и количество людей для роли «${role.name}»")
                 return
             }
         }
 
+        // --- ВЫЧИСЛЕНИЯ ПАРАМЕТРОВ ---
+
+        val maxOrganizersCount = _selectedOrganizers.value.size +
+                roles.filter { it.isOrganizer && !it.isDeleted }.sumOf { it.peopleCount.toIntOrNull() ?: 1 }
+
+        val maxParticipantsCount = if (isFreeEvent) {
+            maxParticipantsStr.toIntOrNull() ?: 0 // 0 = без ограничений
+        } else null
+
+        // Собираем ID секторов из добавленных ролей
+        val roleSectorIds = roles
+            .filter { !it.isOrganizer && !it.isDeleted && it.globalRoleId != null }
+            .mapNotNull { role ->
+                // Ищем сектор ID в загруженном словаре глобальных ролей
+                _globalRoles.value.find { it.id == role.globalRoleId }?.sectorId
+            }
+
+        // ИСПРАВЛЕНИЕ ЗДЕСЬ: Объединяем ручной выбор (если есть) с секторами из ролей.
+        // distinct() уберет дубликаты, если одна роль принадлежит тому же сектору, что и другая.
+        val finalSectorIds = if (!isPublic) {
+            (selectedSectorIds.toList() + roleSectorIds).distinct()
+        } else {
+            emptyList()
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
-
 
             val formattedDate = "${date.substring(4, 8)}-${date.substring(2, 4)}-${date.substring(0, 2)}"
             val formattedStartTime = "${formattedDate}T${startTime.substring(0, 2)}:${startTime.substring(2, 4)}:00"
@@ -124,24 +175,38 @@ class CreateEventScreenModel(
                 startTime = formattedStartTime,
                 endTime = formattedEndTime,
                 venue = venue,
+                organizerIds = emptyList(), // Организаторов добавим потом
+                referenceToPosition = "",
                 isPublic = isPublic,
                 isDraft = isDraft,
-                organizerIds = emptyList(),
-                referenceToPosition = "",
+                isFreeEvent = isFreeEvent,
+                maxParticipantsCount = maxParticipantsCount,
+                maxOrganizersCount = maxOrganizersCount,
+                sectorIds = finalSectorIds
             )
 
             eventsRepository.createEvent(eventRequest).fold(
                 onSuccess = { createdEvent ->
-
                     var hasErrors = false
 
                     for (org in _selectedOrganizers.value) {
                         val orgResult = eventsRepository.addOrganizer(createdEvent.id, org.id)
-                        if (orgResult.isFailure) {
+                        if (orgResult.isFailure) hasErrors = true
+                    }
+
+                    // Создаем заявку на организатора (пустой POST запрос по нужному URL)
+                    val organizerRole = roles.find { it.isOrganizer && !it.isDeleted }
+                    if (organizerRole != null) {
+                        val orgAppResult = eventsRepository.createOrganizerApplication(createdEvent.id)
+                        if (orgAppResult.isFailure) {
+                            hasErrors = true
+                            showError("Ошибка при открытии заявки на организатора.")
                         }
                     }
 
                     for (role in customRoles) {
+                        if (role.isDeleted) continue
+
                         val roleDeadlineDate = "${role.deadlineDate.substring(4, 8)}-${role.deadlineDate.substring(2, 4)}-${role.deadlineDate.substring(0, 2)}"
                         val roleDeadline = "${roleDeadlineDate}T${role.deadlineTime.substring(0, 2)}:${role.deadlineTime.substring(2, 4)}:00"
 
@@ -155,12 +220,10 @@ class CreateEventScreenModel(
                         )
 
                         val roleResult = eventsRepository.createEventRole(roleRequest)
-
                         if (roleResult.isFailure) {
                             hasErrors = true
                             showError("Ошибка при создании роли «${role.name}».")
                             break
-                        } else {
                         }
                     }
 

@@ -28,6 +28,8 @@ import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.preat.peekaboo.image.picker.toImageBitmap
 import io.ktor.util.decodeBase64Bytes
 import org.koin.compose.getKoin
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun SectorDetailsScreen(component: SectorDetailsComponent) {
@@ -35,6 +37,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
     val screenModel = remember { koin.get<SectorDetailsScreenModel>() }
     val state by screenModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         screenModel.effect.collect { message ->
@@ -370,7 +373,7 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                                 if (isCuratorOrChairman) {
                                     CustomButton(
                                         text = "Удалить сектор",
-                                        onClick = { /* TODO */ },
+                                        onClick = { showDeleteDialog = true },
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = Color.Transparent,
@@ -394,7 +397,97 @@ fun SectorDetailsScreen(component: SectorDetailsComponent) {
                         CustomSnackbar(snackbarData = snackbarData)
                     }
                 )
+                if (showDeleteDialog) {
+                    DeleteSectorDialog(
+                        onDismiss = { showDeleteDialog = false },
+                        onConfirm = {
+                            showDeleteDialog = false
+                            screenModel.deactivateSector(sector.id) {
+                                component.onGoBack()
+                            }
+                        }
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+fun DeleteSectorDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+
+            Dialog(
+                onDismissRequest = onDismiss,
+                properties = DialogProperties(
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = true
+                )
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.background,
+                    border = BorderStroke(0.3.dp, MaterialTheme.colorScheme.outline),
+                    shadowElevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Удаление сектора",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(Modifier.height(16.dp))
+
+                        Text(
+                            text = "Вы уверены, что хотите удалить этот сектор? Он будет недоступен для активистов",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(Modifier.height(24.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.weight(1f).height(44.dp),
+                                shape = MaterialTheme.shapes.small,
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                            ) {
+                                Text(
+                                    text = "Отмена",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
+                            OutlinedButton(
+                                onClick = onConfirm,
+                                modifier = Modifier.weight(1f).height(44.dp),
+                                shape = MaterialTheme.shapes.small,
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                            ) {
+                                Text(
+                                    text = "Удалить",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp),
+                                    color = MaterialTheme.colorScheme.onSecondary,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 }

@@ -5,10 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.ais_sst_mobile.domain.model.Event
 import com.example.ais_sst_mobile.domain.repository.EventsRepository
 import com.example.ais_sst_mobile.domain.repository.UserRepository
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+
+sealed interface CoordinatorHomeEffect {
+    data class ShowSnackbar(val message: String) : CoordinatorHomeEffect
+}
 
 sealed interface CoordinatorEventsState {
     data object Loading : CoordinatorEventsState
@@ -30,8 +36,18 @@ class CoordinatorHomeScreenModel(
     private val _state = MutableStateFlow<CoordinatorEventsState>(CoordinatorEventsState.Loading)
     val state: StateFlow<CoordinatorEventsState> = _state.asStateFlow()
 
+    private val _effect = Channel<CoordinatorHomeEffect>()
+    val effect = _effect.receiveAsFlow()
+
     init {
         loadDashboard()
+
+        // Проверяем, было ли только что удалено мероприятие
+        if (eventsRepository.getAndClearDeletedEventSignal()) {
+            viewModelScope.launch {
+                _effect.send(CoordinatorHomeEffect.ShowSnackbar("Мероприятие успешно удалено"))
+            }
+        }
     }
 
     fun selectTab(index: Int) { _selectedTab.value = index }

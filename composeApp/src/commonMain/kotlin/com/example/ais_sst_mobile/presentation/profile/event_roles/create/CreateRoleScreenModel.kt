@@ -43,7 +43,7 @@ class CreateRoleScreenModel(
         }
     }
 
-    fun createRole(title: String, description: String, sectorId: Int?) {
+    fun createRole(title: String, description: String, sectorId: Int?, points: String) {
         if (title.isBlank()) {
             showError("Название роли обязательно!")
             return
@@ -53,13 +53,20 @@ class CreateRoleScreenModel(
             return
         }
 
+        val pointsInt = points.toIntOrNull()
+        if (pointsInt == null) {
+            showError("Укажите корректное количество баллов!")
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             val request = CreateRoleRequestDto(
                 title = title.trim(),
                 description = description.trim(),
                 sectorId = sectorId,
-                isDefaultRole = true
+                isDefaultRole = true,
+                defaultPoints = pointsInt
             )
 
             dictionaryRepository.createEventRole(request)

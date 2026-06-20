@@ -133,4 +133,10 @@ class SectorsRepositoryImpl(
             throw Exception(errorMessage)
         }
     }
+    override suspend fun deactivateSector(id: Int): Result<Unit> = runCatching {
+        val response = httpClient.delete("sector/deactivate/$id")
+        if (!response.status.isSuccess()) {
+            throw Exception("Ошибка при удалении сектора: ${response.status.value}")
+        }
+    }
 }

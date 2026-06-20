@@ -47,7 +47,7 @@ fun UpcomingEventsScreen(component: UpcomingEventsComponent) {
 
                 if (events.isEmpty()) {
                     Text(
-                        text = "Ближайших мероприятий пока нет.",
+                        text = "Ближайших мероприятий нет",
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.align(Alignment.Center)
                     )

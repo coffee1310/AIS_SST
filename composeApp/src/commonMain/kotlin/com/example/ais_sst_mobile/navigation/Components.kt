@@ -256,7 +256,10 @@ class HomeComponent(
                 CoordinatorEventDetailsComponent(
                     componentContext = context,
                     eventId = config.eventId,
-                    onGoBack = { navigation.pop() }
+                    onGoBack = { navigation.pop() },
+                    onNavigateToActivistProfile = { userId ->
+                        onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
+                    }
                 )
             )
         }
@@ -314,7 +317,8 @@ class CreateEventComponent(
 class CoordinatorEventDetailsComponent(
     componentContext: ComponentContext,
     val eventId: Int,
-    val onGoBack: () -> Unit
+    val onGoBack: () -> Unit,
+    val onNavigateToActivistProfile: (Int) -> Unit
 ) : ComponentContext by componentContext
 
 class RatingComponent(

@@ -1,14 +1,19 @@
 package com.example.ais_sst_mobile.presentation.events.create
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,6 +21,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +33,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -56,6 +63,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.getKoin
 
 data class RoleUiModel(
+    val id: Int = kotlin.random.Random.nextInt(), // Уникальный ID для анимации
     val name: String = "",
     val tasks: String = "",
     val deadlineDate: String = "",
@@ -67,6 +75,7 @@ data class RoleUiModel(
     val isOrganizer: Boolean = false,
     val isGlobalSelected: Boolean = false,
     val isExpanded: Boolean = true,
+    val isDeleted: Boolean = false, // Флаг для красивого скрытия
     val globalRoleId: Int? = null
 )
 
@@ -114,16 +123,28 @@ fun CreateEventScreen(component: CreateEventComponent) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Поля основной информации
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
     var startTime by remember { mutableStateOf("") }
     var endTime by remember { mutableStateOf("") }
     var venue by remember { mutableStateOf("") }
+
+    // Тогглы доступа
     var isPublic by remember { mutableStateOf(true) }
     var isFree by remember { mutableStateOf(false) }
     var isDraft by remember { mutableStateOf(false) }
+
+    // Новые поля для Свободного мероприятия
+    var maxParticipants by remember { mutableStateOf("") }
+    var selectedSectorIds by remember { mutableStateOf(setOf<Int>()) }
+    var expandedSectorsMenu by remember { mutableStateOf(false) }
+    var isParticipantExpanded by remember { mutableStateOf(true) }
+
     var roles by remember { mutableStateOf(listOf(RoleUiModel())) }
+
     var showDatePicker by remember { mutableStateOf(false) }
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
@@ -135,6 +156,7 @@ fun CreateEventScreen(component: CreateEventComponent) {
     val filteredActivists by screenModel.filteredActivists.collectAsState()
     val selectedOrganizers by screenModel.selectedOrganizers.collectAsState()
     val globalRoles by screenModel.globalRoles.collectAsState()
+    val sectors by screenModel.sectors.collectAsState()
     val isLoading by screenModel.isLoading.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -143,6 +165,14 @@ fun CreateEventScreen(component: CreateEventComponent) {
                 is CreateEventEffect.NavigateBack -> component.onGoBack()
                 is CreateEventEffect.ShowError -> snackbarHostState.showSnackbar(effect.message)
             }
+        }
+    }
+
+    val selectedSectorsText = remember(selectedSectorIds, sectors) {
+        if (selectedSectorIds.isEmpty()) {
+            "Без ограничений (Все сектора)"
+        } else {
+            sectors.filter { it.id in selectedSectorIds }.joinToString(", ") { it.title }
         }
     }
 
@@ -521,7 +551,7 @@ fun CreateEventScreen(component: CreateEventComponent) {
                         }
                     }
 
-                    val hasOrganizerRole = roles.any { it.isOrganizer }
+                    val hasOrganizerRole = roles.any { it.isOrganizer && !it.isDeleted }
                     if (!hasOrganizerRole) {
                         Text(
                             text = "+ Создать заявку на организатора",
@@ -530,7 +560,12 @@ fun CreateEventScreen(component: CreateEventComponent) {
                             modifier = Modifier
                                 .padding(top = 8.dp)
                                 .clickable {
-                                    roles = roles + RoleUiModel(name = "Организатор", isOrganizer = true, isGlobalSelected = true)
+                                    // Добавляем организатора, баллы больше не нужны
+                                    roles = roles + RoleUiModel(
+                                        name = "Организатор",
+                                        isOrganizer = true,
+                                        isGlobalSelected = true
+                                    )
                                 }
                         )
                     }
@@ -613,22 +648,134 @@ fun CreateEventScreen(component: CreateEventComponent) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                         Text("Роли и задачи", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.width(12.dp))
+
+                        val totalRolesCount = roles.count { !it.isDeleted } + if (isFree) 1 else 0
                         Box(modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape).padding(horizontal = 10.dp, vertical = 4.dp)) {
-                            Text(getRolePlural(roles.size), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary)
+                            Text(getRolePlural(totalRolesCount), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
 
+                    // Карточка встроенной роли "Участник" для свободного мероприятия
+                    AnimatedVisibility(visible = isFree) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
+                                .animateContentSize()
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                    Text(
+                                        text = "Участник",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    IconButton(
+                                        onClick = { isParticipantExpanded = !isParticipantExpanded },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isParticipantExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Свернуть/Развернуть"
+                                        )
+                                    }
+                                }
+
+                                AnimatedVisibility(visible = isParticipantExpanded) {
+                                    Column {
+                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                        CustomTextField(
+                                            value = maxParticipants,
+                                            onValueChange = { if (it.all { char -> char.isDigit() }) maxParticipants = it },
+                                            placeholder = "* Макс. количество (0 - без ограничений)",
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next)
+                                        )
+
+                                        AnimatedVisibility(visible = !isPublic) {
+                                            Column(modifier = Modifier.padding(top = 12.dp)) {
+                                                ExposedDropdownMenuBox(
+                                                    expanded = expandedSectorsMenu,
+                                                    onExpandedChange = { expandedSectorsMenu = !expandedSectorsMenu }
+                                                ) {
+                                                    CustomTextField(
+                                                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                                        value = selectedSectorsText,
+                                                        onValueChange = {},
+                                                        readOnly = true,
+                                                        placeholder = "  Доступно для секторов",
+                                                        trailingIcon = {
+                                                            val icon = if (expandedSectorsMenu) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown
+                                                            Icon(icon, null, tint = MaterialTheme.colorScheme.secondary)
+                                                        },
+                                                    )
+
+                                                    ExposedDropdownMenu(
+                                                        expanded = expandedSectorsMenu,
+                                                        onDismissRequest = { expandedSectorsMenu = false }
+                                                    ) {
+                                                        sectors.forEach { sector ->
+                                                            val isSelected = selectedSectorIds.contains(sector.id)
+                                                            DropdownMenuItem(
+                                                                text = {
+                                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                        Checkbox(
+                                                                            checked = isSelected,
+                                                                            onCheckedChange = null,
+                                                                            colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.secondary)
+                                                                        )
+                                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                                        Text(
+                                                                            text = sector.title,
+                                                                            style = MaterialTheme.typography.labelMedium,
+                                                                            color = MaterialTheme.colorScheme.onSurface
+                                                                        )
+                                                                    }
+                                                                },
+                                                                onClick = {
+                                                                    selectedSectorIds = if (isSelected) {
+                                                                        selectedSectorIds - sector.id
+                                                                    } else {
+                                                                        selectedSectorIds + sector.id
+                                                                    }
+                                                                }
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } // End inner Column
+                                } // End AnimatedVisibility
+                            } // End Column padding 16
+                        } // End Card
+                    } // End AnimatedVisibility isFree
+
                     roles.forEachIndexed { index, role ->
-                        RoleCard(
-                            role = role,
-                            globalRolesList = globalRoles,
-                            tealAccent = MaterialTheme.colorScheme.secondary,
-                            onRoleChange = { updatedRole -> roles = roles.toMutableList().apply { this[index] = updatedRole } },
-                            onRemove = { roles = roles.filterIndexed { i, _ -> i != index } },
-                            onDateClick = { activeRoleDateIndex = index },
-                            onTimeClick = { activeRoleTimeIndex = index }
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        androidx.compose.runtime.key(role.id) {
+                            AnimatedVisibility(
+                                visible = !role.isDeleted,
+                                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
+                                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()
+                            ) {
+                                Column {
+                                    RoleCard(
+                                        role = role,
+                                        globalRolesList = globalRoles,
+                                        tealAccent = MaterialTheme.colorScheme.secondary,
+                                        onRoleChange = { updatedRole -> roles = roles.toMutableList().apply { this[index] = updatedRole } },
+                                        onRemove = { roles = roles.toMutableList().apply { this[index] = this[index].copy(isDeleted = true) } },
+                                        onDateClick = { activeRoleDateIndex = index },
+                                        onTimeClick = { activeRoleTimeIndex = index }
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
+                            }
+                        }
                     }
 
                     val dashColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
@@ -669,7 +816,10 @@ fun CreateEventScreen(component: CreateEventComponent) {
                                     venue = venue,
                                     isPublic = isPublic,
                                     isDraft = isDraft,
-                                    roles = roles
+                                    isFreeEvent = isFree,
+                                    maxParticipantsStr = maxParticipants,
+                                    selectedSectorIds = selectedSectorIds,
+                                    roles = roles.filter { !it.isDeleted }
                                 )
                             }
                         },
@@ -772,6 +922,29 @@ fun RoleCard(
                         textAlign = TextAlign.Center
                     )
 
+                    if (info.defaultPoints != null) {
+                        Spacer(Modifier.height(12.dp))
+                        val pointsText = when {
+                            info.defaultPoints % 100 in 11..14 -> "${info.defaultPoints} баллов"
+                            info.defaultPoints % 10 == 1 -> "${info.defaultPoints} балл"
+                            info.defaultPoints % 10 in 2..4 -> "${info.defaultPoints} балла"
+                            else -> "${info.defaultPoints} баллов"
+                        }
+                        Box(
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
+                                .border(BorderStroke(0.5.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "Вознаграждение: $pointsText",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.secondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+
                     Spacer(Modifier.height(8.dp))
 
                     Text(
@@ -800,7 +973,8 @@ fun RoleCard(
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().animateContentSize()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -866,7 +1040,8 @@ fun RoleCard(
                                                     name = globalRole.title,
                                                     isGlobalSelected = true,
                                                     sector = globalRole.sectorTitle ?: "Нет сектора",
-                                                    globalRoleId = globalRole.id
+                                                    globalRoleId = globalRole.id,
+                                                    points = globalRole.defaultPoints?.toString() ?: ""
                                                 )
                                             )
                                         }
@@ -902,77 +1077,88 @@ fun RoleCard(
 
             AnimatedVisibility(visible = role.isExpanded) {
                 Column(modifier = Modifier.padding(top = 16.dp)) {
-                    OutlinedTextField(
-                        value = role.tasks,
-                        onValueChange = { onRoleChange(role.copy(tasks = it)) },
-                        placeholder = { Text("  Задачи", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                        maxLines = 4,
-                        textStyle = MaterialTheme.typography.bodyLarge,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = glassBg,
-                            unfocusedContainerColor = glassBg,
-                            focusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            cursorColor = MaterialTheme.colorScheme.primary
-                        ),
-                        shape = MaterialTheme.shapes.medium
-                    )
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        CustomTextField(
-                            value = role.deadlineDate,
-                            onValueChange = { if (it.length <= 8 && it.all { char -> char.isDigit() }) onRoleChange(role.copy(deadlineDate = it)) },
-                            placeholder = "* Дедлайн (дата)",
-                            modifier = Modifier.weight(1f),
-                            trailingIcon = {
-                                IconButton(onClick = onDateClick) {
-                                    Icon(Icons.Outlined.CalendarToday, "Выбрать дату", tint = tealAccent, modifier = Modifier.size(20.dp))
-                                }
-                            },
-                            visualTransformation = DateTransformation(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    // Задачи и дедлайны показываем ТОЛЬКО для обычных ролей
+                    if (!role.isOrganizer) {
+                        OutlinedTextField(
+                            value = role.tasks,
+                            onValueChange = { onRoleChange(role.copy(tasks = it)) },
+                            placeholder = { Text("  Задачи", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3,
+                            maxLines = 4,
+                            textStyle = MaterialTheme.typography.bodyLarge,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = glassBg,
+                                unfocusedContainerColor = glassBg,
+                                focusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                cursorColor = MaterialTheme.colorScheme.primary
+                            ),
+                            shape = MaterialTheme.shapes.medium
                         )
 
-                        CustomTextField(
-                            value = role.deadlineTime,
-                            onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) onRoleChange(role.copy(deadlineTime = it)) },
-                            placeholder = "* Дедлайн (время)",
-                            modifier = Modifier.weight(1f),
-                            trailingIcon = {
-                                IconButton(onClick = onTimeClick) {
-                                    Icon(Icons.Outlined.Schedule, "Выбрать время", tint = tealAccent, modifier = Modifier.size(20.dp))
-                                }
-                            },
-                            visualTransformation = TimeTransformation(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            CustomTextField(
+                                value = role.deadlineDate,
+                                onValueChange = { if (it.length <= 8 && it.all { char -> char.isDigit() }) onRoleChange(role.copy(deadlineDate = it)) },
+                                placeholder = "* Дедлайн (дата)",
+                                modifier = Modifier.weight(1f),
+                                trailingIcon = {
+                                    IconButton(onClick = onDateClick) {
+                                        Icon(Icons.Outlined.CalendarToday, "Выбрать дату", tint = tealAccent, modifier = Modifier.size(20.dp))
+                                    }
+                                },
+                                visualTransformation = DateTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            )
+
+                            CustomTextField(
+                                value = role.deadlineTime,
+                                onValueChange = { if (it.length <= 4 && it.all { char -> char.isDigit() }) onRoleChange(role.copy(deadlineTime = it)) },
+                                placeholder = "* Дедлайн (время)",
+                                modifier = Modifier.weight(1f),
+                                trailingIcon = {
+                                    IconButton(onClick = onTimeClick) {
+                                        Icon(Icons.Outlined.Schedule, "Выбрать время", tint = tealAccent, modifier = Modifier.size(20.dp))
+                                    }
+                                },
+                                visualTransformation = TimeTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
+                    // Поле количества показывается всегда
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         CustomTextField(
                             value = role.peopleCount,
                             onValueChange = { onRoleChange(role.copy(peopleCount = it)) },
-                            placeholder = "* Кол-во людей",
+                            placeholder = if (role.isOrganizer) "* Количество организаторов" else "* Кол-во людей",
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
                         )
-                        CustomTextField(
-                            value = role.points,
-                            onValueChange = { onRoleChange(role.copy(points = it)) },
-                            placeholder = "* Кол-во баллов",
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
+
+                        // Поле баллов показываем ТОЛЬКО для обычных ролей
+                        if (!role.isOrganizer) {
+                            CustomTextField(
+                                value = role.points,
+                                onValueChange = { },
+                                readOnly = true,
+                                placeholder = "Кол-во баллов",
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
 
+                    // Резерв и Сектор показываем ТОЛЬКО для обычных ролей
                     if (!role.isOrganizer) {
                         Spacer(modifier = Modifier.height(12.dp))
                         CustomTextField(

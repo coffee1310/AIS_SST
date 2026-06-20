@@ -101,7 +101,6 @@ class LoginScreenModel(
         _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     }
 
-
     fun refreshCaptcha(clearError: Boolean = true) {
         val chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"
         _currentCaptcha.value = (1..6).map { chars.random() }.joinToString("")
@@ -126,7 +125,6 @@ class LoginScreenModel(
         failedAttempts = 0
     }
 
-
     fun login() {
         val currentUiState = _uiState.value
 
@@ -139,14 +137,17 @@ class LoginScreenModel(
             return
         }
 
+        // Универсальная ошибка для любого неверного ввода
+        val universalErrorMsg = "Неверный логин или пароль"
+
         if (domain == "@edu.fa.ru" && loginId.length != 6) {
-            _screenState.value = ScreenState.Error("Номер студенческого должен состоять из 6 цифр")
+            _screenState.value = ScreenState.Error(universalErrorMsg)
             return
         }
 
         val passwordRegex = Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$")
         if (!passwordRegex.matches(pass)) {
-            _screenState.value = ScreenState.Error("Пароль: от 8 символов (A-Z, a-z, цифры, спецсимволы)")
+            _screenState.value = ScreenState.Error(universalErrorMsg)
             return
         }
 

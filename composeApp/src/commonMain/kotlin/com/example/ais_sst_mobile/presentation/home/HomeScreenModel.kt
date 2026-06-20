@@ -45,13 +45,28 @@ class HomeScreenModel(
 
     private fun loadData() {
         viewModelScope.launch {
-
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val nextWeek = today.plus(DatePeriod(days = 7))
 
             val upcomingDeferred = async {
-                eventsRepository.getUpcomingEvents(today.toString(), nextWeek.toString())
+                // Сначала ищем в ближайшие 7 дней
+                val firstTry = eventsRepository.getUpcomingEvents(today.toString(), nextWeek.toString())
+
+                if (firstTry.isSuccess && firstTry.getOrDefault(emptyList()).isEmpty()) {
+                    // Если в ближайшие 7 дней пусто, берем горизонт в 1 год и оставляем только 1 самое ближайшее
+                    val farFuture = today.plus(DatePeriod(years = 1))
+                    val secondTry = eventsRepository.getUpcomingEvents(today.toString(), farFuture.toString())
+
+                    if (secondTry.isSuccess) {
+                        Result.success(secondTry.getOrDefault(emptyList()).take(1))
+                    } else {
+                        secondTry
+                    }
+                } else {
+                    firstTry
+                }
             }
+
             val availableDeferred = async {
                 eventsRepository.getAvailableEvents()
             }

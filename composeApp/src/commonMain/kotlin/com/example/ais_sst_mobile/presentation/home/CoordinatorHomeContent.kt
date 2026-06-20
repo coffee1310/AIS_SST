@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.FlashOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
@@ -38,6 +40,16 @@ fun CoordinatorHomeContent(onNavigateToCreateEvent: () -> Unit,
     val selectedTab by screenModel.selectedTab.collectAsState()
     val searchQuery by screenModel.searchQuery.collectAsState()
     val focusManager = LocalFocusManager.current
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        screenModel.effect.collect { effect ->
+            when (effect) {
+                is CoordinatorHomeEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+            }
+        }
+    }
 
     val coordinatorTabs = listOf(
         Pair("Мероприятия", Icons.Outlined.Event),
@@ -147,6 +159,17 @@ fun CoordinatorHomeContent(onNavigateToCreateEvent: () -> Unit,
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 90.dp), // Отступ, чтобы быть выше кнопки "+"
+            snackbar = { snackbarData ->
+                CustomSnackbar(snackbarData = snackbarData)
+            }
+        )
 
         Box(
             modifier = Modifier

@@ -60,10 +60,9 @@ fun LoginScreen(component: LoginComponent) {
 
     val focusManager = LocalFocusManager.current
 
-    val passwordRegex = remember { Regex("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$") }
-
-    val isLoginError = uiState.domain == "@edu.fa.ru" && uiState.login.isNotEmpty() && uiState.login.length != 6
-    val isPasswordError = uiState.password.isNotEmpty() && !passwordRegex.matches(uiState.password)
+    // Локальные состояния для подсвечивания пустых полей при попытке входа
+    var emptyLoginError by remember { mutableStateOf(false) }
+    var emptyPasswordError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         screenModel.effect.collect { effect ->
@@ -110,13 +109,14 @@ fun LoginScreen(component: LoginComponent) {
                 modifier = contentModifier,
                 value = uiState.login,
                 onValueChange = { newValue ->
+                    emptyLoginError = false // Убираем ошибку, если пользователь начал печатать
                     if (newValue.length + uiState.domain.length <= 32) {
                         screenModel.updateLogin(newValue)
                     }
                 },
                 placeholder = if (uiState.domain == "@edu.fa.ru") "Номер студбилета" else "Логин",
-                isError = isLoginError,
-                errorMessage = if (isLoginError) "Студбилет должен состоять из 6 цифр" else null,
+                isError = emptyLoginError,
+                errorMessage = null,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = if (uiState.domain == "@edu.fa.ru") KeyboardType.Number else KeyboardType.Email,
                     imeAction = ImeAction.Next
@@ -165,18 +165,21 @@ fun LoginScreen(component: LoginComponent) {
                 modifier = contentModifier,
                 value = uiState.password,
                 onValueChange = { newValue ->
+                    emptyPasswordError = false // Убираем ошибку, если пользователь начал печатать
                     if (newValue.length <= 256) {
                         screenModel.updatePassword(newValue)
                     }
                 },
                 placeholder = "Пароль",
-                isError = isPasswordError,
-                errorMessage = if (isPasswordError) "От 8 символов: A-Z, a-z, цифры, спецсимволы" else null,
+                isError = emptyPasswordError,
+                errorMessage = null,
                 visualTransformation = if (uiState.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
+                        emptyLoginError = uiState.login.isBlank()
+                        emptyPasswordError = uiState.password.isBlank()
                         screenModel.login()
                     }
                 ),
@@ -206,11 +209,14 @@ fun LoginScreen(component: LoginComponent) {
                 isLoading = screenState is LoginScreenModel.ScreenState.Loading,
                 onClick = {
                     focusManager.clearFocus()
+                    emptyLoginError = uiState.login.isBlank()
+                    emptyPasswordError = uiState.password.isBlank()
                     screenModel.login()
                 },
                 modifier = contentModifier
             )
 
+            // Здесь выводится единая ошибка
             if (screenState is LoginScreenModel.ScreenState.Error) {
                 Text(
                     text = (screenState as LoginScreenModel.ScreenState.Error).message,

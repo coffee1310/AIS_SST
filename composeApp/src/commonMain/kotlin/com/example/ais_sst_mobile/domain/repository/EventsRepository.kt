@@ -17,4 +17,7 @@ interface EventsRepository {
     suspend fun addOrganizer(eventId: Int, userId: Int): Result<Unit>
     suspend fun createEventRole(request: CreateEventRoleRequestDto): Result<Unit>
     suspend fun getEventRoles(eventId: Int): Result<List<EventRoleDto>>
+    suspend fun createOrganizerApplication(eventId: Int): Result<Unit>
+    suspend fun deleteEvent(eventId: Int): Result<Unit>
+    fun getAndClearDeletedEventSignal(): Boolean
 }

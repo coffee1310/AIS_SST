@@ -10,13 +10,16 @@ data class EventGlobalRoleDto(
     val description: String,
     val sectorId: Int,
     val sectorTitle: String,
+    val defaultPoints: Int? = null, // Добавили поле баллов
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
+
 @Serializable
 data class CreateRoleRequestDto(
     val title: String,
     val description: String,
     @SerialName("sector_id") val sectorId: Int,
-    val isDefaultRole: Boolean = true
+    val isDefaultRole: Boolean,
+    val defaultPoints: Int // Добавили поле баллов
 )

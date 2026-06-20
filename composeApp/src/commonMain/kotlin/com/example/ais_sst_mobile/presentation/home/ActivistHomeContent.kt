@@ -125,16 +125,33 @@ fun ActivistHomeContent(
                                 }
                             }
 
-                            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                items(upcomingEvents) { event ->
-                                    val cardWidth = if (upcomingEvents.size == 1) Modifier.fillParentMaxWidth() else Modifier.fillParentMaxWidth(0.9f)
-
-                                    EventCard(
-                                        event = event,
-                                        isHorizontal = true,
-                                        modifier = cardWidth,
-                                        onClick = { onNavigateToUpcomingEventDetails(event.id) }
+                            if (upcomingEvents.isEmpty()) {
+                                // Если вообще нет предстоящих мероприятий
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Нет предстоящих мероприятий",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                        textAlign = TextAlign.Center
                                     )
+                                }
+                            } else {
+                                LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    items(upcomingEvents) { event ->
+                                        val cardWidth = if (upcomingEvents.size == 1) Modifier.fillParentMaxWidth() else Modifier.fillParentMaxWidth(0.9f)
+
+                                        EventCard(
+                                            event = event,
+                                            isHorizontal = true,
+                                            modifier = cardWidth,
+                                            onClick = { onNavigateToUpcomingEventDetails(event.id) }
+                                        )
+                                    }
                                 }
                             }
                             Spacer(modifier = Modifier.height(20.dp))
