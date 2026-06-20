@@ -64,6 +64,7 @@ public class EventParticipantService {
         log.info("User {} left event {}", userId, eventId);
     }
 
+
     @Transactional(readOnly = true)
     public List<EventParticipantResponseDTO> getEventParticipants(Long eventId) {
         getEventById(eventId);
