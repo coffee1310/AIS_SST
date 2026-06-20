@@ -27,12 +27,17 @@ namespace Diplom_Stud.Pages.Coordinator
         private static readonly HttpClient _httpClient = new HttpClient();
         private int _eventId;
         private string _newBase64Image = null;
+        private bool _isLoading = false;
 
         private List<RoleDto> _apiRoles = new List<RoleDto>();
         private List<SectorDto> _apiSectors = new List<SectorDto>();
 
+        private List<int> _rolesToDelete = new List<int>();
+        private List<int> _initialOrganizerIds = new List<int>();
+
         public ObservableCollection<RoleItem> Roles { get; set; } = new ObservableCollection<RoleItem>();
         public ObservableCollection<UserDto> SelectedOrganizers { get; set; } = new ObservableCollection<UserDto>();
+        public ObservableCollection<SectorSelectionItem> TargetSectors { get; set; } = new ObservableCollection<SectorSelectionItem>();
 
         private string _eventTitle;
         public string EventTitle { get => _eventTitle; set { _eventTitle = value; OnPropertyChanged(nameof(EventTitle)); } }
@@ -94,6 +99,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
         private async Task LoadDataFromApiAsync()
         {
+            _isLoading = true;
             LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
@@ -156,8 +162,19 @@ namespace Diplom_Stud.Pages.Coordinator
                         StartTime = ev.startTime?.Length >= 5 ? ev.startTime.Substring(0, 5) : ev.startTime;
                         EndTime = ev.endTime?.Length >= 5 ? ev.endTime.Substring(0, 5) : ev.endTime;
                         Venue = ev.venue;
+
                         IsPublic = ev.isPublic;
+                        IsFree = ev.isFreeEvent;
                         IsDraft = ev.isDraft;
+
+                        TargetSectors.Clear();
+                        foreach (var s in _apiSectors)
+                        {
+                            bool isSel = ev.sectors != null && ev.sectors.Any(sec => sec.id == s.id);
+                            TargetSectors.Add(new SectorSelectionItem { Sector = s, IsSelected = isSel });
+                        }
+
+                        TargetSectorsPanel.Visibility = (!IsPublic && IsFree) ? Visibility.Visible : Visibility.Collapsed;
 
                         if (!string.IsNullOrEmpty(ev.photo))
                         {
@@ -172,12 +189,46 @@ namespace Diplom_Stud.Pages.Coordinator
 
                         if (ev.organizers != null)
                         {
-                            foreach (var org in ev.organizers) SelectedOrganizers.Add(org);
+                            foreach (var org in ev.organizers)
+                            {
+                                SelectedOrganizers.Add(org);
+                                _initialOrganizerIds.Add(org.id);
+                            }
+                        }
+
+                        Roles.Clear();
+                        if (ev.isFreeEvent)
+                        {
+                            Roles.Add(new RoleItem
+                            {
+                                RoleType = RoleItem.RoleTypeEnum.Participant,
+                                RoleTitleDisplay = "Участник (Свободное)",
+                                Tasks = "Участие в мероприятии",
+                                Points = "10",
+                                PeopleCount = ev.maxParticipantsCount.ToString(),
+                                IsExpanded = false,
+                                AvailableSectors = _apiSectors,
+                                AvailableRoles = _apiRoles
+                            });
+                        }
+                        if (ev.maxOrganizersCount > 0)
+                        {
+                            Roles.Add(new RoleItem
+                            {
+                                RoleType = RoleItem.RoleTypeEnum.Organizer,
+                                RoleTitleDisplay = "Организатор (Набор)",
+                                Tasks = "Организация и помощь в проведении",
+                                Points = "15",
+                                PeopleCount = ev.maxOrganizersCount.ToString(),
+                                IsExpanded = false,
+                                AvailableSectors = _apiSectors,
+                                AvailableRoles = _apiRoles
+                            });
                         }
                     }
                 }
 
-                var rolesListResp = await _httpClient.GetAsync($"/api/event-roles?eventId={_eventId}&page=0&size=100");
+                var rolesListResp = await _httpClient.GetAsync($"/api/event-roles?eventId={_eventId}&isDeleted=false&page=0&size=100");
                 if (rolesListResp.IsSuccessStatusCode)
                 {
                     string json = await rolesListResp.Content.ReadAsStringAsync();
@@ -185,8 +236,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
                     if (pageData?.content != null)
                     {
-                        Roles.Clear();
-                        foreach (var roleDto in pageData.content)
+                        foreach (var roleDto in pageData.content.Where(r => !r.deleted))
                         {
                             var globalRole = _apiRoles.FirstOrDefault(r => r.id == roleDto.globalEventRoleId);
                             var globalSector = globalRole != null ? _apiSectors.FirstOrDefault(s => s.id == globalRole.sectorId) : null;
@@ -201,7 +251,8 @@ namespace Diplom_Stud.Pages.Coordinator
 
                             Roles.Add(new RoleItem
                             {
-                                RoleId = roleDto.id, 
+                                RoleId = roleDto.id,
+                                RoleType = RoleItem.RoleTypeEnum.Custom,
                                 IsExpanded = false,
                                 AvailableRoles = _apiRoles,
                                 AvailableSectors = _apiSectors,
@@ -222,8 +273,80 @@ namespace Diplom_Stud.Pages.Coordinator
             }
             finally
             {
+                _isLoading = false;
                 LoadingOverlay.Visibility = Visibility.Collapsed;
             }
+        }
+
+        private void UpdateTargetSectorsVisibility()
+        {
+            if (TargetSectorsPanel != null)
+            {
+                TargetSectorsPanel.Visibility = (!IsPublic && IsFree) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void cbIsPublic_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isLoading) return;
+            UpdateTargetSectorsVisibility();
+        }
+
+        private void cbIsPublic_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (_isLoading) return;
+            UpdateTargetSectorsVisibility();
+        }
+
+        private void cbIsFree_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isLoading) return;
+            UpdateTargetSectorsVisibility();
+
+            if (!Roles.Any(r => r.RoleType == RoleItem.RoleTypeEnum.Participant))
+            {
+                Roles.Add(new RoleItem
+                {
+                    RoleType = RoleItem.RoleTypeEnum.Participant,
+                    RoleTitleDisplay = "Участник (Свободное)",
+                    Tasks = "Участие в мероприятии",
+                    Points = "10",
+                    PeopleCount = "0",
+                    IsExpanded = true,
+                    AvailableSectors = _apiSectors,
+                    AvailableRoles = _apiRoles
+                });
+            }
+        }
+
+        private void cbIsFree_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (_isLoading) return;
+            UpdateTargetSectorsVisibility();
+
+            var participantRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Participant);
+            if (participantRole != null) Roles.Remove(participantRole);
+        }
+
+        private void AddOrganizerRole_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (Roles.Any(r => r.RoleType == RoleItem.RoleTypeEnum.Organizer))
+            {
+                CustomMessageBox.Show("Набор организаторов уже добавлен в список ролей.", "Информация", CustomMessageBox.MessageType.Info);
+                return;
+            }
+
+            Roles.Add(new RoleItem
+            {
+                RoleType = RoleItem.RoleTypeEnum.Organizer,
+                RoleTitleDisplay = "Организатор (Набор)",
+                Tasks = "Организация и помощь в проведении",
+                Points = "15",
+                PeopleCount = "0",
+                IsExpanded = true,
+                AvailableSectors = _apiSectors,
+                AvailableRoles = _apiRoles
+            });
         }
 
         private void UploadImage_Click(object sender, MouseButtonEventArgs e)
@@ -255,6 +378,37 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
+        private async void DeleteEvent_Click(object sender, RoutedEventArgs e)
+        {
+            bool confirmed = CustomMessageBox.Show("Вы уверены, что хотите удалить это мероприятие?", "Подтверждение", CustomMessageBox.MessageType.Question, true);
+            if (!confirmed) return;
+
+            LoadingOverlay.Visibility = Visibility.Visible;
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                HttpResponseMessage res = await _httpClient.DeleteAsync($"/api/events/{_eventId}");
+                if (res.IsSuccessStatusCode)
+                {
+                    CustomMessageBox.Show("Мероприятие успешно удалено.", "Успех", CustomMessageBox.MessageType.Success);
+                    this.NavigationService.GoBack();
+                }
+                else
+                {
+                    string err = await res.Content.ReadAsStringAsync();
+                    CustomMessageBox.Show($"Ошибка удаления: {err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+            }
+            finally
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+        }
+
         private async void SaveFinalEvent_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(EventTitle)) { CustomMessageBox.Show("Введите название.", "Ошибка валидации", CustomMessageBox.MessageType.Error); return; }
@@ -265,12 +419,16 @@ namespace Diplom_Stud.Pages.Coordinator
 
             foreach (var role in Roles)
             {
-                if (role.SelectedRole == null) { CustomMessageBox.Show("В карточке не выбрана роль.", "Ошибка", CustomMessageBox.MessageType.Error); return; }
-                if (role.DeadlineDate == null) { CustomMessageBox.Show($"Для '{role.SelectedRole.title}' не выбран дедлайн.", "Ошибка", CustomMessageBox.MessageType.Error); return; }
-                if (string.IsNullOrWhiteSpace(role.DeadlineTime) || role.DeadlineTime.Length < 5) { CustomMessageBox.Show($"Укажите время дедлайна для '{role.SelectedRole.title}'.", "Ошибка", CustomMessageBox.MessageType.Error); return; }
+                if (role.RoleType == RoleItem.RoleTypeEnum.Custom)
+                {
+                    if (role.SelectedRole == null) { CustomMessageBox.Show("В карточке не выбрана роль.", "Ошибка", CustomMessageBox.MessageType.Error); return; }
+                    if (role.DeadlineDate == null) { CustomMessageBox.Show($"Для '{role.SelectedRole.title}' не выбран дедлайн.", "Ошибка", CustomMessageBox.MessageType.Error); return; }
+                    if (string.IsNullOrWhiteSpace(role.DeadlineTime) || role.DeadlineTime.Length < 5) { CustomMessageBox.Show($"Укажите время дедлайна для '{role.SelectedRole.title}'.", "Ошибка", CustomMessageBox.MessageType.Error); return; }
+                }
             }
 
             btnSave.IsEnabled = false;
+            btnDeleteEvent.IsEnabled = false;
             btnSave.Content = "Сохранение...";
             LoadingOverlay.Visibility = Visibility.Visible;
 
@@ -278,19 +436,41 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                var eventPayload = new
+                string eventDateStr = EventDate.Value.ToString("yyyy-MM-dd");
+                string startDateTime = $"{eventDateStr}T{StartTime}:00";
+                string endDateTime = $"{eventDateStr}T{EndTime}:00";
+
+                var finalOrganizerIds = SelectedOrganizers.Select(u => u.id).ToList();
+
+                var partRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Participant);
+                int pCount = partRole != null && int.TryParse(partRole.PeopleCount, out int parsedP) ? parsedP : 0;
+
+                var orgRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Organizer);
+                int oCount = orgRole != null && int.TryParse(orgRole.PeopleCount, out int parsedO) ? parsedO : 0;
+
+                var eventPayload = new Dictionary<string, object>
                 {
-                    title = EventTitle,
-                    description = EventDescription ?? "",
-                    dateOfEvent = EventDate.Value.ToString("yyyy-MM-dd"),
-                    startTime = StartTime + ":00",
-                    endTime = EndTime + ":00",
-                    venue = Venue,
-                    referenceToPosition = string.IsNullOrWhiteSpace(EventDescription) ? "Описание отсутствует" : EventDescription,
-                    isPublic = IsPublic,
-                    isDraft = IsDraft,
-                    photo = _newBase64Image ?? ""
+                    { "title", EventTitle },
+                    { "description", EventDescription ?? "" },
+                    { "photo", _newBase64Image ?? "" },
+                    { "dateOfEvent", eventDateStr },
+                    { "startTime", startDateTime },
+                    { "endTime", endDateTime },
+                    { "venue", Venue },
+                    { "organizerIds", finalOrganizerIds },
+                    { "referenceToPosition", string.IsNullOrWhiteSpace(EventDescription) ? "Описание отсутствует" : EventDescription },
+                    { "isPublic", IsPublic },
+                    { "isDraft", IsDraft },
+                    { "isFreeEvent", IsFree },
+                    { "maxParticipantsCount", pCount },
+                    { "maxOrganizersCount", oCount }
                 };
+
+                if (!IsPublic && IsFree)
+                {
+                    var selectedSectors = TargetSectors.Where(s => s.IsSelected).Select(s => s.Sector.id).ToList();
+                    eventPayload.Add("sectorIds", selectedSectors);
+                }
 
                 string eventJson = JsonSerializer.Serialize(eventPayload);
                 var eventContent = new StringContent(eventJson, Encoding.UTF8, "application/json");
@@ -300,11 +480,28 @@ namespace Diplom_Stud.Pages.Coordinator
                 if (!eventResponse.IsSuccessStatusCode)
                 {
                     string err = await eventResponse.Content.ReadAsStringAsync();
-                    CustomMessageBox.Show($"Ошибка обновления: {err}", "Ошибка сервера", CustomMessageBox.MessageType.Error);
+                    CustomMessageBox.Show($"Ошибка обновления мероприятия: {err}", "Ошибка сервера", CustomMessageBox.MessageType.Error);
                     return;
                 }
 
-                foreach (var role in Roles)
+                var addedOrganizers = finalOrganizerIds.Except(_initialOrganizerIds).ToList();
+                var removedOrganizers = _initialOrganizerIds.Except(finalOrganizerIds).ToList();
+
+                foreach (int id in removedOrganizers)
+                {
+                    await _httpClient.DeleteAsync($"/api/events/{_eventId}/organizers/{id}");
+                }
+                foreach (int id in addedOrganizers)
+                {
+                    await _httpClient.PostAsync($"/api/events/{_eventId}/organizers/{id}", new StringContent(""));
+                }
+
+                foreach (int roleId in _rolesToDelete)
+                {
+                    await _httpClient.DeleteAsync($"/api/event-roles/{roleId}");
+                }
+
+                foreach (var role in Roles.Where(r => r.RoleType == RoleItem.RoleTypeEnum.Custom))
                 {
                     string deadlineFormatted = $"{role.DeadlineDate.Value.ToString("yyyy-MM-dd")}T{role.DeadlineTime}:00";
                     var rolePayload = new
@@ -312,6 +509,7 @@ namespace Diplom_Stud.Pages.Coordinator
                         eventId = _eventId,
                         globalEventRoleId = role.SelectedRole.id,
                         capacity = int.TryParse(role.PeopleCount, out int cap) ? cap : 1,
+                        reserveCapacity = 0,
                         deadline = deadlineFormatted,
                         description = role.Tasks ?? ""
                     };
@@ -319,23 +517,18 @@ namespace Diplom_Stud.Pages.Coordinator
                     string roleJson = JsonSerializer.Serialize(rolePayload);
                     var roleContent = new StringContent(roleJson, Encoding.UTF8, "application/json");
 
-                    if (role.RoleId == 0) 
+                    if (role.RoleId == 0)
                     {
                         await _httpClient.PostAsync("/api/event-roles", roleContent);
                     }
-                    else 
+                    else
                     {
                         await _httpClient.PutAsync($"/api/event-roles/{role.RoleId}", roleContent);
                     }
                 }
 
-                foreach (var org in SelectedOrganizers)
-                {
-                    var orgContent = new StringContent("", Encoding.UTF8, "application/json");
-                    await _httpClient.PostAsync($"/api/events/{_eventId}/organizers/{org.id}", orgContent);
-                }
-
                 CustomMessageBox.Show("Изменения успешно сохранены!", "Успех", CustomMessageBox.MessageType.Success);
+                this.NavigationService.GoBack();
             }
             catch (Exception ex)
             {
@@ -344,6 +537,7 @@ namespace Diplom_Stud.Pages.Coordinator
             finally
             {
                 btnSave.IsEnabled = true;
+                btnDeleteEvent.IsEnabled = true;
                 btnSave.Content = "Сохранить изменения";
                 LoadingOverlay.Visibility = Visibility.Collapsed;
             }
@@ -416,7 +610,18 @@ namespace Diplom_Stud.Pages.Coordinator
         {
             if (sender is Button btn && btn.DataContext is RoleItem role)
             {
-                Roles.Remove(role);
+                if (role.RoleType == RoleItem.RoleTypeEnum.Participant)
+                {
+                    IsFree = false;
+                }
+                else
+                {
+                    if (role.RoleId > 0)
+                    {
+                        _rolesToDelete.Add(role.RoleId);
+                    }
+                    Roles.Remove(role);
+                }
             }
         }
 
@@ -492,7 +697,6 @@ namespace Diplom_Stud.Pages.Coordinator
         protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-
     public class EditEventDtoLocal
     {
         public int id { get; set; }
@@ -505,7 +709,11 @@ namespace Diplom_Stud.Pages.Coordinator
         public string photo { get; set; }
         public bool isPublic { get; set; }
         public bool isDraft { get; set; }
-        public List<UserDto> organizers { get; set; } 
+        public bool isFreeEvent { get; set; }
+        public int maxParticipantsCount { get; set; }
+        public int maxOrganizersCount { get; set; }
+        public List<SectorDto> sectors { get; set; }
+        public List<UserDto> organizers { get; set; }
     }
 
     public class EditEventRolePageLocal
@@ -521,5 +729,6 @@ namespace Diplom_Stud.Pages.Coordinator
         public string deadline { get; set; }
         public int capacity { get; set; }
         public int reserveCapacity { get; set; }
+        public bool deleted { get; set; }
     }
 }

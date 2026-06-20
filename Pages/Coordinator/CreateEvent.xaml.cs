@@ -87,6 +87,7 @@ namespace Diplom_Stud.Pages.Coordinator
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadDataFromApiAsync();
+            UpdateTargetSectorsVisibility();
         }
 
         private async Task LoadDataFromApiAsync()
@@ -166,18 +167,28 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
+        private void UpdateTargetSectorsVisibility()
+        {
+            if (TargetSectorsPanel != null)
+            {
+                TargetSectorsPanel.Visibility = (!IsPublic && IsFree) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
         private void cbIsPublic_Checked(object sender, RoutedEventArgs e)
         {
-            if (TargetSectorsPanel != null) TargetSectorsPanel.Visibility = Visibility.Collapsed;
+            UpdateTargetSectorsVisibility();
         }
 
         private void cbIsPublic_Unchecked(object sender, RoutedEventArgs e)
         {
-            if (TargetSectorsPanel != null) TargetSectorsPanel.Visibility = Visibility.Visible;
+            UpdateTargetSectorsVisibility();
         }
 
         private void cbIsFree_Checked(object sender, RoutedEventArgs e)
         {
+            UpdateTargetSectorsVisibility();
+
             if (!Roles.Any(r => r.RoleType == RoleItem.RoleTypeEnum.Participant))
             {
                 Roles.Add(new RoleItem
@@ -196,6 +207,8 @@ namespace Diplom_Stud.Pages.Coordinator
 
         private void cbIsFree_Unchecked(object sender, RoutedEventArgs e)
         {
+            UpdateTargetSectorsVisibility();
+
             var participantRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Participant);
             if (participantRole != null) Roles.Remove(participantRole);
         }
@@ -446,7 +459,7 @@ namespace Diplom_Stud.Pages.Coordinator
                         eventId = newEventId,
                         globalEventRoleId = role.SelectedRole.id,
                         capacity = int.TryParse(role.PeopleCount, out int cap) ? cap : 1,
-                        reserveCapacity = 0, 
+                        reserveCapacity = 0,
                         deadline = deadlineFormatted,
                         description = role.Tasks ?? ""
                     };

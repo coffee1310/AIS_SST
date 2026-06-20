@@ -260,7 +260,7 @@ namespace Diplom_Stud
             {
                 NavHome.IsChecked = true;
             }
-            else if (e.Content is Pages.Activist.Events || e.Content is Pages.Activist.EventDetails || e.Content is Pages.Activist.EventRegistration)
+            else if (e.Content is Pages.Activist.Events || e.Content is Pages.Coordinator.CoordinatorEvents || e.Content is Pages.Activist.EventDetails || e.Content is Pages.Activist.EventRegistration)
             {
                 NavEvents.IsChecked = true;
             }
@@ -323,9 +323,24 @@ namespace Diplom_Stud
 
         private void MenuEvents_Click(object sender, RoutedEventArgs e)
         {
-            if (!(MainFrame.Content is Pages.Activist.Events))
+            var data = App.CurrentUserProfile;
+            if (data == null) return;
+
+            bool isCoordinator = data.roleTitle == "Coordinator" || data.roleTitle == "Sector_coordinator" || data.roleTitle == "Admin";
+
+            if (isCoordinator && !App.IsActivistMode)
             {
-                MainFrame.Navigate(new Pages.Activist.Events());
+                if (!(MainFrame.Content is Pages.Coordinator.CoordinatorEvents))
+                {
+                    MainFrame.Navigate(new Pages.Coordinator.CoordinatorEvents());
+                }
+            }
+            else
+            {
+                if (!(MainFrame.Content is Pages.Activist.Events))
+                {
+                    MainFrame.Navigate(new Pages.Activist.Events());
+                }
             }
         }
 
@@ -430,7 +445,7 @@ namespace Diplom_Stud
             App.AuthToken = null;
             App.RefreshToken = null;
             App.CurrentUserProfile = null;
-            App.IsActivistMode = false; 
+            App.IsActivistMode = false;
 
             App.ClearSession();
 

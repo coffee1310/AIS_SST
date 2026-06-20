@@ -168,3 +168,5 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventParticipant
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventRequestsPage.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventEditPage.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventEditPage.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorEvents.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorEvents.baml
