@@ -275,8 +275,8 @@ public class ParticipationMarkService extends BaseEntityService {
 
         List<EventParticipant> participants = eventParticipantsRepository.findByEventId(eventId).stream()
                 .filter(p -> !Boolean.TRUE.equals(p.getIsDeleted()))
-                .collect(Collectors.toList());;
-                ;
+                .collect(Collectors.toList());
+
         if (participants.isEmpty()) {
             throw new ValidationException("Нет участников для этого мероприятия");
         }
@@ -310,7 +310,7 @@ public class ParticipationMarkService extends BaseEntityService {
         List<EventOrganizer> organizers = eventOrganizerRepository.findByEventId(eventId).stream()
                 .filter(p -> !Boolean.TRUE.equals(p.getIsDeleted()))
                 .collect(Collectors.toList());;
-                ;
+
         if (organizers.isEmpty()) {
             throw new ValidationException("Нет организаторов для этого мероприятия");
         }

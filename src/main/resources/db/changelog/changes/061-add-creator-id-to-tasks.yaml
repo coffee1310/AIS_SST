@@ -1,0 +1,34 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-creator-id-to-tasks
+      author: your-name
+      comment: "Add creator_id column to tasks table with foreign key to users"
+      changes:
+        # Добавляем поле creator_id
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: creator_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tasks_creator
+                    references: users(id)
+
+        # Добавляем индекс для оптимизации
+        - createIndex:
+            tableName: tasks
+            indexName: idx_tasks_creator_id
+            columns:
+              - column:
+                  name: creator_id
+
+      rollback:
+        # Откат изменений
+        - dropIndex:
+            tableName: tasks
+            indexName: idx_tasks_creator_id
+        - dropColumn:
+            tableName: tasks
+            columnName: creator_id

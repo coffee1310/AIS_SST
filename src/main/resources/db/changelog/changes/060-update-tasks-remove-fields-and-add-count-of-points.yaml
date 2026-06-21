@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: update-tasks-remove-fields-and-add-count-of-points
+      author: your-name
+      comment: "Remove people_count and is_it_only_available_to_the_board, add count_of_points column to tasks table"
+      changes:
+        # 1. Удаляем поле people_count
+        - dropColumn:
+            tableName: tasks
+            columnName: people_count
+
+        # 2. Удаляем поле is_it_only_available_to_the_board
+        - dropColumn:
+            tableName: tasks
+            columnName: is_it_only_available_to_the_board
+
+        # 3. Добавляем поле count_of_points
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: count_of_points
+                  type: int
+                  defaultValue: 1
+                  constraints:
+                    nullable: false
+
+      rollback:
+        # Откат изменений
+        - dropColumn:
+            tableName: tasks
+            columnName: count_of_points
+
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: people_count
+                  type: int
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
+
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: is_it_only_available_to_the_board
+                  type: boolean
+                  defaultValue: false
+                  constraints:
+                    nullable: false

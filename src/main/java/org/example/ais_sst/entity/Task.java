@@ -1,17 +1,24 @@
 package org.example.ais_sst.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "tasks")
 public class Task {
     @Id
@@ -27,29 +34,76 @@ public class Task {
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
-    @NotNull
-    @Column(name = "date_time", nullable = false)
-    private Instant dateTime;
+    @Column(name = "deadline")
+    private Instant deadline;
 
     @NotNull
-    @Column(name = "people_count", nullable = false)
-    private Integer peopleCount;
+    @Min(0)
+    @Column(name = "max_people_count", nullable = false)
+    @Builder.Default
+    private Integer maxPeopleCount = 0;
 
-    @ColumnDefault("0")
-    @Column(name = "count_of_points")
-    private Integer countOfPoints;
-
-    @ColumnDefault("false")
-    @Column(name = "is_it_only_available_to_the_board")
-    private Boolean isItOnlyAvailableToTheBoard;
+    @NotNull
+    @Min(1)
+    @Column(name = "count_of_points", nullable = false)
+    @Builder.Default
+    private Integer countOfPoints = 1;
 
     @ColumnDefault("false")
     @Column(name = "is_completed")
-    private Boolean isCompleted;
+    @Builder.Default
+    private Boolean isCompleted = false;
 
-    @ColumnDefault("true")
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @ColumnDefault("false")
+    @Column(name = "is_deleted")
+    @Builder.Default
+    private Boolean isDeleted = false;
 
+    @ColumnDefault("false")
+    @Column(name = "is_preassigned")
+    @Builder.Default
+    private Boolean isPreassigned = false;
 
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_id", nullable = false)
+    private User creator;
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<TaskUser> taskUsers = new ArrayList<>();
+
+    public void addUser(User user) {
+        TaskUser taskUser = TaskUser.builder()
+                .task(this)
+                .user(user)
+                .isAssigned(false)
+                .isCompleted(false)
+                .build();
+        taskUsers.add(taskUser);
+    }
+
+    public void removeUser(User user) {
+        taskUsers.removeIf(tu -> tu.getUser().equals(user));
+    }
+
+    public List<User> getAssignedUsers() {
+        return taskUsers.stream()
+                .filter(tu -> !Boolean.TRUE.equals(tu.getIsDeleted()))
+                .map(TaskUser::getUser)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public long getAssignedUsersCount() {
+        return taskUsers.stream()
+                .filter(tu -> !Boolean.TRUE.equals(tu.getIsDeleted()))
+                .count();
+    }
 }

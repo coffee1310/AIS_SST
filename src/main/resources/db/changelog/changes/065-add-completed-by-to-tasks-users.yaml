@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-completed-by-to-tasks-users
+      author: your-name
+      changes:
+        - addColumn:
+            tableName: tasks_users
+            columns:
+              - column:
+                  name: completed_by
+                  type: bigint
+                  constraints:
+                    foreignKeyName: fk_tasks_users_completed_by
+                    references: users(id)
+
+      rollback:
+        - dropColumn:
+            tableName: tasks_users
+            columnName: completed_by

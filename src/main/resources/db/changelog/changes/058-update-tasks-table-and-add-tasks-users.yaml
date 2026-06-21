@@ -1,0 +1,135 @@
+databaseChangeLog:
+  - changeSet:
+      id: update-tasks-table-and-add-tasks-users
+      author: coffee13102006
+      comment: "Replace is_active with is_deleted, add is_preassigned field, and create tasks_users table"
+      changes:
+        # 1. Переименовываем is_active в is_deleted
+        - renameColumn:
+            tableName: tasks
+            oldColumnName: is_active
+            newColumnName: is_deleted
+            columnDataType: boolean
+
+        # 2. Добавляем поле is_preassigned (заранее определен исполнитель)
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: is_preassigned
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        # 3. Создаем таблицу tasks_users
+        - createTable:
+            tableName: tasks_users
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: task_id
+                  type: int
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tasks_users_task
+                    references: tasks(id)
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tasks_users_user
+                    references: users(id)
+              - column:
+                  name: is_assigned
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_completed
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: assigned_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: completed_at
+                  type: timestamp
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: is_deleted
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        # 4. Добавляем уникальное ограничение (один пользователь может быть привязан к задаче только один раз)
+        - addUniqueConstraint:
+            tableName: tasks_users
+            constraintName: uk_tasks_users_task_user
+            columnNames: task_id, user_id
+            deferrable: false
+            initiallyDeferred: false
+
+        # 5. Добавляем индексы для оптимизации
+        - createIndex:
+            tableName: tasks_users
+            indexName: idx_tasks_users_task_id
+            columns:
+              - column:
+                  name: task_id
+
+        - createIndex:
+            tableName: tasks_users
+            indexName: idx_tasks_users_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: tasks_users
+            indexName: idx_tasks_users_is_deleted
+            columns:
+              - column:
+                  name: is_deleted
+
+        - createIndex:
+            tableName: tasks
+            indexName: idx_tasks_is_deleted
+            columns:
+              - column:
+                  name: is_deleted
+
+      rollback:
+        - dropTable:
+            tableName: tasks_users
+        - renameColumn:
+            tableName: tasks
+            oldColumnName: is_deleted
+            newColumnName: is_active
+            columnDataType: boolean
+        - dropColumn:
+            tableName: tasks
+            columnName: is_preassigned

@@ -268,9 +268,4 @@ public class EventController extends BaseController {
         eventService.softDeleteEventRoles(ids);
         return ResponseEntity.noContent().build();
     }
-
-
-    // ==================== РУЧНОЕ УПРАВЛЕНИЕ РОЛЯМИ ====================
-
-
 }

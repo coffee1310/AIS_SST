@@ -109,3 +109,19 @@ databaseChangeLog:
       file: db/changelog/changes/056-remove-total-points-and-was-present-from-event-roles.yaml
   - include:
       file: db/changelog/changes/057-add-is-deleted-to-event-participation-records.yaml
+  - include:
+      file: db/changelog/changes/058-update-tasks-table-and-add-tasks-users.yaml
+  - include:
+      file: db/changelog/changes/059-update-tasks-table-structure.yaml
+  - include:
+      file: db/changelog/changes/060-update-tasks-remove-fields-and-add-count-of-points.yaml
+  - include:
+      file: db/changelog/changes/061-add-creator-id-to-tasks.yaml
+  - include:
+      file: db/changelog/changes/062-add-updated-at-to-tasks.yaml
+  - include:
+      file: db/changelog/changes/063-add-is-deleted-to-task-requests.yaml
+  - include:
+      file: db/changelog/changes/064-add-reviewed-at-to-task-requests.yaml
+  - include:
+      file: db/changelog/changes/065-add-completed-by-to-tasks-users.yaml

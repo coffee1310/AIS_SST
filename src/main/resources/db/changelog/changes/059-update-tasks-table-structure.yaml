@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: rename-and-add-columns-to-tasks
+      author: coffee13102006
+      comment: "Rename date_time to deadline, rename count_of_points to max_people_count, add created_at column"
+      changes:
+        # 1. Переименовываем date_time в deadline (с возможностью null)
+        - renameColumn:
+            tableName: tasks
+            oldColumnName: date_time
+            newColumnName: deadline
+            columnDataType: timestamp
+
+        # 2. Делаем deadline nullable (если сейчас not null)
+        - modifyDataType:
+            tableName: tasks
+            columnName: deadline
+            newDataType: timestamp
+
+        - addNotNullConstraint:
+            tableName: tasks
+            columnName: deadline
+            constraintName: tasks_deadline_not_null
+            defaultNullValue: null
+          # Если нужно сделать nullable, закомментируйте addNotNullConstraint выше
+          # или используйте dropNotNullConstraint:
+
+        # 3. Переименовываем count_of_points в max_people_count
+        - renameColumn:
+            tableName: tasks
+            oldColumnName: count_of_points
+            newColumnName: max_people_count
+            columnDataType: integer
+
+        # 4. Добавляем поле created_at
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+      rollback:
+        # Откат изменений
+        - renameColumn:
+            tableName: tasks
+            oldColumnName: deadline
+            newColumnName: date_time
+            columnDataType: timestamp
+
+        - renameColumn:
+            tableName: tasks
+            oldColumnName: max_people_count
+            newColumnName: count_of_points
+            columnDataType: integer
+
+        - dropColumn:
+            tableName: tasks
+            columnName: created_at

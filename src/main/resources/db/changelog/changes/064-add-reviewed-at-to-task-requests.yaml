@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-reviewed-at-to-task-requests
+      author: your-name
+      changes:
+        - addColumn:
+            tableName: task_requests
+            columns:
+              - column:
+                  name: reviewed_at
+                  type: timestamp
+
+      rollback:
+        - dropColumn:
+            tableName: task_requests
+            columnName: reviewed_at
