@@ -1,12 +1,15 @@
 package org.example.ais_sst.repository;
 
+import jakarta.validation.constraints.NotNull;
 import org.example.ais_sst.entity.EventParticipationRecord;
 import org.example.ais_sst.entity.EventRole;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,20 +17,63 @@ import java.util.Optional;
 @Repository
 public interface EventParticipationRecordRepository extends JpaRepository<EventParticipationRecord, Long> {
 
-    // Проверка существования записи
-    boolean existsBySectorParticipantAndEventRole(SectorParticipant sectorParticipant, EventRole eventRole);
+    Optional<EventParticipationRecord> findById(Long id);
 
+    // Поиск по ID роли
+    List<EventParticipationRecord> findByEventRoleId(Long eventRoleId);
+
+    // Поиск по ID участника сектора
+    List<EventParticipationRecord> findBySectorParticipantId(Long sectorParticipantId);
+
+    // Поиск по ID пользователя (через sector_participant)
+    @Query("SELECT epr FROM EventParticipationRecord epr WHERE epr.sectorParticipant.student.id = :userId")
+    List<EventParticipationRecord> findByUserId(@Param("userId") Long userId);
+
+    // ИСПРАВЛЕННЫЙ МЕТОД - поиск по ID мероприятия через eventRole
+    @Query("SELECT epr FROM EventParticipationRecord epr WHERE epr.eventRole.event.id = :eventId")
+    List<EventParticipationRecord> findByEventId(@Param("eventId") Long eventId);
+
+    // Проверка существования записи
     boolean existsBySectorParticipantIdAndEventRoleId(Long sectorParticipantId, Long eventRoleId);
+
+    // Получить только записи с присутствием
+    @Query("SELECT epr FROM EventParticipationRecord epr WHERE epr.eventRole.event.id = :eventId AND epr.wasPresent = true")
+    List<EventParticipationRecord> findByEventIdAndWasPresentTrue(@Param("eventId") Long eventId);
+
+    // Подсчет суммы баллов по мероприятию
+    @Query("SELECT SUM(epr.totalPoints) FROM EventParticipationRecord epr WHERE epr.eventRole.event.id = :eventId AND epr.wasPresent = true")
+    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
+
+    // Подсчет количества записей по мероприятию
+    @Query("SELECT COUNT(epr) FROM EventParticipationRecord epr WHERE epr.eventRole.event.id = :eventId")
+    long countByEventId(@Param("eventId") Long eventId);
+
+    // Обновление статуса присутствия
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventParticipationRecord epr SET epr.wasPresent = :wasPresent WHERE epr.id = :id")
+    void updateWasPresent(@Param("id") Long id, @Param("wasPresent") Boolean wasPresent);
+
+    // Обновление баллов
+    @Modifying
+    @Transactional
+    @Query("UPDATE EventParticipationRecord epr SET epr.totalPoints = :points WHERE epr.id = :id")
+    void updateTotalPoints(@Param("id") Long id, @Param("points") Integer points);
+
+    // Подсчет количества записей с присутствием
+    @Query("SELECT COUNT(epr) FROM EventParticipationRecord epr WHERE epr.eventRole.event.id = :eventId AND epr.wasPresent = true")
+    long countPresentByEventId(@Param("eventId") Long eventId);
+
+    boolean existsBySectorParticipantAndEventRole(@NotNull SectorParticipant sectorParticipant, @NotNull EventRole eventRole);
+
+    Optional<EventParticipationRecord> findBySectorParticipantIdAndEventRoleId(Long id, Long id1);
+
 
     // Поиск по участнику сектора
     List<EventParticipationRecord> findBySectorParticipant(SectorParticipant sectorParticipant);
 
-    List<EventParticipationRecord> findBySectorParticipantId(Long sectorParticipantId);
-
     // Поиск по роли мероприятия
     List<EventParticipationRecord> findByEventRole(EventRole eventRole);
-
-    List<EventParticipationRecord> findByEventRoleId(Long eventRoleId);
 
     // Поиск по участнику и роли
     Optional<EventParticipationRecord> findBySectorParticipantAndEventRole(SectorParticipant sectorParticipant,

@@ -21,7 +21,7 @@ public class ParticipationMarkController extends BaseController {
     private final ParticipationMarkService participationMarkService;
 
     @PostMapping("/mark")
-    @Operation(summary = "Отметить участников, организаторов и роли как присутствовавших/отсутствовавших")
+    @Operation(summary = "Отметить участников, организаторов и записи об участии")
     public ResponseEntity<ParticipationMarkResponseDTO> markParticipation(
             @Valid @RequestBody ParticipationMarkRequestDTO request) {
 
@@ -58,5 +58,51 @@ public class ParticipationMarkController extends BaseController {
         log.info("GET /api/events/participation/{}/stats - Getting participation stats", eventId);
         ParticipationStatsDTO stats = participationMarkService.getParticipationStats(eventId);
         return ResponseEntity.ok(stats);
+    }
+
+    @PutMapping("/points")
+    @Operation(summary = "Обновить баллы для сущности")
+    public ResponseEntity<UpdatePointsResponseDTO> updatePoints(
+            @Valid @RequestBody UpdatePointsRequestDTO request) {
+
+        log.info("PUT /api/events/participation/points - Updating points for entity: {}, type: {}",
+                request.getEntityId(), request.getEntityType());
+        UpdatePointsResponseDTO response = participationMarkService.updatePoints(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/points/record/{recordId}")
+    @Operation(summary = "Обновить баллы записи об участии (event_participation_records)")
+    public ResponseEntity<UpdatePointsResponseDTO> updateParticipationRecordPoints(
+            @PathVariable Long recordId,
+            @RequestParam Integer points,
+            @RequestParam(required = false) String reason) {
+
+        log.info("PUT /api/events/participation/points/record/{} - Updating points to: {}", recordId, points);
+        UpdatePointsResponseDTO response = participationMarkService.updateParticipationRecordPoints(
+                recordId, points, reason);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset/participants/{eventId}")
+    @Operation(summary = "Сбросить баллы всех участников мероприятия к значению по умолчанию")
+    public ResponseEntity<UpdatePointsResponseDTO.BulkUpdateResponse> resetAllParticipantPoints(
+            @PathVariable Long eventId) {
+
+        log.info("POST /api/events/participation/reset/participants/{} - Resetting all participant points", eventId);
+        UpdatePointsResponseDTO.BulkUpdateResponse response =
+                participationMarkService.resetAllParticipantPoints(eventId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset/organizers/{eventId}")
+    @Operation(summary = "Сбросить баллы всех организаторов мероприятия к значению по умолчанию")
+    public ResponseEntity<UpdatePointsResponseDTO.BulkUpdateResponse> resetAllOrganizerPoints(
+            @PathVariable Long eventId) {
+
+        log.info("POST /api/events/participation/reset/organizers/{} - Resetting all organizer points", eventId);
+        UpdatePointsResponseDTO.BulkUpdateResponse response =
+                participationMarkService.resetAllOrganizerPoints(eventId);
+        return ResponseEntity.ok(response);
     }
 }

@@ -58,18 +58,4 @@ public class EventRole {
 
     @Column(name = "deadline", nullable = false)
     private LocalDateTime deadline;
-
-    @Column(name = "total_points", nullable = false)
-    private Integer totalPoints;  // Берется из default_points глобальной роли
-
-    @Column(name = "was_present", nullable = false)
-    @Builder.Default
-    private Boolean wasPresent = false;
-
-    @PrePersist
-    public void setDefaultTotalPoints() {
-        if (this.totalPoints == null && this.globalEventRole != null) {
-            this.totalPoints = this.globalEventRole.getDefaultPoints();
-        }
-    }
 }

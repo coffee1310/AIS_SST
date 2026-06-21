@@ -14,7 +14,7 @@ public class ParticipationMarkResponseDTO {
     private Long eventId;
     private Integer markedParticipants;
     private Integer markedOrganizers;
-    private Integer markedEventRoles;
+    private List<Long> participationRecordIds;  // ID записей из event_participation_records
     private Integer totalPointsAwarded;
     private String message;
     private List<MarkedEntityDTO> details;

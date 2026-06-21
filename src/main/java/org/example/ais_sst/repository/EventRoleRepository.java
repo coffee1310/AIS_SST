@@ -167,54 +167,10 @@ public interface EventRoleRepository extends JpaRepository<EventRole, Long> {
 
     Optional<EventRole> findByEventIdAndGlobalEventRoleIdAndDeletedFalse(Long eventId, Long globalEventRoleId);
 
-    @Query("SELECT er FROM EventRole er WHERE er.event.id = :eventId AND er.deleted = false")
-    List<EventRole> findActiveByEventId(@Param("eventId") Long eventId);
-
-    @Query("SELECT er FROM EventRole er WHERE er.deadline < :now AND er.deleted = false")
-    List<EventRole> findExpiredRoles(@Param("now") LocalDateTime now);
-
-//    @Modifying
-//    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.event.id = :eventId AND er.deleted = false")
-//    void softDeleteAllByEventId(@Param("eventId") Long eventId);
-
-    Optional<EventRole> findByIdAndDeletedFalse(Long id);
 
     List<EventRole> findByEventIdAndDeletedFalse(Long eventId);
 
     List<EventRole> findByEventId(Long eventId);
 
-    List<EventRole> findByEventIdAndWasPresentTrue(Long eventId);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE EventRole er SET er.wasPresent = :wasPresent WHERE er.id = :id")
-    void updateWasPresent(@Param("id") Long id, @Param("wasPresent") Boolean wasPresent);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE EventRole er SET er.totalPoints = :points WHERE er.id = :id")
-    void updateTotalPoints(@Param("id") Long id, @Param("points") Integer points);
-
-
-    // НОВЫЕ МЕТОДЫ - используем "deleted"
-    List<EventRole> findByEventIdAndWasPresentTrueAndDeletedFalse(Long eventId);
-
-    @Query("SELECT SUM(er.totalPoints) FROM EventRole er WHERE er.event.id = :eventId AND er.wasPresent = true AND er.deleted = false")
-    Long sumTotalPointsByEventId(@Param("eventId") Long eventId);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.id = :id")
-    void softDeleteById(@Param("id") Long id);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE EventRole er SET er.deleted = false WHERE er.id = :id")
-    void restoreById(@Param("id") Long id);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE EventRole er SET er.deleted = true WHERE er.event.id = :eventId")
-    void softDeleteAllByEventId(@Param("eventId") Long eventId);
-
+    long countByEventId(Long eventId);
 }

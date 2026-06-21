@@ -1,10 +1,7 @@
 package org.example.ais_sst.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -17,9 +14,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "event_participation_records",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_participation_record_sector_participant_role",
+                @UniqueConstraint(name = "uk_participation_record",
                         columnNames = {"sector_participant_id", "event_role_id"})
         })
+@ToString(exclude = {"sectorParticipant", "eventRole"})  // Исключаем циклические ссылки
 public class EventParticipationRecord {
 
     @Id
@@ -38,14 +36,18 @@ public class EventParticipationRecord {
     @Builder.Default
     private Boolean wasPresent = false;
 
-    @Column(name = "comment", length = 500)
+    @Column(name = "total_points", nullable = false)
+    private Integer totalPoints ;
+
+    @Column(name = "comment", columnDefinition = "TEXT")
     private String comment;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false, nullable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
 }

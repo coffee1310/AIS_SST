@@ -321,4 +321,30 @@ public class EventRoleService {
         target.setIsReserveFull(source.getIsReserveFull());
         target.setIsFullyFull(source.getIsFullyFull());
     }
+
+    @Transactional
+    public EventRole createEventRoleManually(EventRoleCreateDTO dto) {
+        log.info("Manually creating event role for event: {}", dto.getEventId());
+
+        Event event = eventRepository.findById(dto.getEventId())
+                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
+
+        GlobalEventRole globalRole = globalEventRoleRepository.findById(dto.getGlobalEventRoleId())
+                .orElseThrow(() -> new GlobalRoleDoesNotExistException("Глобальная роль не найдена"));
+
+        // Проверка на дубликат
+        if (eventRoleRepository.existsByEventIdAndGlobalEventRoleIdAndDeletedFalse(
+                dto.getEventId(), dto.getGlobalEventRoleId())) {
+            throw new ValidationException("Роль уже существует для этого мероприятия");
+        }
+
+        EventRole eventRole = eventRoleMapper.toEntity(dto);
+        eventRole.setEvent(event);
+        eventRole.setGlobalEventRole(globalRole);
+        eventRole.setDeleted(false);
+
+        EventRole saved = eventRoleRepository.save(eventRole);
+        log.info("Event role created manually with id: {}", saved.getId());
+        return saved;
+    }
 }

@@ -22,7 +22,7 @@ public class BulkUpdatePointsRequestDTO {
 
     private List<Long> organizerIds;
 
-    private List<Long> eventRoleIds;
+    private List<Long> participationRecordIds;
 
     @NotNull(message = "Количество баллов обязательно")
     @Min(value = 0, message = "Баллы не могут быть отрицательными")

@@ -70,4 +70,6 @@ public interface EventOrganizerRepository extends JpaRepository<EventOrganizer, 
     @Transactional
     @Query("UPDATE EventOrganizer eo SET eo.isDeleted = true WHERE eo.event.id = :eventId")
     void softDeleteAllByEventId(@Param("eventId") Long eventId);
+
+    boolean existsByUserIdAndEventId(Long id, Long eventId);
 }

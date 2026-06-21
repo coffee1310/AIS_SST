@@ -28,6 +28,6 @@ public class UpdatePointsRequestDTO {
     public enum EntityType {
         PARTICIPANT,
         ORGANIZER,
-        EVENT_ROLE
+        PARTICIPATION_RECORD
     }
 }

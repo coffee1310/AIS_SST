@@ -73,4 +73,6 @@ public interface EventParticipantsRepository extends JpaRepository<EventParticip
     @Transactional
     @Query("UPDATE EventParticipant ep SET ep.isDeleted = true WHERE ep.event.id = :eventId")
     void softDeleteAllByEventId(@Param("eventId") Long eventId);
+
+    boolean existsByUserIdAndEventId(Long id, Long eventId);
 }

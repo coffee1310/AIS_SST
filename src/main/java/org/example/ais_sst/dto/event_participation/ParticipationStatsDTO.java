@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,4 +27,19 @@ public class ParticipationStatsDTO {
     private Integer totalOrganizerPoints;
     private Integer totalRolePoints;
     private Integer totalPoints;
+
+    private List<RoleStatsDTO> roleStats;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RoleStatsDTO {
+        private Long roleId;
+        private String roleTitle;
+        private Integer totalRecords;
+        private Integer presentRecords;
+        private Integer absentRecords;
+        private Integer totalPoints;
+    }
 }

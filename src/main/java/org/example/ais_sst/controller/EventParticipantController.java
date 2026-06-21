@@ -6,7 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.event_participant.EventParticipantResponseDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
+import org.example.ais_sst.entity.EventParticipant;
 import org.example.ais_sst.service.eventService.EventParticipantService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -103,5 +105,25 @@ public class EventParticipantController extends BaseController {
         log.info("DELETE /api/events/participants/soft/bulk - Soft deleting {} participants", ids.size());
         eventParticipantService.softDeleteParticipants(ids);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/manual/{eventId}/{userId}")
+    @Operation(summary = "Ручное добавление участника (без заявки)")
+    public ResponseEntity<EventParticipant> addParticipantManually(
+            @PathVariable Long eventId,
+            @PathVariable Long userId) {
+        log.info("POST /api/events/participants/manual/{}/{} - Adding participant manually", eventId, userId);
+        EventParticipant participant = eventParticipantService.addParticipantManually(eventId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(participant);
+    }
+
+    @PostMapping("/manual/bulk")
+    @Operation(summary = "Массовое ручное добавление участников")
+    public ResponseEntity<List<EventParticipant>> addParticipantsManually(
+            @RequestParam Long eventId,
+            @RequestParam List<Long> userIds) {
+        log.info("POST /api/events/participants/manual/bulk - Adding {} participants to event {}", userIds.size(), eventId);
+        List<EventParticipant> participants = eventParticipantService.addParticipantsManually(eventId, userIds);
+        return ResponseEntity.status(HttpStatus.CREATED).body(participants);
     }
 }

@@ -4,23 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.config.PointsConfig;
 import org.example.ais_sst.dto.event_participation.*;
-import org.example.ais_sst.entity.Event;
-import org.example.ais_sst.entity.EventOrganizer;
-import org.example.ais_sst.entity.EventParticipant;
-import org.example.ais_sst.entity.EventRole;
+import org.example.ais_sst.entity.*;
 import org.example.ais_sst.exception.EventDoesNotExistException;
-import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.exception.ValidationException;
-import org.example.ais_sst.repository.EventOrganizerRepository;
-import org.example.ais_sst.repository.EventParticipantsRepository;
-import org.example.ais_sst.repository.EventRepository;
-import org.example.ais_sst.repository.EventRoleRepository;
+import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.base.BaseEntityService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -32,9 +26,22 @@ public class ParticipationMarkService extends BaseEntityService {
     private final EventOrganizerRepository eventOrganizerRepository;
     private final EventRoleRepository eventRoleRepository;
     private final PointsConfig pointsConfig;
+    private final EventParticipationRecordRepository participationRecordRepository;
+    private final SectorParticipantRepository sectorParticipantRepository;
 
     /**
-     * Отметить участников, организаторов и роли как присутствовавших или отсутствовавших
+     * Получить баллы из глобальной роли
+     */
+    private Integer getDefaultPointsFromGlobalRole(EventRole eventRole) {
+        if (eventRole == null || eventRole.getGlobalEventRole() == null) {
+            return pointsConfig.getDefaultParticipantPoints();
+        }
+        Integer points = eventRole.getGlobalEventRole().getDefaultPoints();
+        return points != null ? points : 1;
+    }
+
+    /**
+     * ОСНОВНОЙ МЕТОД - обновляет event_participants, event_organizers и event_participation_records
      */
     @Transactional
     public ParticipationMarkResponseDTO markParticipation(ParticipationMarkRequestDTO request) {
@@ -44,31 +51,127 @@ public class ParticipationMarkService extends BaseEntityService {
                 () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
         List<ParticipationMarkResponseDTO.MarkedEntityDTO> details = new ArrayList<>();
+        List<Long> createdRecordIds = new ArrayList<>();
         int totalPointsAwarded = 0;
-        int markedParticipants = 0;
-        int markedOrganizers = 0;
-        int markedEventRoles = 0;
 
-        // Отметка участников
+        // 1. Обрабатываем participantIds (обновляем event_participants)
         if (request.getParticipantIds() != null && !request.getParticipantIds().isEmpty()) {
-            markedParticipants = markParticipants(request.getParticipantIds(), request.getPresent(), details);
+            for (Long participantId : request.getParticipantIds()) {
+                EventParticipant participant = eventParticipantsRepository.findById(participantId)
+                        .orElseThrow(() -> new ValidationException("Участник не найден: " + participantId));
+
+                if (!participant.getEvent().getId().equals(request.getEventId())) {
+                    throw new ValidationException(
+                            String.format("Участник с id %d не принадлежит мероприятию с id %d",
+                                    participantId, request.getEventId())
+                    );
+                }
+
+                participant.setWasPresent(request.getPresent());
+                if (request.getPresent()) {
+                    participant.setTotalPoints(pointsConfig.getDefaultParticipantPoints());
+                } else {
+                    participant.setTotalPoints(0);
+                }
+                eventParticipantsRepository.save(participant);
+
+                details.add(ParticipationMarkResponseDTO.MarkedEntityDTO.builder()
+                        .id(participantId)
+                        .type("PARTICIPANT")
+                        .name(participant.getUser().getName() + " " + participant.getUser().getSurname())
+                        .pointsAwarded(request.getPresent() ? participant.getTotalPoints() : 0)
+                        .wasPresent(request.getPresent())
+                        .build());
+
+                totalPointsAwarded += request.getPresent() ? participant.getTotalPoints() : 0;
+            }
         }
 
-        // Отметка организаторов
+        // 2. Обрабатываем organizerIds (обновляем event_organizers)
         if (request.getOrganizerIds() != null && !request.getOrganizerIds().isEmpty()) {
-            markedOrganizers = markOrganizers(request.getOrganizerIds(), request.getPresent(), details);
+            for (Long organizerId : request.getOrganizerIds()) {
+                EventOrganizer organizer = eventOrganizerRepository.findById(organizerId)
+                        .orElseThrow(() -> new ValidationException("Организатор не найден: " + organizerId));
+
+                if (!organizer.getEvent().getId().equals(request.getEventId())) {
+                    throw new ValidationException(
+                            String.format("Организатор с id %d не принадлежит мероприятию с id %d",
+                                    organizerId, request.getEventId())
+                    );
+                }
+
+                organizer.setWasPresent(request.getPresent());
+                if (request.getPresent()) {
+                    organizer.setTotalPoints(pointsConfig.getDefaultOrganizerPoints());
+                } else {
+                    organizer.setTotalPoints(0);
+                }
+                eventOrganizerRepository.save(organizer);
+
+                details.add(ParticipationMarkResponseDTO.MarkedEntityDTO.builder()
+                        .id(organizerId)
+                        .type("ORGANIZER")
+                        .name(organizer.getUser().getName() + " " + organizer.getUser().getSurname())
+                        .pointsAwarded(request.getPresent() ? organizer.getTotalPoints() : 0)
+                        .wasPresent(request.getPresent())
+                        .build());
+
+                totalPointsAwarded += request.getPresent() ? organizer.getTotalPoints() : 0;
+            }
         }
 
-        // Отметка ролей
-        if (request.getEventRoleIds() != null && !request.getEventRoleIds().isEmpty()) {
-            markedEventRoles = markEventRoles(request.getEventRoleIds(), request.getPresent(), details);
-        }
+        // 3. Обрабатываем eventRoleSectorParticipations (создаем/обновляем event_participation_records)
+        if (request.getEventRoleSectorParticipations() != null && !request.getEventRoleSectorParticipations().isEmpty()) {
+            for (ParticipationRecordCreateDTO participationDTO : request.getEventRoleSectorParticipations()) {
+                // Получаем роль для получения баллов
+                EventRole eventRole = eventRoleRepository.findById(participationDTO.getEventRoleId())
+                        .orElseThrow(() -> new ValidationException("Роль не найдена: " + participationDTO.getEventRoleId()));
 
-        // Подсчет общих баллов
-        totalPointsAwarded = details.stream()
-                .filter(ParticipationMarkResponseDTO.MarkedEntityDTO::getWasPresent)
-                .mapToInt(ParticipationMarkResponseDTO.MarkedEntityDTO::getPointsAwarded)
-                .sum();
+                // Создаем или получаем запись об участии
+                EventParticipationRecord record = createOrUpdateParticipationRecord(
+                        request.getEventId(),
+                        participationDTO.getSectorParticipantId(),
+                        participationDTO.getEventRoleId(),
+                        participationDTO.getComment()
+                );
+
+                // Отмечаем запись
+                record.setWasPresent(request.getPresent());
+
+//                // УСТАНАВЛИВАЕМ БАЛЛЫ ИЗ ГЛОБАЛЬНОЙ РОЛИ
+//                if (request.getPresent()) {
+//                    Integer points = getDefaultPointsFromGlobalRole(eventRole);
+//                    record.setTotalPoints(points);
+//                } else {
+//                    record.setTotalPoints(0);
+//                }
+
+                // ПРИНУДИТЕЛЬНО СОХРАНЯЕМ ИЗМЕНЕНИЯ
+                record = participationRecordRepository.save(record);
+                createdRecordIds.add(record.getId());
+
+                String userName = "";
+                if (record.getSectorParticipant() != null && record.getSectorParticipant().getStudent() != null) {
+                    userName = record.getSectorParticipant().getStudent().getName() + " " +
+                            record.getSectorParticipant().getStudent().getSurname();
+                }
+
+                String roleName = "";
+                if (record.getEventRole() != null && record.getEventRole().getGlobalEventRole() != null) {
+                    roleName = record.getEventRole().getGlobalEventRole().getTitle();
+                }
+
+                details.add(ParticipationMarkResponseDTO.MarkedEntityDTO.builder()
+                        .id(record.getId())
+                        .type("PARTICIPATION_RECORD")
+                        .name(userName + " (" + roleName + ")")
+                        .pointsAwarded(request.getPresent() ? record.getTotalPoints() : 0)
+                        .wasPresent(request.getPresent())
+                        .build());
+
+                totalPointsAwarded += request.getPresent() ? record.getTotalPoints() : 0;
+            }
+        }
 
         String message = request.getPresent()
                 ? "Участники успешно отмечены как присутствовавшие"
@@ -76,9 +179,13 @@ public class ParticipationMarkService extends BaseEntityService {
 
         return ParticipationMarkResponseDTO.builder()
                 .eventId(request.getEventId())
-                .markedParticipants(markedParticipants)
-                .markedOrganizers(markedOrganizers)
-                .markedEventRoles(markedEventRoles)
+                .markedParticipants(
+                        (request.getParticipantIds() != null ? request.getParticipantIds().size() : 0) +
+                                (request.getOrganizerIds() != null ? request.getOrganizerIds().size() : 0) +
+                                (request.getEventRoleSectorParticipations() != null ? request.getEventRoleSectorParticipations().size() : 0)
+                )
+                .markedOrganizers(request.getOrganizerIds() != null ? request.getOrganizerIds().size() : 0)
+                .participationRecordIds(createdRecordIds)
                 .totalPointsAwarded(totalPointsAwarded)
                 .message(message)
                 .details(details)
@@ -86,106 +193,85 @@ public class ParticipationMarkService extends BaseEntityService {
     }
 
     /**
-     * Отметить участников
+     * Создать или обновить запись об участии
      */
-    private int markParticipants(List<Long> participantIds, Boolean present,
-                                 List<ParticipationMarkResponseDTO.MarkedEntityDTO> details) {
-        int count = 0;
-        for (Long participantId : participantIds) {
-            EventParticipant participant = eventParticipantsRepository.findById(participantId)
-                    .orElseThrow(() -> new UserDoesNotExistException("Участник не найден: " + participantId));
 
-            participant.setWasPresent(present);
+    @Transactional
+    public EventParticipationRecord createOrUpdateParticipationRecord(Long eventId, Long sectorParticipantId, Long eventRoleId, String comment) {
+        log.info("Creating or updating participation record: eventId={}, sectorParticipant={}, eventRole={}",
+                eventId, sectorParticipantId, eventRoleId);
 
-            // Если присутствует, начисляем баллы
-            if (present) {
-                participant.setTotalPoints(pointsConfig.getDefaultParticipantPoints());
-            } else {
-                participant.setTotalPoints(0);
+        if (eventRoleId == null) {
+            throw new ValidationException("ID роли мероприятия обязателен для создания записи об участии");
+        }
+
+        SectorParticipant sectorParticipant = sectorParticipantRepository.findById(sectorParticipantId)
+                .orElseThrow(() -> new ValidationException("Участник сектора не найден"));
+
+        EventRole eventRole = eventRoleRepository.findById(eventRoleId)
+                .orElseThrow(() -> new ValidationException("Роль не найдена: " + eventRoleId));
+
+        // Проверяем, что роль принадлежит указанному мероприятию
+        if (!eventRole.getEvent().getId().equals(eventId)) {
+            throw new ValidationException(
+                    String.format("Роль с id %d не принадлежит мероприятию с id %d",
+                            eventRoleId, eventId)
+            );
+        }
+
+        // Проверяем, не превышен ли лимит мест для этой роли
+        long currentCount = participationRecordRepository.countByEventRoleId(eventRoleId);
+        int capacity = eventRole.getCapacity() != null ? eventRole.getCapacity() : Integer.MAX_VALUE;
+        if (currentCount >= capacity) {
+            throw new ValidationException("Достигнут лимит мест для этой роли (" + capacity + ")");
+        }
+
+        // Проверяем, существует ли уже запись для этого пользователя и роли
+        Optional<EventParticipationRecord> existingRecord = participationRecordRepository
+                .findBySectorParticipantIdAndEventRoleId(sectorParticipantId, eventRoleId);
+
+        if (existingRecord.isPresent()) {
+            EventParticipationRecord record = existingRecord.get();
+
+            if (!record.getEventRole().getEvent().getId().equals(eventId)) {
+                throw new ValidationException("Существующая запись об участии принадлежит другому мероприятию");
             }
 
-            eventParticipantsRepository.save(participant);
-            count++;
+            if (comment != null) {
+                record.setComment(comment);
+            }
 
-            details.add(ParticipationMarkResponseDTO.MarkedEntityDTO.builder()
-                    .id(participantId)
-                    .type("PARTICIPANT")
-                    .name(participant.getUser().getName() + " " + participant.getUser().getSurname())
-                    .pointsAwarded(present ? pointsConfig.getDefaultParticipantPoints() : 0)
-                    .wasPresent(present)
-                    .build());
+            // Устанавливаем баллы из глобальной роли для существующей записи
+            Integer pointsFromGlobalRole = getDefaultPointsFromGlobalRole(eventRole);
+            record.setTotalPoints(pointsFromGlobalRole);
+
+            // Сохраняем изменения
+            record = participationRecordRepository.save(record);
+
+            log.info("Updating existing participation record with id: {}, totalPoints: {} (from global role)",
+                    record.getId(), record.getTotalPoints());
+            return record;
         }
-        return count;
+
+        // Создаем новую запись
+        Integer pointsFromGlobalRole = getDefaultPointsFromGlobalRole(eventRole);
+
+        EventParticipationRecord record = EventParticipationRecord.builder()
+                .sectorParticipant(sectorParticipant)
+                .eventRole(eventRole)
+                .wasPresent(false)
+                .totalPoints(pointsFromGlobalRole)
+                .comment(comment != null ? comment : "Создана при отметке присутствия")
+                .build();
+
+        record = participationRecordRepository.save(record);
+        log.info("Participation record created with id: {}, totalPoints: {} (from global role)",
+                record.getId(), record.getTotalPoints());
+        return record;
     }
 
     /**
-     * Отметить организаторов
-     */
-    private int markOrganizers(List<Long> organizerIds, Boolean present,
-                               List<ParticipationMarkResponseDTO.MarkedEntityDTO> details) {
-        int count = 0;
-        for (Long organizerId : organizerIds) {
-            EventOrganizer organizer = eventOrganizerRepository.findById(organizerId)
-                    .orElseThrow(() -> new UserDoesNotExistException("Организатор не найден: " + organizerId));
-
-            organizer.setWasPresent(present);
-
-            if (present) {
-                organizer.setTotalPoints(pointsConfig.getDefaultOrganizerPoints());
-            } else {
-                organizer.setTotalPoints(0);
-            }
-
-            eventOrganizerRepository.save(organizer);
-            count++;
-
-            details.add(ParticipationMarkResponseDTO.MarkedEntityDTO.builder()
-                    .id(organizerId)
-                    .type("ORGANIZER")
-                    .name(organizer.getUser().getName() + " " + organizer.getUser().getSurname())
-                    .pointsAwarded(present ? pointsConfig.getDefaultOrganizerPoints() : 0)
-                    .wasPresent(present)
-                    .build());
-        }
-        return count;
-    }
-
-    /**
-     * Отметить роли
-     */
-    private int markEventRoles(List<Long> eventRoleIds, Boolean present,
-                               List<ParticipationMarkResponseDTO.MarkedEntityDTO> details) {
-        int count = 0;
-        for (Long roleId : eventRoleIds) {
-            EventRole role = eventRoleRepository.findById(roleId)
-                    .orElseThrow(() -> new UserDoesNotExistException("Роль не найдена: " + roleId));
-
-            role.setWasPresent(present);
-
-            if (present) {
-                // Баллы для роли берутся из глобальной роли
-                Integer points = role.getGlobalEventRole().getDefaultPoints();
-                role.setTotalPoints(points != null ? points : 1);
-            } else {
-                role.setTotalPoints(0);
-            }
-
-            eventRoleRepository.save(role);
-            count++;
-
-            details.add(ParticipationMarkResponseDTO.MarkedEntityDTO.builder()
-                    .id(roleId)
-                    .type("EVENT_ROLE")
-                    .name(role.getGlobalEventRole().getTitle())
-                    .pointsAwarded(present ? role.getTotalPoints() : 0)
-                    .wasPresent(present)
-                    .build());
-        }
-        return count;
-    }
-
-    /**
-     * Отметить всех участников мероприятия как присутствовавших
+     * Отметить всех участников мероприятия
      */
     @Transactional
     public ParticipationMarkResponseDTO markAllParticipants(Long eventId, Boolean present) {
@@ -195,21 +281,28 @@ public class ParticipationMarkService extends BaseEntityService {
                 () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
         List<EventParticipant> participants = eventParticipantsRepository.findByEventId(eventId);
+        if (participants.isEmpty()) {
+            throw new ValidationException("Нет участников для этого мероприятия");
+        }
+
         List<Long> participantIds = participants.stream()
                 .map(EventParticipant::getId)
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
 
+        // Убираем создание participationDTOs, чтобы не трогать EventParticipationRecord
         ParticipationMarkRequestDTO request = ParticipationMarkRequestDTO.builder()
                 .eventId(eventId)
                 .participantIds(participantIds)
+                // НЕ передаем eventRoleSectorParticipations
                 .present(present)
+                .comment("Автоматическая отметка всех участников")
                 .build();
 
         return markParticipation(request);
     }
 
     /**
-     * Отметить всех организаторов мероприятия как присутствовавших
+     * Отметить всех организаторов мероприятия
      */
     @Transactional
     public ParticipationMarkResponseDTO markAllOrganizers(Long eventId, Boolean present) {
@@ -219,14 +312,36 @@ public class ParticipationMarkService extends BaseEntityService {
                 () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
         List<EventOrganizer> organizers = eventOrganizerRepository.findByEventId(eventId);
+        if (organizers.isEmpty()) {
+            throw new ValidationException("Нет организаторов для этого мероприятия");
+        }
+
         List<Long> organizerIds = organizers.stream()
                 .map(EventOrganizer::getId)
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
+
+        List<ParticipationRecordCreateDTO> participationDTOs = new ArrayList<>();
+
+        List<EventRole> eventRoles = eventRoleRepository.findByEventId(eventId);
+
+        for (EventOrganizer organizer : organizers) {
+            List<SectorParticipant> sectorParticipants = sectorParticipantRepository
+                    .findByStudentId(organizer.getUser().getId());
+            if (!sectorParticipants.isEmpty() && !eventRoles.isEmpty()) {
+                participationDTOs.add(ParticipationRecordCreateDTO.builder()
+                        .sectorParticipantId(sectorParticipants.get(0).getId())
+                        .eventRoleId(eventRoles.get(0).getId())
+                        .comment("Автоматическая отметка всех организаторов")
+                        .build());
+            }
+        }
 
         ParticipationMarkRequestDTO request = ParticipationMarkRequestDTO.builder()
                 .eventId(eventId)
                 .organizerIds(organizerIds)
+                .eventRoleSectorParticipations(participationDTOs)
                 .present(present)
+                .comment("Автоматическая отметка всех организаторов")
                 .build();
 
         return markParticipation(request);
@@ -246,19 +361,18 @@ public class ParticipationMarkService extends BaseEntityService {
         long totalOrganizers = eventOrganizerRepository.countByEventId(eventId);
         long presentOrganizers = eventOrganizerRepository.findByEventIdAndWasPresentTrue(eventId).size();
 
-        long totalRoles = eventRoleRepository.findByEventId(eventId).size();
-        long presentRoles = eventRoleRepository.findByEventIdAndWasPresentTrue(eventId).size();
+        List<EventParticipationRecord> records = participationRecordRepository.findByEventId(eventId);
+        long totalRecords = records.size();
+        long presentRecords = records.stream()
+                .filter(EventParticipationRecord::getWasPresent)
+                .count();
 
         Long participantPoints = eventParticipantsRepository.sumTotalPointsByEventId(eventId);
         Long organizerPoints = eventOrganizerRepository.sumTotalPointsByEventId(eventId);
-        Long rolePoints = eventRoleRepository.sumTotalPointsByEventId(eventId);
+        int totalPoints = (participantPoints != null ? participantPoints.intValue() : 0) +
+                (organizerPoints != null ? organizerPoints.intValue() : 0);
 
-        // Исправляем: конвертируем Long в Integer и суммируем
-        int totalParticipantPoints = participantPoints != null ? participantPoints.intValue() : 0;
-        int totalOrganizerPoints = organizerPoints != null ? organizerPoints.intValue() : 0;
-        int totalRolePoints = rolePoints != null ? rolePoints.intValue() : 0;
-
-        int totalPoints = totalParticipantPoints + totalOrganizerPoints + totalRolePoints;
+        long totalRoles = eventRoleRepository.countByEventId(eventId);
 
         return ParticipationStatsDTO.builder()
                 .eventId(eventId)
@@ -270,40 +384,13 @@ public class ParticipationMarkService extends BaseEntityService {
                 .presentOrganizers((int) presentOrganizers)
                 .absentOrganizers((int) (totalOrganizers - presentOrganizers))
                 .totalRoles((int) totalRoles)
-                .presentRoles((int) presentRoles)
-                .absentRoles((int) (totalRoles - presentRoles))
-                .totalParticipantPoints(totalParticipantPoints)
-                .totalOrganizerPoints(totalOrganizerPoints)
-                .totalRolePoints(totalRolePoints)
+                .presentRoles((int) presentRecords)
+                .absentRoles((int) (totalRoles - presentRecords))
+                .totalParticipantPoints(participantPoints != null ? participantPoints.intValue() : 0)
+                .totalOrganizerPoints(organizerPoints != null ? organizerPoints.intValue() : 0)
+                .totalRolePoints(0)
                 .totalPoints(totalPoints)
                 .build();
-    }
-
-    @Transactional
-    public UpdatePointsResponseDTO updatePoints(UpdatePointsRequestDTO request) {
-        log.info("Updating points for entity: {}, type: {}, new points: {}",
-                request.getEntityId(), request.getEntityType(), request.getPoints());
-
-        try {
-            switch (request.getEntityType()) {
-                case PARTICIPANT:
-                    return updateParticipantPoints(request.getEntityId(), request.getPoints(), request.getReason());
-                case ORGANIZER:
-                    return updateOrganizerPoints(request.getEntityId(), request.getPoints(), request.getReason());
-                case EVENT_ROLE:
-                    return updateEventRolePoints(request.getEntityId(), request.getPoints(), request.getReason());
-                default:
-                    throw new IllegalArgumentException("Неизвестный тип сущности: " + request.getEntityType());
-            }
-        } catch (Exception e) {
-            log.error("Failed to update points: {}", e.getMessage());
-            return UpdatePointsResponseDTO.builder()
-                    .entityId(request.getEntityId())
-                    .entityType(request.getEntityType().name())
-                    .success(false)
-                    .message("Ошибка при обновлении баллов: " + e.getMessage())
-                    .build();
-        }
     }
 
     /**
@@ -316,7 +403,7 @@ public class ParticipationMarkService extends BaseEntityService {
 
         Integer oldPoints = participant.getTotalPoints();
         participant.setTotalPoints(points);
-        eventParticipantsRepository.save(participant);
+        participant = eventParticipantsRepository.save(participant);
 
         return UpdatePointsResponseDTO.builder()
                 .entityId(participantId)
@@ -340,7 +427,7 @@ public class ParticipationMarkService extends BaseEntityService {
 
         Integer oldPoints = organizer.getTotalPoints();
         organizer.setTotalPoints(points);
-        eventOrganizerRepository.save(organizer);
+        organizer = eventOrganizerRepository.save(organizer);
 
         return UpdatePointsResponseDTO.builder()
                 .entityId(organizerId)
@@ -355,27 +442,64 @@ public class ParticipationMarkService extends BaseEntityService {
     }
 
     /**
-     * Обновить баллы роли
+     * Обновить баллы для записи об участии
      */
     @Transactional
-    public UpdatePointsResponseDTO updateEventRolePoints(Long roleId, Integer points, String reason) {
-        EventRole role = eventRoleRepository.findById(roleId)
-                .orElseThrow(() -> new ValidationException("Роль не найдена: " + roleId));
+    public UpdatePointsResponseDTO updateParticipationRecordPoints(Long recordId, Integer points, String reason) {
+        EventParticipationRecord record = participationRecordRepository.findById(recordId)
+                .orElseThrow(() -> new ValidationException("Запись об участии не найдена: " + recordId));
 
-        Integer oldPoints = role.getTotalPoints();
-        role.setTotalPoints(points);
-        eventRoleRepository.save(role);
+        Integer oldPoints = record.getTotalPoints();
+        record.setTotalPoints(points);
+        record = participationRecordRepository.save(record);
+
+        String userName = "";
+        if (record.getSectorParticipant() != null && record.getSectorParticipant().getStudent() != null) {
+            userName = record.getSectorParticipant().getStudent().getName() + " " +
+                    record.getSectorParticipant().getStudent().getSurname();
+        }
 
         return UpdatePointsResponseDTO.builder()
-                .entityId(roleId)
-                .entityType("EVENT_ROLE")
-                .entityName(role.getGlobalEventRole().getTitle())
+                .entityId(recordId)
+                .entityType("PARTICIPATION_RECORD")
+                .entityName(userName)
                 .oldPoints(oldPoints)
                 .newPoints(points)
                 .reason(reason)
                 .success(true)
-                .message("Баллы роли успешно обновлены")
+                .message("Баллы записи об участии успешно обновлены")
                 .build();
+    }
+
+    /**
+     * Обновить баллы через универсальный интерфейс
+     */
+    @Transactional
+    public UpdatePointsResponseDTO updatePoints(UpdatePointsRequestDTO request) {
+        log.info("Updating points for entity: {}, type: {}, new points: {}",
+                request.getEntityId(), request.getEntityType(), request.getPoints());
+
+        try {
+            String type = request.getEntityType().name();
+            switch (type) {
+                case "PARTICIPANT":
+                    return updateParticipantPoints(request.getEntityId(), request.getPoints(), request.getReason());
+                case "ORGANIZER":
+                    return updateOrganizerPoints(request.getEntityId(), request.getPoints(), request.getReason());
+                case "PARTICIPATION_RECORD":
+                    return updateParticipationRecordPoints(request.getEntityId(), request.getPoints(), request.getReason());
+                default:
+                    throw new IllegalArgumentException("Неизвестный тип сущности: " + type);
+            }
+        } catch (Exception e) {
+            log.error("Failed to update points: {}", e.getMessage());
+            return UpdatePointsResponseDTO.builder()
+                    .entityId(request.getEntityId())
+                    .entityType(request.getEntityType().name())
+                    .success(false)
+                    .message("Ошибка при обновлении баллов: " + e.getMessage())
+                    .build();
+        }
     }
 
     /**
@@ -387,7 +511,6 @@ public class ParticipationMarkService extends BaseEntityService {
         log.info("Bulk updating participant points for event: {}, points: {}",
                 request.getEventId(), request.getPoints());
 
-        // Проверяем существование мероприятия
         Event event = findEntityOrThrow(request.getEventId(), eventRepository::findById,
                 () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
@@ -399,7 +522,6 @@ public class ParticipationMarkService extends BaseEntityService {
                 EventParticipant participant = eventParticipantsRepository.findById(participantId)
                         .orElseThrow(() -> new ValidationException("Участник не найден: " + participantId));
 
-                // Проверяем, что участник принадлежит указанному мероприятию
                 if (!participant.getEvent().getId().equals(request.getEventId())) {
                     throw new ValidationException(
                             String.format("Участник %d не принадлежит мероприятию %d",
@@ -408,7 +530,7 @@ public class ParticipationMarkService extends BaseEntityService {
 
                 Integer oldPoints = participant.getTotalPoints();
                 participant.setTotalPoints(request.getPoints());
-                eventParticipantsRepository.save(participant);
+                participant = eventParticipantsRepository.save(participant);
                 updatedCount++;
 
                 details.add(UpdatePointsResponseDTO.builder()
@@ -454,7 +576,6 @@ public class ParticipationMarkService extends BaseEntityService {
                 EventOrganizer organizer = eventOrganizerRepository.findById(organizerId)
                         .orElseThrow(() -> new ValidationException("Организатор не найден: " + organizerId));
 
-                // Проверяем, что организатор принадлежит указанному мероприятию
                 if (!organizer.getEvent().getId().equals(request.getEventId())) {
                     throw new ValidationException(
                             String.format("Организатор %d не принадлежит мероприятию %d",
@@ -463,7 +584,7 @@ public class ParticipationMarkService extends BaseEntityService {
 
                 Integer oldPoints = organizer.getTotalPoints();
                 organizer.setTotalPoints(request.getPoints());
-                eventOrganizerRepository.save(organizer);
+                organizer = eventOrganizerRepository.save(organizer);
                 updatedCount++;
 
                 details.add(UpdatePointsResponseDTO.builder()
@@ -490,74 +611,25 @@ public class ParticipationMarkService extends BaseEntityService {
     }
 
     /**
-     * Массовое обновление баллов для ролей
+     * Массовое обновление баллов для ролей (НЕ ИСПОЛЬЗУЕТСЯ)
      */
     @Transactional
     public UpdatePointsResponseDTO.BulkUpdateResponse bulkUpdateEventRolePoints(
             BulkUpdatePointsRequestDTO request) {
-        log.info("Bulk updating role points for event: {}, points: {}",
-                request.getEventId(), request.getPoints());
-
-        Event event = findEntityOrThrow(request.getEventId(), eventRepository::findById,
-                () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
-
-        List<UpdatePointsResponseDTO> details = new ArrayList<>();
-        int updatedCount = 0;
-
-        if (request.getEventRoleIds() != null && !request.getEventRoleIds().isEmpty()) {
-            for (Long roleId : request.getEventRoleIds()) {
-                EventRole role = eventRoleRepository.findById(roleId)
-                        .orElseThrow(() -> new ValidationException("Роль не найдена: " + roleId));
-
-                // Проверяем, что роль принадлежит указанному мероприятию
-                if (!role.getEvent().getId().equals(request.getEventId())) {
-                    throw new ValidationException(
-                            String.format("Роль %d не принадлежит мероприятию %d",
-                                    roleId, request.getEventId()));
-                }
-
-                Integer oldPoints = role.getTotalPoints();
-                role.setTotalPoints(request.getPoints());
-                eventRoleRepository.save(role);
-                updatedCount++;
-
-                details.add(UpdatePointsResponseDTO.builder()
-                        .entityId(roleId)
-                        .entityType("EVENT_ROLE")
-                        .entityName(role.getGlobalEventRole().getTitle())
-                        .oldPoints(oldPoints)
-                        .newPoints(request.getPoints())
-                        .reason(request.getReason())
-                        .success(true)
-                        .build());
-            }
-        }
-
-        Long totalPointsAfter = eventRoleRepository.sumTotalPointsByEventId(request.getEventId());
-
-        return UpdatePointsResponseDTO.BulkUpdateResponse.builder()
-                .eventId(request.getEventId())
-                .updatedCount(updatedCount)
-                .totalPointsAfterUpdate(totalPointsAfter != null ? totalPointsAfter.intValue() : 0)
-                .details(details)
-                .message("Баллы для " + updatedCount + " ролей успешно обновлены")
-                .build();
+        throw new UnsupportedOperationException("Баллы не хранятся в ролях. Используйте массовое обновление записей об участии.");
     }
 
     /**
-     * Сбросить баллы для всех участников мероприятия к значениям по умолчанию
+     * Сбросить баллы для всех участников
      */
     @Transactional
     public UpdatePointsResponseDTO.BulkUpdateResponse resetAllParticipantPoints(Long eventId) {
         log.info("Resetting all participant points for event: {}", eventId);
 
-        Event event = findEntityOrThrow(eventId, eventRepository::findById,
-                () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
-
         List<EventParticipant> participants = eventParticipantsRepository.findByEventId(eventId);
         List<Long> participantIds = participants.stream()
                 .map(EventParticipant::getId)
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
 
         BulkUpdatePointsRequestDTO request = BulkUpdatePointsRequestDTO.builder()
                 .eventId(eventId)
@@ -570,19 +642,16 @@ public class ParticipationMarkService extends BaseEntityService {
     }
 
     /**
-     * Сбросить баллы для всех организаторов мероприятия к значениям по умолчанию
+     * Сбросить баллы для всех организаторов
      */
     @Transactional
     public UpdatePointsResponseDTO.BulkUpdateResponse resetAllOrganizerPoints(Long eventId) {
         log.info("Resetting all organizer points for event: {}", eventId);
 
-        Event event = findEntityOrThrow(eventId, eventRepository::findById,
-                () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
-
         List<EventOrganizer> organizers = eventOrganizerRepository.findByEventId(eventId);
         List<Long> organizerIds = organizers.stream()
                 .map(EventOrganizer::getId)
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
 
         BulkUpdatePointsRequestDTO request = BulkUpdatePointsRequestDTO.builder()
                 .eventId(eventId)
@@ -592,5 +661,65 @@ public class ParticipationMarkService extends BaseEntityService {
                 .build();
 
         return bulkUpdateOrganizerPoints(request);
+    }
+
+    /**
+     * Создать запись об участии вручную
+     */
+    @Transactional
+    public EventParticipationRecord createParticipationRecordManually(Long sectorParticipantId, Long eventRoleId) {
+        SectorParticipant sectorParticipant = sectorParticipantRepository.findById(sectorParticipantId)
+                .orElseThrow(() -> new ValidationException("Участник сектора не найден"));
+
+        EventRole eventRole = eventRoleRepository.findById(eventRoleId)
+                .orElseThrow(() -> new ValidationException("Роль не найдена"));
+
+        Optional<EventParticipationRecord> existingRecord = participationRecordRepository
+                .findBySectorParticipantIdAndEventRoleId(sectorParticipantId, eventRoleId);
+
+        if (existingRecord.isPresent()) {
+            EventParticipationRecord record = existingRecord.get();
+            Integer pointsFromGlobalRole = getDefaultPointsFromGlobalRole(eventRole);
+            record.setTotalPoints(pointsFromGlobalRole);
+            record = participationRecordRepository.save(record);
+            return record;
+        }
+
+        Integer pointsFromGlobalRole = getDefaultPointsFromGlobalRole(eventRole);
+
+        EventParticipationRecord record = EventParticipationRecord.builder()
+                .sectorParticipant(sectorParticipant)
+                .eventRole(eventRole)
+                .wasPresent(false)
+                .totalPoints(pointsFromGlobalRole)
+                .comment("Создана вручную")
+                .build();
+
+        return participationRecordRepository.save(record);
+    }
+
+    /**
+     * Получить все записи об участии для мероприятия
+     */
+    @Transactional(readOnly = true)
+    public List<EventParticipationRecord> getParticipationRecordsByEvent(Long eventId) {
+        return participationRecordRepository.findByEventId(eventId);
+    }
+
+    /**
+     * Получить все записи об участии для роли
+     */
+    @Transactional(readOnly = true)
+    public List<EventParticipationRecord> getParticipationRecordsByRole(Long eventRoleId) {
+        return participationRecordRepository.findByEventRoleId(eventRoleId);
+    }
+
+    /**
+     * Получить запись об участии по ID
+     */
+    @Transactional(readOnly = true)
+    public EventParticipationRecord getParticipationRecordById(Long recordId) {
+        return participationRecordRepository.findById(recordId)
+                .orElseThrow(() -> new ValidationException("Запись об участии не найдена: " + recordId));
     }
 }

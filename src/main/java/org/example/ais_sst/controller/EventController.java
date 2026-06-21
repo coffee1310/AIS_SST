@@ -6,11 +6,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.controller.base.BaseController;
+import org.example.ais_sst.dto.event_roles.EventRoleCreateDTO;
 import org.example.ais_sst.dto.events.EventCreateDTO;
 import org.example.ais_sst.dto.events.EventFilterDTO;
 import org.example.ais_sst.dto.events.EventResponseDTO;
 import org.example.ais_sst.dto.events.EventUpdateDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
+import org.example.ais_sst.entity.EventOrganizer;
+import org.example.ais_sst.entity.EventRole;
 import org.example.ais_sst.service.eventService.EventService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -265,4 +268,28 @@ public class EventController extends BaseController {
         eventService.softDeleteEventRoles(ids);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/manual/organizer/{eventId}/{userId}")
+    @Operation(summary = "Ручное добавление организатора (без заявки)")
+    public ResponseEntity<EventOrganizer> addOrganizerManually(
+            @PathVariable Long eventId,
+            @PathVariable Long userId) {
+        log.info("POST /api/events/manual/organizer/{}/{} - Adding organizer manually", eventId, userId);
+        EventOrganizer organizer = eventService.addOrganizerManually(eventId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(organizer);
+    }
+
+    @PostMapping("/manual/organizers/bulk")
+    @Operation(summary = "Массовое ручное добавление организаторов")
+    public ResponseEntity<List<EventOrganizer>> addOrganizersManually(
+            @RequestParam Long eventId,
+            @RequestParam List<Long> userIds) {
+        log.info("POST /api/events/manual/organizers/bulk - Adding {} organizers to event {}", userIds.size(), eventId);
+        List<EventOrganizer> organizers = eventService.addOrganizersManually(eventId, userIds);
+        return ResponseEntity.status(HttpStatus.CREATED).body(organizers);
+    }
+
+    // ==================== РУЧНОЕ УПРАВЛЕНИЕ РОЛЯМИ ====================
+
+
 }

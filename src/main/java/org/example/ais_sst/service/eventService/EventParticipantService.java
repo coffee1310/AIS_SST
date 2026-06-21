@@ -2,6 +2,7 @@ package org.example.ais_sst.service.eventService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.config.PointsConfig;
 import org.example.ais_sst.dto.event_participant.EventParticipantResponseDTO;
 import org.example.ais_sst.entity.Event;
 import org.example.ais_sst.entity.EventParticipant;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -28,6 +30,7 @@ public class EventParticipantService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventParticipantMapper eventParticipantMapper;
+    private final PointsConfig pointsConfig;
 
     private static final int UNLIMITED_PARTICIPANTS = 0;
 
@@ -242,5 +245,70 @@ public class EventParticipantService {
                         String.format("Event %d has already started", event.getId()));
             }
         }
+    }
+
+    @Transactional
+    public EventParticipant addParticipantManually(Long eventId, Long userId) {
+        log.info("Manually adding participant: event={}, user={}", eventId, userId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
+
+        // Проверка на дубликат
+        if (eventParticipantsRepository.existsByEventIdAndUserIdAndIsDeletedFalse(eventId, userId)) {
+            throw new ValidationException("Пользователь уже является участником этого мероприятия");
+        }
+
+        EventParticipant participant = EventParticipant.builder()
+                .event(event)
+                .user(user)
+                .totalPoints(pointsConfig.getDefaultParticipantPoints())
+                .wasPresent(false)
+                .isDeleted(false)
+                .build();
+
+        EventParticipant saved = eventParticipantsRepository.save(participant);
+        log.info("Participant added manually with id: {}", saved.getId());
+        return saved;
+    }
+
+    /**
+     * Массовое ручное добавление участников
+     */
+    @Transactional
+    public List<EventParticipant> addParticipantsManually(Long eventId, List<Long> userIds) {
+        log.info("Manually adding {} participants to event {}", userIds.size(), eventId);
+
+        List<EventParticipant> created = new ArrayList<>();
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
+
+        for (Long userId : userIds) {
+            try {
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден: " + userId));
+
+                if (!eventParticipantsRepository.existsByEventIdAndUserIdAndIsDeletedFalse(eventId, userId)) {
+                    EventParticipant participant = EventParticipant.builder()
+                            .event(event)
+                            .user(user)
+                            .totalPoints(pointsConfig.getDefaultParticipantPoints())
+                            .wasPresent(false)
+                            .isDeleted(false)
+                            .build();
+                    created.add(eventParticipantsRepository.save(participant));
+                } else {
+                    log.warn("User {} is already a participant of event {}", userId, eventId);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to add participant {}: {}", userId, e.getMessage());
+            }
+        }
+
+        log.info("Added {} participants manually", created.size());
+        return created;
     }
 }

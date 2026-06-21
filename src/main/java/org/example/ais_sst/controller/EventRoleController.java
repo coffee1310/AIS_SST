@@ -10,6 +10,7 @@ import org.example.ais_sst.dto.event_roles.EventRoleFilterDTO;
 import org.example.ais_sst.dto.event_roles.EventRoleResponseDTO;
 import org.example.ais_sst.dto.event_roles.EventRoleUpdateDTO;
 import org.example.ais_sst.entity.CustomUserDetails;
+import org.example.ais_sst.entity.EventRole;
 import org.example.ais_sst.service.eventService.EventRoleService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -101,5 +102,13 @@ public class EventRoleController extends BaseController {
         Page<EventRoleResponseDTO> eventRoles = eventRoleService.getAllEventRoles(filter, pageable);
 
         return ResponseEntity.ok(eventRoles);
+    }
+
+    @PostMapping("/manual/role")
+    @Operation(summary = "Ручное создание роли (без заявок)")
+    public ResponseEntity<EventRole> createRoleManually(@Valid @RequestBody EventRoleCreateDTO dto) {
+        log.info("POST /api/events/manual/role - Creating role manually");
+        EventRole role = eventRoleService.createEventRoleManually(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(role);
     }
 }

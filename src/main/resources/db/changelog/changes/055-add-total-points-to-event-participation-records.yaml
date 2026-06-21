@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20240620-add-total-points-to-event-participation-records
+      author: coffee13102006
+      labels: event-participation-records-points
+      comment: "Добавление поля total_points в таблицу event_participation_records"
+      changes:
+        - addColumn:
+            tableName: event_participation_records
+            columns:
+              - column:
+                  name: total_points
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+                  remarks: "Фактические баллы за участие (суммируются из global_event_roles.default_points при отметке присутствия)"
+
+        # Создаем индекс для ускорения подсчета баллов
+        - createIndex:
+            indexName: idx_event_participation_records_total_points
+            tableName: event_participation_records
+            columns:
+              - column:
+                  name: total_points
+            remarks: "Индекс для ускорения подсчета и фильтрации по баллам"
+
+  # Для существующих записей - устанавливаем total_points = default_points из глобальной роли
+  - changeSet:
+      id: 20240620-update-event-participation-records-total-points
+      author: coffee13102006
+      labels: event-participation-records-update-points
+      comment: "Обновление total_points для существующих записей на основе default_points из global_event_roles"
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              UPDATE event_participation_records epr
+              SET total_points = COALESCE(ger.default_points, 0)
+              FROM event_roles er
+              JOIN global_event_roles ger ON er.global_event_role_id = ger.id
+              WHERE epr.event_role_id = er.id
+              AND epr.was_present = true;

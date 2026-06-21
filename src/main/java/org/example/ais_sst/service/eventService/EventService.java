@@ -2,6 +2,7 @@ package org.example.ais_sst.service.eventService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.config.PointsConfig;
 import org.example.ais_sst.dto.events.*;
 import org.example.ais_sst.entity.*;
 import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 public class EventService extends BaseEntityService {
 
     private static final Integer UNLIMITED_ORGANIZERS = 0;
+
     private final EventRepository eventRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
     private final UserRepository userRepository;
@@ -36,6 +39,8 @@ public class EventService extends BaseEntityService {
     private final SectorRepository sectorRepository;
     private final EventRoleRepository eventRoleRepository;
     private final SectorParticipantRepository sectorParticipantRepository;
+
+    private final PointsConfig pointsConfig;
 
     private static final Set<String> ALLOWED_ROLES = Set.of(
             "Administrator", "Curator", "Deputy_chairman",
@@ -619,5 +624,70 @@ public class EventService extends BaseEntityService {
     public Integer getMaxOrganizersCount(Long eventId) {
         Event event = getEventById(eventId);
         return event.getMaxOrganizersCount() != null ? event.getMaxOrganizersCount() : 0;
+    }
+
+    @Transactional
+    public EventOrganizer addOrganizerManually(Long eventId, Long userId) {
+        log.info("Manually adding organizer: event={}, user={}", eventId, userId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
+
+        // Проверка на дубликат
+        if (eventOrganizerRepository.existsByEventIdAndUserIdAndIsDeletedFalse(eventId, userId)) {
+            throw new ValidationException("Пользователь уже является организатором этого мероприятия");
+        }
+
+        EventOrganizer organizer = EventOrganizer.builder()
+                .event(event)
+                .user(user)
+                .totalPoints(pointsConfig.getDefaultOrganizerPoints())
+                .wasPresent(false)
+                .isDeleted(false)
+                .build();
+
+        EventOrganizer saved = eventOrganizerRepository.save(organizer);
+        log.info("Organizer added manually with id: {}", saved.getId());
+        return saved;
+    }
+
+    /**
+     * Массовое ручное добавление организаторов
+     */
+    @Transactional
+    public List<EventOrganizer> addOrganizersManually(Long eventId, List<Long> userIds) {
+        log.info("Manually adding {} organizers to event {}", userIds.size(), eventId);
+
+        List<EventOrganizer> created = new ArrayList<>();
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
+
+        for (Long userId : userIds) {
+            try {
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден: " + userId));
+
+                if (!eventOrganizerRepository.existsByEventIdAndUserIdAndIsDeletedFalse(eventId, userId)) {
+                    EventOrganizer organizer = EventOrganizer.builder()
+                            .event(event)
+                            .user(user)
+                            .totalPoints(pointsConfig.getDefaultOrganizerPoints())
+                            .wasPresent(false)
+                            .isDeleted(false)
+                            .build();
+                    created.add(eventOrganizerRepository.save(organizer));
+                } else {
+                    log.warn("User {} is already an organizer of event {}", userId, eventId);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to add organizer {}: {}", userId, e.getMessage());
+            }
+        }
+
+        log.info("Added {} organizers manually", created.size());
+        return created;
     }
 }
