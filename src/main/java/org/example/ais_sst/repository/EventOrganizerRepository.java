@@ -4,6 +4,7 @@ import org.example.ais_sst.entity.Event;
 import org.example.ais_sst.entity.EventOrganizer;
 import org.example.ais_sst.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface EventOrganizerRepository extends JpaRepository<EventOrganizer, Long> {
+public interface EventOrganizerRepository extends JpaRepository<EventOrganizer, Long>, JpaSpecificationExecutor<EventOrganizer> {
 
     List<EventOrganizer> findByEventId(Long eventId);
 
@@ -72,4 +73,20 @@ public interface EventOrganizerRepository extends JpaRepository<EventOrganizer, 
     void softDeleteAllByEventId(@Param("eventId") Long eventId);
 
     boolean existsByUserIdAndEventId(Long id, Long eventId);
+
+    // Метод для фильтрации
+    @Query("SELECT eo FROM EventOrganizer eo WHERE eo.event.id = :eventId AND eo.isDeleted = false " +
+            "AND (:fullName IS NULL OR LOWER(CONCAT(eo.user.name, ' ', eo.user.surname)) LIKE LOWER(CONCAT('%', :fullName, '%'))) " +
+            "AND (:minPoints IS NULL OR eo.totalPoints >= :minPoints) " +
+            "AND (:maxPoints IS NULL OR eo.totalPoints <= :maxPoints) " +
+            "AND (:wasPresent IS NULL OR eo.wasPresent = :wasPresent)")
+    List<EventOrganizer> findByEventIdWithFilters(@Param("eventId") Long eventId,
+                                                  @Param("fullName") String fullName,
+                                                  @Param("minPoints") Integer minPoints,
+                                                  @Param("maxPoints") Integer maxPoints,
+                                                  @Param("wasPresent") Boolean wasPresent);
+
+    boolean existsByUser_IdAndEvent_IdAndIsDeleted(Long userId, Long eventId, Boolean isDeleted);
+
+    Optional<EventOrganizer> findByEventIdAndUserIdAndIsDeleted(Long eventId, Long userId, Boolean isDeleted);
 }

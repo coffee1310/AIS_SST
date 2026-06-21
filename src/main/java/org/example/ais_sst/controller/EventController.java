@@ -269,25 +269,6 @@ public class EventController extends BaseController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/manual/organizer/{eventId}/{userId}")
-    @Operation(summary = "Ручное добавление организатора (без заявки)")
-    public ResponseEntity<EventOrganizer> addOrganizerManually(
-            @PathVariable Long eventId,
-            @PathVariable Long userId) {
-        log.info("POST /api/events/manual/organizer/{}/{} - Adding organizer manually", eventId, userId);
-        EventOrganizer organizer = eventService.addOrganizerManually(eventId, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(organizer);
-    }
-
-    @PostMapping("/manual/organizers/bulk")
-    @Operation(summary = "Массовое ручное добавление организаторов")
-    public ResponseEntity<List<EventOrganizer>> addOrganizersManually(
-            @RequestParam Long eventId,
-            @RequestParam List<Long> userIds) {
-        log.info("POST /api/events/manual/organizers/bulk - Adding {} organizers to event {}", userIds.size(), eventId);
-        List<EventOrganizer> organizers = eventService.addOrganizersManually(eventId, userIds);
-        return ResponseEntity.status(HttpStatus.CREATED).body(organizers);
-    }
 
     // ==================== РУЧНОЕ УПРАВЛЕНИЕ РОЛЯМИ ====================
 

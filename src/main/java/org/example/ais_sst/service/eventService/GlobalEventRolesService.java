@@ -74,6 +74,10 @@ public class GlobalEventRolesService {
             role.setDescription(dto.getDescription());
         }
 
+        if (dto.getDefault_points() != null) {
+            role.setDefaultPoints(dto.getDefault_points());
+        }
+
         GlobalEventRole updatedRole = globalEventRolesRepository.save(role);
         log.info("Role updated successfully: {}", updatedRole.getId());
 

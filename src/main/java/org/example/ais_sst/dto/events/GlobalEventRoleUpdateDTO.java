@@ -26,4 +26,6 @@ public class GlobalEventRoleUpdateDTO {
     private Boolean isDefaultRole;
 
     private Boolean isDeleted;
+
+    private Integer default_points;
 }

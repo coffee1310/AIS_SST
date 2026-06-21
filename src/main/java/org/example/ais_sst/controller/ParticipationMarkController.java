@@ -7,9 +7,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.event_participation.*;
+import org.example.ais_sst.service.eventService.EventParticipantService;
+import org.example.ais_sst.service.eventService.EventParticipantsFilterService;
 import org.example.ais_sst.service.eventService.ParticipationMarkService;
+import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.example.ais_sst.dto.event_participation.EventParticipantFilterDTO;
+
+import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -19,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 public class ParticipationMarkController extends BaseController {
 
     private final ParticipationMarkService participationMarkService;
+    private final EventParticipantService eventParticipantService;
+    private final EventParticipantsFilterService filterService;
 
     @PostMapping("/mark")
     @Operation(summary = "Отметить участников, организаторов и записи об участии")
@@ -104,5 +113,82 @@ public class ParticipationMarkController extends BaseController {
         UpdatePointsResponseDTO.BulkUpdateResponse response =
                 participationMarkService.resetAllOrganizerPoints(eventId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/filter")
+    @Operation(summary = "Получить участников мероприятия с фильтрацией (GET)")
+    public ResponseEntity<Page<EventParticipantInfoDTO>> getEventParticipants(
+            @RequestParam(required = false) Long eventId,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String fullName,
+            @RequestParam(required = false) Integer minPoints,
+            @RequestParam(required = false) Integer maxPoints,
+            @RequestParam(required = false) Boolean wasPresent,
+            @RequestParam(required = false) String entityType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "fullName") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+
+        log.info("GET /api/events/participation/filter - Filtering participants with params");
+
+        // Если eventId не передан, возвращаем пустую страницу
+        if (eventId == null) {
+            log.warn("eventId is null, returning empty page");
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+            return ResponseEntity.ok(new PageImpl<>(Collections.emptyList(), pageable, 0));
+        }
+
+        EventParticipantFilterDTO filter = EventParticipantFilterDTO.builder()
+                .eventId(eventId)
+                .role(role)
+                .fullName(fullName)
+                .minPoints(minPoints)
+                .maxPoints(maxPoints)
+                .wasPresent(wasPresent)
+                .entityType(entityType)
+                .build();
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        try {
+            Page<EventParticipantInfoDTO> result = filterService.getEventParticipantsWithFilters(filter, pageable);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error filtering participants: {}", e.getMessage());
+            // В случае ошибки возвращаем пустую страницу
+            return ResponseEntity.ok(new PageImpl<>(Collections.emptyList(), pageable, 0));
+        }
+    }
+
+    @PostMapping("/filter")
+    @Operation(summary = "Получить участников мероприятия с фильтрацией (POST)")
+    public ResponseEntity<Page<EventParticipantInfoDTO>> getEventParticipantsWithFilters(
+            @RequestBody(required = false) EventParticipantFilterDTO filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "fullName") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+
+        log.info("POST /api/events/participation/filter - Filtering participants with body");
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Если filter не передан или eventId не указан, возвращаем пустую страницу
+        if (filter == null || filter.getEventId() == null) {
+            log.warn("Filter is null or eventId is null, returning empty page");
+            return ResponseEntity.ok(new PageImpl<>(Collections.emptyList(), pageable, 0));
+        }
+
+        try {
+            Page<EventParticipantInfoDTO> result = filterService.getEventParticipantsWithFilters(filter, pageable);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error filtering participants: {}", e.getMessage());
+            // В случае ошибки возвращаем пустую страницу
+            return ResponseEntity.ok(new PageImpl<>(Collections.emptyList(), pageable, 0));
+        }
     }
 }

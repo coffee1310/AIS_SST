@@ -5,6 +5,7 @@ import org.example.ais_sst.entity.EventParticipationRecord;
 import org.example.ais_sst.entity.EventRole;
 import org.example.ais_sst.entity.SectorParticipant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface EventParticipationRecordRepository extends JpaRepository<EventParticipationRecord, Long> {
+public interface EventParticipationRecordRepository extends JpaRepository<EventParticipationRecord, Long>,
+        JpaSpecificationExecutor<EventParticipationRecord> {
 
     Optional<EventParticipationRecord> findById(Long id);
 
@@ -150,4 +152,23 @@ public interface EventParticipationRecordRepository extends JpaRepository<EventP
             "WHERE epr.sectorParticipant.student.id = :userId " +
             "AND epr.wasPresent = true")
     long countPresentRecordsByUserId(@Param("userId") Long userId);
+
+    // Метод для фильтрации
+    @Query("SELECT epr FROM EventParticipationRecord epr " +
+            "JOIN epr.eventRole er " +
+            "JOIN er.event e " +
+            "JOIN epr.sectorParticipant sp " +
+            "JOIN sp.student u " +
+            "WHERE e.id = :eventId " +
+            "AND (:fullName IS NULL OR LOWER(CONCAT(u.name, ' ', u.surname)) LIKE LOWER(CONCAT('%', :fullName, '%'))) " +
+            "AND (:minPoints IS NULL OR epr.totalPoints >= :minPoints) " +
+            "AND (:maxPoints IS NULL OR epr.totalPoints <= :maxPoints) " +
+            "AND (:wasPresent IS NULL OR epr.wasPresent = :wasPresent) " +
+            "AND (:roleTitle IS NULL OR LOWER(er.globalEventRole.title) LIKE LOWER(CONCAT('%', :roleTitle, '%')))")
+    List<EventParticipationRecord> findByEventIdWithFilters(@Param("eventId") Long eventId,
+                                                            @Param("fullName") String fullName,
+                                                            @Param("minPoints") Integer minPoints,
+                                                            @Param("maxPoints") Integer maxPoints,
+                                                            @Param("wasPresent") Boolean wasPresent,
+                                                            @Param("roleTitle") String roleTitle);
 }

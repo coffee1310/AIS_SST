@@ -39,8 +39,13 @@ public class EventService extends BaseEntityService {
     private final SectorRepository sectorRepository;
     private final EventRoleRepository eventRoleRepository;
     private final SectorParticipantRepository sectorParticipantRepository;
+    private final EventSectorRepository eventSectorRepository;
 
     private final PointsConfig pointsConfig;
+
+    private static final Set<String> HIGHEST_ROLES = Set.of(
+            "Administrator", "Curator", "Deputy_chairman", "Chairman"
+    );
 
     private static final Set<String> ALLOWED_ROLES = Set.of(
             "Administrator", "Curator", "Deputy_chairman",
@@ -126,7 +131,12 @@ public class EventService extends BaseEntityService {
             log.info("DTO title: {}", dto.getTitle());
             log.info("DTO description: {}", dto.getDescription());
 
-            validateIsEventCreator(eventId, userId);
+            User user = userRepository.findUserById(userId)
+                    .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
+            String user_role = user.getRole().getTitle();
+
+            if (!HIGHEST_ROLES.contains(user_role))
+                validateIsEventCreator(eventId, userId);
 
             Event event = findEntityOrThrow(eventId, eventRepository::findById,
                     () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
@@ -188,23 +198,41 @@ public class EventService extends BaseEntityService {
                 updateOrganizers(event, dto.getOrganizerIds());
             }
 
+            if (dto.getMaxOrganizersCount() != null) {
+                event.setMaxOrganizersCount(dto.getMaxOrganizersCount());
+            }
+
+            // Обновление секторов
             if (dto.getSectorIds() != null) {
-                // Очищаем существующие сектора
-                event.getEventSectors().clear();
+                log.info("Updating sectors: {}", dto.getSectorIds());
+
+                // Удаляем все существующие связи EventSector
+                if (event.getEventSectors() != null && !event.getEventSectors().isEmpty()) {
+                    // Используем отдельный репозиторий для удаления
+                    eventSectorRepository.deleteAll(event.getEventSectors());
+                    event.getEventSectors().clear();
+                }
 
                 // Добавляем новые сектора
                 for (Long sectorId : dto.getSectorIds()) {
                     Sector sector = findEntityOrThrow(sectorId, sectorRepository::findById,
                             () -> new IllegalArgumentException("Сектор не найден: " + sectorId), "Sector");
-                    event.addSector(sector);
+
+                    // Проверяем, не существует ли уже такая связь
+                    boolean exists = eventSectorRepository.existsByEventIdAndSectorId(eventId, sectorId);
+                    if (!exists) {
+                        event.addSector(sector);
+                    }
                 }
-            } else if (dto.getSectorIds() == null && dto.getIsPublic() != null && Boolean.FALSE.equals(dto.getIsPublic())) {
-                // Если isPublic = false и sectorIds не указан - ошибка уже выброшена в validateSectorsRequired
             }
 
-                if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");}
+            if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {
+                throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");
+            }
 
-            if (event.getMaxOrganizersCount() == null) {event.setMaxOrganizersCount(event.getOrganizers().size());}
+            if (event.getMaxOrganizersCount() == null) {
+                event.setMaxOrganizersCount(event.getOrganizers().size());
+            }
 
             log.info("Saving event with title: '{}'", event.getTitle());
             Event updatedEvent = eventRepository.save(event);
@@ -313,7 +341,12 @@ public class EventService extends BaseEntityService {
     @Transactional
     public EventResponseDTO addOrganizer(Long eventId, Long organizerId, Long userId) {
         return executeWithLogging(() -> {
-            validateIsEventCreator(eventId, userId);
+            User user = userRepository.findUserById(userId)
+                    .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
+            String user_role = user.getRole().getTitle();
+
+            if (!HIGHEST_ROLES.contains(user_role))
+                validateIsEventCreator(eventId, userId);
 
             Event event = findEntityOrThrow(eventId, eventRepository::findById,
                     () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
@@ -321,12 +354,31 @@ public class EventService extends BaseEntityService {
             User organizer = findEntityOrThrow(organizerId, userRepository::findById,
                     () -> new UserDoesNotExistException("Пользователь не найден"), "User");
 
-            validateState(!eventOrganizerRepository.existsByEventIdAndUserId(eventId, organizerId),
-                    () -> new IllegalArgumentException("Пользователь уже является организатором"),
-                    "Organizer already exists");
+            // Проверяем, существует ли уже активный организатор
+            if (eventOrganizerRepository.existsByEventIdAndUserIdAndIsDeletedFalse(eventId, organizerId)) {
+                throw new IllegalArgumentException("Пользователь уже является организатором");
+            }
 
-            EventOrganizer eventOrganizer = EventOrganizer.builder()
-                    .event(event).user(organizer).build();
+            // Ищем удаленного организатора для восстановления
+            EventOrganizer eventOrganizer = eventOrganizerRepository
+                    .findByEventIdAndUserIdAndIsDeleted(eventId, organizerId, true)
+                    .orElse(null);
+
+            if (eventOrganizer != null) {
+                // Восстанавливаем удаленного организатора
+                eventOrganizer.setIsDeleted(false);
+            } else {
+                // Создаем нового организатора
+                eventOrganizer = EventOrganizer.builder()
+                        .event(event)
+                        .user(organizer)
+                        .wasPresent(false)
+                        .totalPoints(pointsConfig.getDefaultOrganizerPoints())
+                        .isDeleted(false)
+                        .totalPoints(pointsConfig.getDefaultOrganizerPoints())
+                        .build();
+            }
+
             eventOrganizerRepository.save(eventOrganizer);
 
             EventResponseDTO response = eventMapper.toResponseDto(event);
@@ -371,7 +423,11 @@ public class EventService extends BaseEntityService {
     @Transactional
     public void deleteEvent(Long eventId, Long userId) {
         executeVoidWithLogging(() -> {
-            validateIsEventCreator(eventId, userId);
+            User user = userRepository.findUserById(userId)
+                    .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
+            String user_role = user.getRole().getTitle();
+            if (!HIGHEST_ROLES.contains(user_role))
+                validateIsEventCreator(eventId, userId);
 
             Event event = findEntityOrThrow(eventId, eventRepository::findById,
                     () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
@@ -546,8 +602,59 @@ public class EventService extends BaseEntityService {
     }
 
     private void updateOrganizers(Event event, List<Long> newOrganizerIds) {
-        eventOrganizerRepository.deleteByEventId(event.getId());
-        addOrganizersToEvent(event, newOrganizerIds);
+        if (newOrganizerIds == null) {
+            return;
+        }
+
+        // Получаем текущих организаторов
+        List<EventOrganizer> currentOrganizers = event.getOrganizers();
+
+        // Получаем ID текущих организаторов
+        List<Long> currentOrganizerIds = currentOrganizers.stream()
+                .map(EventOrganizer::getUser)
+                .map(User::getId)
+                .collect(Collectors.toList());
+
+        // Находим организаторов для удаления (которые есть в текущих, но нет в новых)
+        List<EventOrganizer> toRemove = currentOrganizers.stream()
+                .filter(org -> !newOrganizerIds.contains(org.getUser().getId()))
+                .collect(Collectors.toList());
+
+        // Находим организаторов для добавления (которые есть в новых, но нет в текущих)
+        List<Long> toAdd = newOrganizerIds.stream()
+                .filter(id -> !currentOrganizerIds.contains(id))
+                .collect(Collectors.toList());
+
+        // Удаляем организаторов, которых нет в новом списке
+        if (!toRemove.isEmpty()) {
+            log.info("Removing organizers: {}", toRemove.stream()
+                    .map(org -> org.getUser().getId())
+                    .collect(Collectors.toList()));
+            event.getOrganizers().removeAll(toRemove);
+        }
+
+        // Добавляем новых организаторов
+        if (!toAdd.isEmpty()) {
+            log.info("Adding organizers: {}", toAdd);
+            for (Long userId : toAdd) {
+                User user = findEntityOrThrow(userId, userRepository::findById,
+                        () -> new UserDoesNotExistException("Пользователь не найден: " + userId), "User");
+
+                EventOrganizer organizer = EventOrganizer.builder()
+                        .event(event)
+                        .user(user)
+                        .wasPresent(false)
+                        .totalPoints(pointsConfig.getDefaultOrganizerPoints())
+                        .isDeleted(false)
+                        .build();
+
+                event.getOrganizers().add(organizer);
+            }
+        }
+
+        if (toRemove.isEmpty() && toAdd.isEmpty()) {
+            log.info("Organizers list unchanged, no updates needed");
+        }
     }
 
     private void addOrganizersToEvent(Event event, List<Long> organizerIds) {
