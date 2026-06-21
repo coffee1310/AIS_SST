@@ -213,7 +213,7 @@ fun EventDetailsScreen(component: CoordinatorEventDetailsComponent) {
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         if (showApps && event.maxOrganizersCount > event.currentOrganizersCount) {
                             val available = event.maxOrganizersCount - event.currentOrganizersCount
@@ -493,7 +493,7 @@ fun RoleDetailCard(title: String, description: String?, deadline: String?, accen
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 12.sp),
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 13.sp),
                 color = MaterialTheme.colorScheme.onSurface
             )
 
