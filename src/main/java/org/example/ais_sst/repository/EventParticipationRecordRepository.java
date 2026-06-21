@@ -178,4 +178,6 @@ public interface EventParticipationRecordRepository extends JpaRepository<EventP
 
     @Query("SELECT epr FROM EventParticipationRecord epr WHERE epr.eventRole.event.id = :eventId AND epr.isDeleted = false")
     List<EventParticipationRecord> findActiveByEventId(@Param("eventId") Long eventId);
+
+    long countByEventRoleIdAndIsDeletedFalse(Long eventRoleId);
 }

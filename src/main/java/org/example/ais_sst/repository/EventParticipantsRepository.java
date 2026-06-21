@@ -90,4 +90,7 @@ public interface EventParticipantsRepository extends JpaRepository<EventParticip
                                                     @Param("wasPresent") Boolean wasPresent);
 
     Optional<EventParticipant> findByEventIdAndUserIdAndIsDeletedTrue(Long eventId, Long userId);
+
+    Long countByEventIdAndIsDeletedFalseAndIsDeletedFalse(Long eventId);
+
 }

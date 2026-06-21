@@ -60,8 +60,8 @@ public class EventService extends BaseEntityService {
 
             EventResponseDTO response = eventMapper.toResponseDto(event);
 
-            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
-            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId));
 
             if (event.getPhoto() != null && !event.getPhoto().isEmpty()) {
                 String base64Photo = eventPhotoService.getPhotoAsBase64(event.getPhoto());
@@ -114,7 +114,7 @@ public class EventService extends BaseEntityService {
 
             EventResponseDTO response = eventMapper.toResponseDto(savedEvent);
             response.setCurrentParticipantsCount(0L);
-            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(savedEvent.getId()));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(savedEvent.getId()));
             response.setSectors(getEventSectors(savedEvent));
             // Для создателя мероприятия isMySector всегда true, так как он создатель
             response.setIsMySector(true);
@@ -239,8 +239,8 @@ public class EventService extends BaseEntityService {
             log.info("Event saved successfully with ID: {}", updatedEvent.getId());
 
             EventResponseDTO response = eventMapper.toResponseDto(updatedEvent);
-            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
-            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId));
             response.setSectors(getEventSectors(updatedEvent));
             response.setIsMySector(isUserHasSectorForEvent(updatedEvent, userId));
 
@@ -329,8 +329,8 @@ public class EventService extends BaseEntityService {
             EventResponseDTO response = eventMapper.toResponseDto(savedEvent);
 
             // Добавляем текущее количество участников и организаторов
-            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
-            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId));
             // ДОБАВЛЯЕМ СЕКТОРА
             response.setSectors(getEventSectors(savedEvent));
 
@@ -384,8 +384,8 @@ public class EventService extends BaseEntityService {
             EventResponseDTO response = eventMapper.toResponseDto(event);
 
             // Добавляем текущее количество участников и организаторов
-            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
-            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId));
             // ДОБАВЛЯЕМ СЕКТОРА
             response.setSectors(getEventSectors(event));
 
@@ -401,7 +401,7 @@ public class EventService extends BaseEntityService {
             Event event = findEntityOrThrow(eventId, eventRepository::findById,
                     () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
-            long organizersCount = eventOrganizerRepository.countByEventId(eventId);
+            long organizersCount = eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId);
             validateState(organizersCount > 1,
                     () -> new IllegalArgumentException("Нельзя удалить единственного организатора"),
                     "Cannot remove last organizer");
@@ -411,8 +411,8 @@ public class EventService extends BaseEntityService {
             EventResponseDTO response = eventMapper.toResponseDto(event);
 
             // Добавляем текущее количество участников и организаторов
-            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(eventId));
-            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(eventId));
+            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(eventId));
+            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId));
             // ДОБАВЛЯЕМ СЕКТОРА
             response.setSectors(getEventSectors(event));
 
@@ -466,8 +466,8 @@ public class EventService extends BaseEntityService {
         return eventRepository.findByEventCreatorId(creatorId, pageable)
                 .map(event -> {
                     EventResponseDTO dto = eventMapper.toResponseDto(event);
-                    dto.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(event.getId()));
-                    dto.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(event.getId()));
+                    dto.setCurrentParticipantsCount(eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(event.getId()));
+                    dto.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(event.getId()));
                     dto.setSectors(getEventSectors(event));
                     // Для этого метода userId не передается, можно оставить null или получить из контекста
                     dto.setIsMySector(false);
@@ -481,8 +481,8 @@ public class EventService extends BaseEntityService {
         return eventRepository.findAll(spec, pageable)
                 .map(event -> {
                     EventResponseDTO dto = eventMapper.toResponseDto(event);
-                    dto.setCurrentParticipantsCount(eventParticipantsRepository.countByEventId(event.getId()));
-                    dto.setCurrentOrganizersCount(eventOrganizerRepository.countByEventId(event.getId()));
+                    dto.setCurrentParticipantsCount(eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(event.getId()));
+                    dto.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(event.getId()));
                     dto.setSectors(getEventSectors(event));
                     dto.setIsMySector(isUserHasSectorForEvent(event, filter.getCurrentUserId()));
                     if (event.getPhoto() != null) {
@@ -688,7 +688,7 @@ public class EventService extends BaseEntityService {
 
     @Transactional(readOnly = true)
     public long getOrganizersCount(Long eventId) {
-        return eventOrganizerRepository.countByEventId(eventId);
+        return eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId);
     }
 
     @Transactional(readOnly = true)
@@ -701,7 +701,7 @@ public class EventService extends BaseEntityService {
     public int getAvailableOrganizerSlots(Long eventId) {
         Event event = getEventById(eventId);
 
-        long currentOrganizers = eventOrganizerRepository.countByEventId(eventId);
+        long currentOrganizers = eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId);
 
         if (event.getMaxOrganizersCount() <= UNLIMITED_ORGANIZERS) {
             return Integer.MAX_VALUE;
@@ -714,7 +714,7 @@ public class EventService extends BaseEntityService {
     public String getAvailableOrganizerSlotsInfo(Long eventId) {
         Event event = getEventById(eventId);
 
-        long currentOrganizers = eventOrganizerRepository.countByEventId(eventId);
+        long currentOrganizers = eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId);
 
         if (event.getMaxOrganizersCount() <= UNLIMITED_ORGANIZERS) {
             return "Неограниченное количество организаторов (текущее: " + currentOrganizers + ")";

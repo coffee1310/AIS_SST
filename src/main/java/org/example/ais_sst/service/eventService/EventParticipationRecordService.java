@@ -169,7 +169,7 @@ public class EventParticipationRecordService {
     }
 
     private void validateRoleCapacity(Long eventRoleId, Integer capacity) {
-        long currentCount = participationRecordRepository.countByEventRoleId(eventRoleId);
+        long currentCount = participationRecordRepository.countByEventRoleIdAndIsDeletedFalse(eventRoleId);
         int maxCapacity = capacity != null ? capacity : Integer.MAX_VALUE;
         if (currentCount >= maxCapacity) {
             throw new ValidationException("Достигнут лимит мест для этой роли (" + maxCapacity + ")");

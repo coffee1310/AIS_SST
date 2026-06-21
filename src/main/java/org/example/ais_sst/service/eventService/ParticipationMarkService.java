@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -212,7 +213,7 @@ public class ParticipationMarkService extends BaseEntityService {
         }
 
         // Проверяем, не превышен ли лимит мест для этой роли
-        long currentCount = participationRecordRepository.countByEventRoleId(eventRoleId);
+        long currentCount = participationRecordRepository.countByEventRoleIdAndIsDeletedFalse(eventRoleId);
         int capacity = eventRole.getCapacity() != null ? eventRole.getCapacity() : Integer.MAX_VALUE;
         if (currentCount >= capacity) {
             throw new ValidationException("Достигнут лимит мест для этой роли (" + capacity + ")");
@@ -272,7 +273,10 @@ public class ParticipationMarkService extends BaseEntityService {
         Event event = findEntityOrThrow(eventId, eventRepository::findById,
                 () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
-        List<EventParticipant> participants = eventParticipantsRepository.findByEventId(eventId);
+        List<EventParticipant> participants = eventParticipantsRepository.findByEventId(eventId).stream()
+                .filter(p -> !Boolean.TRUE.equals(p.getIsDeleted()))
+                .collect(Collectors.toList());;
+                ;
         if (participants.isEmpty()) {
             throw new ValidationException("Нет участников для этого мероприятия");
         }
@@ -303,7 +307,10 @@ public class ParticipationMarkService extends BaseEntityService {
         Event event = findEntityOrThrow(eventId, eventRepository::findById,
                 () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
-        List<EventOrganizer> organizers = eventOrganizerRepository.findByEventId(eventId);
+        List<EventOrganizer> organizers = eventOrganizerRepository.findByEventId(eventId).stream()
+                .filter(p -> !Boolean.TRUE.equals(p.getIsDeleted()))
+                .collect(Collectors.toList());;
+                ;
         if (organizers.isEmpty()) {
             throw new ValidationException("Нет организаторов для этого мероприятия");
         }
@@ -347,13 +354,16 @@ public class ParticipationMarkService extends BaseEntityService {
         Event event = findEntityOrThrow(eventId, eventRepository::findById,
                 () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
-        long totalParticipants = eventParticipantsRepository.countByEventId(eventId);
-        long presentParticipants = eventParticipantsRepository.findByEventIdAndWasPresentTrue(eventId).size();
+        long totalParticipants = eventParticipantsRepository.countByEventIdAndIsDeletedFalse(eventId);
+        long presentParticipants = eventParticipantsRepository.findByEventIdAndWasPresentTrueAndIsDeletedFalse(eventId).size();
 
-        long totalOrganizers = eventOrganizerRepository.countByEventId(eventId);
-        long presentOrganizers = eventOrganizerRepository.findByEventIdAndWasPresentTrue(eventId).size();
+        long totalOrganizers = eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId);
+        long presentOrganizers = eventOrganizerRepository.findByEventIdAndWasPresentTrueAndIsDeletedFalse(eventId).size();
 
-        List<EventParticipationRecord> records = participationRecordRepository.findByEventId(eventId);
+        List<EventParticipationRecord> records = participationRecordRepository.findByEventId(eventId).stream()
+                .filter(p -> !Boolean.TRUE.equals(p.getIsDeleted()))
+                .collect(Collectors.toList());
+
         long totalRecords = records.size();
         long presentRecords = records.stream()
                 .filter(EventParticipationRecord::getWasPresent)
