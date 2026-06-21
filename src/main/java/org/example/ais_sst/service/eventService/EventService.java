@@ -250,7 +250,7 @@ public class EventService extends BaseEntityService {
 
     private void validateSectorsRequired(EventCreateDTO dto) {
         if (Boolean.FALSE.equals(dto.getIsPublic()) &&
-                (dto.getSectorIds() == null || dto.getSectorIds().isEmpty())) {
+                (dto.getSectorIds() == null || dto.getSectorIds().isEmpty()) && dto.getIsFreeEvent()) {
             throw new IllegalArgumentException("Для закрытого мероприятия необходимо указать хотя бы один сектор");
         }
     }
