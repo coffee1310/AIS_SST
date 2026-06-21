@@ -249,6 +249,14 @@ class HomeComponent(
                 AvailableEventDetailsComponent(
                     componentContext = context,
                     eventId = config.eventId,
+                    onGoBack = { navigation.pop() },
+                    onNavigateToRoleSelection = { id -> navigation.pushNew(Config.EventRoleSelection(id)) }
+                )
+            )
+            is Config.EventRoleSelection -> Child.EventRoleSelection(
+                EventRoleSelectionComponent(
+                    componentContext = context,
+                    eventId = config.eventId,
                     onGoBack = { navigation.pop() }
                 )
             )
@@ -269,6 +277,7 @@ class HomeComponent(
         class UpcomingEvents(val component: UpcomingEventsComponent) : Child()
         class UpcomingEventDetails(val component: UpcomingEventDetailsComponent) : Child()
         class AvailableEventDetails(val component: AvailableEventDetailsComponent) : Child()
+        class EventRoleSelection(val component: EventRoleSelectionComponent) : Child()
         class CoordinatorEventDetails(val component: CoordinatorEventDetailsComponent) : Child()
     }
 
@@ -278,6 +287,7 @@ class HomeComponent(
         @Serializable data object UpcomingEvents : Config
         @Serializable data class UpcomingEventDetails(val eventId: Int) : Config
         @Serializable data class AvailableEventDetails(val eventId: Int) : Config
+        @Serializable data class EventRoleSelection(val eventId: Int) : Config
         @Serializable data class CoordinatorEventDetails(val eventId: Int) : Config
     }
 }
@@ -304,6 +314,13 @@ class UpcomingEventDetailsComponent(
 ) : ComponentContext by componentContext
 
 class AvailableEventDetailsComponent(
+    componentContext: ComponentContext,
+    val eventId: Int,
+    val onGoBack: () -> Unit,
+    val onNavigateToRoleSelection: (Int) -> Unit
+) : ComponentContext by componentContext
+
+class EventRoleSelectionComponent(
     componentContext: ComponentContext,
     val eventId: Int,
     val onGoBack: () -> Unit

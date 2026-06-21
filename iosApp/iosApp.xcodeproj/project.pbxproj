@@ -180,7 +180,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "ССУ КИПФИН";
+				INFOPLIST_KEY_CFBundleDisplayName = "ССУ КИП";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Приложению требуется доступ к камере, чтобы вы могли сделать фотографию для профиля студента.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Приложению требуется доступ к вашей галерее, чтобы вы могли установить официальную фотографию для профиля студента.";
@@ -272,7 +272,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "ССУ КИПФИН";
+				INFOPLIST_KEY_CFBundleDisplayName = "ССУ КИП";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Приложению требуется доступ к камере, чтобы вы могли сделать фотографию для профиля студента.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Приложению требуется доступ к вашей галерее, чтобы вы могли установить официальную фотографию для профиля студента.";

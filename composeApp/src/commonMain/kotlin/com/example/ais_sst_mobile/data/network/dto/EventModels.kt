@@ -84,7 +84,9 @@ data class RoleDto(
     val description: String? = null,
     val sectorId: Int,
     val sectorTitle: String? = null,
-    val defaultPoints: Int? = null
+    val defaultPoints: Int? = null,
+    val createdAt: String? = null, // ИСПРАВЛЕНИЕ: Добавили поля
+    val updatedAt: String? = null  // ИСПРАВЛЕНИЕ: Добавили поля
 )
 
 @Serializable
@@ -99,7 +101,9 @@ data class EventRoleDto(
     val description: String,
     val deadline: String,
     val totalOccupiedSlots: Int? = 0,
-    val totalAvailableSlots: Int? = 0
+    val totalAvailableSlots: Int? = 0,
+    val createdAt: String? = null, // ИСПРАВЛЕНИЕ: Добавили поля
+    val updatedAt: String? = null  // ИСПРАВЛЕНИЕ: Добавили поля
 )
 
 @Serializable

@@ -28,5 +28,6 @@ data class Event(
     val maxParticipantsCount: Int = 0,
     val maxOrganizersCount: Int = 0,
     val currentParticipantsCount: Int = 0,
-    val currentOrganizersCount: Int = 0
+    val currentOrganizersCount: Int = 0,
+    val sectorTitle: String? = null
 )

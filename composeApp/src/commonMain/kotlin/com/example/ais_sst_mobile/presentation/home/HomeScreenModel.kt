@@ -45,26 +45,14 @@ class HomeScreenModel(
 
     private fun loadData() {
         viewModelScope.launch {
+            _state.value = ActivistHomeState.Loading
+
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-            val nextWeek = today.plus(DatePeriod(days = 7))
+            // Берем запас ровно в 1 год вперед для ближайших событий
+            val farFuture = today.plus(DatePeriod(years = 1))
 
             val upcomingDeferred = async {
-                // Сначала ищем в ближайшие 7 дней
-                val firstTry = eventsRepository.getUpcomingEvents(today.toString(), nextWeek.toString())
-
-                if (firstTry.isSuccess && firstTry.getOrDefault(emptyList()).isEmpty()) {
-                    // Если в ближайшие 7 дней пусто, берем горизонт в 1 год и оставляем только 1 самое ближайшее
-                    val farFuture = today.plus(DatePeriod(years = 1))
-                    val secondTry = eventsRepository.getUpcomingEvents(today.toString(), farFuture.toString())
-
-                    if (secondTry.isSuccess) {
-                        Result.success(secondTry.getOrDefault(emptyList()).take(1))
-                    } else {
-                        secondTry
-                    }
-                } else {
-                    firstTry
-                }
+                eventsRepository.getUpcomingEvents(today.toString(), farFuture.toString())
             }
 
             val availableDeferred = async {
@@ -75,9 +63,13 @@ class HomeScreenModel(
             val availableRes = availableDeferred.await()
 
             if (upcomingRes.isSuccess && availableRes.isSuccess) {
+                // Оставляем только 1 самое ближайшее
+                val upcoming = upcomingRes.getOrDefault(emptyList()).take(1)
+                val available = availableRes.getOrDefault(emptyList())
+
                 _state.value = ActivistHomeState.Success(
-                    upcoming = upcomingRes.getOrDefault(emptyList()),
-                    available = availableRes.getOrDefault(emptyList())
+                    upcoming = upcoming,
+                    available = available
                 )
             } else {
                 _state.value = ActivistHomeState.Error("Не удалось загрузить мероприятия. Проверьте подключение к сети.")

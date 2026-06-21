@@ -43,7 +43,6 @@ fun ActivistHomeContent(
     onNavigateToAvailableEventDetails: (Int) -> Unit
 ) {
     val selectedTab by screenModel.selectedTab.collectAsState()
-
     val state by screenModel.state.collectAsState()
 
     val focusManager = LocalFocusManager.current
@@ -92,7 +91,10 @@ fun ActivistHomeContent(
                     val upcomingEvents = currentState.upcoming
                     val availableEvents = currentState.available
 
-                    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
                         item {
                             Row(
                                 modifier = Modifier
@@ -126,7 +128,6 @@ fun ActivistHomeContent(
                             }
 
                             if (upcomingEvents.isEmpty()) {
-                                // Если вообще нет предстоящих мероприятий
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -220,8 +221,8 @@ fun ActivistHomeContent(
                     }
                 }
             }
-        } else if (selectedTab == 1) { // <-- Вкладка "Быстрые задачи"
-            QuickTasksContent() // <-- ПРОСТО ВСТАВЬ ЭТОТ ВЫЗОВ СЮДА
+        } else if (selectedTab == 1) {
+            QuickTasksContent()
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Контент вкладки $selectedTab", color = MaterialTheme.colorScheme.onSurface)

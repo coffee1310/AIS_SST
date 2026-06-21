@@ -106,14 +106,9 @@ class CreateEventScreenModel(
             return
         }
 
-        // ДОБАВЛЕННАЯ ПРОВЕРКА: Конец не может быть раньше начала
+        // ПРОВЕРКА: Конец не может быть раньше начала
         if (startTime.toInt() >= endTime.toInt()) {
             showError("Время окончания должно быть позже времени начала")
-            return
-        }
-
-        if (isFreeEvent && !isPublic && selectedSectorIds.isEmpty()) {
-            showError("Для закрытого свободного мероприятия выберите хотя бы один доступный сектор")
             return
         }
 
@@ -135,27 +130,29 @@ class CreateEventScreenModel(
             }
         }
 
-        // --- ВЫЧИСЛЕНИЯ ПАРАМЕТРОВ ---
-
         val maxOrganizersCount = _selectedOrganizers.value.size +
                 roles.filter { it.isOrganizer && !it.isDeleted }.sumOf { it.peopleCount.toIntOrNull() ?: 1 }
 
         val maxParticipantsCount = if (isFreeEvent) {
-            maxParticipantsStr.toIntOrNull() ?: 0 // 0 = без ограничений
-        } else null
+            maxParticipantsStr.toIntOrNull() ?: 0
+        } else 0
 
-        // Собираем ID секторов из добавленных ролей
         val roleSectorIds = roles
             .filter { !it.isOrganizer && !it.isDeleted && it.globalRoleId != null }
             .mapNotNull { role ->
-                // Ищем сектор ID в загруженном словаре глобальных ролей
                 _globalRoles.value.find { it.id == role.globalRoleId }?.sectorId
             }
 
-        // ИСПРАВЛЕНИЕ ЗДЕСЬ: Объединяем ручной выбор (если есть) с секторами из ролей.
-        // distinct() уберет дубликаты, если одна роль принадлежит тому же сектору, что и другая.
+        // НОВАЯ ЛОГИКА: Если мероприятие закрытое, свободное, но сектора не выбраны — берем все доступные сектора
+        val effectiveSectorIds = if (isFreeEvent && !isPublic && selectedSectorIds.isEmpty()) {
+            _sectors.value.map { it.id }
+        } else {
+            selectedSectorIds.toList()
+        }
+
+        // Формируем финальный список секторов
         val finalSectorIds = if (!isPublic) {
-            (selectedSectorIds.toList() + roleSectorIds).distinct()
+            (effectiveSectorIds + roleSectorIds).distinct()
         } else {
             emptyList()
         }
@@ -194,7 +191,7 @@ class CreateEventScreenModel(
                         if (orgResult.isFailure) hasErrors = true
                     }
 
-                    // Создаем заявку на организатора (пустой POST запрос по нужному URL)
+                    // Создаем заявку на организатора
                     val organizerRole = roles.find { it.isOrganizer && !it.isDeleted }
                     if (organizerRole != null) {
                         val orgAppResult = eventsRepository.createOrganizerApplication(createdEvent.id)

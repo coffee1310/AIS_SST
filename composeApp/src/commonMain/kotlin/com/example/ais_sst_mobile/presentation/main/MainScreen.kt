@@ -93,7 +93,12 @@ fun MainScreen(component: MainComponent) {
                 onBackClick = { homeActive.component.onGoBack() }
             }
             is HomeComponent.Child.AvailableEventDetails -> {
-                title = "Регистрация на мероприятие"
+                title = "Мероприятие"
+                showBackButton = true
+                onBackClick = { homeActive.component.onGoBack() }
+            }
+            is HomeComponent.Child.EventRoleSelection -> {
+                title = "Регистрация"
                 showBackButton = true
                 onBackClick = { homeActive.component.onGoBack() }
             }
