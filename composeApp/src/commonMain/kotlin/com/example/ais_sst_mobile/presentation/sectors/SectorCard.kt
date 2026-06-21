@@ -1,7 +1,6 @@
 package com.example.ais_sst_mobile.presentation.sectors
 
 import ais_sst_mobile.composeapp.generated.resources.Res
-import ais_sst_mobile.composeapp.generated.resources.default_sector
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -141,12 +140,7 @@ fun SectorCard(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    Image(
-                        painter = painterResource(Res.drawable.default_sector),
-                        contentDescription = "Заглушка",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+
                 }
             }
         }

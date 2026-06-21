@@ -34,7 +34,6 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.*
 import org.jetbrains.compose.resources.painterResource
 import ais_sst_mobile.composeapp.generated.resources.Res
-import ais_sst_mobile.composeapp.generated.resources.img_calendar
 import androidx.compose.foundation.BorderStroke
 
 // --- МОДЕЛИ ---
@@ -344,12 +343,7 @@ fun CalendarEventCard(event: CalendarEventMock) {
                             contentAlignment = Alignment.Center
                         ) {
                             // ИСПОЛЬЗУЕМ ВАШУ КАРТИНКУ-ЗАГЛУШКУ
-                            Image(
-                                painter = painterResource(Res.drawable.img_calendar),
-                                contentDescription = "Превью",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
+
                         }
                     }
                 }

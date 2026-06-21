@@ -33,6 +33,10 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
             implementation("io.insert-koin:koin-android:3.5.3")
+            implementation("androidx.camera:camera-core:1.4.0")
+            implementation("androidx.camera:camera-camera2:1.4.0")
+            implementation("androidx.camera:camera-lifecycle:1.4.0")
+            implementation("androidx.camera:camera-view:1.4.0")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -105,6 +109,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
     buildTypes {
