@@ -171,4 +171,11 @@ public interface EventParticipationRecordRepository extends JpaRepository<EventP
                                                             @Param("maxPoints") Integer maxPoints,
                                                             @Param("wasPresent") Boolean wasPresent,
                                                             @Param("roleTitle") String roleTitle);
+
+    // Добавить методы для работы с isDeleted
+    Optional<EventParticipationRecord> findBySectorParticipantIdAndEventRoleIdAndIsDeletedTrue(
+            Long sectorParticipantId, Long eventRoleId);
+
+    @Query("SELECT epr FROM EventParticipationRecord epr WHERE epr.eventRole.event.id = :eventId AND epr.isDeleted = false")
+    List<EventParticipationRecord> findActiveByEventId(@Param("eventId") Long eventId);
 }

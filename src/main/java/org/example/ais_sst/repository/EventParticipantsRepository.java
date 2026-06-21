@@ -88,4 +88,6 @@ public interface EventParticipantsRepository extends JpaRepository<EventParticip
                                                     @Param("minPoints") Integer minPoints,
                                                     @Param("maxPoints") Integer maxPoints,
                                                     @Param("wasPresent") Boolean wasPresent);
+
+    Optional<EventParticipant> findByEventIdAndUserIdAndIsDeletedTrue(Long eventId, Long userId);
 }

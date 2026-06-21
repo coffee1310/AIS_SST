@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -310,5 +311,76 @@ public class EventParticipantService {
 
         log.info("Added {} participants manually", created.size());
         return created;
+    }
+
+    @Transactional
+    public EventParticipantResponseDTO createOrRestoreParticipant(Long eventId, Long userId) {
+        log.info("Creating or restoring participant: event={}, user={}", eventId, userId);
+
+        Event event = getEventById(eventId);
+        User user = getUserById(userId);
+
+        // Проверяем, существует ли уже активный участник
+        if (eventParticipantsRepository.existsByEventIdAndUserIdAndIsDeletedFalse(eventId, userId)) {
+            throw new DuplicateParticipantException("Пользователь уже является участником этого мероприятия");
+        }
+
+        // Ищем удаленного участника
+        Optional<EventParticipant> deletedParticipant = eventParticipantsRepository
+                .findByEventIdAndUserIdAndIsDeletedTrue(eventId, userId);
+
+        EventParticipant participant;
+        boolean wasRestored = false;
+
+        if (deletedParticipant.isPresent()) {
+            // Восстанавливаем удаленного участника
+            participant = deletedParticipant.get();
+            participant.setIsDeleted(false);
+            participant.setWasPresent(false);
+            participant.setTotalPoints(pointsConfig.getDefaultParticipantPoints());
+            wasRestored = true;
+            log.info("Restoring deleted participant with id: {}", participant.getId());
+        } else {
+            // Создаем нового участника
+            participant = EventParticipant.builder()
+                    .event(event)
+                    .user(user)
+                    .totalPoints(pointsConfig.getDefaultParticipantPoints())
+                    .wasPresent(false)
+                    .isDeleted(false)
+                    .build();
+            log.info("Creating new participant");
+        }
+
+        participant = eventParticipantsRepository.save(participant);
+
+        EventParticipantResponseDTO response = eventParticipantMapper.toResponseDto(participant);
+        // Можно добавить поле wasRestored в DTO, если нужно
+        // response.setWasRestored(wasRestored);
+
+        return response;
+    }
+
+    /**
+     * Массовое создание или восстановление участников
+     */
+    @Transactional
+    public List<EventParticipantResponseDTO> createOrRestoreParticipants(Long eventId, List<Long> userIds) {
+        log.info("Creating or restoring {} participants for event {}", userIds.size(), eventId);
+
+        List<EventParticipantResponseDTO> responses = new ArrayList<>();
+
+        for (Long userId : userIds) {
+            try {
+                EventParticipantResponseDTO response = createOrRestoreParticipant(eventId, userId);
+                responses.add(response);
+            } catch (Exception e) {
+                log.error("Failed to create/restore participant {}: {}", userId, e.getMessage());
+                // Продолжаем с остальными
+            }
+        }
+
+        log.info("Successfully created/restored {} participants", responses.size());
+        return responses;
     }
 }
