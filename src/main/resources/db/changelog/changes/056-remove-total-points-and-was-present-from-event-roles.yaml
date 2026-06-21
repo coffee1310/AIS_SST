@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: remove-total-points-and-was-present-from-event-roles
+      author: your-name
+      comment: "Remove total_points and was_present columns from event_roles table"
+      changes:
+        - dropColumn:
+            tableName: event_roles
+            columnName: total_points
+        - dropColumn:
+            tableName: event_roles
+            columnName: was_present
+      rollback:
+        - addColumn:
+            tableName: event_roles
+            columns:
+              - column:
+                  name: total_points
+                  type: int
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
+        - addColumn:
+            tableName: event_roles
+            columns:
+              - column:
+                  name: was_present
+                  type: boolean
+                  defaultValue: false
+                  constraints:
+                    nullable: false

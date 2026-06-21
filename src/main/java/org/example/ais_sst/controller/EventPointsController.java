@@ -9,6 +9,7 @@ import org.example.ais_sst.controller.base.BaseController;
 import org.example.ais_sst.dto.event_participation.BulkUpdatePointsRequestDTO;
 import org.example.ais_sst.dto.event_participation.UpdatePointsResponseDTO;
 import org.example.ais_sst.service.eventService.ParticipationMarkService;
+import org.example.ais_sst.service.eventService.PointsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class EventPointsController extends BaseController {
 
     private final ParticipationMarkService participationMarkService;
+    private final PointsService pointsService;
 
     @PutMapping("/participant/{participantId}")
     @Operation(summary = "Изменить баллы участника")
@@ -29,7 +31,7 @@ public class EventPointsController extends BaseController {
             @RequestParam(required = false) String reason) {
 
         log.info("PUT /api/events/points/participant/{} - Updating points to: {}", participantId, points);
-        UpdatePointsResponseDTO response = participationMarkService.updateParticipantPoints(
+        UpdatePointsResponseDTO response = pointsService.updateParticipantPoints(
                 participantId, points, reason);
         return ResponseEntity.ok(response);
     }
@@ -42,7 +44,7 @@ public class EventPointsController extends BaseController {
             @RequestParam(required = false) String reason) {
 
         log.info("PUT /api/events/points/organizer/{} - Updating points to: {}", organizerId, points);
-        UpdatePointsResponseDTO response = participationMarkService.updateOrganizerPoints(
+        UpdatePointsResponseDTO response = pointsService.updateOrganizerPoints(
                 organizerId, points, reason);
         return ResponseEntity.ok(response);
     }
@@ -55,7 +57,7 @@ public class EventPointsController extends BaseController {
             @RequestParam(required = false) String reason) {
 
         log.info("PUT /api/events/points/role/{} - Updating points to: {}", participation_record_id, points);
-        UpdatePointsResponseDTO response = participationMarkService.updateParticipationRecordPoints(
+        UpdatePointsResponseDTO response = pointsService.updateParticipationRecordPoints(
                 participation_record_id, points, reason);
         return ResponseEntity.ok(response);
     }
@@ -68,7 +70,7 @@ public class EventPointsController extends BaseController {
         log.info("PUT /api/events/points/bulk/participants - Bulk updating participant points for event: {}",
                 request.getEventId());
         UpdatePointsResponseDTO.BulkUpdateResponse response =
-                participationMarkService.bulkUpdateParticipantPoints(request);
+                pointsService.bulkUpdateParticipantPoints(request);
         return ResponseEntity.ok(response);
     }
 
@@ -80,7 +82,7 @@ public class EventPointsController extends BaseController {
         log.info("PUT /api/events/points/bulk/organizers - Bulk updating organizer points for event: {}",
                 request.getEventId());
         UpdatePointsResponseDTO.BulkUpdateResponse response =
-                participationMarkService.bulkUpdateOrganizerPoints(request);
+                pointsService.bulkUpdateOrganizerPoints(request);
         return ResponseEntity.ok(response);
     }
 
@@ -92,7 +94,7 @@ public class EventPointsController extends BaseController {
         log.info("PUT /api/events/points/bulk/roles - Bulk updating role points for event: {}",
                 request.getEventId());
         UpdatePointsResponseDTO.BulkUpdateResponse response =
-                participationMarkService.bulkUpdateEventRolePoints(request);
+                pointsService.bulkUpdateEventRolePoints(request);
         return ResponseEntity.ok(response);
     }
 
@@ -103,7 +105,7 @@ public class EventPointsController extends BaseController {
 
         log.info("POST /api/events/points/reset/participants/{} - Resetting all participant points", eventId);
         UpdatePointsResponseDTO.BulkUpdateResponse response =
-                participationMarkService.resetAllParticipantPoints(eventId);
+                pointsService.resetAllParticipantPoints(eventId);
         return ResponseEntity.ok(response);
     }
 
@@ -114,7 +116,7 @@ public class EventPointsController extends BaseController {
 
         log.info("POST /api/events/points/reset/organizers/{} - Resetting all organizer points", eventId);
         UpdatePointsResponseDTO.BulkUpdateResponse response =
-                participationMarkService.resetAllOrganizerPoints(eventId);
+                pointsService.resetAllOrganizerPoints(eventId);
         return ResponseEntity.ok(response);
     }
 }

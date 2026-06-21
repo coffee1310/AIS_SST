@@ -105,3 +105,5 @@ databaseChangeLog:
       file: db/changelog/changes/054-add-is-deleted-to-event-participants.yaml
   - include:
       file: db/changelog/changes/055-add-total-points-to-event-participation-records.yaml
+  - include:
+      file: db/changelog/changes/056-remove-total-points-and-was-present-from-event-roles.yaml

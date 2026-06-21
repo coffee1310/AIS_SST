@@ -138,14 +138,6 @@ public class ParticipationMarkService extends BaseEntityService {
                 // Отмечаем запись
                 record.setWasPresent(request.getPresent());
 
-//                // УСТАНАВЛИВАЕМ БАЛЛЫ ИЗ ГЛОБАЛЬНОЙ РОЛИ
-//                if (request.getPresent()) {
-//                    Integer points = getDefaultPointsFromGlobalRole(eventRole);
-//                    record.setTotalPoints(points);
-//                } else {
-//                    record.setTotalPoints(0);
-//                }
-
                 // ПРИНУДИТЕЛЬНО СОХРАНЯЕМ ИЗМЕНЕНИЯ
                 record = participationRecordRepository.save(record);
                 createdRecordIds.add(record.getId());
@@ -611,15 +603,6 @@ public class ParticipationMarkService extends BaseEntityService {
     }
 
     /**
-     * Массовое обновление баллов для ролей (НЕ ИСПОЛЬЗУЕТСЯ)
-     */
-    @Transactional
-    public UpdatePointsResponseDTO.BulkUpdateResponse bulkUpdateEventRolePoints(
-            BulkUpdatePointsRequestDTO request) {
-        throw new UnsupportedOperationException("Баллы не хранятся в ролях. Используйте массовое обновление записей об участии.");
-    }
-
-    /**
      * Сбросить баллы для всех участников
      */
     @Transactional
@@ -661,65 +644,5 @@ public class ParticipationMarkService extends BaseEntityService {
                 .build();
 
         return bulkUpdateOrganizerPoints(request);
-    }
-
-    /**
-     * Создать запись об участии вручную
-     */
-    @Transactional
-    public EventParticipationRecord createParticipationRecordManually(Long sectorParticipantId, Long eventRoleId) {
-        SectorParticipant sectorParticipant = sectorParticipantRepository.findById(sectorParticipantId)
-                .orElseThrow(() -> new ValidationException("Участник сектора не найден"));
-
-        EventRole eventRole = eventRoleRepository.findById(eventRoleId)
-                .orElseThrow(() -> new ValidationException("Роль не найдена"));
-
-        Optional<EventParticipationRecord> existingRecord = participationRecordRepository
-                .findBySectorParticipantIdAndEventRoleId(sectorParticipantId, eventRoleId);
-
-        if (existingRecord.isPresent()) {
-            EventParticipationRecord record = existingRecord.get();
-            Integer pointsFromGlobalRole = getDefaultPointsFromGlobalRole(eventRole);
-            record.setTotalPoints(pointsFromGlobalRole);
-            record = participationRecordRepository.save(record);
-            return record;
-        }
-
-        Integer pointsFromGlobalRole = getDefaultPointsFromGlobalRole(eventRole);
-
-        EventParticipationRecord record = EventParticipationRecord.builder()
-                .sectorParticipant(sectorParticipant)
-                .eventRole(eventRole)
-                .wasPresent(false)
-                .totalPoints(pointsFromGlobalRole)
-                .comment("Создана вручную")
-                .build();
-
-        return participationRecordRepository.save(record);
-    }
-
-    /**
-     * Получить все записи об участии для мероприятия
-     */
-    @Transactional(readOnly = true)
-    public List<EventParticipationRecord> getParticipationRecordsByEvent(Long eventId) {
-        return participationRecordRepository.findByEventId(eventId);
-    }
-
-    /**
-     * Получить все записи об участии для роли
-     */
-    @Transactional(readOnly = true)
-    public List<EventParticipationRecord> getParticipationRecordsByRole(Long eventRoleId) {
-        return participationRecordRepository.findByEventRoleId(eventRoleId);
-    }
-
-    /**
-     * Получить запись об участии по ID
-     */
-    @Transactional(readOnly = true)
-    public EventParticipationRecord getParticipationRecordById(Long recordId) {
-        return participationRecordRepository.findById(recordId)
-                .orElseThrow(() -> new ValidationException("Запись об участии не найдена: " + recordId));
     }
 }
