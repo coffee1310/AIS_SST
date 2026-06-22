@@ -14,27 +14,27 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface TaskRequestRepository extends JpaRepository<TaskRequest, Integer>, JpaSpecificationExecutor<TaskRequest> {
+public interface TaskRequestRepository extends JpaRepository<TaskRequest, Long>, JpaSpecificationExecutor<TaskRequest> {
 
-    List<TaskRequest> findByTaskIdAndIsDeletedFalse(Integer taskId);
+    List<TaskRequest> findByTaskIdAndIsDeletedFalse(Long taskId);
 
     List<TaskRequest> findByStudentIdAndIsDeletedFalse(Long studentId);
 
-    Optional<TaskRequest> findByTaskIdAndStudentIdAndIsDeletedFalse(Integer taskId, Long studentId);
+    Optional<TaskRequest> findByTaskIdAndStudentIdAndIsDeletedFalse(Long taskId, Long studentId);
 
     @Query("SELECT tr FROM TaskRequest tr WHERE tr.task.id = :taskId AND tr.status = :status AND tr.isDeleted = false")
-    List<TaskRequest> findByTaskIdAndStatus(@Param("taskId") Integer taskId, @Param("status") TaskRequestStatus status);
+    List<TaskRequest> findByTaskIdAndStatus(@Param("taskId") Long taskId, @Param("status") TaskRequestStatus status);
 
     @Query("SELECT tr FROM TaskRequest tr WHERE tr.student.id = :studentId AND tr.status = :status AND tr.isDeleted = false")
     List<TaskRequest> findByStudentIdAndStatus(@Param("studentId") Long studentId, @Param("status") TaskRequestStatus status);
 
     @Query("SELECT COUNT(tr) FROM TaskRequest tr WHERE tr.task.id = :taskId AND tr.status = :status AND tr.isDeleted = false")
-    long countByTaskIdAndStatus(@Param("taskId") Integer taskId, @Param("status") TaskRequestStatus status);
+    long countByTaskIdAndStatus(@Param("taskId") Long taskId, @Param("status") TaskRequestStatus status);
 
     @Modifying
     @Query("UPDATE TaskRequest tr SET tr.isDeleted = true WHERE tr.id = :requestId")
-    void softDelete(@Param("requestId") Integer requestId);
+    void softDelete(@Param("requestId") Long requestId);
 
     boolean existsByTaskIdAndStudentIdAndStatusAndIsDeletedFalse(
-            Integer taskId, Long studentId, TaskRequestStatus status);
+            Long taskId, Long studentId, TaskRequestStatus status);
 }

@@ -13,7 +13,7 @@ import java.time.Instant;
 @AllArgsConstructor
 public class TaskCompletionResponse {
     private Long taskUserId;
-    private Integer taskId;
+    private Long taskId;
     private String taskTitle;
     private Long userId;
     private String userName;

@@ -9,6 +9,9 @@ import org.example.ais_sst.entity.TaskRequest;
 import org.example.ais_sst.entity.TaskUser;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.entity.enums.TaskRequestStatus;
+import org.example.ais_sst.event.tasks.TaskRequestApprovedEvent;
+import org.example.ais_sst.event.tasks.TaskRequestRejectedEvent;
+import org.example.ais_sst.event.tasks.TaskRequestSubmittedEvent;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.exception.ValidationException;
 import org.example.ais_sst.mapper.TaskRequestMapper;
@@ -17,6 +20,7 @@ import org.example.ais_sst.repository.TaskRequestRepository;
 import org.example.ais_sst.repository.TaskUserRepository;
 import org.example.ais_sst.repository.UserRepository;
 import org.example.ais_sst.specification.TaskRequestSpecification;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,6 +41,8 @@ public class TaskRequestService {
     private final UserRepository userRepository;
     private final TaskUserRepository taskUserRepository;
     private final TaskRequestMapper taskRequestMapper;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public TaskRequestResponseDTO createTaskRequest(CreateTaskRequestDTO request, Long studentId) {
@@ -91,6 +97,14 @@ public class TaskRequestService {
 
         taskRequest = taskRequestRepository.save(taskRequest);
         log.info("Task request created with id: {}", taskRequest.getId());
+
+
+        eventPublisher.publishEvent(new TaskRequestSubmittedEvent(
+                task.getId().longValue(),
+                task.getTitle(),
+                studentId,                           // заявитель
+                task.getCreator().getId()            // создатель задачи
+        ));
 
         return taskRequestMapper.toResponseDto(taskRequest);
     }
@@ -158,6 +172,12 @@ public class TaskRequestService {
         taskUserRepository.save(taskUser);
         log.info("User {} assigned to task {}", taskRequest.getStudent().getId(), task.getId());
 
+        eventPublisher.publishEvent(new TaskRequestApprovedEvent(
+                task.getId(),
+                task.getTitle(),
+                taskRequest.getStudent().getId()
+        ));
+
         return taskRequestMapper.toResponseDto(taskRequest);
     }
 
@@ -187,6 +207,12 @@ public class TaskRequestService {
         taskRequest = taskRequestRepository.save(taskRequest);
         log.info("Task request {} rejected", request.getRequestId());
 
+        eventPublisher.publishEvent(new TaskRequestRejectedEvent(
+                task.getId(),
+                task.getTitle(),
+                taskRequest.getStudent().getId()
+        ));
+
         return taskRequestMapper.toResponseDto(taskRequest);
     }
 
@@ -198,7 +224,7 @@ public class TaskRequestService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskRequestResponseDTO> getRequestsByTaskId(Integer taskId) {
+    public List<TaskRequestResponseDTO> getRequestsByTaskId(Long taskId) {
         taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
@@ -228,7 +254,7 @@ public class TaskRequestService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskRequestResponseDTO> getRequestsByTaskIdAndStatus(Integer taskId, TaskRequestStatus status) {
+    public List<TaskRequestResponseDTO> getRequestsByTaskIdAndStatus(Long taskId, TaskRequestStatus status) {
         taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
@@ -238,7 +264,7 @@ public class TaskRequestService {
     }
 
     @Transactional
-    public void cancelTaskRequest(Integer requestId, Long studentId) {
+    public void cancelTaskRequest(Long requestId, Long studentId) {
         TaskRequest taskRequest = taskRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ValidationException("Заявка не найдена: " + requestId));
 

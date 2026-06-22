@@ -14,35 +14,35 @@ import java.util.Optional;
 public interface TaskUserRepository extends JpaRepository<TaskUser, Long> {
 
 
-    List<TaskUser> findByTaskId(Integer taskId);
+    List<TaskUser> findByTaskId(Long taskId);
 
     List<TaskUser> findByUserId(Long userId);
 
-    Optional<TaskUser> findByTaskIdAndUserId(Integer taskId, Long userId);
+    Optional<TaskUser> findByTaskIdAndUserId(Long taskId, Long userId);
 
     @Query("SELECT tu FROM TaskUser tu WHERE tu.task.id = :taskId AND tu.isDeleted = false")
-    List<TaskUser> findActiveByTaskId(@Param("taskId") Integer taskId);
+    List<TaskUser> findActiveByTaskId(@Param("taskId") Long taskId);
 
     @Query("SELECT tu FROM TaskUser tu WHERE tu.task.id = :taskId AND tu.isDeleted = true")
-    List<TaskUser> findDeletedByTaskId(@Param("taskId") Integer taskId);
+    List<TaskUser> findDeletedByTaskId(@Param("taskId") Long taskId);
 
     @Modifying
     @Query("UPDATE TaskUser tu SET tu.isDeleted = true WHERE tu.task.id = :taskId")
-    void softDeleteByTaskId(@Param("taskId") Integer taskId);
+    void softDeleteByTaskId(@Param("taskId") Long taskId);
 
     @Modifying
     @Query("UPDATE TaskUser tu SET tu.isDeleted = true WHERE tu.task.id = :taskId AND tu.user.id IN :userIds")
-    void softDeleteByTaskIdAndUserIds(@Param("taskId") Integer taskId, @Param("userIds") List<Long> userIds);
+    void softDeleteByTaskIdAndUserIds(@Param("taskId") Long taskId, @Param("userIds") List<Long> userIds);
 
-    boolean existsByTaskIdAndUserIdAndIsDeletedFalse(Integer taskId, Long userId);
+    boolean existsByTaskIdAndUserIdAndIsDeletedFalse(Long taskId, Long userId);
 
     @Query("SELECT COUNT(tu) FROM TaskUser tu WHERE tu.task.id = :taskId AND tu.isDeleted = false")
-    long countByTaskIdAndIsDeletedFalse(@Param("taskId") Integer taskId);
+    long countByTaskIdAndIsDeletedFalse(@Param("taskId") Long taskId);
 
     @Query("SELECT tu FROM TaskUser tu WHERE tu.task.id = :taskId AND tu.user.id = :userId AND tu.isDeleted = false")
-    Optional<TaskUser> findActiveByTaskIdAndUserId(@Param("taskId") Integer taskId, @Param("userId") Long userId);
+    Optional<TaskUser> findActiveByTaskIdAndUserId(@Param("taskId") Long taskId, @Param("userId") Long userId);
 
     // Метод для поиска всех невыполненных назначений по задаче
     @Query("SELECT tu FROM TaskUser tu WHERE tu.task.id = :taskId AND tu.isCompleted = false AND tu.isDeleted = false")
-    List<TaskUser> findActiveIncompleteByTaskId(@Param("taskId") Integer taskId);
+    List<TaskUser> findActiveIncompleteByTaskId(@Param("taskId") Long taskId);
 }

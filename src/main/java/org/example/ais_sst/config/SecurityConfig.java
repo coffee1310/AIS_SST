@@ -84,6 +84,16 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+
+        CorsConfiguration wsConfig = new CorsConfiguration();
+        wsConfig.setAllowedOriginPatterns(configuration.getAllowedOriginPatterns());
+        wsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "OPTIONS"));
+        wsConfig.setAllowedHeaders(Arrays.asList("*"));           // ← важно
+        wsConfig.setAllowCredentials(true);
+        wsConfig.setMaxAge(3600L);
+
+        source.registerCorsConfiguration("/ws-endpoint/**", wsConfig);
+
         return source;
     }
 

@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProcessTaskRequestDTO {
     @NotNull(message = "ID заявки обязателен")
-    private Integer requestId;
+    private Long requestId;
 }

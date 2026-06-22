@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Repository
-public interface TaskRepository extends JpaRepository<Task, Integer>, JpaSpecificationExecutor<Task> {
+public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
     List<Task> findByIsDeletedFalse();
 

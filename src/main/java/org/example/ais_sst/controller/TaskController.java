@@ -102,7 +102,7 @@ public class TaskController extends BaseController {
 
     @GetMapping("/{taskId}")
     @Operation(summary = "Получить задачу по ID")
-    public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable Integer taskId) {
+    public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable Long taskId) {
         log.info("GET /api/tasks/{} - Getting task", taskId);
         TaskResponseDTO response = taskService.getTaskById(taskId);
         return ResponseEntity.ok(response);
@@ -143,7 +143,7 @@ public class TaskController extends BaseController {
     @DeleteMapping("/{taskId}")
     @Operation(summary = "Мягкое удаление задачи (только для создателя)")
     public ResponseEntity<Void> softDeleteTask(
-            @PathVariable Integer taskId,
+            @PathVariable Long taskId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         log.info("DELETE /api/tasks/{} - Soft deleting task", taskId);
@@ -154,7 +154,7 @@ public class TaskController extends BaseController {
     @PutMapping("/{taskId}/completion/executor")
     @Operation(summary = "Исполнитель отмечает выполнение задачи для себя")
     public ResponseEntity<TaskCompletionResponse> markTaskCompletedByExecutor(
-            @PathVariable Integer taskId,
+            @PathVariable Long taskId,
             @Valid @RequestBody UpdateTaskCompletionRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -167,7 +167,7 @@ public class TaskController extends BaseController {
     @PutMapping("/{taskId}/completion/creator")
     @Operation(summary = "Создатель отмечает задачу как выполненную")
     public ResponseEntity<TaskCompletionResponse> markTaskCompletedByCreator(
-            @PathVariable Integer taskId,
+            @PathVariable Long taskId,
             @RequestParam Boolean isCompleted,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -180,7 +180,7 @@ public class TaskController extends BaseController {
     @GetMapping("/{taskId}/completion/executor/{userId}")
     @Operation(summary = "Получить статус выполнения задачи для исполнителя")
     public ResponseEntity<TaskCompletionResponse> getTaskCompletionStatus(
-            @PathVariable Integer taskId,
+            @PathVariable Long taskId,
             @PathVariable Long userId) {
 
         log.info("GET /api/tasks/{}/completion/executor/{} - Getting task completion status for executor", taskId, userId);
@@ -191,7 +191,7 @@ public class TaskController extends BaseController {
     @GetMapping("/{taskId}/completion/executor/all")
     @Operation(summary = "Получить статусы выполнения всех исполнителей задачи")
     public ResponseEntity<List<TaskCompletionResponse>> getAllTaskCompletionStatuses(
-            @PathVariable Integer taskId) {
+            @PathVariable Long taskId) {
 
         log.info("GET /api/tasks/{}/completion/executor/all - Getting all task completion statuses", taskId);
         List<TaskCompletionResponse> response = taskService.getAllTaskCompletionStatuses(taskId);
@@ -201,7 +201,7 @@ public class TaskController extends BaseController {
     @GetMapping("/{taskId}/completion/creator")
     @Operation(summary = "Получить статус задачи (только для создателя)")
     public ResponseEntity<TaskCompletionResponse> getTaskStatus(
-            @PathVariable Integer taskId,
+            @PathVariable Long taskId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         log.info("GET /api/tasks/{}/completion/creator - Getting task status", taskId);

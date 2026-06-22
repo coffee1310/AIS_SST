@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateTaskRequestDTO {
     @NotNull(message = "ID задачи обязателен")
-    private Integer taskId;
+    private Long taskId;
 
     private String comment;
 }

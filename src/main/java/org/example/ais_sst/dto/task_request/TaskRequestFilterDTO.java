@@ -13,8 +13,8 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskRequestFilterDTO {
-    private Integer id;
-    private Integer taskId;
+    private Long id;
+    private Long taskId;
     private Long studentId;
     private Long currentUserId;
     private TaskRequestStatus status;

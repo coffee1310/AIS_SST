@@ -49,7 +49,7 @@ public class TaskRequestController extends BaseController {
     @PostMapping("/{requestId}/approve")
     @Operation(summary = "Одобрить заявку (только для создателя задачи)")
     public ResponseEntity<TaskRequestResponseDTO> approveTaskRequest(
-            @PathVariable Integer requestId,
+            @PathVariable Long requestId,
             @Valid @RequestBody(required = false) ProcessTaskRequestDTO request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -65,7 +65,7 @@ public class TaskRequestController extends BaseController {
     @PostMapping("/{requestId}/reject")
     @Operation(summary = "Отклонить заявку (только для создателя задачи)")
     public ResponseEntity<TaskRequestResponseDTO> rejectTaskRequest(
-            @PathVariable Integer requestId,
+            @PathVariable Long requestId,
             @Valid @RequestBody(required = false) ProcessTaskRequestDTO request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -81,7 +81,7 @@ public class TaskRequestController extends BaseController {
     @DeleteMapping("/{requestId}")
     @Operation(summary = "Отменить заявку (только для автора, если заявка на рассмотрении)")
     public ResponseEntity<Void> cancelTaskRequest(
-            @PathVariable Integer requestId,
+            @PathVariable Long requestId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         log.info("DELETE /api/task-requests/{} - Cancelling task request", requestId);
@@ -91,7 +91,7 @@ public class TaskRequestController extends BaseController {
 
     @GetMapping("/task/{taskId}")
     @Operation(summary = "Получить все заявки на задачу")
-    public ResponseEntity<List<TaskRequestResponseDTO>> getRequestsByTaskId(@PathVariable Integer taskId) {
+    public ResponseEntity<List<TaskRequestResponseDTO>> getRequestsByTaskId(@PathVariable Long taskId) {
         log.info("GET /api/task-requests/task/{} - Getting requests for task", taskId);
         List<TaskRequestResponseDTO> response = taskRequestService.getRequestsByTaskId(taskId);
         return ResponseEntity.ok(response);
@@ -100,7 +100,7 @@ public class TaskRequestController extends BaseController {
     @GetMapping("/task/{taskId}/status/{status}")
     @Operation(summary = "Получить заявки на задачу по статусу")
     public ResponseEntity<List<TaskRequestResponseDTO>> getRequestsByTaskIdAndStatus(
-            @PathVariable Integer taskId,
+            @PathVariable Long taskId,
             @PathVariable String status) {
 
         log.info("GET /api/task-requests/task/{}/status/{} - Getting requests for task by status", taskId, status);
@@ -143,8 +143,8 @@ public class TaskRequestController extends BaseController {
     @GetMapping
     @Operation(summary = "Получить заявки с фильтрацией")
     public ResponseEntity<Page<TaskRequestResponseDTO>> getTaskRequestsWithFilters(
-            @RequestParam(required = false) Integer id,
-            @RequestParam(required = false) Integer taskId,
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) Long taskId,
             @RequestParam(required = false) Long studentId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant filingDateFrom,

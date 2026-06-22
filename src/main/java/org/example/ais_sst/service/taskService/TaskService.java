@@ -7,6 +7,7 @@ import org.example.ais_sst.entity.Task;
 import org.example.ais_sst.entity.TaskUser;
 import org.example.ais_sst.entity.User;
 import org.example.ais_sst.event.tasks.TaskCompletedEvent;
+import org.example.ais_sst.event.tasks.TaskCreatedEvent;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.exception.ValidationException;
 import org.example.ais_sst.mapper.TaskMapper;
@@ -131,7 +132,7 @@ public class TaskService {
      * Получить задачу по ID
      */
     @Transactional(readOnly = true)
-    public TaskResponseDTO getTaskById(Integer taskId) {
+    public TaskResponseDTO getTaskById(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
@@ -215,7 +216,7 @@ public class TaskService {
      * Мягкое удаление задачи (только для создателя)
      */
     @Transactional
-    public void softDeleteTask(Integer taskId, Long currentUserId) {
+    public void softDeleteTask(Long taskId, Long currentUserId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
@@ -233,7 +234,7 @@ public class TaskService {
      * Обновление статуса выполнения задачи
      */
     @Transactional
-    public TaskResponseDTO completeTask(Integer taskId) {
+    public TaskResponseDTO completeTask(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
@@ -254,7 +255,7 @@ public class TaskService {
      * Обновление задачи (только для создателя)
      */
     @Transactional
-    public TaskResponseDTO updateTask(Integer taskId, CreateTaskRequest request, Long currentUserId) {
+    public TaskResponseDTO updateTask(Long taskId, CreateTaskRequest request, Long currentUserId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
@@ -306,7 +307,7 @@ public class TaskService {
      * Обновить статус выполнения задачи для текущего пользователя (исполнитель для себя)
      */
     @Transactional
-    public TaskCompletionResponse updateTaskCompletionByExecutor(Integer taskId, UpdateTaskCompletionRequest request, Long currentUserId) {
+    public TaskCompletionResponse updateTaskCompletionByExecutor(Long taskId, UpdateTaskCompletionRequest request, Long currentUserId) {
         log.info("Updating task completion by executor: taskId={}, isCompleted={}, currentUserId={}",
                 taskId, request.getIsCompleted(), currentUserId);
 
@@ -352,7 +353,7 @@ public class TaskService {
      * Обновить статус выполнения задачи для любого пользователя (только для создателя)
      */
     @Transactional
-    public TaskCompletionResponse updateTaskCompletionByCreator(Integer taskId, Long userId, UpdateTaskCompletionRequest request, Long currentUserId) {
+    public TaskCompletionResponse updateTaskCompletionByCreator(Long taskId, Long userId, UpdateTaskCompletionRequest request, Long currentUserId) {
         log.info("Updating task completion by creator: taskId={}, userId={}, isCompleted={}, currentUserId={}",
                 taskId, userId, request.getIsCompleted(), currentUserId);
 
@@ -403,7 +404,7 @@ public class TaskService {
      * Автоматически определяет роль пользователя
      */
     @Transactional
-    public TaskCompletionResponse markTaskCompletedByExecutor(Integer taskId, UpdateTaskCompletionRequest request, Long currentUserId) {
+    public TaskCompletionResponse markTaskCompletedByExecutor(Long taskId, UpdateTaskCompletionRequest request, Long currentUserId) {
         log.info("Executor marking task completion: taskId={}, isCompleted={}, executorId={}",
                 taskId, request.getIsCompleted(), currentUserId);
 
@@ -441,7 +442,7 @@ public class TaskService {
      * Создатель отмечает задачу как выполненную (обновляется tasks)
      */
     @Transactional
-    public TaskCompletionResponse markTaskCompletedByCreator(Integer taskId, Boolean isCompleted, Long currentUserId) {
+    public TaskCompletionResponse markTaskCompletedByCreator(Long taskId, Boolean isCompleted, Long currentUserId) {
         log.info("Creator marking task completion: taskId={}, isCompleted={}, creatorId={}",
                 taskId, isCompleted, currentUserId);
 
@@ -465,12 +466,9 @@ public class TaskService {
         // Возвращаем информацию о создателе
 
         eventPublisher.publishEvent(new TaskCompletedEvent(
-                task.getId().longValue(),
+                task.getId(),           // Long
                 task.getTitle(),
-                currentUserId,
-                task.getCreator().getStudentEmail(),
-                task.getCreator().getId(),           // или другой пользователь, если нужно
-                "Задача \"" + task.getTitle() + "\" отмечена как выполненная"
+                currentUserId
         ));
 
         return TaskCompletionResponse.builder()
@@ -487,7 +485,7 @@ public class TaskService {
      * Получить статус выполнения задачи для пользователя (из task_users)
      */
     @Transactional(readOnly = true)
-    public TaskCompletionResponse getTaskCompletionStatus(Integer taskId, Long userId) {
+    public TaskCompletionResponse getTaskCompletionStatus(Long taskId, Long userId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
@@ -502,7 +500,7 @@ public class TaskService {
      * Получить все статусы выполнения для задачи (всех исполнителей из task_users)
      */
     @Transactional(readOnly = true)
-    public List<TaskCompletionResponse> getAllTaskCompletionStatuses(Integer taskId) {
+    public List<TaskCompletionResponse> getAllTaskCompletionStatuses(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
@@ -517,7 +515,7 @@ public class TaskService {
      * Получить статус задачи (из tasks) - только для создателя
      */
     @Transactional(readOnly = true)
-    public TaskCompletionResponse getTaskStatus(Integer taskId, Long currentUserId) {
+    public TaskCompletionResponse getTaskStatus(Long taskId, Long currentUserId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ValidationException("Задача не найдена: " + taskId));
 
