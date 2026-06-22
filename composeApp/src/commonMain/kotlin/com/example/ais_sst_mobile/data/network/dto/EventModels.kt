@@ -27,7 +27,8 @@ data class EventDto(
     val currentParticipantsCount: Int? = 0,
     val currentOrganizersCount: Int? = 0,
     val sectorTitle: String? = null,
-    val isMySector: Boolean? = null
+    val isMySector: Boolean? = null,
+    val sectors: List<SectorDto>? = null
 )
 
 @Serializable

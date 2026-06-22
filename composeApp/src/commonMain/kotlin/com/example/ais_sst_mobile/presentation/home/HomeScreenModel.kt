@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.domain.model.Event
 import com.example.ais_sst_mobile.domain.repository.EventsRepository
+import com.example.ais_sst_mobile.domain.repository.UserRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,7 @@ sealed interface ActivistHomeState {
 
 class HomeScreenModel(
     private val eventsRepository: EventsRepository,
+    private val userRepository: UserRepository, // Добавили репозиторий пользователя
     sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -48,22 +50,30 @@ class HomeScreenModel(
             _state.value = ActivistHomeState.Loading
 
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-            // Берем запас ровно в 1 год вперед для ближайших событий
             val farFuture = today.plus(DatePeriod(years = 1))
 
             val upcomingDeferred = async {
                 eventsRepository.getUpcomingEvents(today.toString(), farFuture.toString())
             }
 
-            val availableDeferred = async {
-                eventsRepository.getAvailableEvents()
+            // Запрашиваем профиль, чтобы узнать сектора
+            val profileDeferred = async {
+                userRepository.getUserProfile()
             }
 
             val upcomingRes = upcomingDeferred.await()
+            val profileRes = profileDeferred.await()
+
+            // Приводим сектора к безопасному виду прямо здесь (без пробелов, нижний регистр)
+            val userSectorsSafe = profileRes.getOrNull()?.userSectors?.map { it.trim().lowercase() } ?: emptyList()
+
+            // Передаем сектора в функцию!
+            val availableDeferred = async {
+                eventsRepository.getAvailableEvents(userSectorsSafe)
+            }
             val availableRes = availableDeferred.await()
 
             if (upcomingRes.isSuccess && availableRes.isSuccess) {
-                // Оставляем только 1 самое ближайшее
                 val upcoming = upcomingRes.getOrDefault(emptyList()).take(1)
                 val available = availableRes.getOrDefault(emptyList())
 

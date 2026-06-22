@@ -9,6 +9,7 @@ import com.example.ais_sst_mobile.domain.repository.EventsRepository
 import com.example.ais_sst_mobile.data.network.dto.RoleDto
 import com.example.ais_sst_mobile.data.network.dto.EventRoleDto
 import com.example.ais_sst_mobile.data.network.dto.PagedEventRoleResponse
+import com.example.ais_sst_mobile.data.network.dto.UserProfileDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import kotlinx.coroutines.IO
@@ -80,32 +81,10 @@ class EventsRepositoryImpl(
         }
     }
 
-    override suspend fun getAvailableEvents(): Result<List<Event>> = runCatching {
+    override suspend fun getAvailableEvents(userSectorsSafe: List<String>): Result<List<Event>> = runCatching {
         coroutineScope {
-            // 1. Публичные мероприятия
-            val publicDeferred = async(Dispatchers.IO) {
-                runCatching {
-                    httpClient.get("events") {
-                        parameter("isPublic", true)
-                        parameter("isDraft", false)
-                        parameter("size", 150)
-                    }.body<PagedEventResponse>().content
-                }.getOrDefault(emptyList())
-            }
-
-            // 2. Мероприятия для моего сектора (закрытые или свободные)
-            val mySectorDeferred = async(Dispatchers.IO) {
-                runCatching {
-                    httpClient.get("events") {
-                        parameter("isMySector", true)
-                        parameter("isDraft", false)
-                        parameter("size", 150)
-                    }.body<PagedEventResponse>().content
-                }.getOrDefault(emptyList())
-            }
-
-            // 3. Все мероприятия (базовый запрос без фильтров, на случай если сервер отдаст те, где нужны организаторы)
-            val allDeferred = async(Dispatchers.IO) {
+            // 1. Абсолютно все мероприятия (без фильтров, чтобы не зависеть от сломанного бэкенда)
+            val allEventsDeferred = async(Dispatchers.IO) {
                 runCatching {
                     httpClient.get("events") {
                         parameter("isDraft", false)
@@ -114,54 +93,52 @@ class EventsRepositoryImpl(
                 }.getOrDefault(emptyList())
             }
 
-            // 4. Роли для моего сектора
-            val rolesDeferred = async(Dispatchers.IO) {
+            // 2. Все неудаленные роли
+            val allRolesDeferred = async(Dispatchers.IO) {
                 runCatching {
                     httpClient.get("event-roles") {
-                        parameter("isMySector", true)
                         parameter("isDeleted", false)
                         parameter("page", 0)
                         parameter("size", 1000)
                     }.body<PagedEventRoleResponse>().content
-                }.onFailure {
-                    println("EVENT_DEBUG: Ошибка парсинга ролей -> ${it.message}")
-                    it.printStackTrace()
                 }.getOrDefault(emptyList())
             }
 
-            val publicEvents = publicDeferred.await()
-            val mySectorEvents = mySectorDeferred.await()
-            val allEvents = allDeferred.await()
-            val myRoles = rolesDeferred.await()
+            // 3. Справочник глобальных ролей
+            val globalRolesDeferred = async(Dispatchers.IO) {
+                runCatching {
+                    httpClient.get("roles").body<List<RoleDto>>()
+                }.getOrDefault(emptyList())
+            }
 
-            println("EVENT_DEBUG: Загружено -> Public: ${publicEvents.size}, MySector: ${mySectorEvents.size}, All: ${allEvents.size}")
-            println("EVENT_DEBUG: Найдено ролей для моего сектора: ${myRoles.size}")
+            val allEvents = allEventsDeferred.await()
+            val allRoles = allRolesDeferred.await()
+            val globalRoles = globalRolesDeferred.await()
+
+            // ЛОКАЛЬНАЯ ФИЛЬТРАЦИЯ РОЛЕЙ: Оставляем только те, чей сектор есть у активиста
+            val myRoles = allRoles.filter { role ->
+                val globalRole = globalRoles.find { it.id == role.globalEventRoleId }
+                val roleSectorSafe = globalRole?.sectorTitle?.trim()?.lowercase()
+                roleSectorSafe != null && userSectorsSafe.contains(roleSectorSafe)
+            }
 
             val roleEventIds = myRoles.map { it.eventId }.toSet()
-            println("EVENT_DEBUG: ID мероприятий из ролей: $roleEventIds")
 
-            val combinedEvents = (publicEvents + mySectorEvents + allEvents).distinctBy { it.id }.toMutableList()
+            val combinedEvents = allEvents.toMutableList()
             val knownEventIds = combinedEvents.map { it.id }.toSet()
 
             val missingEventIds = roleEventIds - knownEventIds
-            println("EVENT_DEBUG: Нужно догрузить поштучно ID: $missingEventIds")
 
             val missingEventsDeferred = missingEventIds.map { id ->
                 async(Dispatchers.IO) {
                     runCatching {
                         httpClient.get("events/$id").body<EventDto>()
-                    }.onFailure {
-                        println("EVENT_DEBUG: Ошибка поштучной загрузки события $id -> ${it.message}")
                     }.getOrNull()
                 }
             }
 
             missingEventsDeferred.forEach { deferred ->
-                val event = deferred.await()
-                if (event != null) {
-                    println("EVENT_DEBUG: Успешно догружено событие ${event.id}")
-                    combinedEvents.add(event)
-                }
+                deferred.await()?.let { combinedEvents.add(it) }
             }
 
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
@@ -170,14 +147,15 @@ class EventsRepositoryImpl(
                 combinedEvents.filter { dto ->
                     val isPub = dto.isPublic
                     val isLookingForOrg = (dto.maxOrganizersCount ?: 0) > (dto.currentOrganizersCount ?: 0)
-                    val isFreeMySector = dto.isFreeEvent == true && dto.isMySector == true
+
+                    // БЕЗОПАСНАЯ ЛОКАЛЬНАЯ ПРОВЕРКА ДЛЯ ЗАКРЫТЫХ МЕРОПРИЯТИЙ (Свободных)
+                    val eventSectorsSafe = dto.sectors?.map { it.title.trim().lowercase() } ?: emptyList()
+                    val isMySectorLocal = eventSectorsSafe.any { it in userSectorsSafe }
+                    val isFreeMySector = dto.isFreeEvent == true && isMySectorLocal
+
                     val hasRoleForMe = roleEventIds.contains(dto.id)
 
                     val isVisible = isPub || isLookingForOrg || isFreeMySector || hasRoleForMe
-
-                    if (isVisible) {
-                        println("EVENT_DEBUG: Событие ${dto.id} (${dto.title}) прошло проверку: isPub=$isPub, isLookingForOrg=$isLookingForOrg, isFreeMySector=$isFreeMySector, hasRoleForMe=$hasRoleForMe")
-                    }
 
                     dto.isDeleted != true && !dto.isDraft && dto.dateOfEvent >= today && isVisible
                 }.map { mapToEvent(it, today) }.sortedBy { it.rawDate }
