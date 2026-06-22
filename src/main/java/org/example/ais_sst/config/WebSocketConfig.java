@@ -26,10 +26,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-endpoint")
                 .setAllowedOriginPatterns(
-                        // Локальная разработка
                         "http://localhost:*",
                         "http://127.0.0.1:*",
-                        // Продакшен
+                        "https://ais-sst.ru",
+                        "https://app.ais-sst.ru",
+                        "https://admin.ais-sst.ru"
+                );
+        // НЕ добавляй .withSockJS() здесь!
+
+        // === Для SockJS (браузер) ===
+        registry.addEndpoint("/ws-endpoint")
+                .setAllowedOriginPatterns(
+                        "http://localhost:*",
+                        "http://127.0.0.1:*",
                         "https://ais-sst.ru",
                         "https://app.ais-sst.ru",
                         "https://admin.ais-sst.ru"
