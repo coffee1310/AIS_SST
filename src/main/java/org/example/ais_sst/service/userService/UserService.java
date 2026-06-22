@@ -21,6 +21,7 @@ import org.example.ais_sst.repository.SectorParticipantRepository;
 import org.example.ais_sst.repository.SocialStatusStudentsRepository;
 import org.example.ais_sst.repository.UserRepository;
 import org.springframework.data.domain.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
@@ -41,6 +42,8 @@ public class UserService implements UserServiceImpl {
     private final SectorParticipantRepository sectorParticipantRepository;
     private final UserPhotoService userPhotoService; // Добавлено
     private final EventParticipationRecordRepository eventParticipationRecordRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     private static final int POINTS_FOR_PARTICIPATION = 1;
 
@@ -402,5 +405,14 @@ public class UserService implements UserServiceImpl {
                 .specialityShortTitle(row.length > 20 && row[20] != null ? row[20].toString() : null)
                 .socialStatuses(null)
                 .build();
+    }
+
+    @Transactional
+    public void updatePassword(Long userId, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("Password updated for user: {}", userId);
     }
 }

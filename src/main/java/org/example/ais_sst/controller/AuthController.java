@@ -2,6 +2,9 @@ package org.example.ais_sst.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.ais_sst.controller.base.BaseController;
+import org.example.ais_sst.dto.password.PasswordResetConfirmDTO;
+import org.example.ais_sst.dto.password.PasswordResetRequestDTO;
+import org.example.ais_sst.dto.password.PasswordResetVerifyDTO;
 import org.example.ais_sst.dto.request.LoginRequest;
 import org.example.ais_sst.dto.request.RefreshTokenRequest;
 import org.example.ais_sst.dto.response.JwtResponse;
@@ -20,6 +23,7 @@ import org.example.ais_sst.service.redisService.RedisKeys;
 import org.example.ais_sst.service.redisService.RedisRateLimitService;
 import org.example.ais_sst.service.tokens.RefreshTokenService;
 import org.example.ais_sst.service.tokens.RevokedTokenService;
+import org.example.ais_sst.service.userService.PasswordResetService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +60,7 @@ public class AuthController extends BaseController {
     private final RevokedTokenService revokedTokenService;
     private final RedisRateLimitService rateLimitService;
     private final HttpServletRequest httpServletRequest;
+    private final PasswordResetService passwordResetService;
 
     @Value("${app.jwtExpirationMs}")
     private int jwtExpirationMs;
@@ -294,5 +299,57 @@ public class AuthController extends BaseController {
             socialStatusStudentRepository.save(socialStatusStudent);
         }
         logInfo("/api/auth/register", "Saved {} social statuses for user ID: {}", socialStatusIds.size(), user.getId());
+    }
+
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<?> requestPasswordReset(@Valid @RequestBody PasswordResetRequestDTO request) {
+        try {
+            log.info("Password reset request for email: {}", request.getEmail());
+            passwordResetService.requestPasswordReset(request);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Код для восстановления пароля отправлен на вашу почту",
+                    "email", request.getEmail()
+            ));
+        } catch (Exception e) {
+            log.error("Password reset request failed: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Проверка кода и смена пароля
+     * POST /api/auth/password-reset/verify
+     */
+    @PostMapping("/password-reset/verify")
+    public ResponseEntity<?> verifyCodeAndResetPassword(@Valid @RequestBody PasswordResetVerifyDTO request) {
+        try {
+            log.info("Password reset verification for email: {}", request.getEmail());
+            passwordResetService.verifyCodeAndResetPassword(request);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Пароль успешно изменен"
+            ));
+        } catch (Exception e) {
+            log.error("Password reset verification failed: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Проверка кода (без смены пароля)
+     * POST /api/auth/password-reset/confirm
+     */
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<?> confirmCode(@Valid @RequestBody PasswordResetConfirmDTO request) {
+        try {
+            log.info("Password reset confirm for email: {}", request.getEmail());
+            boolean isValid = passwordResetService.verifyCode(request);
+            return ResponseEntity.ok(Map.of(
+                    "valid", isValid,
+                    "message", isValid ? "Код подтвержден" : "Неверный код"
+            ));
+        } catch (Exception e) {
+            log.error("Password reset confirm failed: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }
