@@ -181,12 +181,21 @@ public class ApplicationsForTheRoleService {
             );
         }
 
+        // ⭐ ПОЛУЧАЕМ БАЛЛЫ ИЗ GLOBAL_EVENT_ROLES
+        EventRole eventRole = application.getEventRole();
+        GlobalEventRole globalEventRole = eventRole.getGlobalEventRole();
+        Integer points = globalEventRole.getDefaultPoints();
+
+        if (points == null) {
+            points = 1; // Значение по умолчанию, если не указано
+            log.warn("GlobalEventRole {} has null defaultPoints, using default: 1", globalEventRole.getId());
+        }
+
         // Проверяем, было ли уже мероприятие
         boolean wasPresent = false;
-        Event event = application.getEventRole().getEvent();
+        Event event = eventRole.getEvent();
         if (event.getDateOfEvent() != null && event.getStartTime() != null) {
             LocalDateTime eventDateTime = LocalDateTime.of(event.getDateOfEvent(), event.getStartTime());
-            // Если мероприятие уже прошло, считаем что человек присутствовал
             if (eventDateTime.isBefore(LocalDateTime.now())) {
                 wasPresent = true;
                 log.info("Event has already passed, setting wasPresent = true");
@@ -195,13 +204,15 @@ public class ApplicationsForTheRoleService {
 
         EventParticipationRecord record = EventParticipationRecord.builder()
                 .sectorParticipant(application.getSectorParticipant())
-                .eventRole(application.getEventRole())
-                .wasPresent(wasPresent) // Устанавливаем правильное значение
+                .eventRole(eventRole)
+                .wasPresent(wasPresent)
+                .totalPoints(points)  // ⭐ УСТАНАВЛИВАЕМ БАЛЛЫ
                 .comment("Создано на основе одобренной заявки #" + application.getId())
                 .build();
 
         eventParticipationRecordRepository.save(record);
-        log.info("Participation record created with id: {}, wasPresent: {}", record.getId(), record.getWasPresent());
+        log.info("Participation record created with id: {}, totalPoints: {}, wasPresent: {}",
+                record.getId(), record.getTotalPoints(), record.getWasPresent());
     }
 
     @Transactional
