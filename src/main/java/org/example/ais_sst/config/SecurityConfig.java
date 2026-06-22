@@ -1,4 +1,4 @@
-package org.example.ais_sst.config;  // ПРАВИЛЬНО!
+package org.example.ais_sst.config;
 
 import org.example.ais_sst.security.jwt.AuthTokenFilter;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +31,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final AuthTokenFilter authTokenFilter;  // ДОЛЖНО БЫТЬ FINAL!
-
+    private final AuthTokenFilter authTokenFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
@@ -48,27 +47,56 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:8080", "*", "http://localhost:8081"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token", "Authorization"));
-        configuration.setExposedHeaders(Arrays.asList("x-auth-token", "Authorization"));
+
+        // ✅ ТОЛЬКО ВАШИ ДОМЕНЫ для продакшна
+        // ДЛЯ РАЗРАБОТКИ ОСТАВЬТЕ localhost
+        if (isProduction()) {
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                    "https://ais-sst.ru",
+                    "https://app.ais-sst.ru",
+                    "https://admin.ais-sst.ru"
+            ));
+        } else {
+            // ⭐ ДЛЯ РАЗРАБОТКИ - только localhost
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                    "http://localhost:*",
+                    "http://127.0.0.1:*"
+            ));
+        }
+
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(Arrays.asList(
+                "authorization", "content-type", "x-auth-token",
+                "Authorization", "X-Requested-With", "Accept"
+        ));
+
+        configuration.setExposedHeaders(Arrays.asList(
+                "x-auth-token", "Authorization"
+        ));
+
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
+    private boolean isProduction() {
+        // Используйте Spring profiles
+        String profile = System.getProperty("spring.profiles.active");
+        return "prod".equals(profile) || "production".equals(profile);
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         log.info("========== НАСТРОЙКА БЕЗОПАСНОСТИ ==========");
         log.info("Configuring security with CSRF DISABLED...");
-
-        if (authTokenFilter == null) {
-            log.error("authTokenFilter is NULL!");
-            throw new IllegalStateException("authTokenFilter cannot be null");
-        }
-        log.info("authTokenFilter is properly injected: {}", authTokenFilter.getClass().getName());
 
         http
                 .csrf(csrf -> {
@@ -79,7 +107,6 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // ДОБАВЬТЕ ЭТУ СТРОКУ - обработчик ошибок аутентификации
                 .exceptionHandling(exceptions ->
                         exceptions.authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
@@ -88,16 +115,21 @@ public class SecurityConfig {
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/auth/**")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/test/**")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/account_requests")).permitAll()
-                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/debug/**")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/social_status")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/specialities")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/group")).permitAll()
-                            .requestMatchers(AntPathRequestMatcher.antMatcher("/")).permitAll()
-                            .requestMatchers(AntPathRequestMatcher.antMatcher("/error")).permitAll()
-                            .requestMatchers(AntPathRequestMatcher.antMatcher("/favicon.ico")).permitAll()
+
+                            // OPTIONS для CORS preflight
+                            .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.OPTIONS, "/**")).permitAll()
+
+                            // H2 Console (только для разработки)
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/h2-console/**")).permitAll()
+
+                            // WebSocket handshake разрешаем (нужно для SockJS)
+                            // Реальная проверка JWT будет в WebSocketAuthInterceptor на этапе CONNECT
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/ws-endpoint/**")).permitAll()
+
                             .anyRequest().authenticated();
-                    log.info("Authorization rules configured");
                 })
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 

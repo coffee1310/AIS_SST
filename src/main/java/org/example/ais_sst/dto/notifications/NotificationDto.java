@@ -13,6 +13,7 @@ public class NotificationDto implements Serializable {
     private String id;
     private String userId;
     private String message;
+    private String email;
     private String type; // INFO, WARNING, ERROR
     private LocalDateTime timestamp;
     private Object data; // Дополнительные данные

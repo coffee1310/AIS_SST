@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.dto.notifications.NotificationDto;
+import org.example.ais_sst.entity.User;
+import org.example.ais_sst.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,27 +24,25 @@ public class PushNotificationService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
 
     @Value("${websocket.redis.channel:websocket:notifications}")
     private String notificationChannel;
 
     public void sendToUser(String userId, String message, String type) {
+        // Находим email пользователя
+        String email = userRepository.findById(Long.parseLong(userId.replace("user", "")))
+                .map(User::getStudentEmail)
+                .orElse(userId); // fallback
+
         NotificationDto notification = new NotificationDto(userId, message, type);
-        log.info("Sending notification to user {}: {}", userId, message);
+        notification.setEmail(email);           // ← вот это главное
 
-        // 1. Отправляем через WebSocket
-        messagingTemplate.convertAndSendToUser(
-                userId,
-                "/queue/notifications",
-                notification
-        );
+        log.info("Sending notification to user {} (email={}): {}", userId, email, message);
 
-        // 2. Сохраняем в Redis для истории
         saveToHistory(userId, notification);
 
-        // 3. Публикуем в Redis для других инстансов
         try {
-            // Используем RedisTemplate для отправки
             redisTemplate.convertAndSend(notificationChannel, notification);
             log.debug("Published to Redis channel: {}", notificationChannel);
         } catch (Exception e) {

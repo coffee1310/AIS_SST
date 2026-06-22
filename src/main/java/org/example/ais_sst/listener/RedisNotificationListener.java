@@ -36,7 +36,7 @@ public class RedisNotificationListener implements MessageListener {
                 log.debug("Broadcasted to /topic/public");
             } else {
                 messagingTemplate.convertAndSendToUser(
-                        notification.getUserId(),
+                        notification.getEmail(),   // ← email
                         "/queue/notifications",
                         notification
                 );

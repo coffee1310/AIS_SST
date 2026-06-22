@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -36,7 +38,14 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        // Проверяем, является ли эндпоинт публичным
+        // ⭐ OPTIONS запросы всегда пропускаем (CORS preflight)
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            log.debug("OPTIONS request to: {}, skipping authentication", path);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // ⭐ Проверяем публичные эндпоинты
         if (isPublicEndpoint(path, method)) {
             log.debug("Public endpoint: {} {}, skipping authentication", method, path);
             filterChain.doFilter(request, response);
@@ -45,6 +54,19 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         try {
             String jwt = parseJwt(request);
+
+            if ("OPTIONS".equalsIgnoreCase(method)) {
+                log.debug("OPTIONS request to: {}, skipping", path);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // ⭐ 2. WebSocket эндпоинты - всегда пропускаем
+            if (path.startsWith("/ws-endpoint") || path.startsWith("/websocket")) {
+                log.debug("WebSocket endpoint: {}, skipping authentication", path);
+                filterChain.doFilter(request, response);
+                return;
+            }
 
             if (jwt == null) {
                 log.debug("No JWT token found for request to: {}", path);
@@ -62,7 +84,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             // Получаем JTI из токена
             String jti = jwtUtils.getJtiFromToken(jwt);
 
-            // КРИТИЧЕСКИ ВАЖНО: проверяем, не отозван ли токен по JTI
+            // Проверяем, не отозван ли токен
             if (revokedTokenService.isAccessTokenRevoked(jti)) {
                 log.warn("Access token has been revoked for request to: {}, JTI: {}", path, jti);
                 sendUnauthorizedResponse(response, "Token has been revoked. Please login again.");
@@ -113,7 +135,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     }
 
     private boolean isPublicEndpoint(String path, String method) {
-        // Публичные эндпоинты без аутентификации
+        // ⭐ WebSocket эндпоинты - пропускаем ВСЕ
+        if (path.startsWith("/ws-endpoint")) {
+            return true;
+        }
+        if (path.startsWith("/websocket")) {
+            return true;
+        }
+
+        // Публичные API
         if (path.startsWith("/api/auth/")) {
             return true;
         }
@@ -138,17 +168,22 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         if (path.equals("/favicon.ico")) {
             return true;
         }
-
-        // ВАЖНО: разрешаем POST запросы на /api/account_requests без токена
         if (path.equals("/api/account_requests") && "POST".equals(method)) {
             return true;
         }
-
-        // Разрешаем OPTIONS запросы для CORS
-        if ("OPTIONS".equals(method)) {
+        if (path.startsWith("/ws-endpoint") || path.startsWith("/websocket")) {
+            return true;
+        }
+        if ("OPTIONS".equalsIgnoreCase(method)) {
             return true;
         }
 
         return false;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/ws-endpoint");
     }
 }

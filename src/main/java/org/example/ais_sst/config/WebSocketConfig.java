@@ -1,7 +1,6 @@
 package org.example.ais_sst.config;
 
-import org.example.ais_sst.interceptor.WebSocketAuthInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -11,27 +10,35 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor                    // ← добавь эту аннотацию
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final WebSocketAuthInterceptor webSocketAuthInterceptor;   // ← final оставь
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Клиент отправляет на сервер по префиксу /app
         config.setApplicationDestinationPrefixes("/app");
-
-        // Встроенный брокер для рассылки
         config.enableSimpleBroker("/topic", "/queue");
-
-        // Для личных уведомлений
         config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-endpoint")
-                .setAllowedOrigins(
+                .setAllowedOriginPatterns(
+                        // Локальная разработка
+                        "http://localhost:*",
+                        "http://127.0.0.1:*",
+                        // Продакшен
                         "https://ais-sst.ru",
-                        "https://app.ais-sst.ru"
-                ) // Укажите конкретные домены!
+                        "https://app.ais-sst.ru",
+                        "https://admin.ais-sst.ru"
+                )
                 .withSockJS();
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketAuthInterceptor);
     }
 }
