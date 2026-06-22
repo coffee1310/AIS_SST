@@ -6,6 +6,7 @@ import org.example.ais_sst.dto.tasks.*;
 import org.example.ais_sst.entity.Task;
 import org.example.ais_sst.entity.TaskUser;
 import org.example.ais_sst.entity.User;
+import org.example.ais_sst.event.tasks.TaskCompletedEvent;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.exception.ValidationException;
 import org.example.ais_sst.mapper.TaskMapper;
@@ -13,6 +14,7 @@ import org.example.ais_sst.repository.TaskRepository;
 import org.example.ais_sst.repository.TaskUserRepository;
 import org.example.ais_sst.repository.UserRepository;
 import org.example.ais_sst.specification.TaskSpecification;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,6 +34,8 @@ public class TaskService {
     private final TaskUserRepository taskUserRepository;
     private final UserRepository userRepository;
     private final TaskMapper taskMapper;
+
+    private final ApplicationEventPublisher eventPublisher;   // ← Внедряем публикатор
 
     /**
      * Создание новой задачи
@@ -240,6 +244,8 @@ public class TaskService {
         task.setIsCompleted(true);
         task = taskRepository.save(task);
         log.info("Task {} completed", taskId);
+
+
 
         return taskMapper.toResponseDto(task);
     }
@@ -457,6 +463,16 @@ public class TaskService {
         log.info("Creator {} marked task {} as completed: {}", currentUserId, taskId, isCompleted);
 
         // Возвращаем информацию о создателе
+
+        eventPublisher.publishEvent(new TaskCompletedEvent(
+                task.getId().longValue(),
+                task.getTitle(),
+                currentUserId,
+                task.getCreator().getStudentEmail(),
+                task.getCreator().getId(),           // или другой пользователь, если нужно
+                "Задача \"" + task.getTitle() + "\" отмечена как выполненная"
+        ));
+
         return TaskCompletionResponse.builder()
                 .taskId(task.getId())
                 .taskTitle(task.getTitle())
