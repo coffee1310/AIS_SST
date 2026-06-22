@@ -126,14 +126,14 @@
                                     </Border>
 
                                     <StackPanel Grid.Row="1" Margin="15,15,15,20">
-                                        <TextBlock Text="{Binding Title}" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="Wrap" Height="35"/>
+                                        <TextBlock Text="{Binding Title}" Foreground="White" FontSize="14" FontFamily="Digital Pixel" Margin="0,0,0,10" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                             <Path Data="M8,0 A8,8 0 1,0 8,16 A8,8 0 0,0 8,0 Z M8,2 V8 L12,10" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
                                             <TextBlock Text="{Binding DateTimeDisplay}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="M8,0 C3.5,0 0,3.5 0,8 C0,13.5 8,16 8,16 C8,16 16,13.5 16,8 C16,3.5 12.5,0 8,0 Z M8,11 A3,3 0 1,1 8,5 A3,3 0 0,1 8,11 Z" Stroke="#02B3BA" StrokeThickness="1" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0"/>
-                                            <TextBlock Text="{Binding Venue}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="Wrap" MaxHeight="30"/>
+                                            <TextBlock Text="{Binding Venue}" Foreground="#7A7886" FontSize="10" FontFamily="Montserrat Thin" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Venue}"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
@@ -142,7 +142,8 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock x:Name="EmptyEventsText" Text="Мероприятия не найдены." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,20,0,40" Visibility="Collapsed"/>
+                <TextBlock x:Name="EmptyEventsText" Text="Мероприятия не найдены."
+                           Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,20,0,40" Visibility="Collapsed"/>
 
                 <StackPanel x:Name="PaginationPanel" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,20"/>
 

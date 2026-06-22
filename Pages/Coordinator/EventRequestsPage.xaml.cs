@@ -45,6 +45,32 @@ namespace Diplom_Stud.Pages.Coordinator
             await LoadRequestsAsync();
         }
 
+        private List<T> ParsePageOrList<T>(string json, JsonSerializerOptions options)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return new List<T>();
+            string trimmed = json.TrimStart();
+
+            if (trimmed.StartsWith("["))
+            {
+                return JsonSerializer.Deserialize<List<T>>(json, options) ?? new List<T>();
+            }
+            else if (trimmed.StartsWith("{"))
+            {
+                try
+                {
+                    using (var doc = JsonDocument.Parse(json))
+                    {
+                        if (doc.RootElement.TryGetProperty("content", out var contentElem))
+                        {
+                            return JsonSerializer.Deserialize<List<T>>(contentElem.GetRawText(), options) ?? new List<T>();
+                        }
+                    }
+                }
+                catch { }
+            }
+            return new List<T>();
+        }
+
         private async Task LoadRequestsAsync()
         {
             LoadingOverlay.Visibility = Visibility.Visible;
@@ -58,16 +84,15 @@ namespace Diplom_Stud.Pages.Coordinator
                 var blocks = new List<Req_RoleBlockViewModel>();
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                // 1. Кастомные роли
                 HttpResponseMessage resRoles = await _httpClient.GetAsync($"/api/role-applications?status=НА_РАССМОТРЕНИИ&eventId={_eventId}");
                 if (resRoles.IsSuccessStatusCode)
                 {
                     string json = await resRoles.Content.ReadAsStringAsync();
-                    var page = JsonSerializer.Deserialize<Req_PageResponseApp>(json, options);
+                    var list = ParsePageOrList<Req_RoleAppDto>(json, options);
 
-                    if (page?.content != null && page.content.Count > 0)
+                    if (list.Count > 0)
                     {
-                        var grouped = page.content.GroupBy(c => string.IsNullOrEmpty(c.eventRoleName) ? "Роль" : c.eventRoleName);
+                        var grouped = list.GroupBy(c => string.IsNullOrEmpty(c.eventRoleName) ? "Роль не указана" : c.eventRoleName);
                         foreach (var g in grouped)
                         {
                             var block = new Req_RoleBlockViewModel { RoleTitle = g.Key, Applications = new List<Req_AppViewModel>() };
@@ -78,7 +103,7 @@ namespace Diplom_Stud.Pages.Coordinator
                                     ApplicationId = app.id,
                                     StudentId = app.studentId ?? 0,
                                     FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
-                                    StudentEmail = app.studentEmail,
+                                    StudentEmail = string.IsNullOrWhiteSpace(app.studentEmail) ? "Почта не указана" : app.studentEmail,
                                     Comment = string.IsNullOrWhiteSpace(app.description) ? "Комментарий не оставлен" : app.description,
                                     Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
                                     IsOrganizer = false
@@ -89,24 +114,23 @@ namespace Diplom_Stud.Pages.Coordinator
                     }
                 }
 
-                // 2. Организаторы
                 HttpResponseMessage resOrg = await _httpClient.GetAsync($"/api/role-applications/organizer/event/{_eventId}?status=НА_РАССМОТРЕНИИ");
                 if (resOrg.IsSuccessStatusCode)
                 {
                     string json = await resOrg.Content.ReadAsStringAsync();
-                    var page = JsonSerializer.Deserialize<Req_PageResponseApp>(json, options);
+                    var list = ParsePageOrList<Req_RoleAppDto>(json, options);
 
-                    if (page?.content != null && page.content.Count > 0)
+                    if (list.Count > 0)
                     {
                         var block = new Req_RoleBlockViewModel { RoleTitle = "Организатор", Applications = new List<Req_AppViewModel>() };
-                        foreach (var app in page.content)
+                        foreach (var app in list)
                         {
                             block.Applications.Add(new Req_AppViewModel
                             {
                                 ApplicationId = app.id,
                                 StudentId = app.studentId ?? 0,
                                 FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
-                                StudentEmail = app.studentEmail,
+                                StudentEmail = string.IsNullOrWhiteSpace(app.studentEmail) ? "Почта не указана" : app.studentEmail,
                                 Comment = string.IsNullOrWhiteSpace(app.description) ? "Комментарий не оставлен" : app.description,
                                 Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
                                 IsOrganizer = true
@@ -276,11 +300,6 @@ namespace Diplom_Stud.Pages.Coordinator
             catch { }
             return null;
         }
-    }
-
-    public class Req_PageResponseApp
-    {
-        public List<Req_RoleAppDto> content { get; set; }
     }
 
     public class Req_RoleAppDto

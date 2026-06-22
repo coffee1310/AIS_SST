@@ -97,6 +97,32 @@ namespace Diplom_Stud.Pages.Coordinator
             await LoadDataFromApiAsync();
         }
 
+        private List<T> ParsePageOrList<T>(string json, JsonSerializerOptions options)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return new List<T>();
+            string trimmed = json.TrimStart();
+
+            if (trimmed.StartsWith("["))
+            {
+                return JsonSerializer.Deserialize<List<T>>(json, options) ?? new List<T>();
+            }
+            else if (trimmed.StartsWith("{"))
+            {
+                try
+                {
+                    using (var doc = JsonDocument.Parse(json))
+                    {
+                        if (doc.RootElement.TryGetProperty("content", out var contentElem))
+                        {
+                            return JsonSerializer.Deserialize<List<T>>(contentElem.GetRawText(), options) ?? new List<T>();
+                        }
+                    }
+                }
+                catch { }
+            }
+            return new List<T>();
+        }
+
         private async Task LoadDataFromApiAsync()
         {
             _isLoading = true;
@@ -187,12 +213,27 @@ namespace Diplom_Stud.Pages.Coordinator
                             }
                         }
 
-                        if (ev.organizers != null)
+                        SelectedOrganizers.Clear();
+                        _initialOrganizerIds.Clear();
+
+                        HttpResponseMessage resOrg = await _httpClient.GetAsync($"/api/events/participation/filter?eventId={_eventId}&entityType=ORGANIZER&page=0&size=100");
+                        if (resOrg.IsSuccessStatusCode)
                         {
-                            foreach (var org in ev.organizers)
+                            string jsonOrg = await resOrg.Content.ReadAsStringAsync();
+                            var listOrg = ParsePageOrList<OrgFilterDtoLocal>(jsonOrg, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                            foreach (var o in listOrg)
                             {
-                                SelectedOrganizers.Add(org);
-                                _initialOrganizerIds.Add(org.id);
+                                var user = new UserDto
+                                {
+                                    id = o.id,
+                                    name = o.fullName ?? "Неизвестный организатор",
+                                    surname = "",
+                                    patronymic = "",
+                                    role = o.role
+                                };
+                                SelectedOrganizers.Add(user);
+                                _initialOrganizerIds.Add(user.id);
                             }
                         }
 
@@ -730,5 +771,15 @@ namespace Diplom_Stud.Pages.Coordinator
         public int capacity { get; set; }
         public int reserveCapacity { get; set; }
         public bool deleted { get; set; }
+    }
+
+    public class OrgFilterDtoLocal
+    {
+        public int id { get; set; }
+        public string role { get; set; }
+        public string fullName { get; set; }
+        public int totalPoints { get; set; }
+        public bool wasPresent { get; set; }
+        public string entityType { get; set; }
     }
 }

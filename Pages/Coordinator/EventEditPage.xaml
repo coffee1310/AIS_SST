@@ -152,7 +152,9 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" Width="800" Margin="40,50,40,80">
 
-                <TextBlock Text="Редактирование мероприятия" FontSize="24" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <Button x:Name="BackButton" Content="&lt; Назад" Style="{StaticResource GhostButtonStyle}" Foreground="#A084FB" FontFamily="Montserrat" FontSize="14" HorizontalAlignment="Left" Click="BackButton_Click" Margin="0,-20,0,10"/>
+
+                <TextBlock Text="Редактирование мероприятия" FontSize="36" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
                 <TextBlock Text="Основная информация" Style="{StaticResource SubtitleStyle}"/>
 
@@ -260,7 +262,7 @@
                             </Grid>
 
                             <StackPanel x:Name="TargetSectorsPanel" Margin="0,20,0,0" Visibility="Collapsed">
-                                <TextBlock Text="Целевые сектора (закрытое мероприятие)" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="10" Margin="0,0,0,5"/>
+                                <TextBlock Text="Целевые сектора (свободное закрытое)" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="10" Margin="0,0,0,5"/>
                                 <Border Background="#12101C" CornerRadius="8" Padding="10" BorderBrush="#2A283C" BorderThickness="1.5">
                                     <ItemsControl ItemsSource="{Binding TargetSectors}">
                                         <ItemsControl.ItemTemplate>
@@ -311,7 +313,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="{Binding FullName}" Foreground="White" FontFamily="Montserrat" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontFamily="Montserrat" FontSize="14" VerticalAlignment="Center"/>
                                     <Button Grid.Column="1" Content="✕" Style="{StaticResource GhostButtonStyle}" Foreground="#E81123" FontSize="14" Click="RemoveOrganizer_Click"/>
                                 </Grid>
                             </Border>
@@ -415,6 +417,13 @@
                                                         </Border>
                                                     </StackPanel>
                                                 </Grid>
+
+                                                <StackPanel Visibility="{Binding CustomRoleVisibility}">
+                                                    <TextBlock Text="Резерв" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="10" Margin="5,0,0,5"/>
+                                                    <Border Style="{StaticResource RegInputBorderStyle}" Height="40">
+                                                        <TextBox Text="{Binding ReserveCount, Mode=TwoWay}" Style="{StaticResource RegInnerInputStyle}" TextAlignment="Center" Padding="0" PreviewTextInput="NumericOnly_PreviewTextInput"/>
+                                                    </Border>
+                                                </StackPanel>
                                             </StackPanel>
 
                                             <Grid Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Visibility="{Binding CustomRoleVisibility}">

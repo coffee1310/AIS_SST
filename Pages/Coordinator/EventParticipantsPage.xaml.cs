@@ -42,6 +42,32 @@ namespace Diplom_Stud.Pages.Coordinator
             await LoadParticipantsAsync();
         }
 
+        private List<T> ParsePageOrList<T>(string json, JsonSerializerOptions options)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return new List<T>();
+            string trimmed = json.TrimStart();
+
+            if (trimmed.StartsWith("["))
+            {
+                return JsonSerializer.Deserialize<List<T>>(json, options) ?? new List<T>();
+            }
+            else if (trimmed.StartsWith("{"))
+            {
+                try
+                {
+                    using (var doc = JsonDocument.Parse(json))
+                    {
+                        if (doc.RootElement.TryGetProperty("content", out var contentElem))
+                        {
+                            return JsonSerializer.Deserialize<List<T>>(contentElem.GetRawText(), options) ?? new List<T>();
+                        }
+                    }
+                }
+                catch { }
+            }
+            return new List<T>();
+        }
+
         private async Task LoadParticipantsAsync()
         {
             LoadingOverlay.Visibility = Visibility.Visible;
@@ -55,12 +81,14 @@ namespace Diplom_Stud.Pages.Coordinator
                 var blocks = new List<Part_RoleGroupViewModel>();
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
+                // 1. Обычные участники (Свободное мероприятие)
                 HttpResponseMessage resPart = await _httpClient.GetAsync($"/api/events/participants/{_eventId}");
                 if (resPart.IsSuccessStatusCode)
                 {
                     string json = await resPart.Content.ReadAsStringAsync();
-                    var list = JsonSerializer.Deserialize<List<Part_ParticipantUserDto>>(json, options);
-                    if (list != null && list.Count > 0)
+                    var list = ParsePageOrList<Part_ParticipantUserDto>(json, options);
+
+                    if (list.Count > 0)
                     {
                         var block = new Part_RoleGroupViewModel { RoleTitle = "Участник", Participants = new List<Part_ItemViewModel>() };
                         foreach (var u in list)
@@ -80,39 +108,43 @@ namespace Diplom_Stud.Pages.Coordinator
                     }
                 }
 
-                HttpResponseMessage resEv = await _httpClient.GetAsync($"/api/events/{_eventId}");
-                if (resEv.IsSuccessStatusCode)
+                // 2. Организаторы (Через новый фильтр participation/filter)
+                HttpResponseMessage resOrg = await _httpClient.GetAsync($"/api/events/participation/filter?eventId={_eventId}&entityType=ORGANIZER&page=0&size=100");
+                if (resOrg.IsSuccessStatusCode)
                 {
-                    string json = await resEv.Content.ReadAsStringAsync();
-                    var ev = JsonSerializer.Deserialize<Part_EditEventDto>(json, options);
-                    if (ev?.organizers != null && ev.organizers.Count > 0)
+                    string json = await resOrg.Content.ReadAsStringAsync();
+                    var list = ParsePageOrList<Part_ParticipationRecordDto>(json, options);
+
+                    if (list.Count > 0)
                     {
                         var block = new Part_RoleGroupViewModel { RoleTitle = "Организатор", Participants = new List<Part_ItemViewModel>() };
-                        foreach (var u in ev.organizers)
+                        foreach (var u in list)
                         {
                             block.Participants.Add(new Part_ItemViewModel
                             {
-                                ParticipantId = u.id,
-                                StudentId = u.id,
-                                FullName = $"{u.surname} {u.name} {u.patronymic}".Trim(),
-                                StudentEmail = string.IsNullOrWhiteSpace(u.studentEmail) ? "Почта не указана" : u.studentEmail,
+                                ParticipantId = u.id, // Это ID записи Participation Record
+                                StudentId = 0,        // Устанавливаем 0, чтобы не открывался чужой профиль
+                                FullName = u.fullName ?? "Неизвестный организатор",
+                                StudentEmail = "Почта не указана",
                                 Type = "Organizer",
                                 IsReserve = false,
-                                Avatar = GetImageFromBase64(u.photo) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
+                                Avatar = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
                             });
                         }
                         blocks.Add(block);
                     }
                 }
 
+                // 3. Исполнители ролей (Одобренные заявки)
                 HttpResponseMessage resRoles = await _httpClient.GetAsync($"/api/role-applications?status=ОДОБРЕНА&eventId={_eventId}");
                 if (resRoles.IsSuccessStatusCode)
                 {
                     string json = await resRoles.Content.ReadAsStringAsync();
-                    var page = JsonSerializer.Deserialize<Part_PageResponse>(json, options);
-                    if (page?.content != null && page.content.Count > 0)
+                    var list = ParsePageOrList<Part_RoleAppDto>(json, options);
+
+                    if (list.Count > 0)
                     {
-                        var grouped = page.content.GroupBy(c => string.IsNullOrEmpty(c.eventRoleName) ? "Роль не указана" : c.eventRoleName);
+                        var grouped = list.GroupBy(c => string.IsNullOrEmpty(c.eventRoleName) ? "Роль не указана" : c.eventRoleName);
                         foreach (var g in grouped)
                         {
                             var block = new Part_RoleGroupViewModel { RoleTitle = g.Key, Participants = new List<Part_ItemViewModel>() };
@@ -261,14 +293,14 @@ namespace Diplom_Stud.Pages.Coordinator
         public string photo { get; set; }
     }
 
-    public class Part_EditEventDto
+    public class Part_ParticipationRecordDto
     {
-        public List<Part_ParticipantUserDto> organizers { get; set; }
-    }
-
-    public class Part_PageResponse
-    {
-        public List<Part_RoleAppDto> content { get; set; }
+        public int id { get; set; }
+        public string role { get; set; }
+        public string fullName { get; set; }
+        public int totalPoints { get; set; }
+        public bool wasPresent { get; set; }
+        public string entityType { get; set; }
     }
 
     public class Part_RoleAppDto
