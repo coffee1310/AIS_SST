@@ -84,6 +84,11 @@ kotlin {
 
             implementation("com.russhwolf:multiplatform-settings:1.1.1")
             implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
+
+            implementation("org.hildan.krossbow:krossbow-stomp-core:7.0.0")
+            implementation("org.hildan.krossbow:krossbow-websocket-ktor:7.0.0")
+            // Внутри sourceSets { commonMain.dependencies { ... } }
+            implementation("io.ktor:ktor-client-websockets:2.3.11")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

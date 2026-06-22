@@ -1,6 +1,7 @@
 package com.example.ais_sst_mobile.di
 
 import com.example.ais_sst_mobile.core.network.createHttpClient
+import com.example.ais_sst_mobile.core.notifications.NotificationService
 import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.data.repository.*
 import com.example.ais_sst_mobile.domain.repository.*
@@ -39,6 +40,7 @@ val appModule = module {
     single<UserRepository> { UserRepositoryImpl(get()) }
     single<SectorsRepository> { SectorsRepositoryImpl(get()) }
     single<EventsRepository> { EventsRepositoryImpl(get()) }
+    single { NotificationService(get(), get()) }
 
     // ScreenModels
     factory { LoginScreenModel(get(), get()) }

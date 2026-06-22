@@ -2,6 +2,7 @@ package com.example.ais_sst_mobile.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.domain.model.Event
 import com.example.ais_sst_mobile.domain.repository.EventsRepository
 import com.example.ais_sst_mobile.domain.repository.UserRepository
@@ -24,7 +25,7 @@ sealed interface ChairmanEventsState {
 
 class ChairmanHomeScreenModel(
     private val eventsRepository: EventsRepository,
-    private val userRepository: UserRepository
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _selectedTab = MutableStateFlow(0)
@@ -56,22 +57,22 @@ class ChairmanHomeScreenModel(
         viewModelScope.launch {
             _state.value = ChairmanEventsState.Loading
 
-            userRepository.getUserProfile()
-                .onSuccess { user ->
-                    eventsRepository.getChairmanDashboardEvents(user.id)
-                        .onSuccess { allEvents ->
-                            val overdue = allEvents.filter { it.isOverdue }.sortedBy { it.rawDate }
-                            val upcoming = allEvents.filter { !it.isOverdue }.sortedBy { it.rawDate }
+            // Берем ID из сессии, а не через UserRepository
+            val userId = sessionManager.fetchUserId()
 
-                            _state.value = ChairmanEventsState.Success(overdue + upcoming)
-                        }
-                        .onFailure { error ->
-                            _state.value = ChairmanEventsState.Error(error.message ?: "Не удалось загрузить мероприятия")
-                        }
-                }
-                .onFailure {
-                    _state.value = ChairmanEventsState.Error("Не удалось получить профиль пользователя")
-                }
+            if (userId != null) {
+                eventsRepository.getChairmanDashboardEvents(userId)
+                    .onSuccess { allEvents ->
+                        val overdue = allEvents.filter { it.isOverdue }.sortedBy { it.rawDate }
+                        val upcoming = allEvents.filter { !it.isOverdue }.sortedBy { it.rawDate }
+                        _state.value = ChairmanEventsState.Success(overdue + upcoming)
+                    }
+                    .onFailure { error ->
+                        _state.value = ChairmanEventsState.Error(error.message ?: "Ошибка")
+                    }
+            } else {
+                _state.value = ChairmanEventsState.Error("Пользователь не авторизован")
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ import com.example.ais_sst_mobile.domain.model.Event
 import com.example.ais_sst_mobile.domain.repository.EventsRepository
 import com.example.ais_sst_mobile.domain.repository.UserRepository
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,27 +53,22 @@ class HomeScreenModel(
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val farFuture = today.plus(DatePeriod(years = 1))
 
-            val upcomingDeferred = async {
-                eventsRepository.getUpcomingEvents(today.toString(), farFuture.toString())
-            }
+            // 1. Сначала грузим одно
+            val upcomingRes = eventsRepository.getUpcomingEvents(today.toString(), farFuture.toString())
 
-            val availableDeferred = async {
-                eventsRepository.getAvailableEvents()
-            }
+            // 2. Ждем, чтобы сервер "выдохнул"
+            delay(500)
 
-            val upcomingRes = upcomingDeferred.await()
-            val availableRes = availableDeferred.await()
+            // 3. Потом грузим другое
+            val availableRes = eventsRepository.getAvailableEvents()
 
             if (upcomingRes.isSuccess && availableRes.isSuccess) {
-                val upcoming = upcomingRes.getOrDefault(emptyList()).take(1)
-                val available = availableRes.getOrDefault(emptyList())
-
                 _state.value = ActivistHomeState.Success(
-                    upcoming = upcoming,
-                    available = available
+                    upcoming = upcomingRes.getOrDefault(emptyList()).take(1),
+                    available = availableRes.getOrDefault(emptyList())
                 )
             } else {
-                _state.value = ActivistHomeState.Error("Не удалось загрузить мероприятия. Проверьте подключение к сети.")
+                _state.value = ActivistHomeState.Error("Ошибка загрузки")
             }
         }
     }

@@ -9,6 +9,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -22,7 +23,9 @@ fun ChairmanProfileContent(component: ProfileComponent, screenModel: ProfileScre
     val state by screenModel.state.collectAsState()
     val realRole = screenModel.realRole
     val activeRole by screenModel.activeRole.collectAsState()
-
+    LaunchedEffect(Unit) {
+        screenModel.loadProfile()
+    }
     Column(
     modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
     horizontalAlignment = Alignment.CenterHorizontally

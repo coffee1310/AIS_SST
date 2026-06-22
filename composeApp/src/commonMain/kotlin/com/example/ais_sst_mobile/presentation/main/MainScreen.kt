@@ -28,6 +28,7 @@ import com.example.ais_sst_mobile.domain.repository.UserRepository
 import com.example.ais_sst_mobile.navigation.HomeComponent
 import com.example.ais_sst_mobile.presentation.calendar.CalendarScreen
 import com.example.ais_sst_mobile.presentation.components.AppBackground
+import com.example.ais_sst_mobile.presentation.components.PushNotificationOverlay // <-- Импортируем наш оверлей
 import org.koin.compose.getKoin
 
 @Composable
@@ -133,30 +134,34 @@ fun MainScreen(component: MainComponent) {
     val isKeyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
     AppBackground {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = Color.Transparent,
-            topBar = { SharedTopBar(title = title, showBackButton = showBackButton, onBackClick = onBackClick)},
-            bottomBar = {
-                if (!isKeyboardOpen) {
-                    SharedBottomNav(selectedIndex, component::onTabSelected)
+        Box(modifier = Modifier.fillMaxSize()) { // <-- Оборачиваем Scaffold в Box
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = Color.Transparent,
+                topBar = { SharedTopBar(title = title, showBackButton = showBackButton, onBackClick = onBackClick)},
+                bottomBar = {
+                    if (!isKeyboardOpen) {
+                        SharedBottomNav(selectedIndex, component::onTabSelected)
+                    }
+                }
+            ) { paddingValues ->
+                Children(
+                    stack = childStack,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                ) { child ->
+                    when (val instance = child.instance) {
+                        is MainComponent.Child.Home -> HomeScreen(instance.component)
+                        is MainComponent.Child.Tasks -> Box(Modifier.fillMaxSize()) { Text("Задачи", color = Color.White) }
+                        is MainComponent.Child.Calendar -> CalendarScreen(instance.component)
+                        is MainComponent.Child.Sectors -> SectorsTab(instance.component)
+                        is MainComponent.Child.Profile -> ProfileScreen(instance.component)
+                    }
                 }
             }
-        ) { paddingValues ->
-            Children(
-                stack = childStack,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-            ) { child ->
-                when (val instance = child.instance) {
-                    is MainComponent.Child.Home -> HomeScreen(instance.component)
-                    is MainComponent.Child.Tasks -> Box(Modifier.fillMaxSize()) { Text("Задачи", color = Color.White) }
-                    is MainComponent.Child.Calendar -> CalendarScreen(instance.component)
-                    is MainComponent.Child.Sectors -> SectorsTab(instance.component)
-                    is MainComponent.Child.Profile -> ProfileScreen(instance.component)
-                }
-            }
+
+            PushNotificationOverlay(modifier = Modifier.fillMaxWidth())
         }
     }
 }

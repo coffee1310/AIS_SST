@@ -38,7 +38,7 @@ class ProfileScreenModel(
     val state = _state.asStateFlow()
 
     init {
-        loadProfile()
+
     }
 
     fun setRole(newRole: AppRole) {
@@ -47,7 +47,7 @@ class ProfileScreenModel(
         }
     }
 
-    private fun loadProfile() {
+    public fun loadProfile() {
         viewModelScope.launch {
             _state.value = ProfileState.Loading
 

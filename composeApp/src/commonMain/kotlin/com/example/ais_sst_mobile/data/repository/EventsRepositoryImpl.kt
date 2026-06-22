@@ -12,7 +12,6 @@ import com.example.ais_sst_mobile.data.network.dto.PagedEventRoleResponse
 import com.example.ais_sst_mobile.data.network.dto.UserProfileDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import kotlinx.coroutines.IO
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -24,8 +23,8 @@ import io.ktor.http.isSuccess
 import io.ktor.client.request.headers
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -52,6 +51,7 @@ class EventsRepositoryImpl(
                 parameter("isDraft", false)
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "ASC")
+                headers { append(HttpHeaders.Connection, "close") } // Явно закрываем соединение
             }.body<PagedEventResponse>()
         }
 
@@ -67,12 +67,15 @@ class EventsRepositoryImpl(
     override suspend fun getEventRoles(eventId: Int): Result<List<EventRoleDto>> = runCatching {
         httpClient.get("event-roles") {
             parameter("eventId", eventId)
+            headers { append(HttpHeaders.Connection, "close") }
         }.body<PagedEventRoleResponse>().content
     }
 
     override suspend fun getEventById(id: Int): Result<Event> = runCatching {
         val dto = withContext(Dispatchers.IO) {
-            httpClient.get("events/$id").body<EventDto>()
+            httpClient.get("events/$id") {
+                headers { append(HttpHeaders.Connection, "close") }
+            }.body<EventDto>()
         }
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
 
@@ -82,151 +85,131 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun getAvailableEvents(): Result<List<Event>> = runCatching {
-        coroutineScope {
-            // 1. Публичные мероприятия
-            val publicDeferred = async(Dispatchers.IO) {
-                runCatching {
-                    httpClient.get("events") {
-                        parameter("isPublic", true)
-                        parameter("isDraft", false)
-                        parameter("size", 150)
-                    }.body<PagedEventResponse>().content
-                }.getOrDefault(emptyList())
+
+        val publicEvents = runCatching {
+            httpClient.get("events") {
+                parameter("isPublic", true)
+                parameter("isDraft", false)
+                parameter("size", 150)
+                headers { append(HttpHeaders.Connection, "close") }
+            }.body<PagedEventResponse>().content
+        }.getOrDefault(emptyList())
+
+        delay(500)
+
+        val mySectorEvents = runCatching {
+            httpClient.get("events") {
+                parameter("isMySector", true)
+                parameter("isDraft", false)
+                parameter("size", 150)
+                headers { append(HttpHeaders.Connection, "close") }
+            }.body<PagedEventResponse>().content
+        }.getOrDefault(emptyList())
+
+        delay(500)
+
+        val allEvents = runCatching {
+            httpClient.get("events") {
+                parameter("isDraft", false)
+                parameter("size", 150)
+                headers { append(HttpHeaders.Connection, "close") }
+            }.body<PagedEventResponse>().content
+        }.getOrDefault(emptyList())
+
+        delay(500)
+
+        val myRoles = runCatching {
+            httpClient.get("event-roles") {
+                parameter("isMySector", true)
+                parameter("isDeleted", false)
+                parameter("page", 0)
+                parameter("size", 1000)
+                headers { append(HttpHeaders.Connection, "close") }
+            }.body<PagedEventRoleResponse>().content
+        }.getOrDefault(emptyList())
+
+        val roleEventIds = myRoles.map { it.eventId }.toSet()
+        val combinedEvents = (publicEvents + mySectorEvents + allEvents).distinctBy { it.id }.toMutableList()
+        val knownEventIds = combinedEvents.map { it.id }.toSet()
+        val missingEventIds = roleEventIds - knownEventIds
+
+        for (id in missingEventIds) {
+            delay(300)
+            val event = runCatching {
+                httpClient.get("events/$id") {
+                    headers { append(HttpHeaders.Connection, "close") }
+                }.body<EventDto>()
+            }.getOrNull()
+            if (event != null) {
+                combinedEvents.add(event)
             }
+        }
 
-            // 2. Мероприятия для моего сектора (закрытые или свободные)
-            val mySectorDeferred = async(Dispatchers.IO) {
-                runCatching {
-                    httpClient.get("events") {
-                        parameter("isMySector", true)
-                        parameter("isDraft", false)
-                        parameter("size", 150)
-                    }.body<PagedEventResponse>().content
-                }.getOrDefault(emptyList())
-            }
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
 
-            // 3. Все мероприятия (базовый запрос без фильтров)
-            val allDeferred = async(Dispatchers.IO) {
-                runCatching {
-                    httpClient.get("events") {
-                        parameter("isDraft", false)
-                        parameter("size", 150)
-                    }.body<PagedEventResponse>().content
-                }.getOrDefault(emptyList())
-            }
+        withContext(Dispatchers.Default) {
+            combinedEvents.filter { dto ->
+                val isPub = dto.isPublic
+                val isLookingForOrg = (dto.maxOrganizersCount ?: 0) > (dto.currentOrganizersCount ?: 0)
+                val isFreeMySector = dto.isFreeEvent == true && dto.isMySector == true
+                val hasRoleForMe = roleEventIds.contains(dto.id)
+                val isVisible = isPub || isLookingForOrg || isFreeMySector || hasRoleForMe
 
-            // 4. Роли для моего сектора (Доверяем бэкенду!)
-            val rolesDeferred = async(Dispatchers.IO) {
-                runCatching {
-                    httpClient.get("event-roles") {
-                        parameter("isMySector", true)
-                        parameter("isDeleted", false)
-                        parameter("page", 0)
-                        parameter("size", 1000)
-                    }.body<PagedEventRoleResponse>().content
-                }.getOrDefault(emptyList())
-            }
-
-            // Ждем выполнения всех запросов
-            val publicEvents = publicDeferred.await()
-            val mySectorEvents = mySectorDeferred.await()
-            val allEvents = allDeferred.await()
-            val myRoles = rolesDeferred.await()
-
-            // Вытаскиваем уникальные ID мероприятий из ролей
-            val roleEventIds = myRoles.map { it.eventId }.toSet()
-
-            // Складываем все полученные мероприятия из 3х запросов и удаляем дубликаты
-            val combinedEvents = (publicEvents + mySectorEvents + allEvents).distinctBy { it.id }.toMutableList()
-            val knownEventIds = combinedEvents.map { it.id }.toSet()
-
-            // Ищем ID мероприятий из ролей, которые не попали в базовые списки
-            val missingEventIds = roleEventIds - knownEventIds
-
-            // Запрашиваем недостающие поштучно
-            val missingEventsDeferred = missingEventIds.map { id ->
-                async(Dispatchers.IO) {
-                    runCatching {
-                        httpClient.get("events/$id").body<EventDto>()
-                    }.getOrNull()
-                }
-            }
-
-            missingEventsDeferred.forEach { deferred ->
-                deferred.await()?.let { combinedEvents.add(it) }
-            }
-
-            val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
-
-            withContext(Dispatchers.Default) {
-                combinedEvents.filter { dto ->
-                    // Проверяем все наши условия видимости "ИЛИ"
-                    val isPub = dto.isPublic
-                    val isLookingForOrg = (dto.maxOrganizersCount ?: 0) > (dto.currentOrganizersCount ?: 0)
-                    val isFreeMySector = dto.isFreeEvent == true && dto.isMySector == true
-                    val hasRoleForMe = roleEventIds.contains(dto.id)
-
-                    val isVisible = isPub || isLookingForOrg || isFreeMySector || hasRoleForMe
-
-                    // Исключаем удаленные, черновики и прошедшие
-                    dto.isDeleted != true && !dto.isDraft && dto.dateOfEvent >= today && isVisible
-                }.map { mapToEvent(it, today) }.sortedBy { it.rawDate }
-            }
+                dto.isDeleted != true && !dto.isDraft && dto.dateOfEvent >= today && isVisible
+            }.map { mapToEvent(it, today) }.sortedBy { it.rawDate }
         }
     }
 
     override suspend fun getCoordinatorDashboardEvents(userId: Int): Result<List<Event>> = runCatching {
-        coroutineScope {
-            val createdDeferred = async(Dispatchers.IO) {
-                httpClient.get("events") {
-                    parameter("creatorId", userId)
-                    parameter("size", 150)
-                    parameter("sortBy", "dateOfEvent")
-                    parameter("sortDirection", "DESC")
-                }.body<PagedEventResponse>().content
-            }
+        val created = runCatching {
+            httpClient.get("events") {
+                parameter("creatorId", userId)
+                parameter("size", 150)
+                parameter("sortBy", "dateOfEvent")
+                parameter("sortDirection", "DESC")
+                headers { append(HttpHeaders.Connection, "close") }
+            }.body<PagedEventResponse>().content
+        }.getOrDefault(emptyList()).filter { it.isDeleted != true }
 
-            val organizerDeferred = async(Dispatchers.IO) {
-                httpClient.get("events") {
-                    parameter("isOrganizer", true)
-                    parameter("size", 150)
-                    parameter("sortBy", "dateOfEvent")
-                    parameter("sortDirection", "DESC")
-                }.body<PagedEventResponse>().content
-            }
+        delay(500)
 
-            val sectorDeferred = async(Dispatchers.IO) {
-                httpClient.get("events") {
-                    parameter("isMySector", true)
-                    parameter("size", 150)
-                    parameter("sortBy", "dateOfEvent")
-                    parameter("sortDirection", "DESC")
-                }.body<PagedEventResponse>().content
-            }
+        val organized = runCatching {
+            httpClient.get("events") {
+                parameter("isOrganizer", true)
+                parameter("size", 150)
+                parameter("sortBy", "dateOfEvent")
+                parameter("sortDirection", "DESC")
+                headers { append(HttpHeaders.Connection, "close") }
+            }.body<PagedEventResponse>().content
+        }.getOrDefault(emptyList()).filter { it.isDeleted != true }
 
-            val created = createdDeferred.await().filter { it.isDeleted != true }
-            val organized = organizerDeferred.await().filter { it.isDeleted != true }
+        delay(500)
 
-            // ИСПРАВЛЕНИЕ ЛОГИКИ: Если мероприятие Свободное и открыто для всех секторов (sectorTitle пустой),
-            // мы не выводим его на дашборд с плашкой "Ваш сектор"
-            val sector = sectorDeferred.await().filter { dto ->
-                dto.isDeleted != true && !(dto.isFreeEvent == true && dto.sectorTitle.isNullOrBlank())
-            }
+        val sector = runCatching {
+            httpClient.get("events") {
+                parameter("isMySector", true)
+                parameter("size", 150)
+                parameter("sortBy", "dateOfEvent")
+                parameter("sortDirection", "DESC")
+                headers { append(HttpHeaders.Connection, "close") }
+            }.body<PagedEventResponse>().content
+        }.getOrDefault(emptyList()).filter { dto ->
+            dto.isDeleted != true && !(dto.isFreeEvent == true && dto.sectorTitle.isNullOrBlank())
+        }
 
-            val allDto = (created + organized + sector).distinctBy { it.id }
-            val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+        val allDto = (created + organized + sector).distinctBy { it.id }
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
 
-            withContext(Dispatchers.Default) {
-                allDto.map { dto ->
-                    val badge = when {
-                        organized.any { it.id == dto.id } -> "Вы организатор"
-                        created.any { it.id == dto.id } -> "Вы создатель"
-                        sector.any { it.id == dto.id } -> "Ваш сектор"
-                        else -> null
-                    }
-                    mapToEvent(dto, today, badge)
-                }.sortedBy { it.rawDate }
-            }
+        withContext(Dispatchers.Default) {
+            allDto.map { dto ->
+                val badge = when {
+                    organized.any { it.id == dto.id } -> "Вы организатор"
+                    created.any { it.id == dto.id } -> "Вы создатель"
+                    sector.any { it.id == dto.id } -> "Ваш сектор"
+                    else -> null
+                }
+                mapToEvent(dto, today, badge)
+            }.sortedBy { it.rawDate }
         }
     }
 
@@ -236,6 +219,7 @@ class EventsRepositoryImpl(
                 parameter("size", 150)
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
+                headers { append(HttpHeaders.Connection, "close") }
             }.body<PagedEventResponse>()
         }
 
@@ -256,13 +240,16 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun getGlobalRoles(): Result<List<RoleDto>> = runCatching {
-        httpClient.get("roles").body()
+        httpClient.get("roles") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }.body()
     }
 
     override suspend fun createEvent(request: CreateEventRequestDto): Result<EventDto> = runCatching {
         val response = httpClient.post("events") {
             contentType(ContentType.Application.Json)
             setBody(request)
+            headers { append(HttpHeaders.Connection, "close") }
         }
 
         if (response.status.isSuccess()) {
@@ -273,13 +260,16 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun addOrganizer(eventId: Int, userId: Int): Result<Unit> = runCatching {
-        httpClient.post("events/$eventId/organizers/$userId")
+        httpClient.post("events/$eventId/organizers/$userId") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }
     }
 
     override suspend fun createEventRole(request: CreateEventRoleRequestDto): Result<Unit> = runCatching {
         httpClient.post("event-roles") {
             contentType(ContentType.Application.Json)
             setBody(request)
+            headers { append(HttpHeaders.Connection, "close") }
         }
     }
 
@@ -288,6 +278,7 @@ class EventsRepositoryImpl(
             headers {
                 remove(HttpHeaders.ContentType)
                 remove(HttpHeaders.ContentLength)
+                append(HttpHeaders.Connection, "close")
             }
         }
         if (!response.status.isSuccess()) {
@@ -296,7 +287,9 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun deleteEvent(eventId: Int): Result<Unit> = runCatching {
-        val response = httpClient.delete("events/$eventId")
+        val response = httpClient.delete("events/$eventId") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }
         if (response.status.isSuccess()) {
             hasDeletedEventSignal = true
         } else {
