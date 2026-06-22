@@ -128,124 +128,133 @@ public class EventService extends BaseEntityService {
         return executeWithLogging(() -> {
             log.info("=== START updateEvent ===");
             log.info("Updating event with ID: {}", eventId);
-            log.info("DTO title: {}", dto.getTitle());
-            log.info("DTO description: {}", dto.getDescription());
 
+            // ⭐ 1. Получаем пользователя
             User user = userRepository.findUserById(userId)
                     .orElseThrow(() -> new UserDoesNotExistException("Пользователь не найден"));
-            String user_role = user.getRole().getTitle();
 
-            if (!HIGHEST_ROLES.contains(user_role))
-                validateIsEventCreator(eventId, userId);
-
+            // ⭐ 2. Получаем мероприятие
             Event event = findEntityOrThrow(eventId, eventRepository::findById,
                     () -> new EventDoesNotExistException("Мероприятие не найдено"), "Event");
 
-            // Валидация sector_ids
-            validateSectorsRequired(dto, event);
+            // ⭐ 3. Проверяем права доступа
+            checkEventEditPermission(event, userId, user.getRole().getTitle());
 
-            log.info("Existing event - ID: {}, Title: '{}'", event.getId(), event.getTitle());
+            // ⭐ 4. Обновляем мероприятие
+            updateEventFields(event, dto);
 
-            // Обновляем поля с логированием
-            if (dto.getTitle() != null) {
-                log.info("Changing title from '{}' to '{}'", event.getTitle(), dto.getTitle());
-                event.setTitle(dto.getTitle());
-            }
-            if (dto.getDescription() != null) {
-                log.info("Changing description");
-                event.setDescription(dto.getDescription());
-            }
-            if (dto.getDateOfEvent() != null) {
-                log.info("Changing dateOfEvent from {} to {}", event.getDateOfEvent(), dto.getDateOfEvent());
-                event.setDateOfEvent(dto.getDateOfEvent());
-            }
-            if (dto.getStartTime() != null) {
-                log.info("Changing startTime from {} to {}", event.getStartTime(), dto.getStartTime());
-                event.setStartTime(dto.getStartTime());
-            }
-            if (dto.getEndTime() != null) {
-                log.info("Changing endTime from {} to {}", event.getEndTime(), dto.getEndTime());
-                event.setEndTime(dto.getEndTime());
-            }
-            if (dto.getVenue() != null) {
-                log.info("Changing venue from '{}' to '{}'", event.getVenue(), dto.getVenue());
-                event.setVenue(dto.getVenue());
-            }
-            if (dto.getReferenceToPosition() != null) {
-                log.info("Changing referenceToPosition");
-                event.setReferenceToPosition(dto.getReferenceToPosition());
-            }
-            if (dto.getIsPublic() != null) {
-                log.info("Changing isPublic from {} to {}", event.getIsPublic(), dto.getIsPublic());
-                event.setIsPublic(dto.getIsPublic());
-            }
-            if (dto.getIsDraft() != null) {
-                log.info("Changing isDraft from {} to {}", event.getIsDraft(), dto.getIsDraft());
-                event.setIsDraft(dto.getIsDraft());
-            }
-            if (dto.getIsActive() != null) {
-                log.info("Changing isActive from {} to {}", event.getIsActive(), dto.getIsActive());
-                event.setIsActive(dto.getIsActive());
-            }
-
-            if (dto.getPhoto() != null && !dto.getPhoto().isEmpty()) {
-                log.info("Updating photo");
-                updateEventPhoto(event, dto.getPhoto());
-            }
-
-            if (dto.getOrganizerIds() != null) {
-                log.info("Updating organizers: {}", dto.getOrganizerIds());
-                updateOrganizers(event, dto.getOrganizerIds());
-            }
-
-            if (dto.getMaxOrganizersCount() != null) {
-                event.setMaxOrganizersCount(dto.getMaxOrganizersCount());
-            }
-
-            // Обновление секторов
-            if (dto.getSectorIds() != null) {
-                log.info("Updating sectors: {}", dto.getSectorIds());
-
-                // Удаляем все существующие связи EventSector
-                if (event.getEventSectors() != null && !event.getEventSectors().isEmpty()) {
-                    // Используем отдельный репозиторий для удаления
-                    eventSectorRepository.deleteAll(event.getEventSectors());
-                    event.getEventSectors().clear();
-                }
-
-                // Добавляем новые сектора
-                for (Long sectorId : dto.getSectorIds()) {
-                    Sector sector = findEntityOrThrow(sectorId, sectorRepository::findById,
-                            () -> new IllegalArgumentException("Сектор не найден: " + sectorId), "Sector");
-
-                    // Проверяем, не существует ли уже такая связь
-                    boolean exists = eventSectorRepository.existsByEventIdAndSectorId(eventId, sectorId);
-                    if (!exists) {
-                        event.addSector(sector);
-                    }
-                }
-            }
-
-            if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {
-                throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");
-            }
-
-            if (event.getMaxOrganizersCount() == null) {
-                event.setMaxOrganizersCount(event.getOrganizers().size());
-            }
-
-            log.info("Saving event with title: '{}'", event.getTitle());
+            // ⭐ 5. Сохраняем и возвращаем результат
             Event updatedEvent = eventRepository.save(event);
-            log.info("Event saved successfully with ID: {}", updatedEvent.getId());
-
-            EventResponseDTO response = eventMapper.toResponseDto(updatedEvent);
-            response.setCurrentParticipantsCount(eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(eventId));
-            response.setCurrentOrganizersCount(eventOrganizerRepository.countByEventIdAndIsDeletedFalse(eventId));
-            response.setSectors(getEventSectors(updatedEvent));
-            response.setIsMySector(isUserHasSectorForEvent(updatedEvent, userId));
-
-            return response;
+            return buildEventResponse(updatedEvent, userId);
         }, "updateEvent", eventId, userId);
+    }
+
+    /**
+     * Проверка прав на редактирование мероприятия
+     */
+    private void checkEventEditPermission(Event event, Long userId, String userRole) {
+        boolean isAdminRole = HIGHEST_ROLES.contains(userRole);
+        boolean isOrganizer = eventOrganizerRepository.existsByEventIdAndUserId(event.getId(), userId);
+        boolean isCreator = event.getEventCreator() != null &&
+                event.getEventCreator().getId().equals(userId);
+
+        if (!isOrganizer && !isCreator && !isAdminRole) {
+            throw new AccessDeniedException(
+                    String.format("У вас нет прав на редактирование мероприятия. " +
+                                    "Требуется быть создателем, организатором мероприятия или иметь одну из ролей: %s",
+                            String.join(", ", HIGHEST_ROLES))
+            );
+        }
+
+        log.debug("Permission granted: isAdmin={}, isOrganizer={}, isCreator={}",
+                isAdminRole, isOrganizer, isCreator);
+    }
+
+    /**
+     * Обновление полей мероприятия
+     */
+    private void updateEventFields(Event event, EventUpdateDTO dto) {
+        // Обновляем все поля
+        if (dto.getTitle() != null) {
+            event.setTitle(dto.getTitle());
+        }
+        if (dto.getDescription() != null) {
+            event.setDescription(dto.getDescription());
+        }
+        if (dto.getDateOfEvent() != null) {
+            event.setDateOfEvent(dto.getDateOfEvent());
+        }
+        if (dto.getStartTime() != null) {
+            event.setStartTime(dto.getStartTime());
+        }
+        if (dto.getEndTime() != null) {
+            event.setEndTime(dto.getEndTime());
+        }
+        if (dto.getVenue() != null) {
+            event.setVenue(dto.getVenue());
+        }
+        if (dto.getReferenceToPosition() != null) {
+            event.setReferenceToPosition(dto.getReferenceToPosition());
+        }
+        if (dto.getIsPublic() != null) {
+            event.setIsPublic(dto.getIsPublic());
+        }
+        if (dto.getIsDraft() != null) {
+            event.setIsDraft(dto.getIsDraft());
+        }
+        if (dto.getIsActive() != null) {
+            event.setIsActive(dto.getIsActive());
+        }
+        if (dto.getPhoto() != null && !dto.getPhoto().isEmpty()) {
+            updateEventPhoto(event, dto.getPhoto());
+        }
+        if (dto.getOrganizerIds() != null) {
+            updateOrganizers(event, dto.getOrganizerIds());
+        }
+        if (dto.getMaxOrganizersCount() != null) {
+            event.setMaxOrganizersCount(dto.getMaxOrganizersCount());
+        }
+        if (dto.getSectorIds() != null) {
+            updateEventSectors(event, dto.getSectorIds());
+        }
+
+        // Валидация
+        if (event.getMaxOrganizersCount() < event.getOrganizers().size()) {
+            throw new OrganizerLimitExceededException("Вы указали некорректное максимальное количество организаторов");
+        }
+        if (event.getMaxOrganizersCount() == null) {
+            event.setMaxOrganizersCount(event.getOrganizers().size());
+        }
+    }
+
+    /**
+     * Обновление секторов мероприятия
+     */
+    private void updateEventSectors(Event event, List<Long> sectorIds) {
+        if (event.getEventSectors() != null && !event.getEventSectors().isEmpty()) {
+            eventSectorRepository.deleteAll(event.getEventSectors());
+            event.getEventSectors().clear();
+        }
+
+        for (Long sectorId : sectorIds) {
+            Sector sector = findEntityOrThrow(sectorId, sectorRepository::findById,
+                    () -> new IllegalArgumentException("Сектор не найден: " + sectorId), "Sector");
+            event.addSector(sector);
+        }
+    }
+
+    /**
+     * Построение ответа
+     */
+    private EventResponseDTO buildEventResponse(Event event, Long userId) {
+        EventResponseDTO response = eventMapper.toResponseDto(event);
+        response.setCurrentParticipantsCount(
+                eventParticipantsRepository.countByEventIdAndIsDeletedFalseAndIsDeletedFalse(event.getId()));
+        response.setCurrentOrganizersCount(
+                eventOrganizerRepository.countByEventIdAndIsDeletedFalse(event.getId()));
+        response.setSectors(getEventSectors(event));
+        response.setIsMySector(isUserHasSectorForEvent(event, userId));
+        return response;
     }
 
     private void validateSectorsRequired(EventCreateDTO dto) {
