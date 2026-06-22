@@ -35,8 +35,14 @@ public class RedisNotificationListener implements MessageListener {
                 messagingTemplate.convertAndSend("/topic/public", notification);
                 log.debug("Broadcasted to /topic/public");
             } else {
+                if (notification.getEmail() == null || notification.getEmail().isBlank()) {
+                    log.warn("Cannot send personal notification: email is null for userId={}",
+                            notification.getUserId());
+                    return;
+                }
+
                 messagingTemplate.convertAndSendToUser(
-                        notification.getEmail(),           // используем email
+                        notification.getEmail(),
                         "/queue/notifications",
                         notification
                 );

@@ -32,15 +32,26 @@ public class PushNotificationService {
     public void sendToUser(String userId, String message, String type) {
         NotificationDto notification = new NotificationDto(userId, message, type);
 
-        // Получаем email пользователя (если ещё не делаешь)
-        // String email = userRepository.findById(...).map(User::getStudentEmail).orElse(null);
-        // notification.setEmail(email);
+        try {
+            // Извлекаем числовой ID (user5 → 5)
+            Long numericId = Long.parseLong(userId.replace("user", ""));
 
-        log.info("Sending notification to user {}: {}", userId, message);
+            // Получаем пользователя и его email
+            User user = userRepository.findById(numericId)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
+            notification.setEmail(user.getStudentEmail());   // ← вот это важно
+
+            log.info("Sending notification to user {} (email={}): {}", userId, user.getStudentEmail(), message);
+
+        } catch (Exception e) {
+            log.error("Failed to resolve email for userId={}", userId, e);
+            // Можно либо кинуть исключение, либо fallback на userId (но лучше не делать)
+            return;
+        }
 
         saveToHistory(userId, notification);
 
-        // Только публикация в Redis
         try {
             redisTemplate.convertAndSend(notificationChannel, notification);
             log.debug("Published to Redis channel: {}", notificationChannel);
