@@ -26,7 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/terms")
 @Slf4j
 public class TermsController {
 
@@ -37,7 +37,7 @@ public class TermsController {
         this.storageProperties = storageProperties;
     }
 
-    @GetMapping(value = "/terms", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<Resource> getTermsOfService(
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
             @RequestHeader(value = "If-Modified-Since", required = false) String ifModifiedSince) {

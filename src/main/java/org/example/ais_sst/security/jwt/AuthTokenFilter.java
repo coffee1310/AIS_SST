@@ -148,6 +148,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             return true;
         }
 
+        if (path.startsWith("/api/terms")) {
+            return true;
+        }
+
         if (path.equals("/api/account_requests/send-code")) {
             return true;
         }

@@ -135,6 +135,8 @@ public class SecurityConfig {
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/specialities")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/group")).permitAll()
 
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/terms")).permitAll()
+
                             // OPTIONS для CORS preflight
                             .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.OPTIONS, "/**")).permitAll()
 
