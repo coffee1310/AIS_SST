@@ -50,7 +50,7 @@
                                                             <TextBlock Text="{Binding StatusLabel}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12"/>
                                                         </StackPanel>
 
-                                                        <Button Grid.Column="2" Content="Исключить" Style="{StaticResource OutlineButtonStyle}" Foreground="#E81123" BorderBrush="#E81123" Height="32" Padding="15,0" FontSize="12" VerticalAlignment="Center" Tag="{Binding ParticipantId}" Click="KickParticipant_Click"/>
+                                                        <Button Grid.Column="2" Content="Исключить" Style="{StaticResource OutlineButtonStyle}" Foreground="#E81123" BorderBrush="#E81123" Height="32" Padding="15,0" FontSize="12" VerticalAlignment="Center" Click="KickParticipant_Click"/>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

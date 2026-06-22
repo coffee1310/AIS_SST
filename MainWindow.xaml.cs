@@ -290,7 +290,7 @@ namespace Diplom_Stud
             }
         }
 
-        private void MenuProfile_Click(object sender, RoutedEventArgs e)
+        public void MenuProfile_Click(object sender, RoutedEventArgs e)
         {
             if (!(MainFrame.Content is Pages.Activist.Profile))
             {
@@ -298,7 +298,7 @@ namespace Diplom_Stud
             }
         }
 
-        private void MenuHome_Click(object sender, RoutedEventArgs e)
+        public void MenuHome_Click(object sender, RoutedEventArgs e)
         {
             var data = App.CurrentUserProfile;
             if (data == null) return;

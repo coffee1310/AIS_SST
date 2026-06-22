@@ -23,8 +23,8 @@ namespace Diplom_Stud.Pages.Coordinator
         private static readonly HttpClient _httpClient = new HttpClient();
         private int _eventId;
 
-        // Для отклонения с причиной
         private int _rejectingApplicationId = 0;
+        private bool _isRejectingOrganizer = false;
 
         public EventRequestsPage(int eventId)
         {
@@ -55,66 +55,73 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                // Загружаем все заявки на рассмотрении (без пагинации)
-                HttpResponseMessage response = await _httpClient.GetAsync(
-                    $"/api/role-applications?eventId={_eventId}&status=НА_РАССМОТРЕНИИ&size=100");
+                var blocks = new List<Req_RoleBlockViewModel>();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                if (response.IsSuccessStatusCode)
+                // 1. Кастомные роли
+                HttpResponseMessage resRoles = await _httpClient.GetAsync($"/api/role-applications?status=НА_РАССМОТРЕНИИ&eventId={_eventId}");
+                if (resRoles.IsSuccessStatusCode)
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-                    var pageData = JsonSerializer.Deserialize<ReqPageResponseLocal>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    string json = await resRoles.Content.ReadAsStringAsync();
+                    var page = JsonSerializer.Deserialize<Req_PageResponseApp>(json, options);
 
-                    if (pageData?.content != null && pageData.content.Count > 0)
+                    if (page?.content != null && page.content.Count > 0)
                     {
-                        var groupedApps = pageData.content.GroupBy(a =>
-                            string.IsNullOrEmpty(a.eventRoleName) ? "Роль не указана" : a.eventRoleName);
-
-                        var roleBlocks = new List<RequestRoleBlockViewModel>();
-
-                        foreach (var group in groupedApps)
+                        var grouped = page.content.GroupBy(c => string.IsNullOrEmpty(c.eventRoleName) ? "Роль" : c.eventRoleName);
+                        foreach (var g in grouped)
                         {
-                            var apps = group.Select(a =>
+                            var block = new Req_RoleBlockViewModel { RoleTitle = g.Key, Applications = new List<Req_AppViewModel>() };
+                            foreach (var app in g)
                             {
-                                BitmapImage avatar = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"));
-                                if (!string.IsNullOrEmpty(a.studentPhoto))
+                                block.Applications.Add(new Req_AppViewModel
                                 {
-                                    var bmp = GetImageFromBase64(a.studentPhoto);
-                                    if (bmp != null) avatar = bmp;
-                                }
+                                    ApplicationId = app.id,
+                                    StudentId = app.studentId ?? 0,
+                                    FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
+                                    StudentEmail = app.studentEmail,
+                                    Comment = string.IsNullOrWhiteSpace(app.description) ? "Комментарий не оставлен" : app.description,
+                                    Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
+                                    IsOrganizer = false
+                                });
+                            }
+                            blocks.Add(block);
+                        }
+                    }
+                }
 
-                                return new RequestAppViewModel
-                                {
-                                    ApplicationId = a.id,
-                                    StudentId = a.studentId ?? 0,
-                                    FullName = $"{a.studentSurname} {a.studentName} {a.studentPatronymic}".Trim(),
-                                    StudentEmail = string.IsNullOrWhiteSpace(a.studentEmail) ? "Почта не указана" : a.studentEmail,
-                                    Comment = string.IsNullOrWhiteSpace(a.description) ? "Комментарий не оставлен" : a.description,
-                                    Avatar = avatar
-                                };
-                            }).ToList();
+                // 2. Организаторы
+                HttpResponseMessage resOrg = await _httpClient.GetAsync($"/api/role-applications/organizer/event/{_eventId}?status=НА_РАССМОТРЕНИИ");
+                if (resOrg.IsSuccessStatusCode)
+                {
+                    string json = await resOrg.Content.ReadAsStringAsync();
+                    var page = JsonSerializer.Deserialize<Req_PageResponseApp>(json, options);
 
-                            roleBlocks.Add(new RequestRoleBlockViewModel
+                    if (page?.content != null && page.content.Count > 0)
+                    {
+                        var block = new Req_RoleBlockViewModel { RoleTitle = "Организатор", Applications = new List<Req_AppViewModel>() };
+                        foreach (var app in page.content)
+                        {
+                            block.Applications.Add(new Req_AppViewModel
                             {
-                                RoleTitle = group.Key,
-                                Applications = apps
+                                ApplicationId = app.id,
+                                StudentId = app.studentId ?? 0,
+                                FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
+                                StudentEmail = app.studentEmail,
+                                Comment = string.IsNullOrWhiteSpace(app.description) ? "Комментарий не оставлен" : app.description,
+                                Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
+                                IsOrganizer = true
                             });
                         }
+                        blocks.Add(block);
+                    }
+                }
 
-                        RolesWithRequestsList.ItemsSource = roleBlocks;
-                    }
-                    else
-                    {
-                        EmptyAllText.Visibility = Visibility.Visible;
-                    }
-                }
-                else
-                {
-                    CustomMessageBox.Show($"Ошибка загрузки заявок: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
-                }
+                RolesWithRequestsList.ItemsSource = blocks;
+                if (blocks.Count == 0) EmptyAllText.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                CustomMessageBox.Show($"Ошибка загрузки заявок: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
             finally
             {
@@ -122,12 +129,45 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
-        // ==================== ОТКЛОНЕНИЕ С ПРИЧИНОЙ ====================
+        private async void ApproveRequest_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is Req_AppViewModel app)
+            {
+                LoadingOverlay.Visibility = Visibility.Visible;
+                try
+                {
+                    HttpResponseMessage res;
+                    if (app.IsOrganizer)
+                    {
+                        res = await _httpClient.PutAsync($"/api/role-applications/organizer/{app.ApplicationId}/approve", new StringContent(""));
+                    }
+                    else
+                    {
+                        res = await _httpClient.PutAsync($"/api/role-applications/{app.ApplicationId}/approve", new StringContent(""));
+                    }
+
+                    if (res.IsSuccessStatusCode)
+                    {
+                        CustomMessageBox.Show("Заявка одобрена", "Успех", CustomMessageBox.MessageType.Success);
+                        await LoadRequestsAsync();
+                    }
+                    else
+                    {
+                        string err = await res.Content.ReadAsStringAsync();
+                        CustomMessageBox.Show($"Ошибка: {res.StatusCode}\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    }
+                }
+                catch (Exception ex) { CustomMessageBox.Show(ex.Message, "Ошибка", CustomMessageBox.MessageType.Error); }
+                finally { LoadingOverlay.Visibility = Visibility.Collapsed; }
+            }
+        }
+
         private void RejectRequest_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is int appId)
+            if (sender is Button btn && btn.DataContext is Req_AppViewModel app)
             {
-                _rejectingApplicationId = appId;
+                _rejectingApplicationId = app.ApplicationId;
+                _isRejectingOrganizer = app.IsOrganizer;
                 TbRejectionReason.Text = "";
                 ErrRejectionReason.Visibility = Visibility.Collapsed;
                 RejectionOverlay.Visibility = Visibility.Visible;
@@ -152,75 +192,32 @@ namespace Diplom_Stud.Pages.Coordinator
 
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                var payload = new { rejectionReason = TbRejectionReason.Text };
+                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-                var payload = new { rejectionReason = TbRejectionReason.Text.Trim() };
-                string jsonPayload = JsonSerializer.Serialize(payload);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = await _httpClient.PutAsync(
-                    $"/api/role-applications/{_rejectingApplicationId}/reject", content);
-
-                if (response.IsSuccessStatusCode)
+                HttpResponseMessage res;
+                if (_isRejectingOrganizer)
                 {
-                    CustomMessageBox.Show("Заявка успешно отклонена", "Успех", CustomMessageBox.MessageType.Success);
+                    res = await _httpClient.PutAsync($"/api/role-applications/organizer/{_rejectingApplicationId}/reject", content);
+                }
+                else
+                {
+                    res = await _httpClient.PutAsync($"/api/role-applications/{_rejectingApplicationId}/reject", content);
+                }
+
+                if (res.IsSuccessStatusCode)
+                {
+                    CustomMessageBox.Show("Заявка отклонена", "Успех", CustomMessageBox.MessageType.Success);
                     await LoadRequestsAsync();
                 }
                 else
                 {
-                    string err = await response.Content.ReadAsStringAsync();
+                    string err = await res.Content.ReadAsStringAsync();
                     CustomMessageBox.Show($"Не удалось отклонить заявку:\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
                 }
             }
-            catch (Exception ex)
-            {
-                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
-            }
-            finally
-            {
-                LoadingOverlay.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        // ==================== ОДОБРЕНИЕ ====================
-        private async void ApproveRequest_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is int appId)
-            {
-                await HandleApplicationActionAsync(appId, "approve", "Заявка успешно принята!");
-            }
-        }
-
-        private async Task HandleApplicationActionAsync(int applicationId, string action, string successMessage)
-        {
-            LoadingOverlay.Visibility = Visibility.Visible;
-            try
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-                var content = new StringContent("", Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = await _httpClient.PutAsync(
-                    $"/api/role-applications/{applicationId}/{action}", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    CustomMessageBox.Show(successMessage, "Успех", CustomMessageBox.MessageType.Success);
-                    await LoadRequestsAsync();
-                }
-                else
-                {
-                    string err = await response.Content.ReadAsStringAsync();
-                    CustomMessageBox.Show($"Ошибка: {response.StatusCode}\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
-            }
-            finally
-            {
-                LoadingOverlay.Visibility = Visibility.Collapsed;
-            }
+            catch (Exception ex) { CustomMessageBox.Show(ex.Message, "Ошибка", CustomMessageBox.MessageType.Error); }
+            finally { LoadingOverlay.Visibility = Visibility.Collapsed; }
         }
 
         private void ReserveRequest_Click(object sender, RoutedEventArgs e)
@@ -240,6 +237,7 @@ namespace Diplom_Stud.Pages.Coordinator
         {
             try
             {
+                if (string.IsNullOrEmpty(base64String)) return null;
                 string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
                 byte[] imageBytes = null;
 
@@ -280,13 +278,12 @@ namespace Diplom_Stud.Pages.Coordinator
         }
     }
 
-    // ====================== DTO ======================
-    public class ReqPageResponseLocal
+    public class Req_PageResponseApp
     {
-        public List<ReqAppDtoLocal> content { get; set; }
+        public List<Req_RoleAppDto> content { get; set; }
     }
 
-    public class ReqAppDtoLocal
+    public class Req_RoleAppDto
     {
         public int id { get; set; }
         public int? studentId { get; set; }
@@ -295,16 +292,11 @@ namespace Diplom_Stud.Pages.Coordinator
         public string studentPatronymic { get; set; }
         public string studentEmail { get; set; }
         public string studentPhoto { get; set; }
-        public int eventRoleId { get; set; }
-        public string eventRoleName { get; set; }
-        public int eventId { get; set; }
-        public string eventTitle { get; set; }
         public string description { get; set; }
-        public string status { get; set; }
-        public bool isReserve { get; set; }
+        public string eventRoleName { get; set; }
     }
 
-    public class RequestRoleBlockViewModel : INotifyPropertyChanged
+    public class Req_RoleBlockViewModel : INotifyPropertyChanged
     {
         public string RoleTitle { get; set; }
 
@@ -315,13 +307,13 @@ namespace Diplom_Stud.Pages.Coordinator
             set { _isExpanded = value; OnPropertyChanged(nameof(IsExpanded)); }
         }
 
-        public List<RequestAppViewModel> Applications { get; set; }
+        public List<Req_AppViewModel> Applications { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    public class RequestAppViewModel
+    public class Req_AppViewModel
     {
         public int ApplicationId { get; set; }
         public int StudentId { get; set; }
@@ -330,5 +322,7 @@ namespace Diplom_Stud.Pages.Coordinator
         public string Comment { get; set; }
         public Visibility CommentVisibility => string.IsNullOrWhiteSpace(Comment) ? Visibility.Collapsed : Visibility.Visible;
         public ImageSource Avatar { get; set; }
+        public bool IsOrganizer { get; set; }
+        public Brush BackgroundBrush => Brushes.Transparent;
     }
 }

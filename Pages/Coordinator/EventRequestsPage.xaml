@@ -15,20 +15,17 @@
 
     <Grid Background="Transparent">
         <StackPanel>
-            <!-- Заголовок в стиле участников -->
             <TextBlock Text="Заявки на роли в мероприятии" 
                        Foreground="White" 
                        FontSize="20" 
                        FontFamily="Digital Pixel" 
                        Margin="0,0,0,20"/>
 
-            <!-- Список заявок по ролям -->
             <ItemsControl x:Name="RolesWithRequestsList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
                             <StackPanel>
-                                <!-- Название роли + кнопка сворачивания -->
                                 <Grid Margin="0,0,0,15">
                                     <TextBlock Text="{Binding RoleTitle}" 
                                                Foreground="#02B3BA" 
@@ -52,7 +49,6 @@
 
                                 <Rectangle Height="1" Fill="#2A283C" Margin="0,0,0,10"/>
 
-                                <!-- Список заявок внутри роли -->
                                 <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
                                     <ItemsControl ItemsSource="{Binding Applications}">
                                         <ItemsControl.ItemTemplate>
@@ -73,14 +69,12 @@
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
 
-                                                        <!-- Аватар -->
                                                         <Ellipse Grid.Column="0" Width="46" Height="46" Margin="0,0,15,0">
                                                             <Ellipse.Fill>
                                                                 <ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill"/>
                                                             </Ellipse.Fill>
                                                         </Ellipse>
 
-                                                        <!-- Информация -->
                                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding FullName}" 
                                                                        Foreground="White" 
@@ -100,7 +94,6 @@
                                                                        TextWrapping="Wrap"/>
                                                         </StackPanel>
 
-                                                        <!-- Кнопки действий -->
                                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
                                                             <Button Content="Одобрить" 
                                                                     Style="{StaticResource OutlineButtonStyle}" 
@@ -156,14 +149,12 @@
                        Visibility="Collapsed"/>
         </StackPanel>
 
-        <!-- Лоадер -->
         <Grid x:Name="LoadingOverlay" Background="#E61A1A2E" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar IsIndeterminate="True" Width="150" Height="4" Foreground="#02B3BA" Background="#2A283C" BorderThickness="0" Margin="0,0,0,15"/>
             </StackPanel>
         </Grid>
 
-        <!-- Оверлей отклонения с причиной -->
         <Grid x:Name="RejectionOverlay" Background="#E61A1A2E" Visibility="Collapsed" Panel.ZIndex="100">
             <Border Style="{StaticResource CardBorderStyle}" Width="420" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <StackPanel Margin="30">

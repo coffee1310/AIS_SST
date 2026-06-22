@@ -52,64 +52,94 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                HttpResponseMessage response = await _httpClient.GetAsync($"/api/role-applications?eventId={_eventId}&status=ОДОБРЕНА&page=0&size=100");
+                var blocks = new List<Part_RoleGroupViewModel>();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                if (response.IsSuccessStatusCode)
+                HttpResponseMessage resPart = await _httpClient.GetAsync($"/api/events/participants/{_eventId}");
+                if (resPart.IsSuccessStatusCode)
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-                    var pageData = JsonSerializer.Deserialize<PartPageResponseLocal>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                    if (pageData?.content != null && pageData.content.Count > 0)
+                    string json = await resPart.Content.ReadAsStringAsync();
+                    var list = JsonSerializer.Deserialize<List<Part_ParticipantUserDto>>(json, options);
+                    if (list != null && list.Count > 0)
                     {
-                        var groupedApps = pageData.content.GroupBy(a => string.IsNullOrEmpty(a.eventRoleName) ? "Роль не указана" : a.eventRoleName);
-                        var roleBlocks = new List<ParticipantRoleGroupViewModel>();
-
-                        foreach (var group in groupedApps)
+                        var block = new Part_RoleGroupViewModel { RoleTitle = "Участник", Participants = new List<Part_ItemViewModel>() };
+                        foreach (var u in list)
                         {
-                            var participants = group.Select(a =>
+                            block.Participants.Add(new Part_ItemViewModel
                             {
-                                BitmapImage avatar = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"));
-                                if (!string.IsNullOrEmpty(a.studentPhoto))
-                                {
-                                    var bmp = GetImageFromBase64(a.studentPhoto);
-                                    if (bmp != null) avatar = bmp;
-                                }
-
-                                return new EventParticipantItemViewModel
-                                {
-                                    ParticipantId = a.id,
-                                    StudentId = a.studentId ?? 0,
-                                    FullName = $"{a.studentSurname} {a.studentName} {a.studentPatronymic}".Trim(),
-                                    StudentEmail = string.IsNullOrWhiteSpace(a.studentEmail) ? "Почта не указана" : a.studentEmail,
-                                    IsReserve = a.isReserve,
-                                    Avatar = avatar
-                                };
-                            })
-                            .OrderBy(p => p.IsReserve)
-                            .ToList();
-
-                            roleBlocks.Add(new ParticipantRoleGroupViewModel
-                            {
-                                RoleTitle = group.Key,
-                                Participants = participants
+                                ParticipantId = u.id,
+                                StudentId = u.id,
+                                FullName = $"{u.surname} {u.name} {u.patronymic}".Trim(),
+                                StudentEmail = string.IsNullOrWhiteSpace(u.studentEmail) ? "Почта не указана" : u.studentEmail,
+                                Type = "Participant",
+                                IsReserve = false,
+                                Avatar = GetImageFromBase64(u.photo) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
                             });
                         }
+                        blocks.Add(block);
+                    }
+                }
 
-                        RolesWithParticipantsList.ItemsSource = roleBlocks;
-                    }
-                    else
-                    {
-                        EmptyParticipantsText.Visibility = Visibility.Visible;
-                    }
-                }
-                else
+                HttpResponseMessage resEv = await _httpClient.GetAsync($"/api/events/{_eventId}");
+                if (resEv.IsSuccessStatusCode)
                 {
-                    CustomMessageBox.Show($"Ошибка загрузки участников: {response.StatusCode}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    string json = await resEv.Content.ReadAsStringAsync();
+                    var ev = JsonSerializer.Deserialize<Part_EditEventDto>(json, options);
+                    if (ev?.organizers != null && ev.organizers.Count > 0)
+                    {
+                        var block = new Part_RoleGroupViewModel { RoleTitle = "Организатор", Participants = new List<Part_ItemViewModel>() };
+                        foreach (var u in ev.organizers)
+                        {
+                            block.Participants.Add(new Part_ItemViewModel
+                            {
+                                ParticipantId = u.id,
+                                StudentId = u.id,
+                                FullName = $"{u.surname} {u.name} {u.patronymic}".Trim(),
+                                StudentEmail = string.IsNullOrWhiteSpace(u.studentEmail) ? "Почта не указана" : u.studentEmail,
+                                Type = "Organizer",
+                                IsReserve = false,
+                                Avatar = GetImageFromBase64(u.photo) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
+                            });
+                        }
+                        blocks.Add(block);
+                    }
                 }
+
+                HttpResponseMessage resRoles = await _httpClient.GetAsync($"/api/role-applications?status=ОДОБРЕНА&eventId={_eventId}");
+                if (resRoles.IsSuccessStatusCode)
+                {
+                    string json = await resRoles.Content.ReadAsStringAsync();
+                    var page = JsonSerializer.Deserialize<Part_PageResponse>(json, options);
+                    if (page?.content != null && page.content.Count > 0)
+                    {
+                        var grouped = page.content.GroupBy(c => string.IsNullOrEmpty(c.eventRoleName) ? "Роль не указана" : c.eventRoleName);
+                        foreach (var g in grouped)
+                        {
+                            var block = new Part_RoleGroupViewModel { RoleTitle = g.Key, Participants = new List<Part_ItemViewModel>() };
+                            foreach (var app in g)
+                            {
+                                block.Participants.Add(new Part_ItemViewModel
+                                {
+                                    ParticipantId = app.id,
+                                    StudentId = app.studentId ?? 0,
+                                    FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
+                                    StudentEmail = string.IsNullOrWhiteSpace(app.studentEmail) ? "Почта не указана" : app.studentEmail,
+                                    Type = "Role",
+                                    IsReserve = app.isReserve,
+                                    Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
+                                });
+                            }
+                            blocks.Add(block);
+                        }
+                    }
+                }
+
+                RolesWithParticipantsList.ItemsSource = blocks;
+                if (blocks.Count == 0) EmptyParticipantsText.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                CustomMessageBox.Show($"Ошибка загрузки участников: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
             finally
             {
@@ -127,9 +157,9 @@ namespace Diplom_Stud.Pages.Coordinator
 
         private async void KickParticipant_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is int applicationId)
+            if (sender is Button btn && btn.DataContext is Part_ItemViewModel p)
             {
-                MessageBoxResult result = MessageBox.Show("Вы уверены, что хотите исключить этого участника с мероприятия?", "Исключение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                MessageBoxResult result = MessageBox.Show($"Вы уверены, что хотите исключить {p.FullName}?", "Исключение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
                 if (result == MessageBoxResult.Yes)
                 {
@@ -138,17 +168,29 @@ namespace Diplom_Stud.Pages.Coordinator
                     {
                         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                        var content = new StringContent("", Encoding.UTF8, "application/json");
-                        HttpResponseMessage response = await _httpClient.PutAsync($"/api/role-applications/{applicationId}/reject", content);
+                        HttpResponseMessage response = null;
 
-                        if (response.IsSuccessStatusCode)
+                        if (p.Type == "Participant")
+                        {
+                            response = await _httpClient.DeleteAsync($"/api/events/participants/{p.ParticipantId}/soft");
+                        }
+                        else if (p.Type == "Organizer")
+                        {
+                            response = await _httpClient.DeleteAsync($"/api/events/organizers/{p.ParticipantId}/soft");
+                        }
+                        else if (p.Type == "Role")
+                        {
+                            response = await _httpClient.DeleteAsync($"/api/events/participants/participation-records/{p.ParticipantId}");
+                        }
+
+                        if (response != null && response.IsSuccessStatusCode)
                         {
                             CustomMessageBox.Show("Участник успешно исключен.", "Успех", CustomMessageBox.MessageType.Success);
                             await LoadParticipantsAsync();
                         }
                         else
                         {
-                            string err = await response.Content.ReadAsStringAsync();
+                            string err = response != null ? await response.Content.ReadAsStringAsync() : "Неизвестная ошибка";
                             CustomMessageBox.Show($"Ошибка выполнения действия:\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
                         }
                     }
@@ -168,8 +210,10 @@ namespace Diplom_Stud.Pages.Coordinator
         {
             try
             {
+                if (string.IsNullOrEmpty(base64String)) return null;
                 string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
                 byte[] imageBytes = null;
+
                 try
                 {
                     byte[] decodedFirstLevel = Convert.FromBase64String(cleanStr);
@@ -207,13 +251,27 @@ namespace Diplom_Stud.Pages.Coordinator
         }
     }
 
-    public class PartPageResponseLocal
+    public class Part_ParticipantUserDto
     {
-        public List<PartAppDtoLocal> content { get; set; }
-        public int totalPages { get; set; }
+        public int id { get; set; }
+        public string name { get; set; }
+        public string surname { get; set; }
+        public string patronymic { get; set; }
+        public string studentEmail { get; set; }
+        public string photo { get; set; }
     }
 
-    public class PartAppDtoLocal
+    public class Part_EditEventDto
+    {
+        public List<Part_ParticipantUserDto> organizers { get; set; }
+    }
+
+    public class Part_PageResponse
+    {
+        public List<Part_RoleAppDto> content { get; set; }
+    }
+
+    public class Part_RoleAppDto
     {
         public int id { get; set; }
         public int? studentId { get; set; }
@@ -226,7 +284,7 @@ namespace Diplom_Stud.Pages.Coordinator
         public bool isReserve { get; set; }
     }
 
-    public class ParticipantRoleGroupViewModel : INotifyPropertyChanged
+    public class Part_RoleGroupViewModel : INotifyPropertyChanged
     {
         public string RoleTitle { get; set; }
         private bool _isExpanded = true;
@@ -236,23 +294,23 @@ namespace Diplom_Stud.Pages.Coordinator
             set { _isExpanded = value; OnPropertyChanged(nameof(IsExpanded)); }
         }
 
-        public List<EventParticipantItemViewModel> Participants { get; set; }
+        public List<Part_ItemViewModel> Participants { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    public class EventParticipantItemViewModel
+    public class Part_ItemViewModel
     {
         public int ParticipantId { get; set; }
         public int StudentId { get; set; }
         public string FullName { get; set; }
         public string StudentEmail { get; set; }
         public bool IsReserve { get; set; }
+        public string Type { get; set; }
+        public ImageSource Avatar { get; set; }
 
         public string StatusLabel => IsReserve ? "Резерв" : "Основной состав";
         public Brush BackgroundBrush => IsReserve ? new SolidColorBrush(Color.FromArgb(20, 255, 165, 0)) : Brushes.Transparent;
-
-        public ImageSource Avatar { get; set; }
     }
 }

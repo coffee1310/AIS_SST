@@ -8,7 +8,8 @@
         Title="Студенческий совет КИПФИН" Height="1024" Width="1538"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
-        Background="#0D0914">
+        Background="#0D0914"
+        Icon="/Resources/logoStud.png">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="32" ResizeBorderThickness="5" GlassFrameThickness="0" CornerRadius="0"/>

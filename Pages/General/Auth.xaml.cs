@@ -50,7 +50,7 @@ namespace Diplom_Stud.Pages.General
                 bool success = await RefreshSessionAsync(savedRefreshToken);
                 if (success)
                 {
-                    NavigateToUserProfile();
+                    await CompleteLoginAsync();
                     return;
                 }
             }
@@ -88,6 +88,11 @@ namespace Diplom_Stud.Pages.General
                     var apiResponse = JsonSerializer.Deserialize<LoginApiResponse>(responseBody, options);
                     var authResponse = apiResponse?.data;
 
+                    if (authResponse == null || string.IsNullOrEmpty(authResponse.token))
+                    {
+                        authResponse = JsonSerializer.Deserialize<AuthResponse>(responseBody, options);
+                    }
+
                     if (authResponse != null && !string.IsNullOrEmpty(authResponse.token))
                     {
                         App.AuthToken = authResponse.token;
@@ -106,7 +111,7 @@ namespace Diplom_Stud.Pages.General
                             TokenType = authResponse.type
                         };
 
-                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authResponse.type, authResponse.token);
+                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authResponse.type ?? "Bearer", authResponse.token);
                         return true;
                     }
                 }
@@ -257,7 +262,7 @@ namespace Diplom_Stud.Pages.General
                 bool success = await AuthenticateUser(fullEmail, password);
                 if (success)
                 {
-                    NavigateToUserProfile();
+                    await CompleteLoginAsync();
                 }
                 else
                 {
@@ -275,11 +280,56 @@ namespace Diplom_Stud.Pages.General
             }
         }
 
-        private void NavigateToUserProfile()
+        private async Task CompleteLoginAsync()
         {
-            if (NavigationService != null)
+            try
             {
-                NavigationService.Navigate(new Profile());
+                HttpResponseMessage profileRes = await _httpClient.GetAsync("/api/users/profile");
+                if (profileRes.IsSuccessStatusCode)
+                {
+                    string profileJson = await profileRes.Content.ReadAsStringAsync();
+                    App.CurrentUserProfile = JsonSerializer.Deserialize<UserProfileData>(profileJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+
+                if (App.CurrentUserProfile == null && App.CurrentUser != null)
+                {
+                    string mappedRole = "Activist";
+                    if (App.CurrentUser.Roles != null && App.CurrentUser.Roles.Count > 0)
+                    {
+                        string primaryRole = App.CurrentUser.Roles[0].ToUpper();
+                        if (primaryRole.Contains("COORDINATOR")) mappedRole = "Coordinator";
+                        else if (primaryRole.Contains("ADMIN")) mappedRole = "Admin";
+                        else if (primaryRole.Contains("CURATOR")) mappedRole = "Curator";
+                    }
+
+                    App.CurrentUserProfile = new UserProfileData
+                    {
+                        id = App.CurrentUser.Id,
+                        name = App.CurrentUser.Name,
+                        surname = App.CurrentUser.Surname,
+                        studentEmail = App.CurrentUser.Email,
+                        roleTitle = mappedRole
+                    };
+                }
+
+                var mainWindow = Application.Current.MainWindow as MainWindow;
+                if (mainWindow == null) mainWindow = Window.GetWindow(this) as MainWindow;
+
+                if (mainWindow != null)
+                {
+                    mainWindow.UpdateUserMenu();
+
+                    mainWindow.MenuProfile_Click(null, null);
+                }
+                else
+                {
+                    NavigationService?.Navigate(new Diplom_Stud.Pages.Activist.Profile());
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Ошибка завершения входа: " + ex.Message);
+                CustomMessageBox.Show($"Произошла ошибка интерфейса. Повторите попытку.", "Сбой", CustomMessageBox.MessageType.Error);
             }
         }
 
@@ -301,6 +351,11 @@ namespace Diplom_Stud.Pages.General
                     var apiResponse = JsonSerializer.Deserialize<LoginApiResponse>(responseBody, options);
                     var authResponse = apiResponse?.data;
 
+                    if (authResponse == null || string.IsNullOrEmpty(authResponse.token))
+                    {
+                        authResponse = JsonSerializer.Deserialize<AuthResponse>(responseBody, options);
+                    }
+
                     if (authResponse != null && !string.IsNullOrEmpty(authResponse.token))
                     {
                         App.AuthToken = authResponse.token;
@@ -319,7 +374,7 @@ namespace Diplom_Stud.Pages.General
                             TokenType = authResponse.type
                         };
 
-                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authResponse.type, authResponse.token);
+                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authResponse.type ?? "Bearer", authResponse.token);
                         return true;
                     }
                 }
