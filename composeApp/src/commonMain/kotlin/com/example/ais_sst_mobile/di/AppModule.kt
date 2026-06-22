@@ -7,6 +7,7 @@ import com.example.ais_sst_mobile.data.repository.*
 import com.example.ais_sst_mobile.domain.repository.*
 import com.example.ais_sst_mobile.presentation.auth.*
 import com.example.ais_sst_mobile.presentation.events.create.CreateEventScreenModel
+import com.example.ais_sst_mobile.presentation.events.edit.EditEventScreenModel
 import com.example.ais_sst_mobile.presentation.home.*
 import com.example.ais_sst_mobile.presentation.home.details.AvailableEventDetailsScreenModel
 import com.example.ais_sst_mobile.presentation.home.details.EventDetailsScreenModel
@@ -65,6 +66,7 @@ val appModule = module {
     factory { CreateEventScreenModel(get(), get(), get()) }
     factory { ChairmanHomeScreenModel(get(), get()) }
     factory { AvailableEventDetailsScreenModel(get(), get()) }
+    factory { EditEventScreenModel(get(), get(), get()) }
 }
 
 private var isKoinInitialized = false

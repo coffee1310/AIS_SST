@@ -346,7 +346,7 @@ fun EventDetailsScreen(component: CoordinatorEventDetailsComponent) {
 
                             if (showEdit) {
                                 Button(
-                                    onClick = { /* TODO: Редактировать */ },
+                                    onClick = { component.onNavigateToEditEvent(event.id) },
                                     modifier = Modifier.fillMaxWidth().height(48.dp),
                                     shape = MaterialTheme.shapes.large,
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)

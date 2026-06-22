@@ -22,6 +22,7 @@ sealed interface FullScreenRoute {
     data object CreateRole : FullScreenRoute
     data class EditRole(val roleId: Int) : FullScreenRoute
     data object CreateEvent : FullScreenRoute
+    data class EditEvent(val eventId: Int) : FullScreenRoute // <-- ДОБАВИТЬ ЭТО
     data object Rating : FullScreenRoute
 }
 
@@ -260,13 +261,16 @@ class HomeComponent(
                     onGoBack = { navigation.pop() }
                 )
             )
-            is Config.CoordinatorEventDetails -> Child.CoordinatorEventDetails(
+            is Config.CoordinatorEventDetails -> HomeComponent.Child.CoordinatorEventDetails(
                 CoordinatorEventDetailsComponent(
                     componentContext = context,
                     eventId = config.eventId,
                     onGoBack = { navigation.pop() },
                     onNavigateToActivistProfile = { userId ->
                         onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
+                                                  },
+                    onNavigateToEditEvent = { eventId ->
+                        onNavigateToFullScreen(FullScreenRoute.EditEvent(eventId))
                     }
                 )
             )
@@ -320,6 +324,12 @@ class AvailableEventDetailsComponent(
     val onNavigateToRoleSelection: (Int) -> Unit
 ) : ComponentContext by componentContext
 
+class EditEventComponent(
+    componentContext: ComponentContext,
+    val eventId: Int,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
 class EventRoleSelectionComponent(
     componentContext: ComponentContext,
     val eventId: Int,
@@ -335,7 +345,8 @@ class CoordinatorEventDetailsComponent(
     componentContext: ComponentContext,
     val eventId: Int,
     val onGoBack: () -> Unit,
-    val onNavigateToActivistProfile: (Int) -> Unit
+    val onNavigateToActivistProfile: (Int) -> Unit,
+    val onNavigateToEditEvent: (Int) -> Unit
 ) : ComponentContext by componentContext
 
 class RatingComponent(

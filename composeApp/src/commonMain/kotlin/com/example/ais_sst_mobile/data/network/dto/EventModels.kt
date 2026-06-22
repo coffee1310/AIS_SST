@@ -90,6 +90,7 @@ data class RoleDto(
     val updatedAt: String? = null  // ИСПРАВЛЕНИЕ: Добавили поля
 )
 
+
 @Serializable
 data class EventRoleDto(
     val id: Int,
@@ -103,6 +104,7 @@ data class EventRoleDto(
     val deadline: String? = null,    // Сделали nullable
     val totalOccupiedSlots: Int? = 0,
     val totalAvailableSlots: Int? = 0,
+    val isMySector: Boolean? = false, // <-- Добавляем флаг от сервера
     val createdAt: String? = null,
     val updatedAt: String? = null
 )

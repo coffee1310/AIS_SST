@@ -9,12 +9,12 @@ import com.example.ais_sst_mobile.domain.repository.EventsRepository
 import com.example.ais_sst_mobile.data.network.dto.RoleDto
 import com.example.ais_sst_mobile.data.network.dto.EventRoleDto
 import com.example.ais_sst_mobile.data.network.dto.PagedEventRoleResponse
-import com.example.ais_sst_mobile.data.network.dto.UserProfileDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.delete
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -22,6 +22,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.client.request.headers
 import io.ktor.http.HttpHeaders
+import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
@@ -33,6 +34,15 @@ import kotlinx.datetime.todayIn
 class EventsRepositoryImpl(
     private val httpClient: HttpClient
 ) : EventsRepository {
+
+    // Вспомогательная функция, защищающая от падений при 502 Bad Gateway
+    private suspend inline fun <reified T> HttpResponse.safeBody(): T {
+        if (this.status.isSuccess()) {
+            return this.body<T>()
+        } else {
+            throw Exception("Сервер временно недоступен (${this.status.value}). Пожалуйста, попробуйте позже.")
+        }
+    }
 
     private var hasDeletedEventSignal = false
 
@@ -51,8 +61,8 @@ class EventsRepositoryImpl(
                 parameter("isDraft", false)
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "ASC")
-                headers { append(HttpHeaders.Connection, "close") } // Явно закрываем соединение
-            }.body<PagedEventResponse>()
+                headers { append(HttpHeaders.Connection, "close") }
+            }.safeBody<PagedEventResponse>()
         }
 
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
@@ -68,14 +78,14 @@ class EventsRepositoryImpl(
         httpClient.get("event-roles") {
             parameter("eventId", eventId)
             headers { append(HttpHeaders.Connection, "close") }
-        }.body<PagedEventRoleResponse>().content
+        }.safeBody<PagedEventRoleResponse>().content
     }
 
     override suspend fun getEventById(id: Int): Result<Event> = runCatching {
         val dto = withContext(Dispatchers.IO) {
             httpClient.get("events/$id") {
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<EventDto>()
+            }.safeBody<EventDto>()
         }
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
 
@@ -85,14 +95,13 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun getAvailableEvents(): Result<List<Event>> = runCatching {
-
         val publicEvents = runCatching {
             httpClient.get("events") {
                 parameter("isPublic", true)
                 parameter("isDraft", false)
                 parameter("size", 150)
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<PagedEventResponse>().content
+            }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList())
 
         delay(500)
@@ -103,7 +112,7 @@ class EventsRepositoryImpl(
                 parameter("isDraft", false)
                 parameter("size", 150)
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<PagedEventResponse>().content
+            }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList())
 
         delay(500)
@@ -113,7 +122,7 @@ class EventsRepositoryImpl(
                 parameter("isDraft", false)
                 parameter("size", 150)
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<PagedEventResponse>().content
+            }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList())
 
         delay(500)
@@ -125,7 +134,7 @@ class EventsRepositoryImpl(
                 parameter("page", 0)
                 parameter("size", 1000)
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<PagedEventRoleResponse>().content
+            }.safeBody<PagedEventRoleResponse>().content
         }.getOrDefault(emptyList())
 
         val roleEventIds = myRoles.map { it.eventId }.toSet()
@@ -138,7 +147,7 @@ class EventsRepositoryImpl(
             val event = runCatching {
                 httpClient.get("events/$id") {
                     headers { append(HttpHeaders.Connection, "close") }
-                }.body<EventDto>()
+                }.safeBody<EventDto>()
             }.getOrNull()
             if (event != null) {
                 combinedEvents.add(event)
@@ -168,7 +177,7 @@ class EventsRepositoryImpl(
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<PagedEventResponse>().content
+            }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList()).filter { it.isDeleted != true }
 
         delay(500)
@@ -180,7 +189,7 @@ class EventsRepositoryImpl(
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<PagedEventResponse>().content
+            }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList()).filter { it.isDeleted != true }
 
         delay(500)
@@ -192,7 +201,7 @@ class EventsRepositoryImpl(
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<PagedEventResponse>().content
+            }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList()).filter { dto ->
             dto.isDeleted != true && !(dto.isFreeEvent == true && dto.sectorTitle.isNullOrBlank())
         }
@@ -220,7 +229,7 @@ class EventsRepositoryImpl(
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
                 headers { append(HttpHeaders.Connection, "close") }
-            }.body<PagedEventResponse>()
+            }.safeBody<PagedEventResponse>()
         }
 
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
@@ -242,7 +251,7 @@ class EventsRepositoryImpl(
     override suspend fun getGlobalRoles(): Result<List<RoleDto>> = runCatching {
         httpClient.get("roles") {
             headers { append(HttpHeaders.Connection, "close") }
-        }.body()
+        }.safeBody()
     }
 
     override suspend fun createEvent(request: CreateEventRequestDto): Result<EventDto> = runCatching {
@@ -259,19 +268,61 @@ class EventsRepositoryImpl(
         }
     }
 
-    override suspend fun addOrganizer(eventId: Int, userId: Int): Result<Unit> = runCatching {
-        httpClient.post("events/$eventId/organizers/$userId") {
-            headers { append(HttpHeaders.Connection, "close") }
-        }
-    }
+    // --- НОВЫЕ МЕТОДЫ ДЛЯ РЕДАКТИРОВАНИЯ МЕРОПРИЯТИЙ И РОЛЕЙ ---
 
-    override suspend fun createEventRole(request: CreateEventRoleRequestDto): Result<Unit> = runCatching {
-        httpClient.post("event-roles") {
+    override suspend fun updateEvent(eventId: Int, request: CreateEventRequestDto): Result<EventDto> = runCatching {
+        val response = httpClient.put("events/$eventId") {
             contentType(ContentType.Application.Json)
             setBody(request)
             headers { append(HttpHeaders.Connection, "close") }
         }
+        if (response.status.isSuccess()) {
+            response.body<EventDto>()
+        } else {
+            throw Exception("Ошибка сервера (${response.status.value}). Мероприятие не обновлено.")
+        }
     }
+
+    override suspend fun addOrganizer(eventId: Int, userId: Int): Result<Unit> = runCatching {
+        val response = httpClient.post("events/$eventId/organizers/$userId") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }
+        if (!response.status.isSuccess()) throw Exception("Не удалось добавить организатора")
+    }
+
+    override suspend fun removeOrganizer(eventId: Int, userId: Int): Result<Unit> = runCatching {
+        val response = httpClient.delete("events/$eventId/organizers/$userId") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }
+        if (!response.status.isSuccess()) throw Exception("Не удалось удалить организатора")
+    }
+
+    override suspend fun createEventRole(request: CreateEventRoleRequestDto): Result<Unit> = runCatching {
+        val response = httpClient.post("event-roles") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+            headers { append(HttpHeaders.Connection, "close") }
+        }
+        if (!response.status.isSuccess()) throw Exception("Не удалось создать роль")
+    }
+
+    override suspend fun updateEventRole(roleId: Int, request: CreateEventRoleRequestDto): Result<Unit> = runCatching {
+        val response = httpClient.put("event-roles/$roleId") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+            headers { append(HttpHeaders.Connection, "close") }
+        }
+        if (!response.status.isSuccess()) throw Exception("Не удалось обновить роль")
+    }
+
+    override suspend fun deleteEventRole(roleId: Int): Result<Unit> = runCatching {
+        val response = httpClient.delete("event-roles/$roleId") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }
+        if (!response.status.isSuccess()) throw Exception("Ошибка удаления роли")
+    }
+
+    // -----------------------------------------------------------
 
     override suspend fun createOrganizerApplication(eventId: Int): Result<Unit> = runCatching {
         val response = httpClient.post("role-applications/$eventId/orgainizer") {
@@ -335,6 +386,8 @@ class EventsRepositoryImpl(
             dateStrCard = formatEventDate(dto.dateOfEvent, dto.startTime, null),
             dateStrDetails = formatEventDate(dto.dateOfEvent, dto.startTime, dto.endTime),
             rawDate = dto.dateOfEvent,
+            rawStartTime = dto.startTime, // ДОБАВЛЕНО для формы редактирования
+            rawEndTime = dto.endTime, // ДОБАВЛЕНО для формы редактирования
             eventCreatorId = dto.eventCreatorId,
             isDraft = dto.isDraft,
             isCompleted = dto.isCompleted,
@@ -355,7 +408,8 @@ class EventsRepositoryImpl(
             currentParticipantsCount = dto.currentParticipantsCount ?: 0,
             currentOrganizersCount = dto.currentOrganizersCount ?: 0,
             sectorTitle = dto.sectorTitle,
-            isMySector = dto.isMySector ?: false
+            isMySector = dto.isMySector ?: false,
+            sectorIds = dto.sectors?.map { it.id } ?: emptyList() // ДОБАВЛЕНО для формы редактирования
         )
     }
 }

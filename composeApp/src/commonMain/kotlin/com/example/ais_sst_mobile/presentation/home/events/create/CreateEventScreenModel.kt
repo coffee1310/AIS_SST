@@ -137,22 +137,13 @@ class CreateEventScreenModel(
             maxParticipantsStr.toIntOrNull() ?: 0
         } else 0
 
-        val roleSectorIds = roles
-            .filter { !it.isOrganizer && !it.isDeleted && it.globalRoleId != null }
-            .mapNotNull { role ->
-                _globalRoles.value.find { it.id == role.globalRoleId }?.sectorId
+        // ИСПРАВЛЕННАЯ ЛОГИКА СЕКТОРОВ: Только для карточки "Участник" (Свободное и непубличное)
+        val finalSectorIds = if (isFreeEvent && !isPublic) {
+            if (selectedSectorIds.isEmpty()) {
+                _sectors.value.map { it.id }
+            } else {
+                selectedSectorIds.toList()
             }
-
-        // НОВАЯ ЛОГИКА: Если мероприятие закрытое, свободное, но сектора не выбраны — берем все доступные сектора
-        val effectiveSectorIds = if (isFreeEvent && !isPublic && selectedSectorIds.isEmpty()) {
-            _sectors.value.map { it.id }
-        } else {
-            selectedSectorIds.toList()
-        }
-
-        // Формируем финальный список секторов
-        val finalSectorIds = if (!isPublic) {
-            (effectiveSectorIds + roleSectorIds).distinct()
         } else {
             emptyList()
         }
@@ -161,8 +152,8 @@ class CreateEventScreenModel(
             _isLoading.value = true
 
             val formattedDate = "${date.substring(4, 8)}-${date.substring(2, 4)}-${date.substring(0, 2)}"
-            val formattedStartTime = "${formattedDate}T${startTime.substring(0, 2)}:${startTime.substring(2, 4)}:00"
-            val formattedEndTime = "${formattedDate}T${endTime.substring(0, 2)}:${endTime.substring(2, 4)}:00"
+            val formattedStartTime = "${startTime.substring(0, 2)}:${startTime.substring(2, 4)}:00"
+            val formattedEndTime = "${endTime.substring(0, 2)}:${endTime.substring(2, 4)}:00"
 
             val eventRequest = CreateEventRequestDto(
                 title = title,

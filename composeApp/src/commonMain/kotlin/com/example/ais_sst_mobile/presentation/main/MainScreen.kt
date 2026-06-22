@@ -22,23 +22,60 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.ais_sst_mobile.core.notifications.AppNotification
+import com.example.ais_sst_mobile.core.notifications.NotificationService
 import com.example.ais_sst_mobile.core.prefs.SessionManager
 import com.example.ais_sst_mobile.domain.model.AppRole
 import com.example.ais_sst_mobile.domain.repository.UserRepository
 import com.example.ais_sst_mobile.navigation.HomeComponent
 import com.example.ais_sst_mobile.presentation.calendar.CalendarScreen
 import com.example.ais_sst_mobile.presentation.components.AppBackground
-import com.example.ais_sst_mobile.presentation.components.PushNotificationOverlay // <-- Импортируем наш оверлей
+import com.example.ais_sst_mobile.presentation.components.PushNotificationOverlay
+import kotlinx.coroutines.delay
 import org.koin.compose.getKoin
+
+// Создаем хранилище для текущего уведомления и функции его сброса
+val LocalNotification = compositionLocalOf<AppNotification?> { null }
+val LocalClearNotification = compositionLocalOf<() -> Unit> { {} }
+
+@Composable
+fun NotificationProvider(
+    service: NotificationService,
+    content: @Composable () -> Unit
+) {
+    var currentNotification by remember { mutableStateOf<AppNotification?>(null) }
+
+    LaunchedEffect(service) {
+        service.notifications.collect { notification ->
+            // Чтобы Compose увидел "свежее" уведомление (даже если оно похоже на предыдущее),
+            // мы принудительно сбрасываем состояние на долю секунды
+            currentNotification = null
+            delay(50)
+            currentNotification = notification
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalNotification provides currentNotification,
+        LocalClearNotification provides { currentNotification = null }
+    ) {
+        content()
+    }
+}
 
 @Composable
 fun MainScreen(component: MainComponent) {
     val koin = getKoin()
+    val notificationService = remember { koin.get<NotificationService>() }
     val sessionManager = remember { koin.get<SessionManager>() }
     val userRepository = remember { koin.get<UserRepository>() }
 
     val activeRole by sessionManager.activeRoleFlow.collectAsState(initial = AppRole.ACTIVIST)
     var coordinatorSectorTitle by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        notificationService.connect()
+    }
 
     LaunchedEffect(activeRole) {
         if (activeRole == AppRole.SECTOR_COORDINATOR) {
@@ -103,7 +140,6 @@ fun MainScreen(component: MainComponent) {
                 showBackButton = true
                 onBackClick = { homeActive.component.onGoBack() }
             }
-            // Добавили заголовок и кнопку назад для Координаторского окна
             is HomeComponent.Child.CoordinatorEventDetails -> {
                 title = "Мероприятие"
                 showBackButton = true
@@ -133,35 +169,51 @@ fun MainScreen(component: MainComponent) {
     }
     val isKeyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
-    AppBackground {
-        Box(modifier = Modifier.fillMaxSize()) { // <-- Оборачиваем Scaffold в Box
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                containerColor = Color.Transparent,
-                topBar = { SharedTopBar(title = title, showBackButton = showBackButton, onBackClick = onBackClick)},
-                bottomBar = {
-                    if (!isKeyboardOpen) {
-                        SharedBottomNav(selectedIndex, component::onTabSelected)
-                    }
-                }
-            ) { paddingValues ->
-                Children(
-                    stack = childStack,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                ) { child ->
-                    when (val instance = child.instance) {
-                        is MainComponent.Child.Home -> HomeScreen(instance.component)
-                        is MainComponent.Child.Tasks -> Box(Modifier.fillMaxSize()) { Text("Задачи", color = Color.White) }
-                        is MainComponent.Child.Calendar -> CalendarScreen(instance.component)
-                        is MainComponent.Child.Sectors -> SectorsTab(instance.component)
-                        is MainComponent.Child.Profile -> ProfileScreen(instance.component)
-                    }
-                }
-            }
+    NotificationProvider(service = notificationService) {
+        val notification = LocalNotification.current
+        val clearNotification = LocalClearNotification.current
 
-            PushNotificationOverlay(modifier = Modifier.fillMaxWidth())
+        AppBackground {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = Color.Transparent,
+                    topBar = {
+                        SharedTopBar(
+                            title = title,
+                            showBackButton = showBackButton,
+                            onBackClick = onBackClick
+                        )
+                    },
+                    bottomBar = {
+                        if (!isKeyboardOpen) {
+                            SharedBottomNav(selectedIndex, component::onTabSelected)
+                        }
+                    }
+                ) { paddingValues ->
+                    Children(
+                        stack = childStack,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                    ) { child ->
+                        when (val instance = child.instance) {
+                            is MainComponent.Child.Home -> HomeScreen(instance.component)
+                            is MainComponent.Child.Tasks -> Box(Modifier.fillMaxSize()) { Text("Задачи", color = Color.White) }
+                            is MainComponent.Child.Calendar -> CalendarScreen(instance.component)
+                            is MainComponent.Child.Sectors -> SectorsTab(instance.component)
+                            is MainComponent.Child.Profile -> ProfileScreen(instance.component)
+                        }
+                    }
+                }
+
+                // Рендерим ВСЕГДА, без if(notification != null).
+                // У компонента внутри есть AnimatedVisibility, который отвечает за красивый вход и выход.
+                PushNotificationOverlay(
+                    notification = notification,
+                    onDismiss = { clearNotification() }
+                )
+            }
         }
     }
 }

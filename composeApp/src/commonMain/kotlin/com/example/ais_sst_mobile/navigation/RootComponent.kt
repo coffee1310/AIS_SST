@@ -34,6 +34,7 @@ interface RootComponent {
         class CreateRole(val component: CreateRoleComponent) : Child()
         class EditRole(val component: EditRoleComponent) : Child()
         class CreateEvent(val component: CreateEventComponent) : Child()
+        class EditEvent(val component: EditEventComponent) : Child() // ДОБАВЛЕН CHILD ДЛЯ РЕДАКТИРОВАНИЯ
         class Rating(val component: RatingComponent) : Child()
     }
 }
@@ -98,6 +99,7 @@ class DefaultRootComponent(
                             is FullScreenRoute.CreateRole -> navigation.pushNew(Config.CreateRole)
                             is FullScreenRoute.EditRole -> navigation.pushNew(Config.EditRole(route.roleId))
                             is FullScreenRoute.CreateEvent -> navigation.pushNew(Config.CreateEvent)
+                            is FullScreenRoute.EditEvent -> navigation.pushNew(Config.EditEvent(route.eventId)) // ДОБАВЛЕН ПЕРЕХОД
                             is FullScreenRoute.Rating -> navigation.pushNew(Config.Rating)
 
                         }
@@ -177,6 +179,14 @@ class DefaultRootComponent(
             is Config.CreateEvent -> RootComponent.Child.CreateEvent(
                 CreateEventComponent(componentContext = context, onGoBack = { navigation.pop() })
             )
+            // ДОБАВЛЕН КОМПОНЕНТ ДЛЯ РЕДАКТИРОВАНИЯ МЕРОПРИЯТИЯ
+            is Config.EditEvent -> RootComponent.Child.EditEvent(
+                EditEventComponent(
+                    componentContext = context,
+                    eventId = config.eventId,
+                    onGoBack = { navigation.pop() }
+                )
+            )
             is Config.Rating -> RootComponent.Child.Rating(
                 RatingComponent(componentContext = context, onGoBack = { navigation.pop() })
             )
@@ -198,6 +208,7 @@ class DefaultRootComponent(
         @Serializable data object CreateRole : Config
         @Serializable data class EditRole(val roleId: Int) : Config
         @Serializable data object CreateEvent : Config
+        @Serializable data class EditEvent(val eventId: Int) : Config // ДОБАВЛЕН CONFIG
         @Serializable data object Rating : Config
     }
 }

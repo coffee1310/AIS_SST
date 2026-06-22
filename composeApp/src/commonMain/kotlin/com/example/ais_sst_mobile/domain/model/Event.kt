@@ -17,7 +17,9 @@ data class Event(
     val dateStrCard: String,
     val dateStrDetails: String,
     val rawDate: String,
-    val eventCreatorId: Int,
+    val rawStartTime: String,
+    val rawEndTime: String,
+    val eventCreatorId: Int, // ID создателя для проверки прав удаления
     val isDraft: Boolean,
     val isCompleted: Boolean,
     val isOverdue: Boolean,
@@ -30,5 +32,6 @@ data class Event(
     val currentParticipantsCount: Int = 0,
     val currentOrganizersCount: Int = 0,
     val sectorTitle: String? = null,
-    val isMySector: Boolean = false
+    val isMySector: Boolean = false,
+    val sectorIds: List<Int> = emptyList()
 )

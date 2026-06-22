@@ -696,7 +696,7 @@ fun RegisterScreen(component: RegisterComponent) {
                     val policyAnnotatedString = buildAnnotatedString {
                         append("Я даю согласие на обработку персональных данных в соответствии с ")
 
-                        pushStringAnnotation(tag = "POLICY", annotation = "https://ais-sst.ru/privacy-policy.pdf")
+                        pushStringAnnotation(tag = "POLICY", annotation = "https://ais-sst.ru/api/terms")
                         withStyle(
                             style = SpanStyle(
                                 color = MaterialTheme.colorScheme.secondary,

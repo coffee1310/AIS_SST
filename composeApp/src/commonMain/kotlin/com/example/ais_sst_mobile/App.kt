@@ -30,74 +30,78 @@ import com.example.ais_sst_mobile.presentation.sectors.edit.EditSectorScreen
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.example.ais_sst_mobile.presentation.events.create.CreateEventScreen
+import com.example.ais_sst_mobile.presentation.events.edit.EditEventScreen
 import com.example.ais_sst_mobile.presentation.profile.rating.RatingScreen
 
 @OptIn(ExperimentalDecomposeApi::class)
 @Composable
 fun App(root: RootComponent) {
     AppTheme {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = Color.Transparent
-            ) {
-                val childStack by root.stack.subscribeAsState()
-                val backHandler = (root as ComponentContext).backHandler
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.Transparent
+        ) {
+            val childStack by root.stack.subscribeAsState()
+            val backHandler = (root as ComponentContext).backHandler
 
-                Children(
-                    stack = childStack,
-                    modifier = Modifier.fillMaxSize(),
-                    animation = platformBackAnimation(
-                        backHandler = backHandler,
-                        onBack = { root.onBackClicked(0) }
+            Children(
+                stack = childStack,
+                modifier = Modifier.fillMaxSize(),
+                animation = platformBackAnimation(
+                    backHandler = backHandler,
+                    onBack = { root.onBackClicked(0) }
+                )
+            ) { child ->
+                when (val instance = child.instance) {
+                    is RootComponent.Child.Login -> LoginScreen(instance.component)
+                    is RootComponent.Child.Register -> RegisterScreen(instance.component)
+                    is RootComponent.Child.Main -> MainScreen(instance.component)
+                    is RootComponent.Child.AccountRequests -> AccountRequestsScreen(
+                        onBackClick = { instance.component.onGoBack() },
+                        component = instance.component
                     )
-                ) { child ->
-                    when (val instance = child.instance) {
-                        is RootComponent.Child.Login -> LoginScreen(instance.component)
-                        is RootComponent.Child.Register -> RegisterScreen(instance.component)
-                        is RootComponent.Child.Main -> MainScreen(instance.component)
-                        is RootComponent.Child.AccountRequests -> AccountRequestsScreen(
-                            onBackClick = { instance.component.onGoBack() },
-                            component = instance.component
-                        )
-                        is RootComponent.Child.MyData -> MyDataScreen(
-                            onBackClick = { instance.component.onGoBack() }
-                        )
-                        is RootComponent.Child.RequestDetails -> RequestDetailsScreen(
-                            requestId = instance.component.requestId,
-                            onBackClick = { instance.component.onGoBack() }
-                        )
-                        is RootComponent.Child.ActivistProfile -> ActivistProfileScreen(
-                            userId = instance.component.userId,
-                            onBackClick = instance.component.onGoBack
-                        )
-                        is RootComponent.Child.CreateSector -> CreateSectorScreen(
-                            component = instance.component
-                        )
-                        is RootComponent.Child.Board -> BoardScreen(
-                            component = instance.component
-                        )
-                        is RootComponent.Child.EditSector -> EditSectorScreen(
-                            component = instance.component
-                        )
-                        is RootComponent.Child.EventRoles -> EventRolesScreen(
-                            instance.component
-                        )
-                        is RootComponent.Child.CreateRole -> CreateRoleScreen(
-                            instance.component
-                        )
-                        is RootComponent.Child.EditRole -> EditRoleScreen(
-                            component = instance.component
-                        )
-                        is RootComponent.Child.CreateEvent -> CreateEventScreen(
-                            component = instance.component
-                        )
-                        is RootComponent.Child.Rating -> RatingScreen(
-                            onBackClick = { instance.component.onGoBack() },
-                            component = instance.component
-                        )
-                    }
+                    is RootComponent.Child.MyData -> MyDataScreen(
+                        onBackClick = { instance.component.onGoBack() }
+                    )
+                    is RootComponent.Child.RequestDetails -> RequestDetailsScreen(
+                        requestId = instance.component.requestId,
+                        onBackClick = { instance.component.onGoBack() }
+                    )
+                    is RootComponent.Child.ActivistProfile -> ActivistProfileScreen(
+                        userId = instance.component.userId,
+                        onBackClick = instance.component.onGoBack
+                    )
+                    is RootComponent.Child.CreateSector -> CreateSectorScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.Board -> BoardScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.EditSector -> EditSectorScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.EventRoles -> EventRolesScreen(
+                        instance.component
+                    )
+                    is RootComponent.Child.CreateRole -> CreateRoleScreen(
+                        instance.component
+                    )
+                    is RootComponent.Child.EditRole -> EditRoleScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.CreateEvent -> CreateEventScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.EditEvent -> EditEventScreen(
+                        component = instance.component
+                    )
+                    is RootComponent.Child.Rating -> RatingScreen(
+                        onBackClick = { instance.component.onGoBack() },
+                        component = instance.component
+                    )
                 }
             }
+        }
 
     }
 }
