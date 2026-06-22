@@ -25,7 +25,7 @@ sealed interface ActivistHomeState {
 
 class HomeScreenModel(
     private val eventsRepository: EventsRepository,
-    private val userRepository: UserRepository, // Добавили репозиторий пользователя
+    private val userRepository: UserRepository,
     sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -56,21 +56,11 @@ class HomeScreenModel(
                 eventsRepository.getUpcomingEvents(today.toString(), farFuture.toString())
             }
 
-            // Запрашиваем профиль, чтобы узнать сектора
-            val profileDeferred = async {
-                userRepository.getUserProfile()
+            val availableDeferred = async {
+                eventsRepository.getAvailableEvents()
             }
 
             val upcomingRes = upcomingDeferred.await()
-            val profileRes = profileDeferred.await()
-
-            // Приводим сектора к безопасному виду прямо здесь (без пробелов, нижний регистр)
-            val userSectorsSafe = profileRes.getOrNull()?.userSectors?.map { it.trim().lowercase() } ?: emptyList()
-
-            // Передаем сектора в функцию!
-            val availableDeferred = async {
-                eventsRepository.getAvailableEvents(userSectorsSafe)
-            }
             val availableRes = availableDeferred.await()
 
             if (upcomingRes.isSuccess && availableRes.isSuccess) {

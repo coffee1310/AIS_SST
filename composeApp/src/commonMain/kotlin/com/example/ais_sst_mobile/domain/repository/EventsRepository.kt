@@ -10,10 +10,7 @@ import com.example.ais_sst_mobile.domain.model.Event
 interface EventsRepository {
     suspend fun getUpcomingEvents(dateFrom: String, dateTo: String): Result<List<Event>>
     suspend fun getEventById(id: Int): Result<Event>
-
-    // Передаем сектора активиста напрямую для локальной фильтрации
-    suspend fun getAvailableEvents(userSectorsSafe: List<String>): Result<List<Event>>
-
+    suspend fun getAvailableEvents(): Result<List<Event>>
     suspend fun getCoordinatorDashboardEvents(userId: Int): Result<List<Event>>
     suspend fun getChairmanDashboardEvents(userId: Int): Result<List<Event>>
     suspend fun getGlobalRoles(): Result<List<RoleDto>>

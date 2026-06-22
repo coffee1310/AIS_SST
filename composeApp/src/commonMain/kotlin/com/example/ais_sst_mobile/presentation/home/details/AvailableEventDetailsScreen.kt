@@ -271,6 +271,7 @@ fun AvailableEventDetailsScreen(component: AvailableEventDetailsComponent) {
                             }
 
                             // Остальные роли
+                            // Остальные роли
                             roles.forEach { role ->
                                 val deadlineFormatted = try {
                                     if (role.deadline != null) {

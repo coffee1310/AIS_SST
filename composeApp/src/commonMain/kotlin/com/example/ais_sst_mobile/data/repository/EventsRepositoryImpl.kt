@@ -81,10 +81,32 @@ class EventsRepositoryImpl(
         }
     }
 
-    override suspend fun getAvailableEvents(userSectorsSafe: List<String>): Result<List<Event>> = runCatching {
+    override suspend fun getAvailableEvents(): Result<List<Event>> = runCatching {
         coroutineScope {
-            // 1. Абсолютно все мероприятия (без фильтров, чтобы не зависеть от сломанного бэкенда)
-            val allEventsDeferred = async(Dispatchers.IO) {
+            // 1. Публичные мероприятия
+            val publicDeferred = async(Dispatchers.IO) {
+                runCatching {
+                    httpClient.get("events") {
+                        parameter("isPublic", true)
+                        parameter("isDraft", false)
+                        parameter("size", 150)
+                    }.body<PagedEventResponse>().content
+                }.getOrDefault(emptyList())
+            }
+
+            // 2. Мероприятия для моего сектора (закрытые или свободные)
+            val mySectorDeferred = async(Dispatchers.IO) {
+                runCatching {
+                    httpClient.get("events") {
+                        parameter("isMySector", true)
+                        parameter("isDraft", false)
+                        parameter("size", 150)
+                    }.body<PagedEventResponse>().content
+                }.getOrDefault(emptyList())
+            }
+
+            // 3. Все мероприятия (базовый запрос без фильтров)
+            val allDeferred = async(Dispatchers.IO) {
                 runCatching {
                     httpClient.get("events") {
                         parameter("isDraft", false)
@@ -93,10 +115,11 @@ class EventsRepositoryImpl(
                 }.getOrDefault(emptyList())
             }
 
-            // 2. Все неудаленные роли
-            val allRolesDeferred = async(Dispatchers.IO) {
+            // 4. Роли для моего сектора (Доверяем бэкенду!)
+            val rolesDeferred = async(Dispatchers.IO) {
                 runCatching {
                     httpClient.get("event-roles") {
+                        parameter("isMySector", true)
                         parameter("isDeleted", false)
                         parameter("page", 0)
                         parameter("size", 1000)
@@ -104,31 +127,23 @@ class EventsRepositoryImpl(
                 }.getOrDefault(emptyList())
             }
 
-            // 3. Справочник глобальных ролей
-            val globalRolesDeferred = async(Dispatchers.IO) {
-                runCatching {
-                    httpClient.get("roles").body<List<RoleDto>>()
-                }.getOrDefault(emptyList())
-            }
+            // Ждем выполнения всех запросов
+            val publicEvents = publicDeferred.await()
+            val mySectorEvents = mySectorDeferred.await()
+            val allEvents = allDeferred.await()
+            val myRoles = rolesDeferred.await()
 
-            val allEvents = allEventsDeferred.await()
-            val allRoles = allRolesDeferred.await()
-            val globalRoles = globalRolesDeferred.await()
-
-            // ЛОКАЛЬНАЯ ФИЛЬТРАЦИЯ РОЛЕЙ: Оставляем только те, чей сектор есть у активиста
-            val myRoles = allRoles.filter { role ->
-                val globalRole = globalRoles.find { it.id == role.globalEventRoleId }
-                val roleSectorSafe = globalRole?.sectorTitle?.trim()?.lowercase()
-                roleSectorSafe != null && userSectorsSafe.contains(roleSectorSafe)
-            }
-
+            // Вытаскиваем уникальные ID мероприятий из ролей
             val roleEventIds = myRoles.map { it.eventId }.toSet()
 
-            val combinedEvents = allEvents.toMutableList()
+            // Складываем все полученные мероприятия из 3х запросов и удаляем дубликаты
+            val combinedEvents = (publicEvents + mySectorEvents + allEvents).distinctBy { it.id }.toMutableList()
             val knownEventIds = combinedEvents.map { it.id }.toSet()
 
+            // Ищем ID мероприятий из ролей, которые не попали в базовые списки
             val missingEventIds = roleEventIds - knownEventIds
 
+            // Запрашиваем недостающие поштучно
             val missingEventsDeferred = missingEventIds.map { id ->
                 async(Dispatchers.IO) {
                     runCatching {
@@ -145,18 +160,15 @@ class EventsRepositoryImpl(
 
             withContext(Dispatchers.Default) {
                 combinedEvents.filter { dto ->
+                    // Проверяем все наши условия видимости "ИЛИ"
                     val isPub = dto.isPublic
                     val isLookingForOrg = (dto.maxOrganizersCount ?: 0) > (dto.currentOrganizersCount ?: 0)
-
-                    // БЕЗОПАСНАЯ ЛОКАЛЬНАЯ ПРОВЕРКА ДЛЯ ЗАКРЫТЫХ МЕРОПРИЯТИЙ (Свободных)
-                    val eventSectorsSafe = dto.sectors?.map { it.title.trim().lowercase() } ?: emptyList()
-                    val isMySectorLocal = eventSectorsSafe.any { it in userSectorsSafe }
-                    val isFreeMySector = dto.isFreeEvent == true && isMySectorLocal
-
+                    val isFreeMySector = dto.isFreeEvent == true && dto.isMySector == true
                     val hasRoleForMe = roleEventIds.contains(dto.id)
 
                     val isVisible = isPub || isLookingForOrg || isFreeMySector || hasRoleForMe
 
+                    // Исключаем удаленные, черновики и прошедшие
                     dto.isDeleted != true && !dto.isDraft && dto.dateOfEvent >= today && isVisible
                 }.map { mapToEvent(it, today) }.sortedBy { it.rawDate }
             }
