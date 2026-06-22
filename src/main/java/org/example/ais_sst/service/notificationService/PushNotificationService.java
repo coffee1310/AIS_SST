@@ -30,18 +30,17 @@ public class PushNotificationService {
     private String notificationChannel;
 
     public void sendToUser(String userId, String message, String type) {
-        // Находим email пользователя
-        String email = userRepository.findById(Long.parseLong(userId.replace("user", "")))
-                .map(User::getStudentEmail)
-                .orElse(userId); // fallback
-
         NotificationDto notification = new NotificationDto(userId, message, type);
-        notification.setEmail(email);           // ← вот это главное
 
-        log.info("Sending notification to user {} (email={}): {}", userId, email, message);
+        // Получаем email пользователя (если ещё не делаешь)
+        // String email = userRepository.findById(...).map(User::getStudentEmail).orElse(null);
+        // notification.setEmail(email);
+
+        log.info("Sending notification to user {}: {}", userId, message);
 
         saveToHistory(userId, notification);
 
+        // Только публикация в Redis
         try {
             redisTemplate.convertAndSend(notificationChannel, notification);
             log.debug("Published to Redis channel: {}", notificationChannel);
@@ -54,10 +53,7 @@ public class PushNotificationService {
         NotificationDto notification = new NotificationDto("all", message, type);
         log.info("Sending notification to all: {}", message);
 
-        // 1. Отправляем через WebSocket
-        messagingTemplate.convertAndSend("/topic/public", notification);
-
-        // 2. Публикуем в Redis для других инстансов
+        // Только публикация в Redis (без прямого convertAndSend)
         try {
             redisTemplate.convertAndSend(notificationChannel, notification);
             log.debug("Published to Redis channel: {}", notificationChannel);
