@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.controller.base.BaseController;
+import org.example.ais_sst.dto.applications.ApplicationsForTheRoleFilterDTO;
+import org.example.ais_sst.dto.applications.ApplicationsForTheRoleResponseDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationCreateDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationFilterDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationRejectDTO;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -240,5 +243,73 @@ public class ApplicationsForTheRoleController extends BaseController {
         return ResponseEntity.ok(requests.stream()
                 .map(eventOrganizerRequestMapper::toResponseDto)
                 .toList());
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<ApplicationsForTheRoleResponseDTO>> getApplications(
+            // ⭐ ID заявки
+            @RequestParam(required = false) Long id,
+
+            // ⭐ ID сектор-участника
+            @RequestParam(required = false) Long sectorParticipantId,
+
+            // ⭐ ID роли события
+            @RequestParam(required = false) Long eventRoleId,
+
+            // ⭐ ID сектора
+            @RequestParam(required = false) Long sectorId,
+
+            // ⭐ ID события
+            @RequestParam(required = false) Long eventId,
+
+            // ⭐ ID пользователя
+            @RequestParam(required = false) Long userId,
+
+            // ⭐ Статус резерва
+            @RequestParam(required = false) Boolean isReserve,
+
+            // ⭐ Статус заявки
+            @RequestParam(required = false) RoleApplicationStatuses status,
+
+            // ⭐ Причина отклонения (поиск по частичному совпадению)
+            @RequestParam(required = false) String rejectionReason,
+
+            // ⭐ Описание (поиск по частичному совпадению)
+            @RequestParam(required = false) String description,
+
+            // ⭐ Дата создания
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdAtFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdAtTo,
+
+            // ⭐ Дата обновления
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime updatedAtFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime updatedAtTo,
+
+            // ⭐ Пагинация и сортировка
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        logInfo("/api/applications", "Getting applications with filters");
+
+        ApplicationsForTheRoleFilterDTO filter = ApplicationsForTheRoleFilterDTO.builder()
+                .id(id)
+                .sectorParticipantId(sectorParticipantId)
+                .eventRoleId(eventRoleId)
+                .sectorId(sectorId)
+                .eventId(eventId)
+                .userId(userId)
+                .isReserve(isReserve)
+                .status(status)
+                .rejectionReason(rejectionReason)
+                .description(description)
+                .createdAtFrom(createdAtFrom)
+                .createdAtTo(createdAtTo)
+                .updatedAtFrom(updatedAtFrom)
+                .updatedAtTo(updatedAtTo)
+                .build();
+
+        Page<ApplicationsForTheRoleResponseDTO> result =
+                roleApplicationService.getApplicationsWithFilters(filter, pageable);
+
+        return ResponseEntity.ok(result);
     }
 }

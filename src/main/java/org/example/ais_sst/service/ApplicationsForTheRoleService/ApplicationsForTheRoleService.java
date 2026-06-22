@@ -2,6 +2,8 @@ package org.example.ais_sst.service.ApplicationsForTheRoleService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.dto.applications.ApplicationsForTheRoleFilterDTO;
+import org.example.ais_sst.dto.applications.ApplicationsForTheRoleResponseDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationFilterDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationRejectDTO;
 import org.example.ais_sst.dto.event_roles_application.RoleApplicationResponseDTO;
@@ -10,6 +12,7 @@ import org.example.ais_sst.entity.enums.RoleApplicationStatuses;
 import org.example.ais_sst.exception.*;
 import org.example.ais_sst.mapper.RoleApplicationMapper;
 import org.example.ais_sst.repository.*;
+import org.example.ais_sst.specification.ApplicationsForTheRoleSpecification;
 import org.example.ais_sst.specification.RoleApplicationSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -475,5 +478,62 @@ public class ApplicationsForTheRoleService {
         }
 
         return eventOrganizerRequestRepository.findAll(spec);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ApplicationsForTheRoleResponseDTO> getApplicationsWithFilters(
+            ApplicationsForTheRoleFilterDTO filter,
+            Pageable pageable) {
+
+        Specification<ApplicationsForTheRole> spec =
+                ApplicationsForTheRoleSpecification.withFilter(filter);
+
+        return roleApplicationRepository.findAll(spec, pageable)
+                .map(this::convertToResponseDTO);
+    }
+
+    private ApplicationsForTheRoleResponseDTO convertToResponseDTO(ApplicationsForTheRole application) {
+        SectorParticipant sectorParticipant = application.getSectorParticipant();
+        User user = sectorParticipant.getStudent();
+        Sector sector = sectorParticipant.getSector();
+        EventRole eventRole = application.getEventRole();
+        GlobalEventRole globalEventRole = eventRole.getGlobalEventRole();
+
+        // ⭐ Правильный путь: eventRole -> globalEventRole -> event (через EventRole)
+        // Но Event находится в EventRole, а не в GlobalEventRole!
+        Event event = eventRole.getEvent();  // ✅ EventRole имеет прямую связь с Event
+
+        String fullName = user.getSurname() + " " + user.getName() +
+                (user.getPatronymic() != null ? " " + user.getPatronymic() : "");
+
+        return ApplicationsForTheRoleResponseDTO.builder()
+                .id(application.getId())
+
+                // Пользователь
+                .userId(user.getId())
+                .userFullName(fullName)
+                .userEmail(user.getStudentEmail())
+
+                // Сектор
+                .sectorId(sector.getId())
+                .sectorTitle(sector.getTitle())
+
+                // Роль события
+                .eventRoleId(eventRole.getId())
+                .eventRoleTitle(globalEventRole.getTitle())
+                .eventId(event.getId())
+                .eventTitle(event.getTitle())
+
+                // Заявка
+                .sectorParticipantId(sectorParticipant.getId())
+                .sectorParticipantStatus(sectorParticipant.getStatus() != null ?
+                        sectorParticipant.getStatus().toString() : null)
+                .isReserve(application.getIsReserve())
+                .status(application.getStatus())
+                .rejectionReason(application.getRejectionReason())
+                .description(application.getDescription())
+                .createdAt(application.getCreatedAt())
+                .updatedAt(application.getUpdatedAt())
+                .build();
     }
 }
