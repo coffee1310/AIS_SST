@@ -57,6 +57,8 @@ fun AvailableEventDetailsScreen(component: AvailableEventDetailsComponent) {
             is AvailableEventDetailsState.Success -> {
                 val event = currentState.event
                 val roles = currentState.roles
+                val showOrganizerCard = currentState.showOrganizerCard
+                val showParticipantCard = currentState.showParticipantCard
 
                 val imageBitmap = remember(event.photoBase64) {
                     try {
@@ -249,7 +251,7 @@ fun AvailableEventDetailsScreen(component: AvailableEventDetailsComponent) {
                             Spacer(modifier = Modifier.height(24.dp))
 
                             // Заявка на организатора
-                            if (event.maxOrganizersCount > event.currentOrganizersCount) {
+                            if (showOrganizerCard) {
                                 ReadOnlyRoleCard(
                                     title = "Организатор",
                                     description = "Помощь в планировании, подготовке и проведении мероприятия. Организаторы получают доступ к управлению событием и контролю участников.",
@@ -259,7 +261,7 @@ fun AvailableEventDetailsScreen(component: AvailableEventDetailsComponent) {
                             }
 
                             // Карточка участника (для свободных мероприятий)
-                            if (event.isFreeEvent) {
+                            if (showParticipantCard) {
                                 ReadOnlyRoleCard(
                                     title = "Участник",
                                     description = "Регистрация проходит без отбора. Вы автоматически станете участником мероприятия после подачи заявки.",
@@ -271,16 +273,20 @@ fun AvailableEventDetailsScreen(component: AvailableEventDetailsComponent) {
                             // Остальные роли
                             roles.forEach { role ->
                                 val deadlineFormatted = try {
-                                    val parts = role.deadline.split("T")
-                                    val dateParts = parts[0].split("-")
-                                    val time = parts[1].take(5)
-                                    "${dateParts[2]}.${dateParts[1]}.${dateParts[0]}, $time"
+                                    if (role.deadline != null) {
+                                        val parts = role.deadline.split("T")
+                                        val dateParts = parts[0].split("-")
+                                        val time = parts[1].take(5)
+                                        "${dateParts[2]}.${dateParts[1]}.${dateParts[0]}, $time"
+                                    } else null
                                 } catch (e: Exception) { role.deadline }
+
+                                val deadlineText = deadlineFormatted?.let { "Дедлайн: $it" }
 
                                 ReadOnlyRoleCard(
                                     title = role.globalEventRoleTitle,
                                     description = role.description,
-                                    deadline = "Дедлайн: $deadlineFormatted"
+                                    deadline = deadlineText
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                             }

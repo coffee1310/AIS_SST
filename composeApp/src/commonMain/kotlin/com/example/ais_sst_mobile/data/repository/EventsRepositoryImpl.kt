@@ -11,6 +11,7 @@ import com.example.ais_sst_mobile.data.network.dto.EventRoleDto
 import com.example.ais_sst_mobile.data.network.dto.PagedEventRoleResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import kotlinx.coroutines.IO
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -22,7 +23,6 @@ import io.ktor.http.isSuccess
 import io.ktor.client.request.headers
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
@@ -81,26 +81,107 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun getAvailableEvents(): Result<List<Event>> = runCatching {
-        val response = withContext(Dispatchers.IO) {
-            httpClient.get("events") {
-                parameter("isDraft", false)
-                parameter("size", 150)
-                parameter("sortBy", "dateOfEvent")
-                parameter("sortDirection", "ASC")
-            }.body<PagedEventResponse>()
-        }
+        coroutineScope {
+            // 1. Публичные мероприятия
+            val publicDeferred = async(Dispatchers.IO) {
+                runCatching {
+                    httpClient.get("events") {
+                        parameter("isPublic", true)
+                        parameter("isDraft", false)
+                        parameter("size", 150)
+                    }.body<PagedEventResponse>().content
+                }.getOrDefault(emptyList())
+            }
 
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+            // 2. Мероприятия для моего сектора (закрытые или свободные)
+            val mySectorDeferred = async(Dispatchers.IO) {
+                runCatching {
+                    httpClient.get("events") {
+                        parameter("isMySector", true)
+                        parameter("isDraft", false)
+                        parameter("size", 150)
+                    }.body<PagedEventResponse>().content
+                }.getOrDefault(emptyList())
+            }
 
-        withContext(Dispatchers.Default) {
-            response.content.filter { dto ->
-                val isLookingForOrganizer = (dto.maxOrganizersCount ?: 0) > (dto.currentOrganizersCount ?: 0)
-                val isVisible = dto.isPublic || isLookingForOrganizer || dto.isMySector == true
+            // 3. Все мероприятия (базовый запрос без фильтров, на случай если сервер отдаст те, где нужны организаторы)
+            val allDeferred = async(Dispatchers.IO) {
+                runCatching {
+                    httpClient.get("events") {
+                        parameter("isDraft", false)
+                        parameter("size", 150)
+                    }.body<PagedEventResponse>().content
+                }.getOrDefault(emptyList())
+            }
 
-                dto.isDeleted != true && dto.dateOfEvent >= today && isVisible
-            }.map { dto ->
-                mapToEvent(dto, today)
-            }.sortedBy { it.rawDate }
+            // 4. Роли для моего сектора
+            val rolesDeferred = async(Dispatchers.IO) {
+                runCatching {
+                    httpClient.get("event-roles") {
+                        parameter("isMySector", true)
+                        parameter("isDeleted", false)
+                        parameter("page", 0)
+                        parameter("size", 1000)
+                    }.body<PagedEventRoleResponse>().content
+                }.onFailure {
+                    println("EVENT_DEBUG: Ошибка парсинга ролей -> ${it.message}")
+                    it.printStackTrace()
+                }.getOrDefault(emptyList())
+            }
+
+            val publicEvents = publicDeferred.await()
+            val mySectorEvents = mySectorDeferred.await()
+            val allEvents = allDeferred.await()
+            val myRoles = rolesDeferred.await()
+
+            println("EVENT_DEBUG: Загружено -> Public: ${publicEvents.size}, MySector: ${mySectorEvents.size}, All: ${allEvents.size}")
+            println("EVENT_DEBUG: Найдено ролей для моего сектора: ${myRoles.size}")
+
+            val roleEventIds = myRoles.map { it.eventId }.toSet()
+            println("EVENT_DEBUG: ID мероприятий из ролей: $roleEventIds")
+
+            val combinedEvents = (publicEvents + mySectorEvents + allEvents).distinctBy { it.id }.toMutableList()
+            val knownEventIds = combinedEvents.map { it.id }.toSet()
+
+            val missingEventIds = roleEventIds - knownEventIds
+            println("EVENT_DEBUG: Нужно догрузить поштучно ID: $missingEventIds")
+
+            val missingEventsDeferred = missingEventIds.map { id ->
+                async(Dispatchers.IO) {
+                    runCatching {
+                        httpClient.get("events/$id").body<EventDto>()
+                    }.onFailure {
+                        println("EVENT_DEBUG: Ошибка поштучной загрузки события $id -> ${it.message}")
+                    }.getOrNull()
+                }
+            }
+
+            missingEventsDeferred.forEach { deferred ->
+                val event = deferred.await()
+                if (event != null) {
+                    println("EVENT_DEBUG: Успешно догружено событие ${event.id}")
+                    combinedEvents.add(event)
+                }
+            }
+
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+
+            withContext(Dispatchers.Default) {
+                combinedEvents.filter { dto ->
+                    val isPub = dto.isPublic
+                    val isLookingForOrg = (dto.maxOrganizersCount ?: 0) > (dto.currentOrganizersCount ?: 0)
+                    val isFreeMySector = dto.isFreeEvent == true && dto.isMySector == true
+                    val hasRoleForMe = roleEventIds.contains(dto.id)
+
+                    val isVisible = isPub || isLookingForOrg || isFreeMySector || hasRoleForMe
+
+                    if (isVisible) {
+                        println("EVENT_DEBUG: Событие ${dto.id} (${dto.title}) прошло проверку: isPub=$isPub, isLookingForOrg=$isLookingForOrg, isFreeMySector=$isFreeMySector, hasRoleForMe=$hasRoleForMe")
+                    }
+
+                    dto.isDeleted != true && !dto.isDraft && dto.dateOfEvent >= today && isVisible
+                }.map { mapToEvent(it, today) }.sortedBy { it.rawDate }
+            }
         }
     }
 
@@ -290,7 +371,8 @@ class EventsRepositoryImpl(
             maxOrganizersCount = dto.maxOrganizersCount ?: 0,
             currentParticipantsCount = dto.currentParticipantsCount ?: 0,
             currentOrganizersCount = dto.currentOrganizersCount ?: 0,
-            sectorTitle = dto.sectorTitle
+            sectorTitle = dto.sectorTitle,
+            isMySector = dto.isMySector ?: false
         )
     }
 }

@@ -93,17 +93,17 @@ data class RoleDto(
 data class EventRoleDto(
     val id: Int,
     val eventId: Int,
-    val eventTitle: String,
+    val eventTitle: String? = null, // Сделали nullable
     val globalEventRoleId: Int,
     val globalEventRoleTitle: String,
     val capacity: Int,
     val reserveCapacity: Int,
-    val description: String,
-    val deadline: String,
+    val description: String? = null, // Сделали nullable
+    val deadline: String? = null,    // Сделали nullable
     val totalOccupiedSlots: Int? = 0,
     val totalAvailableSlots: Int? = 0,
-    val createdAt: String? = null, // ИСПРАВЛЕНИЕ: Добавили поля
-    val updatedAt: String? = null  // ИСПРАВЛЕНИЕ: Добавили поля
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )
 
 @Serializable

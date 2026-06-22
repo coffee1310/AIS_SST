@@ -18,7 +18,9 @@ sealed interface AvailableEventDetailsState {
     data class Success(
         val event: Event,
         val roles: List<EventRoleDto>,
-        val creator: Organizer?
+        val creator: Organizer?,
+        val showOrganizerCard: Boolean,
+        val showParticipantCard: Boolean
     ) : AvailableEventDetailsState
     data class Error(val message: String) : AvailableEventDetailsState
 }
@@ -37,10 +39,39 @@ class AvailableEventDetailsScreenModel(
 
             val eventResult = eventsRepository.getEventById(eventId)
             val rolesResult = eventsRepository.getEventRoles(eventId)
+            val userProfileResult = userRepository.getUserProfile()
+            val globalRolesResult = eventsRepository.getGlobalRoles()
 
-            if (eventResult.isSuccess && rolesResult.isSuccess) {
+            if (eventResult.isSuccess && rolesResult.isSuccess && userProfileResult.isSuccess) {
                 var event = eventResult.getOrNull()!!
-                val roles = rolesResult.getOrNull()!!
+                val allRoles = rolesResult.getOrNull()!!
+                val currentUser = userProfileResult.getOrNull()!!
+                val globalRoles = globalRolesResult.getOrNull() ?: emptyList()
+
+                // --- ЛОГИКА ФИЛЬТРАЦИИ РОЛЕЙ И КАРТОЧЕК ---
+
+                // 1. Карточка Организатора
+                val showOrganizerCard = event.maxOrganizersCount > event.currentOrganizersCount
+
+                // 2. Карточка Участника (Свободное И (Публичное ИЛИ это мой сектор))
+                val showParticipantCard = event.isFreeEvent && (event.isPublic || event.isMySector)
+
+                // 3. Остальные роли (БЕЗОПАСНОЕ СРАВНЕНИЕ)
+                // Приводим все сектора пользователя к нижнему регистру без пробелов
+                val userSectorsSafe = currentUser.userSectors.map { it.trim().lowercase() }
+
+                val filteredRoles = if (event.isPublic) {
+                    allRoles // Если публичное - видны все роли
+                } else {
+                    // Если закрытое - оставляем только те роли, сектор которых есть у активиста
+                    allRoles.filter { role ->
+                        val globalRole = globalRoles.find { it.id == role.globalEventRoleId }
+                        // Безопасно получаем сектор глобальной роли
+                        val roleSectorSafe = globalRole?.sectorTitle?.trim()?.lowercase()
+
+                        roleSectorSafe != null && userSectorsSafe.contains(roleSectorSafe)
+                    }
+                }
 
                 var creator: Organizer? = null
                 val creatorRes = userRepository.getUserProfileById(event.eventCreatorId)
@@ -80,8 +111,10 @@ class AvailableEventDetailsScreenModel(
 
                 _state.value = AvailableEventDetailsState.Success(
                     event = event,
-                    roles = roles,
-                    creator = creator
+                    roles = filteredRoles,
+                    creator = creator,
+                    showOrganizerCard = showOrganizerCard,
+                    showParticipantCard = showParticipantCard
                 )
             } else {
                 _state.value = AvailableEventDetailsState.Error("Не удалось загрузить данные мероприятия")

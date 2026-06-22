@@ -29,5 +29,6 @@ data class Event(
     val maxOrganizersCount: Int = 0,
     val currentParticipantsCount: Int = 0,
     val currentOrganizersCount: Int = 0,
-    val sectorTitle: String? = null
+    val sectorTitle: String? = null,
+    val isMySector: Boolean = false
 )

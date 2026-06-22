@@ -213,7 +213,7 @@ fun EventDetailsScreen(component: CoordinatorEventDetailsComponent) {
                             textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
                         if (showApps && event.maxOrganizersCount > event.currentOrganizersCount) {
                             val available = event.maxOrganizersCount - event.currentOrganizersCount
@@ -233,42 +233,48 @@ fun EventDetailsScreen(component: CoordinatorEventDetailsComponent) {
                                 "${event.currentParticipantsCount} (без ограничений)"
                             }
 
+                            // Логика отображения доступности секторов (передаем как accentText)
                             val sectorInfo = if (event.isPublic) {
-                                "\nДоступно всем (публичное мероприятие)"
+                                "Доступно всем (публичное мероприятие)"
                             } else if (!event.sectorTitle.isNullOrBlank()) {
-                                "\nСектора: ${event.sectorTitle}"
+                                "Сектора: ${event.sectorTitle}"
                             } else {
-                                "\nДоступно для всех секторов"
+                                "Доступно для всех секторов"
                             }
 
                             RoleDetailCard(
                                 title = "Участник",
-                                description = "Регистрация проходит без отбора. Вы автоматически станете участником мероприятия после подачи заявки.",
+                                description = "Занято мест: $limitText",
                                 deadline = null,
-                                accentText = "Занято мест: $limitText$sectorInfo"
+                                accentText = sectorInfo
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
                         }
 
                         roles.forEach { role ->
                             val deadlineFormatted = try {
-                                val parts = role.deadline.split("T")
-                                val dateParts = parts[0].split("-")
-                                val time = parts[1].take(5)
-                                "${dateParts[2]}.${dateParts[1]}.${dateParts[0]}, $time"
+                                if (role.deadline != null) {
+                                    val parts = role.deadline.split("T")
+                                    val dateParts = parts[0].split("-")
+                                    val time = parts[1].take(5)
+                                    "${dateParts[2]}.${dateParts[1]}.${dateParts[0]}, $time"
+                                } else null
                             } catch (e: Exception) { role.deadline }
 
                             val occupied = role.totalOccupiedSlots ?: 0
                             val available = role.totalAvailableSlots ?: role.capacity
                             val slotsInfo = "Занято мест: $occupied из $available"
 
+                            val desc = role.description
+                            val finalDescription = if (!desc.isNullOrBlank()) "$desc\n\n$slotsInfo" else slotsInfo
+                            val deadlineText = deadlineFormatted?.let { "Дедлайн: $it" }
+
                             RoleDetailCard(
                                 title = role.globalEventRoleTitle,
-                                description = role.description,
-                                deadline = "Дедлайн: $deadlineFormatted",
-                                accentText = slotsInfo
+                                description = finalDescription,
+                                deadline = deadlineText
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -493,7 +499,7 @@ fun RoleDetailCard(title: String, description: String?, deadline: String?, accen
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 13.sp),
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 12.sp),
                 color = MaterialTheme.colorScheme.onSurface
             )
 
