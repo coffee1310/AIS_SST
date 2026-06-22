@@ -2,12 +2,83 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Loaded="Page_Loaded">
+
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="SoftActionBtnStyle" TargetType="Button">
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.6"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Page.Resources>
+
     <Grid>
         <StackPanel>
             <TextBlock Text="Утвержденные участники" Foreground="White" FontSize="20" FontFamily="Digital Pixel" Margin="0,0,0,20"/>
+
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,25">
+                <StackPanel>
+                    <TextBlock Text="Ручное добавление" Foreground="White" FontFamily="Montserrat" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource RegInputBorderStyle}" Height="40">
+                            <Grid>
+                                <ComboBox x:Name="CbAddUser" 
+                                          IsEditable="True" 
+                                          StaysOpenOnEdit="True"
+                                          Cursor="IBeam"
+                                          Style="{StaticResource ModernComboBoxStyle}" 
+                                          Uid="Поиск пользователя (ФИО)..."/>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource RegInputBorderStyle}" Height="40">
+                            <ComboBox x:Name="CbAddRole" 
+                                      Style="{StaticResource ModernComboBoxStyle}" 
+                                      DisplayMemberPath="DisplayTitle"/>
+                        </Border>
+
+                        <Button Grid.Column="4" 
+                                Content="Добавить" 
+                                Style="{StaticResource SoftActionBtnStyle}" 
+                                Background="#2600C853" 
+                                Foreground="#00C853" 
+                                Padding="20,0" 
+                                Height="40" 
+                                Click="AddParticipantManual_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <ItemsControl x:Name="RolesWithParticipantsList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -50,7 +121,14 @@
                                                             <TextBlock Text="{Binding StatusLabel}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12"/>
                                                         </StackPanel>
 
-                                                        <Button Grid.Column="2" Content="Исключить" Style="{StaticResource OutlineButtonStyle}" Foreground="#E81123" BorderBrush="#E81123" Height="32" Padding="15,0" FontSize="12" VerticalAlignment="Center" Click="KickParticipant_Click"/>
+                                                        <Button Grid.Column="2" 
+                                                                Content="Исключить" 
+                                                                Style="{StaticResource SoftActionBtnStyle}" 
+                                                                Background="#26E81123"
+                                                                Foreground="#E81123" 
+                                                                VerticalAlignment="Center" 
+                                                                Tag="{Binding ParticipantId}" 
+                                                                Click="KickParticipant_Click"/>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

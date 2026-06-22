@@ -11,6 +11,34 @@
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="SoftActionBtnStyle" TargetType="Button">
+            <Setter Property="FontFamily" Value="Montserrat"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.6"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Page.Resources>
 
     <Grid Background="Transparent">
@@ -91,39 +119,30 @@
                                                                        Foreground="#7A7886" 
                                                                        FontFamily="Montserrat Thin" 
                                                                        FontSize="12"
-                                                                       TextWrapping="Wrap"/>
+                                                                       TextWrapping="Wrap"
+                                                                       Visibility="{Binding CommentVisibility}"/>
                                                         </StackPanel>
 
                                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
                                                             <Button Content="Одобрить" 
-                                                                    Style="{StaticResource OutlineButtonStyle}" 
+                                                                    Style="{StaticResource SoftActionBtnStyle}" 
+                                                                    Background="#2600C853"
                                                                     Foreground="#00C853" 
-                                                                    BorderBrush="#00C853" 
-                                                                    Height="32" 
-                                                                    Padding="15,0" 
-                                                                    FontSize="12" 
-                                                                    Margin="0,0,8,0"
                                                                     Tag="{Binding ApplicationId}" 
                                                                     Click="ApproveRequest_Click"/>
 
                                                             <Button Content="Отклонить" 
-                                                                    Style="{StaticResource OutlineButtonStyle}" 
+                                                                    Style="{StaticResource SoftActionBtnStyle}" 
+                                                                    Background="#26E81123"
                                                                     Foreground="#E81123" 
-                                                                    BorderBrush="#E81123" 
-                                                                    Height="32" 
-                                                                    Padding="15,0" 
-                                                                    FontSize="12" 
-                                                                    Margin="0,0,8,0"
                                                                     Tag="{Binding ApplicationId}" 
                                                                     Click="RejectRequest_Click"/>
 
                                                             <Button Content="В резерв" 
-                                                                    Style="{StaticResource OutlineButtonStyle}" 
+                                                                    Style="{StaticResource SoftActionBtnStyle}" 
+                                                                    Background="#26FFA500"
                                                                     Foreground="#FFA500" 
-                                                                    BorderBrush="#FFA500" 
-                                                                    Height="32" 
-                                                                    Padding="15,0" 
-                                                                    FontSize="12"
+                                                                    Margin="0"
                                                                     Tag="{Binding ApplicationId}" 
                                                                     Click="ReserveRequest_Click"/>
                                                         </StackPanel>
@@ -156,28 +175,36 @@
         </Grid>
 
         <Grid x:Name="RejectionOverlay" Background="#E61A1A2E" Visibility="Collapsed" Panel.ZIndex="100">
-            <Border Style="{StaticResource CardBorderStyle}" Width="420" VerticalAlignment="Center" HorizontalAlignment="Center">
-                <StackPanel Margin="30">
+            <Border Background="#1C1B29" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="16" Width="480" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <StackPanel Margin="35">
+
                     <TextBlock Text="ОТКЛОНЕНИЕ ЗАЯВКИ"
                                Foreground="#E81123"
                                FontFamily="Digital Pixel"
-                               FontSize="20"
+                               FontSize="28"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,25"/>
+
                     <TextBlock Text="Укажите причину отклонения (обязательно):"
                                Foreground="White"
-                               FontFamily="Montserrat Thin"
+                               FontFamily="Montserrat"
                                FontSize="13"
                                Margin="0,0,0,12"/>
-                    <Border Style="{StaticResource RegInputBorderStyle}" Height="110" Margin="0,0,0,20">
+
+                    <Border Background="#12101C" BorderBrush="#2A283C" BorderThickness="1.5" CornerRadius="8" Height="110" Margin="0,0,0,20">
                         <TextBox x:Name="TbRejectionReason"
-                                 Style="{StaticResource RegInnerInputStyle}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Foreground="White"
+                                 FontFamily="Montserrat"
+                                 FontSize="14"
                                  TextWrapping="Wrap"
                                  AcceptsReturn="True"
                                  VerticalAlignment="Top"
                                  Padding="15"
-                                 Foreground="White"/>
+                                 CaretBrush="White"/>
                     </Border>
+
                     <TextBlock x:Name="ErrRejectionReason"
                                Text="Причина не может быть пустой"
                                Foreground="#E81123"
@@ -185,19 +212,51 @@
                                FontSize="12"
                                Visibility="Collapsed"
                                Margin="0,-10,0,15"/>
+
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        
                         <Button Content="Отмена"
-                                Style="{StaticResource OutlineButtonStyle}"
                                 Width="130"
-                                Height="42"
+                                Height="44"
                                 Margin="0,0,15,0"
-                                Click="CancelRejection_Click"/>
+                                Click="CancelRejection_Click"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="Transparent" BorderBrush="#2A283C" BorderThickness="1.5" CornerRadius="12">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.Foreground>
+                                <SolidColorBrush Color="White"/>
+                            </Button.Foreground>
+                            <Button.FontFamily>
+                                <FontFamily>Montserrat</FontFamily>
+                            </Button.FontFamily>
+                            <Button.FontSize>14</Button.FontSize>
+                        </Button>
+
                         <Button Content="Подтвердить отклонение"
-                                Style="{StaticResource BaseModernButtonStyle}"
-                                Background="#E81123"
-                                Width="180"
-                                Height="42"
-                                Click="ConfirmRejection_Click"/>
+                                Width="210"
+                                Height="44"
+                                Click="ConfirmRejection_Click"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="#E81123" CornerRadius="22">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.Foreground>
+                                <SolidColorBrush Color="White"/>
+                            </Button.Foreground>
+                            <Button.FontFamily>
+                                <FontFamily>Montserrat</FontFamily>
+                            </Button.FontFamily>
+                            <Button.FontSize>14</Button.FontSize>
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>

@@ -152,9 +152,7 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" Width="800" Margin="40,50,40,80">
 
-                <Button x:Name="BackButton" Content="&lt; Назад" Style="{StaticResource GhostButtonStyle}" Foreground="#A084FB" FontFamily="Montserrat" FontSize="14" HorizontalAlignment="Left" Click="BackButton_Click" Margin="0,-20,0,10"/>
-
-                <TextBlock Text="Редактирование мероприятия" FontSize="36" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="Редактирование мероприятия" FontSize="24" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
                 <TextBlock Text="Основная информация" Style="{StaticResource SubtitleStyle}"/>
 

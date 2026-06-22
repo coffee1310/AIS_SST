@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -34,6 +35,8 @@ namespace Diplom_Stud.Pages.Coordinator
                 _httpClient.DefaultRequestHeaders.Accept.Clear();
                 _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
+
+            CbAddUser.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler(CbAddUser_TextChanged));
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
@@ -77,11 +80,13 @@ namespace Diplom_Stud.Pages.Coordinator
             try
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-
-                var blocks = new List<Part_RoleGroupViewModel>();
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                // 1. Обычные участники (Свободное мероприятие)
+                await PopulateAddUserComboBox(options);
+                await PopulateAddRoleComboBox(options);
+
+                var blocks = new List<Part_RoleGroupViewModel>();
+
                 HttpResponseMessage resPart = await _httpClient.GetAsync($"/api/events/participants/{_eventId}");
                 if (resPart.IsSuccessStatusCode)
                 {
@@ -108,7 +113,6 @@ namespace Diplom_Stud.Pages.Coordinator
                     }
                 }
 
-                // 2. Организаторы (Через новый фильтр participation/filter)
                 HttpResponseMessage resOrg = await _httpClient.GetAsync($"/api/events/participation/filter?eventId={_eventId}&entityType=ORGANIZER&page=0&size=100");
                 if (resOrg.IsSuccessStatusCode)
                 {
@@ -122,8 +126,8 @@ namespace Diplom_Stud.Pages.Coordinator
                         {
                             block.Participants.Add(new Part_ItemViewModel
                             {
-                                ParticipantId = u.id, // Это ID записи Participation Record
-                                StudentId = 0,        // Устанавливаем 0, чтобы не открывался чужой профиль
+                                ParticipantId = u.id,
+                                StudentId = 0,
                                 FullName = u.fullName ?? "Неизвестный организатор",
                                 StudentEmail = "Почта не указана",
                                 Type = "Organizer",
@@ -135,7 +139,6 @@ namespace Diplom_Stud.Pages.Coordinator
                     }
                 }
 
-                // 3. Исполнители ролей (Одобренные заявки)
                 HttpResponseMessage resRoles = await _httpClient.GetAsync($"/api/role-applications?status=ОДОБРЕНА&eventId={_eventId}");
                 if (resRoles.IsSuccessStatusCode)
                 {
@@ -178,6 +181,162 @@ namespace Diplom_Stud.Pages.Coordinator
                 LoadingOverlay.Visibility = Visibility.Collapsed;
             }
         }
+
+
+        private async Task PopulateAddUserComboBox(JsonSerializerOptions options)
+        {
+            HttpResponseMessage usersResp = await _httpClient.GetAsync("/api/users/all?page=0&size=1000&sortBy=id&sortDirection=ASC");
+            if (usersResp.IsSuccessStatusCode)
+            {
+                var pageData = JsonSerializer.Deserialize<Part_UserPageResponse>(await usersResp.Content.ReadAsStringAsync(), options);
+                if (pageData?.content != null)
+                {
+                    var validUsers = pageData.content
+                        .Where(u => string.IsNullOrEmpty(u.role) || (!u.role.ToLower().Contains("curator") && !u.role.ToLower().Contains("admin")))
+                        .ToList();
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        CbAddUser.Items.Clear();
+                        foreach (var user in validUsers)
+                        {
+                            CbAddUser.Items.Add(new ComboBoxItem
+                            {
+                                Content = user.DisplayName,
+                                Tag = user,
+                                Foreground = Brushes.White
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        private async Task PopulateAddRoleComboBox(JsonSerializerOptions options)
+        {
+            Application.Current.Dispatcher.Invoke(() => CbAddRole.Items.Clear());
+
+            HttpResponseMessage evRes = await _httpClient.GetAsync($"/api/events/{_eventId}");
+            if (evRes.IsSuccessStatusCode)
+            {
+                var ev = JsonSerializer.Deserialize<Part_EditEventDto>(await evRes.Content.ReadAsStringAsync(), options);
+                if (ev != null && ev.isFreeEvent)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                        CbAddRole.Items.Add(new AssignRoleItem { IsRegularParticipant = true, DisplayTitle = "Обычный участник" })
+                    );
+                }
+            }
+
+            HttpResponseMessage erRes = await _httpClient.GetAsync($"/api/event-roles?eventId={_eventId}&isDeleted=false&page=0&size=100");
+            if (erRes.IsSuccessStatusCode)
+            {
+                var pageData = ParsePageOrList<Part_EventRoleDto>(await erRes.Content.ReadAsStringAsync(), options);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    foreach (var r in pageData)
+                    {
+                        CbAddRole.Items.Add(new AssignRoleItem { EventRoleId = r.id, IsRegularParticipant = false, DisplayTitle = $"{r.globalEventRoleTitle} (Роль)" });
+                    }
+                });
+            }
+
+            Application.Current.Dispatcher.Invoke(() => { if (CbAddRole.Items.Count > 0) CbAddRole.SelectedIndex = 0; });
+        }
+
+        private void CbAddUser_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var cb = (ComboBox)sender;
+            var tb = e.OriginalSource as TextBox;
+            if (tb != null && cb.IsEditable && tb.IsFocused)
+            {
+                string text = tb.Text;
+                cb.Items.Filter = item =>
+                {
+                    if (string.IsNullOrEmpty(text)) return true;
+                    if (!(item is ComboBoxItem cbi)) return true;
+                    return cbi.Content.ToString().IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0;
+                };
+                cb.IsDropDownOpen = true;
+            }
+        }
+
+        private async void AddParticipantManual_Click(object sender, RoutedEventArgs e)
+        {
+            Part_UserDto selectedUser = null;
+            if (CbAddUser.SelectedItem is ComboBoxItem item && item.Tag is Part_UserDto u)
+            {
+                selectedUser = u;
+            }
+            else
+            {
+                string text = CbAddUser.Text.Trim();
+                foreach (ComboBoxItem cbItem in CbAddUser.Items)
+                {
+                    if (cbItem.Content.ToString().Equals(text, StringComparison.OrdinalIgnoreCase))
+                    {
+                        selectedUser = cbItem.Tag as Part_UserDto;
+                        break;
+                    }
+                }
+            }
+
+            if (selectedUser == null)
+            {
+                CustomMessageBox.Show("Выберите пользователя из списка.", "Внимание", CustomMessageBox.MessageType.Warning);
+                return;
+            }
+
+            var selectedRole = CbAddRole.SelectedItem as AssignRoleItem;
+            if (selectedRole == null)
+            {
+                CustomMessageBox.Show("Выберите роль для пользователя.", "Внимание", CustomMessageBox.MessageType.Warning);
+                return;
+            }
+
+            LoadingOverlay.Visibility = Visibility.Visible;
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                HttpResponseMessage response = null;
+
+                if (selectedRole.IsRegularParticipant)
+                {
+                    var payload = new { studentId = selectedUser.id, userId = selectedUser.id };
+                    var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                    response = await _httpClient.PostAsync($"/api/events/{_eventId}/participants", content);
+                }
+                else
+                {
+                    var payload = new { studentId = selectedUser.id, userId = selectedUser.id, eventRoleId = selectedRole.EventRoleId };
+                    var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                    response = await _httpClient.PostAsync($"/api/events/{_eventId}/participation-records", content);
+                }
+
+                if (response != null && response.IsSuccessStatusCode)
+                {
+                    CustomMessageBox.Show("Участник успешно добавлен!", "Успех", CustomMessageBox.MessageType.Success);
+                    CbAddUser.SelectedItem = null;
+                    CbAddUser.Text = "";
+                    await LoadParticipantsAsync();
+                }
+                else
+                {
+                    string err = response != null ? await response.Content.ReadAsStringAsync() : "Неизвестная ошибка";
+                    CustomMessageBox.Show($"Не удалось добавить участника:\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show(ex.Message, "Ошибка", CustomMessageBox.MessageType.Error);
+            }
+            finally
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+        }
+
+
 
         private void ParticipantCard_Click(object sender, MouseButtonEventArgs e)
         {
@@ -283,6 +442,39 @@ namespace Diplom_Stud.Pages.Coordinator
         }
     }
 
+    public class Part_UserPageResponse
+    {
+        public List<Part_UserDto> content { get; set; }
+    }
+
+    public class Part_UserDto
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public string surname { get; set; }
+        public string patronymic { get; set; }
+        public string role { get; set; }
+        public string DisplayName => $"{surname} {name} {patronymic}".Trim();
+    }
+
+    public class AssignRoleItem
+    {
+        public int EventRoleId { get; set; }
+        public string DisplayTitle { get; set; }
+        public bool IsRegularParticipant { get; set; }
+
+        public override string ToString()
+        {
+            return DisplayTitle;
+        }
+    }
+
+    public class Part_EventRoleDto
+    {
+        public int id { get; set; }
+        public string globalEventRoleTitle { get; set; }
+    }
+
     public class Part_ParticipantUserDto
     {
         public int id { get; set; }
@@ -301,6 +493,12 @@ namespace Diplom_Stud.Pages.Coordinator
         public int totalPoints { get; set; }
         public bool wasPresent { get; set; }
         public string entityType { get; set; }
+    }
+
+    public class Part_EditEventDto
+    {
+        public bool isFreeEvent { get; set; }
+        public List<Part_ParticipantUserDto> organizers { get; set; }
     }
 
     public class Part_RoleAppDto
