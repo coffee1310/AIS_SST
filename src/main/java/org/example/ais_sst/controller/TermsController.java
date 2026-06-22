@@ -1,7 +1,7 @@
 package org.example.ais_sst.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.ais_sst.config.PdfStorageProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -22,39 +22,40 @@ import java.nio.file.attribute.FileTime;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.Locale;
 
 @RestController
-@RequestMapping("/api/terms")
+@RequestMapping("/api")
 @Slf4j
 public class TermsController {
 
     private static final String TERMS_FILE_NAME = "terms-of-service.pdf";
-    private final PdfStorageProperties storageProperties;
 
-    public TermsController(PdfStorageProperties storageProperties) {
-        this.storageProperties = storageProperties;
-    }
+    // Формат для HTTP заголовка Last-Modified (RFC 1123)
+    private static final DateTimeFormatter RFC_1123_FORMATTER =
+            DateTimeFormatter.RFC_1123_DATE_TIME.withLocale(Locale.US);
 
-    @GetMapping(produces = MediaType.APPLICATION_PDF_VALUE)
+    @Value("${pdf.storage.path:/app/storage/terms}")
+    private String storagePath;
+
+    @GetMapping(value = "/terms", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<Resource> getTermsOfService(
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
             @RequestHeader(value = "If-Modified-Since", required = false) String ifModifiedSince) {
 
         try {
-            Path termsPath = Paths.get(storageProperties.getPath(), TERMS_FILE_NAME);
+            Path termsPath = Paths.get(storagePath, TERMS_FILE_NAME);
 
             if (!Files.exists(termsPath)) {
-                log.warn("Terms of service PDF not found at: {}", termsPath);
+                log.warn("Terms of service PDF not found at: {}", termsPath.toAbsolutePath());
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
 
-            // Получаем информацию о файле
             FileTime fileTime = Files.getLastModifiedTime(termsPath);
-            long lastModified = fileTime.toMillis();
-
-            // Генерируем ETag
+            long lastModifiedMillis = fileTime.toMillis();
             String eTag = generateETag(termsPath);
 
             // Проверяем If-None-Match
@@ -66,14 +67,14 @@ public class TermsController {
             // Проверяем If-Modified-Since
             if (ifModifiedSince != null) {
                 try {
-                    // Парсим дату из HTTP заголовка
+                    // Парсим дату из заголовка
                     Instant ifModifiedSinceInstant = Instant.from(
                             DateTimeFormatter.RFC_1123_DATE_TIME.parse(ifModifiedSince)
                     );
                     long ifModifiedSinceTime = ifModifiedSinceInstant.toEpochMilli();
 
                     // Округляем до секунд как в HTTP
-                    if (lastModified / 1000 <= ifModifiedSinceTime / 1000) {
+                    if (lastModifiedMillis / 1000 <= ifModifiedSinceTime / 1000) {
                         log.debug("Returning 304 Not Modified for terms (If-Modified-Since)");
                         return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
                     }
@@ -85,15 +86,19 @@ public class TermsController {
             Resource resource = new FileSystemResource(termsPath);
             long contentLength = Files.size(termsPath);
 
-            log.info("Serving terms of service PDF, size: {} bytes, last modified: {}",
-                    contentLength, Instant.ofEpochMilli(lastModified));
+            // Правильное форматирование для Last-Modified
+            String lastModifiedHeader = RFC_1123_FORMATTER.format(
+                    Instant.ofEpochMilli(lastModifiedMillis).atZone(ZoneId.of("GMT"))
+            );
+
+            log.info("Serving terms of service PDF from: {}, size: {} bytes, last modified: {}",
+                    termsPath.toAbsolutePath(), contentLength, lastModifiedHeader);
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"terms-of-service.pdf\"")
                     .header(HttpHeaders.ETAG, eTag)
                     .header(HttpHeaders.CACHE_CONTROL, "max-age=3600, must-revalidate")
-                    .header(HttpHeaders.LAST_MODIFIED,
-                            DateTimeFormatter.RFC_1123_DATE_TIME.format(Instant.ofEpochMilli(lastModified)))
+                    .header(HttpHeaders.LAST_MODIFIED, lastModifiedHeader)
                     .contentType(MediaType.APPLICATION_PDF)
                     .contentLength(contentLength)
                     .body(resource);
@@ -105,7 +110,6 @@ public class TermsController {
     }
 
     private String generateETag(Path path) throws IOException {
-        // Используем комбинацию размера и времени модификации
         FileTime lastModified = Files.getLastModifiedTime(path);
         long size = Files.size(path);
         String data = size + "_" + lastModified.toMillis();
@@ -115,7 +119,6 @@ public class TermsController {
             byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
             return "\"" + Base64.getEncoder().encodeToString(hash) + "\"";
         } catch (NoSuchAlgorithmException e) {
-            // Fallback
             return "\"" + data.hashCode() + "\"";
         }
     }
