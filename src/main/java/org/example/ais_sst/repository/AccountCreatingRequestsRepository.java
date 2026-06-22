@@ -117,5 +117,20 @@ public interface AccountCreatingRequestsRepository extends JpaRepository<Account
             @Param("groupId") Long groupId,
             @Param("specialityId") Long specialityId);
 
+    boolean existsByStudentEmailAndStatusNot(String email, AccountCreatingRequestStatus status);
 
+    /**
+     * Проверяет, существует ли заявка с таким телефоном и статусом НЕ отклонена
+     */
+    boolean existsByPhoneNumberAndStatusNot(String phone, AccountCreatingRequestStatus status);
+
+    /**
+     * Проверяет, существует ли заявка с таким email (любой статус)
+     */
+    boolean existsByStudentEmail(String email);
+
+    /**
+     * Проверяет, существует ли заявка с таким телефоном (любой статус)
+     */
+    boolean existsByPhoneNumber(String phone);
 }

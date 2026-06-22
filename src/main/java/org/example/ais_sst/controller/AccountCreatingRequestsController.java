@@ -5,16 +5,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.controller.base.BaseController;
-import org.example.ais_sst.dto.account_request.AccountCreatingRequestFilterDTO;
-import org.example.ais_sst.dto.account_request.AccountCreatingRequestRejectDTO;
-import org.example.ais_sst.dto.account_request.AccountCreatingRequestResponseDTO;
-import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO;
+import org.example.ais_sst.dto.account_request.*;
 import org.example.ais_sst.dto.common.PageRequestDTO;
 import org.example.ais_sst.dto.user.UserSummaryDTO;
 import org.example.ais_sst.entity.AccountCreatingRequest;
 import org.example.ais_sst.entity.CustomUserDetails;
 import org.example.ais_sst.entity.enums.AccountCreatingRequestStatus;
 import org.example.ais_sst.service.accountCreatingRequestsService.AccountCreatingRequestsService;
+import org.example.ais_sst.service.email.EmailVerificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,12 +27,15 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/account_requests")
 @RequiredArgsConstructor
 public class AccountCreatingRequestsController extends BaseController {
 
     private final AccountCreatingRequestsService accountCreatingRequestsService;
+    private final EmailVerificationService emailVerificationService;
+
 
     @PostMapping
     public ResponseEntity<?> createAccountRequest(@RequestBody @Valid AccountCreatingRequestsSummaryDTO dto) {
@@ -110,5 +111,81 @@ public class AccountCreatingRequestsController extends BaseController {
             @PageableDefault(size = 20, direction = Sort.Direction.DESC) Pageable pageable) {
         logInfo("/api/account_requests/pending", "Getting pending requests");
         return accountCreatingRequestsService.getPendingRequests(pageable);
+    }
+
+    @PostMapping("/send-code")
+    public ResponseEntity<?> sendVerificationCode(@RequestBody @Valid SendCodeRequestDTO dto) {
+        try {
+            log.info("Sending verification code to: {}", dto.getStudentEmail());
+            String userName = dto.getName() + " " + dto.getSurname();
+            emailVerificationService.sendVerificationCode(dto.getStudentEmail(), userName);
+            return createSuccessResponse(
+                    "Код подтверждения отправлен на вашу почту",
+                    Map.of("email", dto.getStudentEmail())
+            );
+        } catch (Exception e) {
+            log.error("Failed to send verification code: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Шаг 2: Проверка кода (без создания заявки)
+     * POST /api/account_requests/verify-code
+     */
+    @PostMapping("/verify-code")
+    public ResponseEntity<?> verifyCode(@RequestBody @Valid EmailVerificationDTO dto) {
+        try {
+            boolean isValid = emailVerificationService.verifyCode(dto.getEmail(), dto.getCode());
+            return ResponseEntity.ok(Map.of(
+                    "valid", isValid,
+                    "message", isValid ? "Код подтвержден" : "Неверный код"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Шаг 3: Подтверждение кода и создание заявки
+     * POST /api/account_requests/verify-and-create
+     */
+    @PostMapping("/verify-and-create")
+    public ResponseEntity<?> verifyAndCreate(@RequestBody @Valid EmailVerificationDTO verificationDto) {
+        try {
+            log.info("Verifying email: {}", verificationDto.getEmail());
+
+            AccountCreatingRequest request = emailVerificationService.verifyEmailAndCreateRequest(
+                    verificationDto.getEmail(),
+                    verificationDto.getCode(),
+                    verificationDto.getAccountRequest()
+            );
+
+            return createSuccessResponse(
+                    "Email подтвержден. Заявка создана и отправлена на рассмотрение.",
+                    request
+            );
+        } catch (Exception e) {
+            log.error("Email verification failed: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Шаг 4: Повторная отправка кода
+     * POST /api/account_requests/resend-code
+     */
+    @PostMapping("/resend-code")
+    public ResponseEntity<?> resendCode(@RequestBody @Valid ResendVerificationCodeDTO dto) {
+        try {
+            log.info("Resending verification code to: {}", dto.getEmail());
+            emailVerificationService.resendVerificationCode(dto.getEmail());
+            return createSuccessResponse(
+                    "Новый код отправлен на вашу почту",
+                    Map.of("email", dto.getEmail())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

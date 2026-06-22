@@ -125,6 +125,12 @@ public class SecurityConfig {
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/auth/**")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/test/**")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/account_requests")).permitAll()
+
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/account_requests/send-code")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/account_requests/verify-code")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/account_requests/verify-and-create")).permitAll()
+                            .requestMatchers(AntPathRequestMatcher.antMatcher("/api/account_requests/resend-code")).permitAll()
+
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/social_status")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher("/api/specialities")).permitAll()
                             .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/group")).permitAll()

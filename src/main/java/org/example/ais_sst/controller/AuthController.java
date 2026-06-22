@@ -2,6 +2,9 @@ package org.example.ais_sst.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.ais_sst.controller.base.BaseController;
+import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO;
+import org.example.ais_sst.dto.account_request.EmailVerificationDTO;
+import org.example.ais_sst.dto.account_request.ResendVerificationCodeDTO;
 import org.example.ais_sst.dto.password.PasswordResetConfirmDTO;
 import org.example.ais_sst.dto.password.PasswordResetRequestDTO;
 import org.example.ais_sst.dto.password.PasswordResetVerifyDTO;
@@ -19,6 +22,7 @@ import org.example.ais_sst.security.jwt.JwtUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.service.email.EmailVerificationService;
 import org.example.ais_sst.service.redisService.RedisKeys;
 import org.example.ais_sst.service.redisService.RedisRateLimitService;
 import org.example.ais_sst.service.tokens.RefreshTokenService;
@@ -61,6 +65,7 @@ public class AuthController extends BaseController {
     private final RedisRateLimitService rateLimitService;
     private final HttpServletRequest httpServletRequest;
     private final PasswordResetService passwordResetService;
+
 
     @Value("${app.jwtExpirationMs}")
     private int jwtExpirationMs;

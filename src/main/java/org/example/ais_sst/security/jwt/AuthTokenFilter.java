@@ -147,6 +147,20 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/auth/")) {
             return true;
         }
+
+        if (path.equals("/api/account_requests/send-code")) {
+            return true;
+        }
+        if (path.equals("/api/account_requests/verify-code")) {
+            return true;
+        }
+        if (path.equals("/api/account_requests/verify-and-create")) {
+            return true;
+        }
+        if (path.equals("/api/account_requests/resend-code")) {
+            return true;
+        }
+
         if (path.startsWith("/api/test/")) {
             return true;
         }
@@ -177,6 +191,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         if ("OPTIONS".equalsIgnoreCase(method)) {
             return true;
         }
+
 
         return false;
     }

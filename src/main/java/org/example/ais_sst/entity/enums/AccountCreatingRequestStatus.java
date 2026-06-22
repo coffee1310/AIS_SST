@@ -6,7 +6,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum AccountCreatingRequestStatus {
     ОТКЛОНЕНА("Отклонено"),
     НА_РАССМОТРЕНИИ("На рассмотрении"),
-    ОДОБРЕНА("Принято");
+    ОДОБРЕНА("Принято"),
+    ОЖИДАЕТ_ПОДТВЕРЖДЕНИЯ("Ожидает подтверждения");
 
     private final String dbValue;
 

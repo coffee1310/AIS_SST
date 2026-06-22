@@ -54,8 +54,17 @@ public class AccountCreatingRequestsService extends BaseEntityService {
 
     public AccountCreatingRequest createAccountRequest(AccountCreatingRequestsSummaryDTO dto) {
         return executeWithLogging(() -> {
+            // ⭐ ПРОВЕРКА: email уже используется пользователем
             validateUniqueEmail(dto.getStudentEmail());
+
+            // ⭐ ПРОВЕРКА: email уже есть в заявках (НЕ отклоненных)
+            validateEmailNotInPendingRequests(dto.getStudentEmail());
+
+            // ⭐ ПРОВЕРКА: телефон уже используется пользователем
             validateUniquePhone(dto.getPhoneNumber());
+
+            // ⭐ ПРОВЕРКА: телефон уже есть в заявках (НЕ отклоненных)
+            validatePhoneNotInPendingRequests(dto.getPhoneNumber());
 
             Group userGroup = findEntityOrThrow(dto.getGroup_id(), groupRepository::findGroupById,
                     () -> new GroupDoesNotExistException("Группа не найдена"), "Group");
@@ -80,7 +89,31 @@ public class AccountCreatingRequestsService extends BaseEntityService {
         }, "createAccountRequest", dto.getStudentEmail());
     }
 
-    private void validateUniqueEmail(String email) {
+    // ⭐ НОВАЯ ПРОВЕРКА: email не должен быть в активных заявках
+    private void validateEmailNotInPendingRequests(String email) {
+        boolean exists = accountCreatingRequestsRepository.existsByStudentEmailAndStatusNot(
+                email, AccountCreatingRequestStatus.ОТКЛОНЕНА);
+
+        if (exists) {
+            throw new EmailAlreadyExistsException(
+                    "Заявка с этим email уже существует. Пожалуйста, проверьте статус вашей заявки."
+            );
+        }
+    }
+
+    // ⭐ НОВАЯ ПРОВЕРКА: телефон не должен быть в активных заявках
+    private void validatePhoneNotInPendingRequests(String phone) {
+        boolean exists = accountCreatingRequestsRepository.existsByPhoneNumberAndStatusNot(
+                phone, AccountCreatingRequestStatus.ОТКЛОНЕНА);
+
+        if (exists) {
+            throw new PhoneAlreadyExistException(
+                    "Заявка с этим телефоном уже существует. Пожалуйста, проверьте статус вашей заявки."
+            );
+        }
+    }
+
+        private void validateUniqueEmail(String email) {
         validateState(!userRepository.existsByStudentEmail(email),
                 () -> new EmailAlreadyExistsException("Email уже используется"),
                 "Email already exists: " + email);
