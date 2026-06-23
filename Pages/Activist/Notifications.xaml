@@ -7,7 +7,8 @@
       mc:Ignorable="d" 
       d:DesignHeight="950" d:DesignWidth="1111"
       Title="Notifications"
-      Loaded="Page_Loaded">
+      Loaded="Page_Loaded"
+      Unloaded="Page_Unloaded">
 
     <Grid Background="Transparent">
         <ScrollViewer VerticalScrollBarVisibility="Auto">

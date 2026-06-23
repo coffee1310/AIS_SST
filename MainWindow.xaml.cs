@@ -243,7 +243,7 @@ namespace Diplom_Stud
 
         private void MainFrame_Navigated(object sender, NavigationEventArgs e)
         {
-            if (e.Content is Pages.General.Auth || e.Content is Pages.General.Reg)
+            if (e.Content is Pages.General.Auth || e.Content is Pages.General.Reg || e.Content is Pages.General.ForgotPassword)
             {
                 LeftMenu.Visibility = Visibility.Collapsed;
             }

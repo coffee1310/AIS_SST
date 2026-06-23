@@ -156,7 +156,7 @@
                         <TextBlock x:Name="tbPasswordError" Text="Заполните поле пароля" Foreground="#E81123" FontSize="12" Visibility="Collapsed" Margin="5,5,0,0" FontFamily="Montserrat Thin"/>
                     </StackPanel>
 
-                    <TextBlock Text="Забыли пароль?" Foreground="#7A7886" FontSize="12" HorizontalAlignment="Left" Margin="15,0,0,30" Cursor="Hand" FontFamily="Montserrat Thin"/>
+                    <TextBlock Text="Забыли пароль?" Foreground="#7A7886" FontSize="12" HorizontalAlignment="Left" Margin="15,0,0,30" Cursor="Hand" FontFamily="Montserrat Thin" MouseLeftButtonDown="ForgotPassword_MouseLeftButtonDown"/>
                     <Button Content="Войти" Cursor="Hand" Style="{StaticResource AuthModernButtonStyle}" Width="283" Height="50" Margin="0,0,0,25" FontFamily="Digital Pixel" FontSize="9" Click="Button_Click"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

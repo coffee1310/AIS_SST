@@ -3,20 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\danii\\source\\repos\\AIS_SST\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\home.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\home.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\general\\auth.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\general\\auth.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\home.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\home.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|C:\\Users\\danii\\source\\repos\\AIS_SST\\pages\\coordinator\\coordinatorhome.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\coordinatorhome.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\coordinatorhome.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\coordinatorhome.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|C:\\Users\\danii\\source\\repos\\AIS_SST\\pages\\general\\auth.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\general\\auth.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 240,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -46,52 +38,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Home.xaml",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Home.xaml",
-              "RelativeDocumentMoniker": "Pages\\Activist\\Home.xaml",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Home.xaml",
-              "RelativeToolTip": "Pages\\Activist\\Home.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-06-23T11:15:50.778Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "Home.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Home.xaml.cs",
-              "RelativeDocumentMoniker": "Pages\\Activist\\Home.xaml.cs",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Home.xaml.cs",
-              "RelativeToolTip": "Pages\\Activist\\Home.xaml.cs",
-              "ViewState": "AgIAAAIBAAAAAAAAAAAswC4BAAABAAAAAAAAAA==",
+              "Title": "Auth.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\General\\Auth.xaml.cs",
+              "RelativeDocumentMoniker": "Pages\\General\\Auth.xaml.cs",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\General\\Auth.xaml.cs",
+              "RelativeToolTip": "Pages\\General\\Auth.xaml.cs",
+              "ViewState": "AgIAAHQBAAAAAAAAAAAYwJIBAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T11:15:44.492Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-23T21:04:47.816Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "CoordinatorHome.xaml",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorHome.xaml",
-              "RelativeDocumentMoniker": "Pages\\Coordinator\\CoordinatorHome.xaml",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorHome.xaml",
-              "RelativeToolTip": "Pages\\Coordinator\\CoordinatorHome.xaml",
+              "DocumentIndex": 0,
+              "Title": "Auth.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\General\\Auth.xaml",
+              "RelativeDocumentMoniker": "Pages\\General\\Auth.xaml",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\General\\Auth.xaml",
+              "RelativeToolTip": "Pages\\General\\Auth.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-06-23T01:57:17.081Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "CoordinatorHome.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorHome.xaml.cs",
-              "RelativeDocumentMoniker": "Pages\\Coordinator\\CoordinatorHome.xaml.cs",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\CoordinatorHome.xaml.cs",
-              "RelativeToolTip": "Pages\\Coordinator\\CoordinatorHome.xaml.cs",
-              "ViewState": "AgIAAIcBAAAAAAAAAAAkwF0AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T01:51:05.726Z",
+              "WhenOpened": "2026-06-23T20:58:07.97Z",
               "EditorCaption": ""
             }
           ]

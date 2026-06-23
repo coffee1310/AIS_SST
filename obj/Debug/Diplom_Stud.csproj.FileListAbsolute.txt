@@ -170,3 +170,5 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventEditPage.g.
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\EventEditPage.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorEvents.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorEvents.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\General\ForgotPassword.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\General\ForgotPassword.baml

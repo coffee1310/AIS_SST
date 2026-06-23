@@ -393,6 +393,14 @@ namespace Diplom_Stud.Pages.General
                 NavigationService.Navigate(new Reg());
             }
         }
+
+        private void ForgotPassword_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (NavigationService != null)
+            {
+                NavigationService.Navigate(new ForgotPassword());
+            }
+        }
     }
 
     public class LoginApiResponse
