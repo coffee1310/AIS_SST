@@ -245,4 +245,111 @@ public class EmailService {
             throw new RuntimeException("Не удалось отправить email: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Отправка уведомления об одобрении заявки на создание аккаунта.
+     */
+    public void sendAccountApprovedNotification(String toEmail, String fullName, String studentEmail) {
+        String subject = "Ваша заявка одобрена — AIS SST";
+
+        String textBody = String.format("""
+            Здравствуйте, %s!
+            
+            Поздравляем! Ваша заявка на создание аккаунта в системе AIS SST была одобрена.
+            
+            Ваш аккаунт успешно создан.
+            Логин (email): %s
+            
+            Теперь вы можете войти в систему используя свой email и пароль, который вы указали при подаче заявки.
+            
+            Если у вас возникли вопросы, обратитесь к куратору или председателю.
+            
+            С уважением,
+            Команда AIS SST
+            """, fullName != null ? fullName : "пользователь", studentEmail);
+
+        String htmlBody = String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: #28a745; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
+                    .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+                    .success-icon { font-size: 48px; margin-bottom: 15px; }
+                    .login-box { background: white; border: 2px solid #28a745; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
+                    .login-label { font-size: 14px; color: #666; margin-bottom: 5px; }
+                    .login-value { font-size: 20px; font-weight: bold; color: #28a745; }
+                    .footer { margin-top: 30px; font-size: 13px; color: #888; text-align: center; }
+                    .btn { display: inline-block; background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="success-icon">✅</div>
+                    <h2>Заявка одобрена!</h2>
+                </div>
+                <div class="content">
+                    <p>Здравствуйте, <strong>%s</strong>!</p>
+                    
+                    <p>Поздравляем! Ваша заявка на создание аккаунта в системе <strong>AIS SST</strong> была <strong>одобрена</strong>.</p>
+                    
+                    <p>Ваш аккаунт успешно создан.</p>
+                    
+                    <div class="login-box">
+                        <div class="login-label">Ваш логин для входа:</div>
+                        <div class="login-value">%s</div>
+                    </div>
+                    
+                    <p>Теперь вы можете войти в систему, используя email и пароль, указанные при подаче заявки.</p>
+                    
+                    <p style="margin-top: 25px;">Если у вас возникли вопросы — обращайтесь к куратору или в председателю.</p>
+                    
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+                    
+                    <p style="font-size: 14px; color: #666;">С уважением,<br><strong>Команда AIS SST</strong></p>
+                </div>
+                <div class="footer">
+                    © 2026 Автоматизированная информационная система студенческого совета
+                </div>
+            </body>
+            </html>
+            """, fullName != null ? fullName : "пользователь", studentEmail);
+
+        try {
+            SendEmailRequest request = SendEmailRequest.builder()
+                    .fromEmailAddress(fromEmail)
+                    .destination(Destination.builder()
+                            .toAddresses(toEmail)
+                            .build())
+                    .content(EmailContent.builder()
+                            .simple(Message.builder()
+                                    .subject(Content.builder()
+                                            .data(subject)
+                                            .charset("UTF-8")
+                                            .build())
+                                    .body(Body.builder()
+                                            .text(Content.builder()
+                                                    .data(textBody)
+                                                    .charset("UTF-8")
+                                                    .build())
+                                            .html(Content.builder()
+                                                    .data(htmlBody)
+                                                    .charset("UTF-8")
+                                                    .build())
+                                            .build())
+                                    .build())
+                            .build())
+                    .build();
+
+            SendEmailResponse response = sesClient.sendEmail(request);
+            log.info("Account approved notification sent to {}: {}", toEmail, response.messageId());
+
+        } catch (Exception e) {
+            log.error("Failed to send account approved email to {}: {}", toEmail, e.getMessage());
+            // Не бросаем исключение, чтобы не ломать процесс одобрения заявки
+        }
+    }
+
 }

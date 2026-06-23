@@ -1,6 +1,5 @@
 package org.example.ais_sst.service.accountCreatingRequestsService;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,10 +8,9 @@ import org.example.ais_sst.dto.account_request.AccountCreatingRequestRejectDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestResponseDTO;
 import org.example.ais_sst.dto.account_request.AccountCreatingRequestsSummaryDTO;
 import org.example.ais_sst.dto.social_status.UserSocialStatusesDTO;
-import org.example.ais_sst.dto.user.UserSummaryDTO;
 import org.example.ais_sst.entity.*;
 import org.example.ais_sst.entity.enums.AccountCreatingRequestStatus;
-import org.example.ais_sst.entity.enums.Gender;
+import org.example.ais_sst.event.account_creatinge_requests.AccountRequestApprovedEvent;
 import org.example.ais_sst.exception.*;
 import org.example.ais_sst.mapper.AccountCreatingRequestMapper;
 import org.example.ais_sst.mapper.UserMapper;
@@ -21,15 +19,13 @@ import org.example.ais_sst.service.base.BaseEntityService;
 import org.example.ais_sst.service.socialStatusService.AccountCreatingRequestsSocialStatusService;
 import org.example.ais_sst.service.socialStatusService.SocialStatusService;
 import org.example.ais_sst.service.userService.UserPhotoService;
-import org.example.ais_sst.utils.ImageUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -51,6 +47,8 @@ public class AccountCreatingRequestsService extends BaseEntityService {
     private final UserPhotoService userPhotoService;
     private final AccountCreatingRequestMapper requestMapper;
     private final UserMapper userMapper;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     public AccountCreatingRequest createAccountRequest(AccountCreatingRequestsSummaryDTO dto) {
         return executeWithLogging(() -> {
@@ -178,6 +176,8 @@ public class AccountCreatingRequestsService extends BaseEntityService {
 
             request.setStatus(AccountCreatingRequestStatus.ОДОБРЕНА);
             accountCreatingRequestsRepository.save(request);
+
+            eventPublisher.publishEvent(new AccountRequestApprovedEvent(this, request, savedUser));
 
             return requestMapper.toResponseDto(request, accountRequestPhotoService);
         }, "acceptAccountRequest", id);

@@ -2,8 +2,10 @@ package org.example.ais_sst.listener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.ais_sst.entity.AccountCreatingRequest;
 import org.example.ais_sst.entity.Task;
 import org.example.ais_sst.entity.User;
+import org.example.ais_sst.event.account_creatinge_requests.AccountRequestApprovedEvent;
 import org.example.ais_sst.event.tasks.*;
 import org.example.ais_sst.repository.SectorParticipantRepository;
 import org.example.ais_sst.repository.TaskRepository;
@@ -11,6 +13,7 @@ import org.example.ais_sst.repository.UserRepository;
 import org.example.ais_sst.service.notificationService.EmailService;
 import org.example.ais_sst.service.notificationService.PushNotificationService;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -141,5 +144,35 @@ public class NotificationOrchestrator {
                 "Вас назначили исполнителем на задачу: " + event.getTaskTitle(),
                 "INFO"
         );
+    }
+
+    @TransactionalEventListener
+    @Async
+    public void onAccountRequestApproved(AccountRequestApprovedEvent event) {
+        AccountCreatingRequest request = event.getRequest();
+        User createdUser = event.getCreatedUser();
+
+        if (request == null || request.getStudentEmail() == null) {
+            log.warn("AccountRequestApprovedEvent received with null request or email");
+            return;
+        }
+
+        String fullName = buildFullName(request);
+        String toEmail = request.getStudentEmail();
+
+        try {
+            emailService.sendAccountApprovedNotification(toEmail, fullName, toEmail);
+            log.info("Approval notification email sent to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send approval notification to {}: {}", toEmail, e.getMessage());
+        }
+    }
+
+    private String buildFullName(AccountCreatingRequest request) {
+        StringBuilder sb = new StringBuilder();
+        if (request.getSurname() != null) sb.append(request.getSurname()).append(" ");
+        if (request.getName() != null) sb.append(request.getName()).append(" ");
+        if (request.getPatronymic() != null) sb.append(request.getPatronymic());
+        return sb.toString().trim();
     }
 }
