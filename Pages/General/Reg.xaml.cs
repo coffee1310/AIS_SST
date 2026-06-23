@@ -409,6 +409,7 @@ namespace Diplom_Stud.Pages.General
             errConfirmPassword.Visibility = Visibility.Collapsed;
             errPhoto.Visibility = Visibility.Collapsed;
             errAgreement.Visibility = Visibility.Collapsed;
+            errMailingConsent.Visibility = Visibility.Collapsed;
 
             bool hasError = false;
 
@@ -452,6 +453,7 @@ namespace Diplom_Stud.Pages.General
             if (cbSpeciality.SelectedIndex <= 0) { errSpeciality.Visibility = Visibility.Visible; hasError = true; }
             if (tbStudentId.Text.Length < 6) { errStudentId.Visibility = Visibility.Visible; hasError = true; }
             if (cbAgreement.IsChecked != true) { errAgreement.Visibility = Visibility.Visible; hasError = true; }
+            if (cbMailingConsent.IsChecked != true) { errMailingConsent.Visibility = Visibility.Visible; hasError = true; }
 
             string additionalEmail = tbAdditionalEmail.Text.Trim();
             if (!string.IsNullOrWhiteSpace(additionalEmail))
@@ -467,59 +469,24 @@ namespace Diplom_Stud.Pages.General
 
             var btn = sender as Button;
             btn.IsEnabled = false;
-            btn.Content = "Отправка...";
+            btn.Content = "Отправка кода...";
 
             try
             {
-                string photoBase64 = "";
-                if (_selectedImageBytes != null)
+                bool codeSent = await SendVerificationCodeAsync();
+
+                if (codeSent)
                 {
-                    photoBase64 = $"data:image/jpeg;base64,{Convert.ToBase64String(_selectedImageBytes)}";
-                }
+                    btnRegister.Visibility = Visibility.Collapsed;
+                    verificationPanel.Visibility = Visibility.Visible;
 
-                string corporateEmail = tbStudentId.Text.Trim() + ((ComboBoxItem)cbDomain.SelectedItem).Content.ToString();
-
-                string uiGender = ((ComboBoxItem)cbGender.SelectedItem).Content.ToString();
-                string genderVal = uiGender == "Мужской" ? "Мужчина" : (uiGender == "Женский" ? "Женщина" : uiGender);
-
-                var requestObj = new
-                {
-                    name = tbFirstName.Text.Trim(),
-                    surname = tbLastName.Text.Trim(),
-                    patronymic = tbPatronymic.Text.Trim(),
-                    gender = genderVal,
-                    dateOfBirth = dpBirthDate.SelectedDate.Value.ToString("yyyy-MM-dd"),
-                    courseNumber = int.Parse(((ComboBoxItem)cbCourse.SelectedItem).Content.ToString()),
-                    speciality_id = (int)((ComboBoxItem)cbSpeciality.SelectedItem).Tag,
-                    group_id = (int)((ComboBoxItem)cbGroup.SelectedItem).Tag,
-                    studentIdNumber = int.Parse(tbStudentId.Text.Trim()),
-                    studentEmail = corporateEmail,
-                    phoneNumber = tbPhone.Text.Trim().Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", ""),
-                    password = pbPassword.Password,
-                    vkLink = tbVkLink.Text.Trim(),
-                    social_statuses_id = _selectedStatuses.ToArray(),
-                    photo = photoBase64
-                };
-
-                string jsonData = JsonSerializer.Serialize(requestObj);
-                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response = await _httpClient.PostAsync("/api/account_requests", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    CustomMessageBox.Show("Ваша заявка на регистрацию успешно отправлена и ожидает подтверждения администратором!", "Успех", CustomMessageBox.MessageType.Success);
-                    NavigationService?.Navigate(new Auth());
-                }
-                else
-                {
-                    string err = await response.Content.ReadAsStringAsync();
-                    CustomMessageBox.Show($"Ошибка сервера при регистрации.\nКод: {response.StatusCode}\n{err}", "Ошибка сервера", CustomMessageBox.MessageType.Error);
+                    string corporateEmail = tbStudentId.Text.Trim() + ((ComboBoxItem)cbDomain.SelectedItem).Content.ToString();
+                    tbVerificationEmail.Text = corporateEmail;
                 }
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Произошла ошибка при отправке запроса: {ex.Message}", "Системная ошибка", CustomMessageBox.MessageType.Error);
+                CustomMessageBox.Show($"Произошла ошибка: {ex.Message}", "Системная ошибка", CustomMessageBox.MessageType.Error);
             }
             finally
             {
@@ -531,6 +498,174 @@ namespace Diplom_Stud.Pages.General
         private void LoginText_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             NavigationService?.Navigate(new Auth());
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            }
+            catch { }
+            e.Handled = true;
+        }
+
+        private async void BtnVerifyCode_Click(object sender, RoutedEventArgs e)
+        {
+            string code = tbVerificationCode.Text.Trim();
+            if (string.IsNullOrWhiteSpace(code) || code.Length != 6)
+            {
+                errVerificationCode.Text = "Введите 6-значный код";
+                errVerificationCode.Visibility = Visibility.Visible;
+                return;
+            }
+
+            btnVerifyCode.IsEnabled = false;
+            btnVerifyCode.Content = "Проверка...";
+
+            try
+            {
+                bool verified = await VerifyCodeAsync(code);
+                if (verified)
+                {
+                    await CompleteRegistrationWithCodeAsync(code);
+                }
+            }
+            finally
+            {
+                btnVerifyCode.IsEnabled = true;
+                btnVerifyCode.Content = "ПОДТВЕРДИТЬ КОД И ЗАВЕРШИТЬ РЕГИСТРАЦИЮ";
+            }
+        }
+
+        private async Task<bool> SendVerificationCodeAsync()
+        {
+            try
+            {
+                string corporateEmail = tbStudentId.Text.Trim() + ((ComboBoxItem)cbDomain.SelectedItem).Content.ToString();
+
+                var payload = new
+                {
+                    name = tbFirstName.Text.Trim(),
+                    surname = tbLastName.Text.Trim(),
+                    studentEmail = corporateEmail
+                };
+
+                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                HttpResponseMessage response = await _httpClient.PostAsync("/api/account_requests/send-code", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else
+                {
+                    string err = await response.Content.ReadAsStringAsync();
+                    CustomMessageBox.Show($"Не удалось отправить код подтверждения.\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Ошибка при отправке кода: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                return false;
+            }
+        }
+
+        private async Task<bool> VerifyCodeAsync(string code)
+        {
+            try
+            {
+                string corporateEmail = tbStudentId.Text.Trim() + ((ComboBoxItem)cbDomain.SelectedItem).Content.ToString();
+
+                var payload = new
+                {
+                    email = corporateEmail,
+                    code = code
+                };
+
+                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                HttpResponseMessage response = await _httpClient.PostAsync("/api/account_requests/verify-code", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    errVerificationCode.Visibility = Visibility.Collapsed;
+                    return true;
+                }
+                else
+                {
+                    string err = await response.Content.ReadAsStringAsync();
+                    errVerificationCode.Text = "Неверный код или срок действия истёк";
+                    errVerificationCode.Visibility = Visibility.Visible;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Ошибка проверки кода: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                return false;
+            }
+        }
+
+        private async Task CompleteRegistrationWithCodeAsync(string code)
+        {
+            try
+            {
+                string corporateEmail = tbStudentId.Text.Trim() + ((ComboBoxItem)cbDomain.SelectedItem).Content.ToString();
+
+                string uiGender = ((ComboBoxItem)cbGender.SelectedItem).Content.ToString();
+                string genderVal = uiGender == "Мужской" ? "Мужчина" : (uiGender == "Женский" ? "Женщина" : uiGender);
+
+                string photoBase64 = "";
+                if (_selectedImageBytes != null)
+                {
+                    photoBase64 = $"data:image/jpeg;base64,{Convert.ToBase64String(_selectedImageBytes)}";
+                }
+
+                var finalPayload = new
+                {
+                    email = corporateEmail,
+                    code = code,
+                    accountRequest = new
+                    {
+                        name = tbFirstName.Text.Trim(),
+                        surname = tbLastName.Text.Trim(),
+                        patronymic = tbPatronymic.Text.Trim(),
+                        gender = genderVal,
+                        dateOfBirth = dpBirthDate.SelectedDate.Value.ToString("yyyy-MM-dd"),
+                        studentEmail = corporateEmail,
+                        phoneNumber = tbPhone.Text.Trim().Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", ""),
+                        password = pbPassword.Password,
+                        studentIdNumber = int.Parse(tbStudentId.Text.Trim()),
+                        courseNumber = int.Parse(((ComboBoxItem)cbCourse.SelectedItem).Content.ToString()),
+                        group_id = (int)((ComboBoxItem)cbGroup.SelectedItem).Tag,
+                        speciality_id = (int)((ComboBoxItem)cbSpeciality.SelectedItem).Tag,
+                        vkLink = tbVkLink.Text.Trim(),
+                        social_statuses_id = _selectedStatuses.ToArray(),
+                        photo = photoBase64
+                    }
+                };
+
+                string jsonData = JsonSerializer.Serialize(finalPayload);
+                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await _httpClient.PostAsync("/api/account_requests/verify-and-create", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    CustomMessageBox.Show("Ваша заявка на регистрацию успешно отправлена и ожидает подтверждения администратором!", "Успех", CustomMessageBox.MessageType.Success);
+                    NavigationService?.Navigate(new Auth());
+                }
+                else
+                {
+                    string err = await response.Content.ReadAsStringAsync();
+                    CustomMessageBox.Show($"Ошибка при завершении регистрации.\n{err}", "Ошибка сервера", CustomMessageBox.MessageType.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Произошла ошибка: {ex.Message}", "Системная ошибка", CustomMessageBox.MessageType.Error);
+            }
         }
     }
 

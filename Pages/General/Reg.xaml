@@ -547,19 +547,50 @@
                                 <TextBlock x:Name="errPhoto" Text="Необходимо выбрать фотографию" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="5,2,0,0" FontFamily="Montserrat Thin"/>
                             </StackPanel>
                         </Grid>
-
                         <TextBlock Text="Загрузка своей фотографии является обязательным условием! Просьба загружать фото в формате .png или .jpg" 
                                    Foreground="#7A7886" FontSize="11" TextAlignment="Center" Margin="0,15,0,15" TextWrapping="Wrap"/>
 
+                        <!-- Галочки + ссылка на соглашение -->
                         <StackPanel HorizontalAlignment="Center" Margin="0,0,0,25">
                             <CheckBox x:Name="cbAgreement" Style="{StaticResource ModernCheckBoxStyle}" HorizontalAlignment="Center">
                                 <TextBlock Text="Я согласен на обработку персональных данных" VerticalAlignment="Center"/>
                             </CheckBox>
                             <TextBlock x:Name="errAgreement" Text="Необходимо ваше согласие" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="0,5,0,0" HorizontalAlignment="Center" FontFamily="Montserrat Thin"/>
+
+                            <!-- Новая галочка рассылки -->
+                            <CheckBox x:Name="cbMailingConsent" Style="{StaticResource ModernCheckBoxStyle}" HorizontalAlignment="Center" Margin="0,12,0,0">
+                                <TextBlock Text="Я согласен на получение информационной рассылки" VerticalAlignment="Center"/>
+                            </CheckBox>
+                            <TextBlock x:Name="errMailingConsent" Text="Необходимо ваше согласие на рассылку" Foreground="#E81123" FontSize="11" Visibility="Collapsed" Margin="0,5,0,0" HorizontalAlignment="Center" FontFamily="Montserrat Thin"/>
+
+                            <!-- Ссылка на пользовательское соглашение -->
+                            <TextBlock HorizontalAlignment="Center" Margin="0,10,0,0">
+                                <Hyperlink NavigateUri="https://ais-sst.ru/api/terms" RequestNavigate="Hyperlink_RequestNavigate" Foreground="#02B3BA" FontFamily="Montserrat Thin">
+                                    Пользовательское соглашение (скачать)
+                                </Hyperlink>
+                            </TextBlock>
                         </StackPanel>
 
-                        <Button Content="Зарегистрироваться" Style="{StaticResource RegModernButtonStyle}" 
+                        <Button x:Name="btnRegister" Content="Зарегистрироваться" Style="{StaticResource RegModernButtonStyle}" 
                                 FontFamily="Digital Pixel" FontSize="10" Cursor="Hand" Click="Button_Register_Click"/>
+
+                        <StackPanel x:Name="verificationPanel" Visibility="Collapsed" HorizontalAlignment="Center" Margin="0,20,0,10" Width="400">
+                            <TextBlock Text="На вашу почту отправлен код подтверждения" 
+                                       Foreground="#7A7886" FontSize="13" TextAlignment="Center" FontFamily="Montserrat Thin" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="tbVerificationEmail" Foreground="#02B3BA" FontSize="14" TextAlignment="Center" FontFamily="Montserrat Thin" Margin="0,0,0,15"/>
+
+                            <Border Style="{StaticResource RegInputBorderStyle}" Width="300" HorizontalAlignment="Center">
+                                <TextBox x:Name="tbVerificationCode" Style="{StaticResource RegInnerInputStyle}" 
+                                         Tag="Введите код из письма" MaxLength="6" PreviewTextInput="NumericOnly_PreviewTextInput"/>
+                            </Border>
+
+                            <Button x:Name="btnVerifyCode" Content="ПОДТВЕРДИТЬ КОД И ЗАВЕРШИТЬ РЕГИСТРАЦИЮ" 
+                                    Style="{StaticResource RegModernButtonStyle}" Width="380" Height="50" Margin="0,15,0,0"
+                                    FontFamily="Digital Pixel" FontSize="9" Click="BtnVerifyCode_Click"/>
+
+                            <TextBlock x:Name="errVerificationCode" Text="Неверный код" Foreground="#E81123" FontSize="11" 
+                                       Visibility="Collapsed" Margin="0,8,0,0" HorizontalAlignment="Center" FontFamily="Montserrat Thin"/>
+                        </StackPanel>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                             <TextBlock Text="Уже есть аккаунт? " Foreground="#7A7886"/>
