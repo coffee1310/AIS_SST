@@ -21,7 +21,7 @@ public class ParticipationMarkRequestDTO {
 
     private List<Long> organizerIds;        // ID организаторов для отметки
 
-    private List<ParticipationRecordCreateDTO> eventRoleSectorParticipations;
+    private List<Long> participationRecordIds;  // ID записей event_participation_records
 
     @Builder.Default
     private Boolean present = true;         // true - отметить как присутствовавших, false - убрать отметку

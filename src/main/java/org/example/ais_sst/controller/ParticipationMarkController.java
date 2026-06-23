@@ -34,7 +34,10 @@ public class ParticipationMarkController extends BaseController {
     public ResponseEntity<ParticipationMarkResponseDTO> markParticipation(
             @Valid @RequestBody ParticipationMarkRequestDTO request) {
 
-        log.info("POST /api/events/participation/mark - Marking participation for event: {}", request.getEventId());
+        log.info("POST /api/events/participation/mark - Marking participation for event: {}, records: {}",
+                request.getEventId(),
+                request.getParticipationRecordIds() != null ? request.getParticipationRecordIds().size() : 0);
+
         ParticipationMarkResponseDTO response = participationMarkService.markParticipation(request);
         return ResponseEntity.ok(response);
     }

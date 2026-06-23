@@ -617,6 +617,26 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationException(ValidationException ex) {
+        log.error("Validation error: {}", ex.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Validation Error");
+        response.put("message", ex.getMessage());
+
+        // Специальная обработка для ошибки принадлежности организатора
+        if (ex.getMessage() != null && ex.getMessage().contains("не принадлежит мероприятию")) {
+            response.put("details", "Организатор не принадлежит указанному мероприятию");
+            response.put("suggestion", "Проверьте правильность ID организатора и мероприятия");
+            response.put("action", "Ошибка будет проигнорирована, обработка продолжится");
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(
