@@ -24,6 +24,12 @@ namespace Diplom_Stud.Pages.Coordinator
     {
         private static readonly HttpClient _httpClient = new HttpClient();
 
+        private int _currentDraftIndex = 0;
+        private List<EventViewModelLocal> _allDrafts = new List<EventViewModelLocal>();
+
+        private int _currentEventIndex = 0;
+        private List<EventViewModelLocal> _allEvents = new List<EventViewModelLocal>();
+
         public CoordinatorHome()
         {
             InitializeComponent();
@@ -81,38 +87,59 @@ namespace Diplom_Stud.Pages.Coordinator
 
                 int userId = App.CurrentUserProfile?.id ?? 0;
 
-                var draftsDto = await FetchEventsFromApi($"/api/events?isDraft=true&creatorId={userId}&page=0&size=50");
+                var draftsDto = await FetchEventsFromApi($"/api/events?isDraft=true&creatorId={userId}&isDeleted=false&page=0&size=50");
+                var myEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&creatorId={userId}&isDeleted=false&page=0&size=50");
+                var orgEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&isOrganizer=true&isDeleted=false&page=0&size=50");
+                var sectorEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&isResponsibleSector=true&isDeleted=false&page=0&size=50");
 
-                var myEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&creatorId={userId}&page=0&size=50");
+                var activeEventsDict = new Dictionary<int, EventViewModelLocal>();
 
-                var orgEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&isOrganizer=true&page=0&size=50");
+                foreach (var ev in myEventsDto)
+                    activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
 
-                var sectorEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&isResponsibleSector=true&page=0&size=50");
+                foreach (var ev in orgEventsDto)
+                {
+                    if (activeEventsDict.ContainsKey(ev.id))
+                    {
+                        activeEventsDict[ev.id].OrganizerBadgeVisibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
+                    }
+                }
 
-                var activeEventsDict = new Dictionary<int, EventDtoLocal>();
+                foreach (var ev in sectorEventsDto)
+                {
+                    if (!activeEventsDict.ContainsKey(ev.id))
+                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
+                }
 
-                foreach (var ev in myEventsDto) activeEventsDict[ev.id] = ev;
-                foreach (var ev in orgEventsDto) activeEventsDict[ev.id] = ev;
-                foreach (var ev in sectorEventsDto) activeEventsDict[ev.id] = ev;
+                _allDrafts = draftsDto.Select(d => MapToViewModel(d, isOrganizer: false)).ToList();
 
-                var draftsVm = draftsDto.Select(MapToViewModel).ToList();
-
-                var activeEventsVm = activeEventsDict.Values.Select(MapToViewModel).ToList();
-
-                var sortedActiveEventsVm = activeEventsVm
+                _allEvents = activeEventsDict.Values
                     .OrderByDescending(v => v.IsOverdue)
                     .ThenBy(v => v.EventDate)
                     .ToList();
 
-                if (draftsVm.Count > 0)
+                _currentDraftIndex = 0;
+                _currentEventIndex = 0;
+
+                UpdateDraftCarousel();
+                UpdateEventCarousel();
+
+                if (_allDrafts.Count > 0)
                 {
                     DraftsHeaderGrid.Visibility = Visibility.Visible;
                     DraftsItemsControl.Visibility = Visibility.Visible;
-                    DraftsItemsControl.ItemsSource = draftsVm;
+                }
+                else
+                {
+                    DraftsHeaderGrid.Visibility = Visibility.Collapsed;
+                    DraftsItemsControl.Visibility = Visibility.Collapsed;
                 }
 
-                EventsItemsControl.ItemsSource = sortedActiveEventsVm;
-                if (sortedActiveEventsVm.Count == 0) EmptyEventsText.Visibility = Visibility.Visible;
+                if (_allEvents.Count == 0) EmptyEventsText.Visibility = Visibility.Visible;
 
             }
             catch (Exception ex)
@@ -122,6 +149,70 @@ namespace Diplom_Stud.Pages.Coordinator
             finally
             {
                 LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void UpdateDraftCarousel()
+        {
+            if (_allDrafts == null || _allDrafts.Count == 0)
+            {
+                DraftsItemsControl.ItemsSource = null;
+                return;
+            }
+            var displayDrafts = _allDrafts.Skip(_currentDraftIndex).Take(3).ToList();
+            DraftsItemsControl.ItemsSource = displayDrafts;
+
+            BtnPrevDraft.Visibility = _currentDraftIndex > 0 ? Visibility.Visible : Visibility.Collapsed;
+            BtnNextDraft.Visibility = _currentDraftIndex + 3 < _allDrafts.Count ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BtnPrevDraft_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentDraftIndex > 0)
+            {
+                _currentDraftIndex--;
+                UpdateDraftCarousel();
+            }
+        }
+
+        private void BtnNextDraft_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentDraftIndex + 3 < _allDrafts.Count)
+            {
+                _currentDraftIndex++;
+                UpdateDraftCarousel();
+            }
+        }
+
+        private void UpdateEventCarousel()
+        {
+            if (_allEvents == null || _allEvents.Count == 0)
+            {
+                EventsItemsControl.ItemsSource = null;
+                return;
+            }
+            var displayEvents = _allEvents.Skip(_currentEventIndex).Take(3).ToList();
+            EventsItemsControl.ItemsSource = displayEvents;
+
+            BtnPrevEvent.Visibility = _currentEventIndex > 0 ? Visibility.Visible : Visibility.Collapsed;
+            BtnNextEvent.Visibility = _currentEventIndex + 3 < _allEvents.Count ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BtnPrevEvent_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentEventIndex > 0)
+            {
+                _currentEventIndex--;
+                UpdateEventCarousel();
+            }
+        }
+
+        private void BtnNextEvent_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentEventIndex + 3 < _allEvents.Count)
+            {
+                _currentEventIndex++;
+                UpdateEventCarousel();
             }
         }
 
@@ -144,7 +235,7 @@ namespace Diplom_Stud.Pages.Coordinator
             return new List<EventDtoLocal>();
         }
 
-        private EventViewModelLocal MapToViewModel(EventDtoLocal ev)
+        private EventViewModelLocal MapToViewModel(EventDtoLocal ev, bool isOrganizer)
         {
             string dateDisplay = "Дата не указана";
             DateTime parsedDate = DateTime.MaxValue;
@@ -190,6 +281,7 @@ namespace Diplom_Stud.Pages.Coordinator
                 Image = bmp,
                 PlaceholderVisibility = phVis,
                 ImageVisibility = imgVis,
+                OrganizerBadgeVisibility = isOrganizer ? Visibility.Visible : Visibility.Collapsed,
                 EventDate = parsedDate,
                 IsOverdue = isOverdue,
                 CardBorderBrush = isOverdue ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E81123")) : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A283C")),
@@ -319,6 +411,8 @@ namespace Diplom_Stud.Pages.Coordinator
         public ImageSource Image { get; set; }
         public Visibility PlaceholderVisibility { get; set; }
         public Visibility ImageVisibility { get; set; }
+
+        public Visibility OrganizerBadgeVisibility { get; set; } = Visibility.Collapsed;
 
         public DateTime EventDate { get; set; }
         public bool IsOverdue { get; set; }

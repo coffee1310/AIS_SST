@@ -39,7 +39,7 @@
                 <Grid Margin="10,0,10,20">
                     <TextBlock Text="Мероприятия" FontSize="24" FontFamily="Digital Pixel" Foreground="White" VerticalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="Все мероприятия" Style="{StaticResource PurpleOutlineButtonStyle}" Margin="0,0,15,0" Click="AllEvents_Click"/>
+                        <Button Content="Все мероприятий" Style="{StaticResource PurpleOutlineButtonStyle}" Margin="0,0,15,0" Click="AllEvents_Click"/>
 
                         <Button x:Name="BtnPrevEvent" Click="BtnPrevEvent_Click" Style="{StaticResource PurpleArrowButtonStyle}" Margin="0,0,10,0" Visibility="Collapsed">
                             <Path Data="M10,1 L4,7 L10,13 M4,7 L16,7" Stroke="White" StrokeThickness="2" Stretch="Uniform" Width="14" Height="10"/>
@@ -52,15 +52,15 @@
                     </StackPanel>
                 </Grid>
 
-                <ItemsControl x:Name="EventsItemsControl" Margin="0,0,0,60">
+                <ItemsControl x:Name="EventsItemsControl" Margin="0,0,0,60" HorizontalAlignment="Left">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <UniformGrid Columns="3"/>
+                            <StackPanel Orientation="Horizontal"/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource EventCardStyle}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="{Binding CardBorderThickness}" Cursor="Hand" MouseLeftButtonUp="EventCard_Click" Tag="{Binding Id}">
+                            <Border Style="{StaticResource EventCardStyle}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="{Binding CardBorderThickness}" Cursor="Hand" MouseLeftButtonUp="EventCard_Click" Tag="{Binding Id}" Width="300" Height="290" Margin="0,0,20,0" VerticalAlignment="Top">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
