@@ -29,15 +29,15 @@ namespace Diplom_Stud.Pages.Coordinator
         private string _newBase64Image = null;
         private bool _isLoading = false;
 
-        private List<RoleDto> _apiRoles = new List<RoleDto>();
-        private List<SectorDto> _apiSectors = new List<SectorDto>();
+        private List<Edit_RoleDto> _apiRoles = new List<Edit_RoleDto>();
+        private List<Edit_SectorDto> _apiSectors = new List<Edit_SectorDto>();
 
         private List<int> _rolesToDelete = new List<int>();
         private List<int> _initialOrganizerIds = new List<int>();
 
-        public ObservableCollection<RoleItem> Roles { get; set; } = new ObservableCollection<RoleItem>();
-        public ObservableCollection<UserDto> SelectedOrganizers { get; set; } = new ObservableCollection<UserDto>();
-        public ObservableCollection<SectorSelectionItem> TargetSectors { get; set; } = new ObservableCollection<SectorSelectionItem>();
+        public ObservableCollection<Edit_RoleItem> Roles { get; set; } = new ObservableCollection<Edit_RoleItem>();
+        public ObservableCollection<Edit_UserDto> SelectedOrganizers { get; set; } = new ObservableCollection<Edit_UserDto>();
+        public ObservableCollection<Edit_SectorSelectionItem> TargetSectors { get; set; } = new ObservableCollection<Edit_SectorSelectionItem>();
 
         private string _eventTitle;
         public string EventTitle { get => _eventTitle; set { _eventTitle = value; OnPropertyChanged(nameof(EventTitle)); } }
@@ -135,21 +135,21 @@ namespace Diplom_Stud.Pages.Coordinator
                 if (rolesResp.IsSuccessStatusCode)
                 {
                     string json = await rolesResp.Content.ReadAsStringAsync();
-                    _apiRoles = JsonSerializer.Deserialize<List<RoleDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<RoleDto>();
+                    _apiRoles = JsonSerializer.Deserialize<List<Edit_RoleDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<Edit_RoleDto>();
                 }
 
                 var sectorsResp = await _httpClient.GetAsync("/api/sector");
                 if (sectorsResp.IsSuccessStatusCode)
                 {
                     string json = await sectorsResp.Content.ReadAsStringAsync();
-                    _apiSectors = JsonSerializer.Deserialize<List<SectorDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<SectorDto>();
+                    _apiSectors = JsonSerializer.Deserialize<List<Edit_SectorDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<Edit_SectorDto>();
                 }
 
                 var usersResp = await _httpClient.GetAsync("/api/users/all?page=0&size=1000&sortBy=id&sortDirection=ASC");
                 if (usersResp.IsSuccessStatusCode)
                 {
                     string json = await usersResp.Content.ReadAsStringAsync();
-                    var pageData = JsonSerializer.Deserialize<PageResponse_Temp>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var pageData = JsonSerializer.Deserialize<Edit_PageResponse_Temp>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                     if (pageData?.content != null)
                     {
@@ -197,7 +197,7 @@ namespace Diplom_Stud.Pages.Coordinator
                         foreach (var s in _apiSectors)
                         {
                             bool isSel = ev.sectors != null && ev.sectors.Any(sec => sec.id == s.id);
-                            TargetSectors.Add(new SectorSelectionItem { Sector = s, IsSelected = isSel });
+                            TargetSectors.Add(new Edit_SectorSelectionItem { Sector = s, IsSelected = isSel });
                         }
 
                         TargetSectorsPanel.Visibility = (!IsPublic && IsFree) ? Visibility.Visible : Visibility.Collapsed;
@@ -224,7 +224,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
                             foreach (var o in listOrg)
                             {
-                                var user = new UserDto
+                                var user = new Edit_UserDto
                                 {
                                     id = o.id,
                                     name = o.fullName ?? "Неизвестный организатор",
@@ -240,9 +240,9 @@ namespace Diplom_Stud.Pages.Coordinator
                         Roles.Clear();
                         if (ev.isFreeEvent)
                         {
-                            Roles.Add(new RoleItem
+                            Roles.Add(new Edit_RoleItem
                             {
-                                RoleType = RoleItem.RoleTypeEnum.Participant,
+                                RoleType = Edit_RoleItem.RoleTypeEnum.Participant,
                                 RoleTitleDisplay = "Участник (Свободное)",
                                 Tasks = "Участие в мероприятии",
                                 Points = "10",
@@ -254,9 +254,9 @@ namespace Diplom_Stud.Pages.Coordinator
                         }
                         if (ev.maxOrganizersCount > 0)
                         {
-                            Roles.Add(new RoleItem
+                            Roles.Add(new Edit_RoleItem
                             {
-                                RoleType = RoleItem.RoleTypeEnum.Organizer,
+                                RoleType = Edit_RoleItem.RoleTypeEnum.Organizer,
                                 RoleTitleDisplay = "Организатор (Набор)",
                                 Tasks = "Организация и помощь в проведении",
                                 Points = "15",
@@ -290,10 +290,10 @@ namespace Diplom_Stud.Pages.Coordinator
                                 dlTime = dl.ToString("HH:mm");
                             }
 
-                            Roles.Add(new RoleItem
+                            Roles.Add(new Edit_RoleItem
                             {
                                 RoleId = roleDto.id,
-                                RoleType = RoleItem.RoleTypeEnum.Custom,
+                                RoleType = Edit_RoleItem.RoleTypeEnum.Custom,
                                 IsExpanded = false,
                                 AvailableRoles = _apiRoles,
                                 AvailableSectors = _apiSectors,
@@ -301,6 +301,7 @@ namespace Diplom_Stud.Pages.Coordinator
                                 SelectedSector = globalSector,
                                 Tasks = roleDto.description,
                                 PeopleCount = roleDto.capacity.ToString(),
+                                Points = globalRole?.defaultPoints.ToString() ?? "10",
                                 DeadlineDate = dlDate,
                                 DeadlineTime = dlTime
                             });
@@ -344,11 +345,11 @@ namespace Diplom_Stud.Pages.Coordinator
             if (_isLoading) return;
             UpdateTargetSectorsVisibility();
 
-            if (!Roles.Any(r => r.RoleType == RoleItem.RoleTypeEnum.Participant))
+            if (!Roles.Any(r => r.RoleType == Edit_RoleItem.RoleTypeEnum.Participant))
             {
-                Roles.Add(new RoleItem
+                Roles.Add(new Edit_RoleItem
                 {
-                    RoleType = RoleItem.RoleTypeEnum.Participant,
+                    RoleType = Edit_RoleItem.RoleTypeEnum.Participant,
                     RoleTitleDisplay = "Участник (Свободное)",
                     Tasks = "Участие в мероприятии",
                     Points = "10",
@@ -365,21 +366,21 @@ namespace Diplom_Stud.Pages.Coordinator
             if (_isLoading) return;
             UpdateTargetSectorsVisibility();
 
-            var participantRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Participant);
+            var participantRole = Roles.FirstOrDefault(r => r.RoleType == Edit_RoleItem.RoleTypeEnum.Participant);
             if (participantRole != null) Roles.Remove(participantRole);
         }
 
         private void AddOrganizerRole_Click(object sender, MouseButtonEventArgs e)
         {
-            if (Roles.Any(r => r.RoleType == RoleItem.RoleTypeEnum.Organizer))
+            if (Roles.Any(r => r.RoleType == Edit_RoleItem.RoleTypeEnum.Organizer))
             {
                 CustomMessageBox.Show("Набор организаторов уже добавлен в список ролей.", "Информация", CustomMessageBox.MessageType.Info);
                 return;
             }
 
-            Roles.Add(new RoleItem
+            Roles.Add(new Edit_RoleItem
             {
-                RoleType = RoleItem.RoleTypeEnum.Organizer,
+                RoleType = Edit_RoleItem.RoleTypeEnum.Organizer,
                 RoleTitleDisplay = "Организатор (Набор)",
                 Tasks = "Организация и помощь в проведении",
                 Points = "15",
@@ -460,7 +461,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
             foreach (var role in Roles)
             {
-                if (role.RoleType == RoleItem.RoleTypeEnum.Custom)
+                if (role.RoleType == Edit_RoleItem.RoleTypeEnum.Custom)
                 {
                     if (role.SelectedRole == null) { CustomMessageBox.Show("В карточке не выбрана роль.", "Ошибка", CustomMessageBox.MessageType.Error); return; }
                     if (role.DeadlineDate == null) { CustomMessageBox.Show($"Для '{role.SelectedRole.title}' не выбран дедлайн.", "Ошибка", CustomMessageBox.MessageType.Error); return; }
@@ -483,10 +484,10 @@ namespace Diplom_Stud.Pages.Coordinator
 
                 var finalOrganizerIds = SelectedOrganizers.Select(u => u.id).ToList();
 
-                var partRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Participant);
+                var partRole = Roles.FirstOrDefault(r => r.RoleType == Edit_RoleItem.RoleTypeEnum.Participant);
                 int pCount = partRole != null && int.TryParse(partRole.PeopleCount, out int parsedP) ? parsedP : 0;
 
-                var orgRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Organizer);
+                var orgRole = Roles.FirstOrDefault(r => r.RoleType == Edit_RoleItem.RoleTypeEnum.Organizer);
                 int oCount = orgRole != null && int.TryParse(orgRole.PeopleCount, out int parsedO) ? parsedO : 0;
 
                 var eventPayload = new Dictionary<string, object>
@@ -542,7 +543,7 @@ namespace Diplom_Stud.Pages.Coordinator
                     await _httpClient.DeleteAsync($"/api/event-roles/{roleId}");
                 }
 
-                foreach (var role in Roles.Where(r => r.RoleType == RoleItem.RoleTypeEnum.Custom))
+                foreach (var role in Roles.Where(r => r.RoleType == Edit_RoleItem.RoleTypeEnum.Custom))
                 {
                     string deadlineFormatted = $"{role.DeadlineDate.Value.ToString("yyyy-MM-dd")}T{role.DeadlineTime}:00";
                     var rolePayload = new
@@ -603,7 +604,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
         private void AddOrganizer_Click(object sender, RoutedEventArgs e)
         {
-            if (CbUsers.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is UserDto selectedUser)
+            if (CbUsers.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is Edit_UserDto selectedUser)
             {
                 if (!SelectedOrganizers.Any(u => u.id == selectedUser.id)) SelectedOrganizers.Add(selectedUser);
                 CbUsers.SelectedItem = null;
@@ -617,7 +618,7 @@ namespace Diplom_Stud.Pages.Coordinator
                 {
                     if (item.Content.ToString().Equals(typedText, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (item.Tag is UserDto matchedUser && !SelectedOrganizers.Any(u => u.id == matchedUser.id))
+                        if (item.Tag is Edit_UserDto matchedUser && !SelectedOrganizers.Any(u => u.id == matchedUser.id))
                             SelectedOrganizers.Add(matchedUser);
                         break;
                     }
@@ -630,7 +631,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
         private void RemoveOrganizer_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.DataContext is UserDto user)
+            if (sender is Button btn && btn.DataContext is Edit_UserDto user)
                 SelectedOrganizers.Remove(user);
         }
 
@@ -644,14 +645,14 @@ namespace Diplom_Stud.Pages.Coordinator
 
         private void AddRole_Click(object sender, MouseButtonEventArgs e)
         {
-            Roles.Add(new RoleItem { IsExpanded = true, AvailableRoles = _apiRoles, AvailableSectors = _apiSectors });
+            Roles.Add(new Edit_RoleItem { IsExpanded = true, AvailableRoles = _apiRoles, AvailableSectors = _apiSectors });
         }
 
         private void RemoveRole_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.DataContext is RoleItem role)
+            if (sender is Button btn && btn.DataContext is Edit_RoleItem role)
             {
-                if (role.RoleType == RoleItem.RoleTypeEnum.Participant)
+                if (role.RoleType == Edit_RoleItem.RoleTypeEnum.Participant)
                 {
                     IsFree = false;
                 }
@@ -753,8 +754,8 @@ namespace Diplom_Stud.Pages.Coordinator
         public bool isFreeEvent { get; set; }
         public int maxParticipantsCount { get; set; }
         public int maxOrganizersCount { get; set; }
-        public List<SectorDto> sectors { get; set; }
-        public List<UserDto> organizers { get; set; }
+        public List<Edit_SectorDto> sectors { get; set; }
+        public List<Edit_UserDto> organizers { get; set; }
     }
 
     public class EditEventRolePageLocal
@@ -781,5 +782,134 @@ namespace Diplom_Stud.Pages.Coordinator
         public int totalPoints { get; set; }
         public bool wasPresent { get; set; }
         public string entityType { get; set; }
+    }
+
+    public class Edit_RoleDto
+    {
+        public int id { get; set; }
+        public string title { get; set; }
+        public int sectorId { get; set; }
+        public int defaultPoints { get; set; }
+    }
+
+    public class Edit_SectorDto { public int id { get; set; } public string title { get; set; } }
+
+    public class Edit_UserDto { public int id { get; set; } public string name { get; set; } public string surname { get; set; } public string patronymic { get; set; } public string role { get; set; } public string DisplayName => $"{surname} {name} {patronymic}".Trim(); }
+
+    public class Edit_SectorSelectionItem : INotifyPropertyChanged
+    {
+        public Edit_SectorDto Sector { get; set; }
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public class Edit_RoleItem : INotifyPropertyChanged
+    {
+        public enum RoleTypeEnum { Custom, Participant, Organizer }
+
+        private RoleTypeEnum _roleType = RoleTypeEnum.Custom;
+        public RoleTypeEnum RoleType
+        {
+            get => _roleType;
+            set
+            {
+                _roleType = value;
+                OnPropertyChanged(nameof(RoleType));
+                OnPropertyChanged(nameof(CustomRoleVisibility));
+                OnPropertyChanged(nameof(SpecialRoleVisibility));
+            }
+        }
+
+        public Visibility CustomRoleVisibility => RoleType == RoleTypeEnum.Custom ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility SpecialRoleVisibility => RoleType != RoleTypeEnum.Custom ? Visibility.Visible : Visibility.Collapsed;
+
+        private string _roleTitleDisplay;
+        public string RoleTitleDisplay
+        {
+            get => _roleTitleDisplay;
+            set { _roleTitleDisplay = value; OnPropertyChanged(nameof(RoleTitleDisplay)); }
+        }
+
+        public int RoleId { get; set; }
+        private bool _isExpanded = false;
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set { _isExpanded = value; OnPropertyChanged(nameof(IsExpanded)); }
+        }
+
+        private List<Edit_SectorDto> _availableSectors;
+        public List<Edit_SectorDto> AvailableSectors
+        {
+            get => _availableSectors;
+            set { _availableSectors = value; OnPropertyChanged(nameof(AvailableSectors)); }
+        }
+
+        private Edit_SectorDto _selectedSector;
+        public Edit_SectorDto SelectedSector
+        {
+            get => _selectedSector;
+            set { _selectedSector = value; OnPropertyChanged(nameof(SelectedSector)); }
+        }
+
+        private Edit_RoleDto _selectedRole;
+        public Edit_RoleDto SelectedRole
+        {
+            get => _selectedRole;
+            set
+            {
+                _selectedRole = value;
+                OnPropertyChanged(nameof(SelectedRole));
+
+                if (_selectedRole != null)
+                {
+                    if (AvailableSectors != null)
+                    {
+                        var sector = AvailableSectors.FirstOrDefault(s => s.id == _selectedRole.sectorId);
+                        if (sector != null) SelectedSector = sector;
+                    }
+                    Points = _selectedRole.defaultPoints.ToString();
+                }
+            }
+        }
+
+        private List<Edit_RoleDto> _availableRoles;
+        public List<Edit_RoleDto> AvailableRoles
+        {
+            get => _availableRoles;
+            set { _availableRoles = value; OnPropertyChanged(nameof(AvailableRoles)); }
+        }
+
+        public string Tasks { get; set; }
+        public string PeopleCount { get; set; } = "1";
+
+        private string _points = "10";
+        public string Points
+        {
+            get => _points;
+            set { _points = value; OnPropertyChanged(nameof(Points)); }
+        }
+
+        private DateTime? _deadlineDate;
+        public DateTime? DeadlineDate
+        {
+            get => _deadlineDate;
+            set { _deadlineDate = value; OnPropertyChanged(nameof(DeadlineDate)); }
+        }
+        public string DeadlineTime { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public class Edit_PageResponse_Temp
+    {
+        public List<Edit_UserDto> content { get; set; }
     }
 }
