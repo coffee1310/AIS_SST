@@ -593,6 +593,30 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(CapacityExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleCapacityExceeded(
+            CapacityExceededException ex, WebRequest request) {
+        log.error("Capacity exceeded: {}", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Превышен лимит мест",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(EventParticipationRecordNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleEventParticipationRecordNotFound(
+            EventParticipationRecordNotFoundException ex, WebRequest request) {
+        log.error("Event participation record not found: {}", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "Запись об участии не найдена",
+                ex.getMessage(),
+                request
+        );
+    }
+
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(

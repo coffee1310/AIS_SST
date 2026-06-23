@@ -46,7 +46,6 @@ public class ApplicationsForTheRoleService {
     public RoleApplicationResponseDTO createApplication(Long eventRoleId, Long userId, String description) {
         log.info("Creating application for user: {}, eventRole: {}", userId, eventRoleId);
 
-        // Получаем первый сектор пользователя
         List<SectorParticipant> userSectors = sectorParticipantRepository.findByStudentId(userId);
 
         if (userSectors.isEmpty()) {
@@ -58,28 +57,19 @@ public class ApplicationsForTheRoleService {
         EventRole eventRole = eventRoleRepository.findById(eventRoleId)
                 .orElseThrow(() -> new EventRoleDoesNotFoundException("Роль мероприятия не найдена с id: " + eventRoleId));
 
-        // Проверяем, не подавал ли уже заявку
         if (roleApplicationRepository.existsBySectorParticipantIdAndEventRoleId(sectorParticipant.getId(), eventRoleId)) {
             throw new DuplicateApplicationException("Вы уже подали заявку на эту роль");
         }
 
-        // Подсчитываем количество уже одобренных заявок
-        long approvedCount = roleApplicationRepository.countApprovedByEventRoleId(eventRoleId);
-
-        int maxSlots = eventRole.getCapacity() != null ? eventRole.getCapacity() : Integer.MAX_VALUE;
-        boolean isReserve = approvedCount >= maxSlots;
-
         ApplicationsForTheRole application = ApplicationsForTheRole.builder()
                 .sectorParticipant(sectorParticipant)
                 .eventRole(eventRole)
-                .isReserve(isReserve)
                 .status(RoleApplicationStatuses.НА_РАССМОТРЕНИИ)
-                .description(description)  // НОВОЕ ПОЛЕ
+                .description(description)
                 .build();
 
         ApplicationsForTheRole savedApplication = roleApplicationRepository.save(application);
-        log.info("Application created with id: {}, isReserve: {}, description: {}",
-                savedApplication.getId(), isReserve, description);
+        log.info("Application created with id: {}", savedApplication.getId());
 
         return roleApplicationMapper.toResponseDto(savedApplication);
     }
@@ -139,57 +129,65 @@ public class ApplicationsForTheRoleService {
             throw new IllegalStateException("Заявка уже обработана. Текущий статус: " + application.getStatus());
         }
 
-        long approvedCount = roleApplicationRepository.countApprovedByEventRoleId(application.getEventRole().getId());
+        EventRole eventRole = application.getEventRole();
 
-        int maxSlots = application.getEventRole().getCapacity() != null
-                ? application.getEventRole().getCapacity()
-                : Integer.MAX_VALUE;
+        // ⭐ Подсчитываем сколько уже людей в основном составе (isReserve = false)
+        long mainCount = eventParticipationRecordRepository.countByEventRoleIdAndIsReserveFalseAndIsDeletedFalse(eventRole.getId());
 
-        if (approvedCount < maxSlots) {
+        int maxSlots = eventRole.getCapacity() != null ? eventRole.getCapacity() : Integer.MAX_VALUE;
+
+        // ⭐ Определяем, будет ли заявка в резерве
+        boolean isReserve = mainCount >= maxSlots;
+
+        // ⭐ Если есть место в основном составе
+        if (mainCount < maxSlots) {
             application.setStatus(RoleApplicationStatuses.ОДОБРЕНА);
-            log.info("Application approved as regular member");
-        } else if (application.getIsReserve()) {
-            application.setStatus(RoleApplicationStatuses.ОДОБРЕНА);
-            log.info("Application approved as reserve member");
-        } else {
-            throw new IllegalStateException("Нет свободных мест для одобрения заявки. Максимум мест: " + maxSlots);
+            log.info("Application approved as regular member (main count: {}/{})", mainCount + 1, maxSlots);
+        }
+        // ⭐ Если места нет, но есть резервные места
+        else {
+            long reserveCount = eventParticipationRecordRepository.countByEventRoleIdAndIsReserveTrueAndIsDeletedFalse(eventRole.getId());
+            int reserveCapacity = eventRole.getReserveCapacity() != null ? eventRole.getReserveCapacity() : 0;
+
+            if (reserveCount < reserveCapacity) {
+                application.setStatus(RoleApplicationStatuses.ОДОБРЕНА);
+                isReserve = true;
+                log.info("Application approved as reserve member (reserve count: {}/{})", reserveCount + 1, reserveCapacity);
+            } else {
+                throw new IllegalStateException(
+                        String.format("Нет свободных мест. Основной состав: %d/%d, Резерв: %d/%d",
+                                mainCount, maxSlots, reserveCount, reserveCapacity)
+                );
+            }
         }
 
         ApplicationsForTheRole savedApplication = roleApplicationRepository.save(application);
 
-        createParticipationRecord(savedApplication);
+        // ⭐ Создаем запись участия с правильным isReserve
+        createParticipationRecord(savedApplication, isReserve);
 
         return roleApplicationMapper.toResponseDto(savedApplication);
     }
 
     @Transactional
-    public void createParticipationRecord(ApplicationsForTheRole application) {
-        log.info("Creating participation record for approved application: {}", application.getId());
+    public void createParticipationRecord(ApplicationsForTheRole application, boolean isReserve) {
+        log.info("Creating participation record for approved application: {}, isReserve: {}",
+                application.getId(), isReserve);
 
-        // Проверяем, не существует ли уже запись
         boolean exists = eventParticipationRecordRepository.existsBySectorParticipantAndEventRole(
                 application.getSectorParticipant(),
                 application.getEventRole()
         );
 
         if (exists) {
-            log.warn("Participation record already exists for sectorParticipant: {} and eventRole: {}",
-                    application.getSectorParticipant().getId(),
-                    application.getEventRole().getId());
             throw new DuplicateParticipationRecordException(
                     "Запись об участии уже существует для данного участника и роли"
             );
         }
 
-        // ⭐ ПОЛУЧАЕМ БАЛЛЫ ИЗ GLOBAL_EVENT_ROLES
         EventRole eventRole = application.getEventRole();
         GlobalEventRole globalEventRole = eventRole.getGlobalEventRole();
-        Integer points = globalEventRole.getDefaultPoints();
-
-        if (points == null) {
-            points = 1; // Значение по умолчанию, если не указано
-            log.warn("GlobalEventRole {} has null defaultPoints, using default: 1", globalEventRole.getId());
-        }
+        Integer points = globalEventRole.getDefaultPoints() != null ? globalEventRole.getDefaultPoints() : 1;
 
         // Проверяем, было ли уже мероприятие
         boolean wasPresent = false;
@@ -198,7 +196,6 @@ public class ApplicationsForTheRoleService {
             LocalDateTime eventDateTime = LocalDateTime.of(event.getDateOfEvent(), event.getStartTime());
             if (eventDateTime.isBefore(LocalDateTime.now())) {
                 wasPresent = true;
-                log.info("Event has already passed, setting wasPresent = true");
             }
         }
 
@@ -206,13 +203,14 @@ public class ApplicationsForTheRoleService {
                 .sectorParticipant(application.getSectorParticipant())
                 .eventRole(eventRole)
                 .wasPresent(wasPresent)
-                .totalPoints(points)  // ⭐ УСТАНАВЛИВАЕМ БАЛЛЫ
+                .isReserve(isReserve)  // ⭐ Устанавливаем из параметра
+                .totalPoints(points)
                 .comment("Создано на основе одобренной заявки #" + application.getId())
                 .build();
 
         eventParticipationRecordRepository.save(record);
-        log.info("Participation record created with id: {}, totalPoints: {}, wasPresent: {}",
-                record.getId(), record.getTotalPoints(), record.getWasPresent());
+        log.info("Participation record created with id: {}, isReserve: {}, totalPoints: {}",
+                record.getId(), record.getIsReserve(), record.getTotalPoints());
     }
 
     @Transactional
@@ -539,7 +537,6 @@ public class ApplicationsForTheRoleService {
                 .sectorParticipantId(sectorParticipant.getId())
                 .sectorParticipantStatus(sectorParticipant.getStatus() != null ?
                         sectorParticipant.getStatus().toString() : null)
-                .isReserve(application.getIsReserve())
                 .status(application.getStatus())
                 .rejectionReason(application.getRejectionReason())
                 .description(application.getDescription())

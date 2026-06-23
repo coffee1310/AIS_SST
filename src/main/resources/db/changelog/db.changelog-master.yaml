@@ -125,3 +125,5 @@ databaseChangeLog:
       file: db/changelog/changes/064-add-reviewed-at-to-task-requests.yaml
   - include:
       file: db/changelog/changes/065-add-completed-by-to-tasks-users.yaml
+  - include:
+      file: db/changelog/changes/066-2026-06-22-add-is-reserve-to-participation-records.yaml

@@ -40,7 +40,6 @@ public interface ApplicationsForTheRoleRepository extends
             "(:eventRoleId IS NULL OR a.eventRole.id = :eventRoleId) AND " +
             "(:eventId IS NULL OR a.eventRole.event.id = :eventId) AND " +
             "(:status IS NULL OR a.status = :status) AND " +
-            "(:isReserve IS NULL OR a.isReserve = :isReserve) AND " +
             "(:dateFrom IS NULL OR a.createdAt >= :dateFrom) AND " +
             "(:dateTo IS NULL OR a.createdAt <= :dateTo)")
     Page<ApplicationsForTheRole> findAllWithFilters(
@@ -49,7 +48,6 @@ public interface ApplicationsForTheRoleRepository extends
             @Param("eventRoleId") Long eventRoleId,
             @Param("eventId") Long eventId,
             @Param("status") RoleApplicationStatuses status,
-            @Param("isReserve") Boolean isReserve,
             @Param("dateFrom") LocalDateTime dateFrom,
             @Param("dateTo") LocalDateTime dateTo,
             Pageable pageable);
@@ -58,28 +56,4 @@ public interface ApplicationsForTheRoleRepository extends
     Page<ApplicationsForTheRole> findBySectorParticipantIdIn(@Param("sectorParticipantIds") List<Long> sectorParticipantIds, Pageable pageable);
 
     boolean existsBySectorParticipantIdAndEventRoleId(Long sectorParticipantId, Long eventRoleId);
-
-    @Query("SELECT COUNT(a) FROM ApplicationsForTheRole a WHERE a.eventRole.id = :eventRoleId AND a.status = 'Одобрена'")
-    long countApprovedByEventRoleId(@Param("eventRoleId") Long eventRoleId);
-
-    @Query("SELECT " +
-            "COUNT(CASE WHEN a.isReserve = false THEN 1 END) as mainCount, " +
-            "COUNT(CASE WHEN a.isReserve = true THEN 1 END) as reserveCount " +
-            "FROM ApplicationsForTheRole a " +
-            "WHERE a.eventRole.id = :eventRoleId " +
-            "AND a.status = :status")
-    Object[] getCountsByEventRoleAndStatus(@Param("eventRoleId") Long eventRoleId,
-                                           @Param("status") RoleApplicationStatuses status);
-
-    long countByEventRoleIdAndStatusAndIsReserve(Long eventRoleId,
-                                                 RoleApplicationStatuses status,
-                                                 boolean isReserve);
-
-    // Все принятые заявки по списку ролей
-    List<ApplicationsForTheRole> findByEventRoleIdInAndStatus(List<Long> eventRoleIds,
-                                                              RoleApplicationStatuses status);
-
-    // Проверка существования заявки
-    boolean existsByEventRoleIdAndSectorParticipantIdAndStatus(
-            Long eventRoleId, Long sectorParticipantId, RoleApplicationStatuses status);
 }

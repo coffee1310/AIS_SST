@@ -84,9 +84,6 @@ public interface EventParticipationRecordRepository extends JpaRepository<EventP
     // Получить все записи с указанным статусом присутствия
     List<EventParticipationRecord> findByWasPresent(Boolean wasPresent);
 
-    // Количество записей по роли
-    long countByEventRoleId(Long eventRoleId);
-
     // Количество записей по роли с присутствием
     long countByEventRoleIdAndWasPresent(Long eventRoleId, Boolean wasPresent);
 
@@ -180,4 +177,25 @@ public interface EventParticipationRecordRepository extends JpaRepository<EventP
     List<EventParticipationRecord> findActiveByEventId(@Param("eventId") Long eventId);
 
     long countByEventRoleIdAndIsDeletedFalse(Long eventRoleId);
+
+    @Query("SELECT COUNT(epr) FROM EventParticipationRecord epr " +
+            "WHERE epr.eventRole.id = :eventRoleId " +
+            "AND epr.isDeleted = false")
+    long countByEventRoleId(@Param("eventRoleId") Long eventRoleId);
+
+    @Query("SELECT COUNT(epr) FROM EventParticipationRecord epr " +
+            "WHERE epr.eventRole.id = :eventRoleId " +
+            "AND epr.wasPresent = false " +
+            "AND epr.isDeleted = false")
+    long countByEventRoleIdAndWasPresentFalse(@Param("eventRoleId") Long eventRoleId);
+
+    Optional<EventParticipationRecord> findByIdAndIsDeletedFalse(Long id);
+
+    List<EventParticipationRecord> findBySectorParticipantIdAndIsDeletedFalse(Long sectorParticipantId);
+
+    long countByEventRoleIdAndIsReserveTrueAndIsDeletedFalse(Long id);
+
+    long countByEventRoleIdAndIsReserveFalseAndIsDeletedFalse(Long id);
+
+    List<EventParticipationRecord> findByEventRoleIdInAndIsDeletedFalse(List<Long> eventRoleIds);
 }

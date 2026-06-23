@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-06-22-add-is-reserve-to-participation-records
+      author: your-name
+      comment: "Добавление поля is_reserve в event_participation_records и перенос данных из applications_for_the_role"
+      changes:
+        # 1. Добавляем колонку is_reserve в event_participation_records
+        - addColumn:
+            tableName: event_participation_records
+            columns:
+              - column:
+                  name: is_reserve
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        # 2. Переносим данные из applications_for_the_role в event_participation_records
+        # Для всех записей участия, которые были созданы из заявок, копируем is_reserve
+        - sql:
+            comment: "Перенос is_reserve из заявок в записи участия"
+            sql: |
+              UPDATE event_participation_records epr
+              SET is_reserve = app.is_reserve
+              FROM applications_for_the_role app
+              WHERE app.sector_participant_id = epr.sector_participant_id
+                AND app.event_role_id = epr.event_role_id
+                AND app.status = 'Одобрена'
+                AND epr.comment LIKE 'Создано на основе одобренной заявки%';
+
+        # 3. Для записей, которые не были созданы из заявок, ставим is_reserve = false
+        - sql:
+            comment: "Устанавливаем is_reserve = false для записей без заявок"
+            sql: |
+              UPDATE event_participation_records
+              SET is_reserve = false
+              WHERE is_reserve IS NULL;

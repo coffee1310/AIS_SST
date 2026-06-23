@@ -54,4 +54,7 @@ public class EventParticipationRecord {
     @Builder.Default
     private Boolean isDeleted = false;
 
+    @Column(name = "is_reserve", nullable = false)
+    @Builder.Default
+    private Boolean isReserve = false;
 }

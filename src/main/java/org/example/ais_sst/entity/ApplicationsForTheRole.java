@@ -36,10 +36,6 @@ public class ApplicationsForTheRole {
     @JoinColumn(name = "event_role_id", nullable = false)
     private EventRole eventRole;
 
-    @Column(name = "is_reserve", nullable = false)
-    @Builder.Default
-    private Boolean isReserve = false;
-
     @Convert(converter = RoleApplicationStatusesConverter.class)
     @Column(name = "status", nullable = false)
     @Builder.Default
