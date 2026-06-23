@@ -361,6 +361,50 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
+        private async void MoveToReserve_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is Part_ItemViewModel p)
+            {
+                MessageBoxResult result = MessageBox.Show($"Вы уверены, что хотите перевести {p.FullName} в резерв?", "Перевод в резерв", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    LoadingOverlay.Visibility = Visibility.Visible;
+                    try
+                    {
+                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                        var payload = new List<int> { p.ParticipantId };
+                        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                        HttpResponseMessage response = await _httpClient.PutAsync("/api/participants/move/to-reserve", content);
+                        if (!response.IsSuccessStatusCode && (response.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed || response.StatusCode == System.Net.HttpStatusCode.NotFound))
+                        {
+                            response = await _httpClient.PostAsync("/api/participants/move/to-reserve", content);
+                        }
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            CustomMessageBox.Show("Участник переведен в резерв.", "Успех", CustomMessageBox.MessageType.Success);
+                            await LoadParticipantsAsync();
+                        }
+                        else
+                        {
+                            string err = await response.Content.ReadAsStringAsync();
+                            CustomMessageBox.Show($"Ошибка перевода:\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    }
+                    finally
+                    {
+                        LoadingOverlay.Visibility = Visibility.Collapsed;
+                    }
+                }
+            }
+        }
+
         private async void KickParticipant_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.DataContext is Part_ItemViewModel p)
@@ -543,5 +587,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
         public string StatusLabel => IsReserve ? "Резерв" : "Основной состав";
         public Brush BackgroundBrush => IsReserve ? new SolidColorBrush(Color.FromArgb(20, 255, 165, 0)) : Brushes.Transparent;
+
+        public Visibility ReserveBtnVisibility => (Type == "Role" && !IsReserve) ? Visibility.Visible : Visibility.Collapsed;
     }
 }

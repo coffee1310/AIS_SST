@@ -1,12 +1,7 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\danii\\source\\repos\\AIS_SST\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\coordinator\\eventfinalizepage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\coordinator\\eventfinalizepage.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 1,
@@ -14,7 +9,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 240,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": -1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -31,19 +26,6 @@
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "EventFinalizePage.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventFinalizePage.xaml.cs",
-              "RelativeDocumentMoniker": "Pages\\Coordinator\\EventFinalizePage.xaml.cs",
-              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Coordinator\\EventFinalizePage.xaml.cs",
-              "RelativeToolTip": "Pages\\Coordinator\\EventFinalizePage.xaml.cs",
-              "ViewState": "AgIAABcAAAAAAAAAAAAAwBEAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-23T01:09:23.271Z",
-              "EditorCaption": ""
             }
           ]
         },

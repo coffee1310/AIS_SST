@@ -121,14 +121,23 @@
                                                             <TextBlock Text="{Binding StatusLabel}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12"/>
                                                         </StackPanel>
 
-                                                        <Button Grid.Column="2" 
-                                                                Content="Исключить" 
-                                                                Style="{StaticResource SoftActionBtnStyle}" 
-                                                                Background="#26E81123"
-                                                                Foreground="#E81123" 
-                                                                VerticalAlignment="Center" 
-                                                                Tag="{Binding ParticipantId}" 
-                                                                Click="KickParticipant_Click"/>
+                                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <Button Content="В резерв" 
+                                                                    Style="{StaticResource SoftActionBtnStyle}" 
+                                                                    Background="#26FFA500"
+                                                                    Foreground="#FFA500" 
+                                                                    Tag="{Binding ParticipantId}" 
+                                                                    Click="MoveToReserve_Click"
+                                                                    Visibility="{Binding ReserveBtnVisibility}"
+                                                                    Margin="0,0,8,0"/>
+
+                                                            <Button Content="Исключить" 
+                                                                    Style="{StaticResource SoftActionBtnStyle}" 
+                                                                    Background="#26E81123"
+                                                                    Foreground="#E81123" 
+                                                                    Tag="{Binding ParticipantId}" 
+                                                                    Click="KickParticipant_Click"/>
+                                                        </StackPanel>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

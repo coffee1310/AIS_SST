@@ -265,9 +265,44 @@ namespace Diplom_Stud.Pages.Coordinator
             finally { LoadingOverlay.Visibility = Visibility.Collapsed; }
         }
 
-        private void ReserveRequest_Click(object sender, RoutedEventArgs e)
+        private async void ReserveRequest_Click(object sender, RoutedEventArgs e)
         {
-            CustomMessageBox.Show("Функция отправки в резерв пока находится в разработке.", "В разработке", CustomMessageBox.MessageType.Warning);
+            if (sender is Button btn && btn.DataContext is Req_AppViewModel app)
+            {
+                LoadingOverlay.Visibility = Visibility.Visible;
+                try
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                    var payload = new List<int> { app.ApplicationId };
+                    var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                    HttpResponseMessage response = await _httpClient.PutAsync("/api/participants/move/to-reserve", content);
+                    if (response.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        response = await _httpClient.PostAsync("/api/participants/move/to-reserve", content);
+                    }
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        CustomMessageBox.Show("Успешно переведено в резерв.", "Успех", CustomMessageBox.MessageType.Success);
+                        await LoadRequestsAsync();
+                    }
+                    else
+                    {
+                        string err = await response.Content.ReadAsStringAsync();
+                        CustomMessageBox.Show($"Ошибка перевода в резерв:\n{err}", "Ошибка", CustomMessageBox.MessageType.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CustomMessageBox.Show(ex.Message, "Ошибка", CustomMessageBox.MessageType.Error);
+                }
+                finally
+                {
+                    LoadingOverlay.Visibility = Visibility.Collapsed;
+                }
+            }
         }
 
         private void RequestCard_Click(object sender, MouseButtonEventArgs e)
