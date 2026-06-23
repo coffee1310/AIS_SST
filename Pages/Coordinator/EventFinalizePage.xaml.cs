@@ -71,6 +71,21 @@ namespace Diplom_Stud.Pages.Coordinator
             return new List<T>();
         }
 
+        private async Task<List<Fin_GlobalUserDto>> FetchAllUsersAsync(JsonSerializerOptions options)
+        {
+            try
+            {
+                var res = await _httpClient.GetAsync("/api/users/all?page=0&size=1000&sortBy=id&sortDirection=ASC");
+                if (res.IsSuccessStatusCode)
+                {
+                    var page = JsonSerializer.Deserialize<Fin_GlobalUserPage>(await res.Content.ReadAsStringAsync(), options);
+                    return page?.content ?? new List<Fin_GlobalUserDto>();
+                }
+            }
+            catch { }
+            return new List<Fin_GlobalUserDto>();
+        }
+
         private async Task LoadParticipantsForFinalizeAsync()
         {
             LoadingOverlay.Visibility = Visibility.Visible;
@@ -82,6 +97,8 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                var allUsers = await FetchAllUsersAsync(options);
 
                 HttpResponseMessage rolesResp = await _httpClient.GetAsync("/api/roles");
                 if (rolesResp.IsSuccessStatusCode)
@@ -106,6 +123,7 @@ namespace Diplom_Stud.Pages.Coordinator
                             block.Participants.Add(new Fin_ItemViewModel
                             {
                                 ParticipantId = u.id,
+                                StudentId = u.id,
                                 FullName = $"{u.surname} {u.name} {u.patronymic}".Trim(),
                                 Type = "Participant",
                                 TypeDisplay = "Слушатель / Зритель",
@@ -126,14 +144,17 @@ namespace Diplom_Stud.Pages.Coordinator
                         var block = new Fin_RoleGroupViewModel { RoleTitle = "Организаторы", Participants = new List<Fin_ItemViewModel>() };
                         foreach (var u in list)
                         {
+                            var matchedUser = allUsers.FirstOrDefault(x => x.DisplayName.Equals(u.fullName, StringComparison.OrdinalIgnoreCase));
+
                             block.Participants.Add(new Fin_ItemViewModel
                             {
                                 ParticipantId = u.id,
+                                StudentId = matchedUser?.id ?? 0,
                                 FullName = u.fullName ?? "Неизвестный организатор",
                                 Type = "Organizer",
                                 TypeDisplay = "Координация",
                                 DefaultPoints = 10,
-                                Avatar = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
+                                Avatar = GetImageFromBase64(matchedUser?.photo) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
                             });
                         }
                         _blocks.Add(block);
@@ -156,14 +177,17 @@ namespace Diplom_Stud.Pages.Coordinator
 
                             foreach (var app in g)
                             {
+                                var matchedUser = allUsers.FirstOrDefault(x => x.studentEmail == app.studentEmail);
+
                                 block.Participants.Add(new Fin_ItemViewModel
                                 {
                                     ParticipantId = app.id,
+                                    StudentId = matchedUser?.id ?? app.studentId ?? 0,
                                     FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
                                     Type = "Role",
                                     TypeDisplay = "Исполнитель",
                                     DefaultPoints = pts,
-                                    Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
+                                    Avatar = GetImageFromBase64(matchedUser?.photo ?? app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
                                 });
                             }
                             _blocks.Add(block);
@@ -181,6 +205,14 @@ namespace Diplom_Stud.Pages.Coordinator
             finally
             {
                 LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void ParticipantCard_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.Tag is int studentId && studentId != 0)
+            {
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.Profile(studentId));
             }
         }
 
@@ -330,6 +362,22 @@ namespace Diplom_Stud.Pages.Coordinator
         }
     }
 
+    public class Fin_GlobalUserDto
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public string surname { get; set; }
+        public string patronymic { get; set; }
+        public string studentEmail { get; set; }
+        public string photo { get; set; }
+        public string DisplayName => $"{surname} {name} {patronymic}".Trim();
+    }
+
+    public class Fin_GlobalUserPage
+    {
+        public List<Fin_GlobalUserDto> content { get; set; }
+    }
+
     public class Fin_GlobalRoleDto
     {
         public string title { get; set; }
@@ -350,16 +398,22 @@ namespace Diplom_Stud.Pages.Coordinator
     {
         public int id { get; set; }
         public string fullName { get; set; }
+        public int? totalPoints { get; set; }
+        public bool? wasPresent { get; set; }
+        public string entityType { get; set; }
     }
 
     public class Fin_RoleAppDto
     {
         public int id { get; set; }
+        public int? studentId { get; set; }
         public string studentName { get; set; }
         public string studentSurname { get; set; }
         public string studentPatronymic { get; set; }
         public string studentPhoto { get; set; }
+        public string studentEmail { get; set; }
         public string eventRoleName { get; set; }
+        public bool? isReserve { get; set; } 
     }
 
     public class Fin_RoleGroupViewModel : INotifyPropertyChanged
@@ -381,8 +435,9 @@ namespace Diplom_Stud.Pages.Coordinator
     public class Fin_ItemViewModel : INotifyPropertyChanged
     {
         public int ParticipantId { get; set; }
+        public int StudentId { get; set; }
         public string FullName { get; set; }
-        public string Type { get; set; } 
+        public string Type { get; set; }
         public string TypeDisplay { get; set; }
         public ImageSource Avatar { get; set; }
 

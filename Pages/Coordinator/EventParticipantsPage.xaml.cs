@@ -24,6 +24,8 @@ namespace Diplom_Stud.Pages.Coordinator
         private int _eventId;
         private static readonly HttpClient _httpClient = new HttpClient();
 
+        private List<Part_UserDto> _allUsersCache = new List<Part_UserDto>();
+
         public EventParticipantsPage(int eventId)
         {
             InitializeComponent();
@@ -71,6 +73,21 @@ namespace Diplom_Stud.Pages.Coordinator
             return new List<T>();
         }
 
+        private async Task<List<Part_UserDto>> FetchAllUsersAsync(JsonSerializerOptions options)
+        {
+            try
+            {
+                var res = await _httpClient.GetAsync("/api/users/all?page=0&size=1000&sortBy=id&sortDirection=ASC");
+                if (res.IsSuccessStatusCode)
+                {
+                    var page = JsonSerializer.Deserialize<Part_UserPageResponse>(await res.Content.ReadAsStringAsync(), options);
+                    return page?.content ?? new List<Part_UserDto>();
+                }
+            }
+            catch { }
+            return new List<Part_UserDto>();
+        }
+
         private async Task LoadParticipantsAsync()
         {
             LoadingOverlay.Visibility = Visibility.Visible;
@@ -81,6 +98,11 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                if (_allUsersCache.Count == 0)
+                {
+                    _allUsersCache = await FetchAllUsersAsync(options);
+                }
 
                 await PopulateAddUserComboBox(options);
                 await PopulateAddRoleComboBox(options);
@@ -124,15 +146,17 @@ namespace Diplom_Stud.Pages.Coordinator
                         var block = new Part_RoleGroupViewModel { RoleTitle = "Организатор", Participants = new List<Part_ItemViewModel>() };
                         foreach (var u in list)
                         {
+                            var matchedUser = _allUsersCache.FirstOrDefault(x => x.DisplayName.Equals(u.fullName, StringComparison.OrdinalIgnoreCase));
+
                             block.Participants.Add(new Part_ItemViewModel
                             {
                                 ParticipantId = u.id,
-                                StudentId = 0,
+                                StudentId = matchedUser?.id ?? 0,
                                 FullName = u.fullName ?? "Неизвестный организатор",
-                                StudentEmail = "Почта не указана",
+                                StudentEmail = matchedUser?.studentEmail ?? "Почта не указана",
                                 Type = "Organizer",
                                 IsReserve = false,
-                                Avatar = new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
+                                Avatar = GetImageFromBase64(matchedUser?.photo) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
                             });
                         }
                         blocks.Add(block);
@@ -153,15 +177,17 @@ namespace Diplom_Stud.Pages.Coordinator
                             var block = new Part_RoleGroupViewModel { RoleTitle = g.Key, Participants = new List<Part_ItemViewModel>() };
                             foreach (var app in g)
                             {
+                                var matchedUser = _allUsersCache.FirstOrDefault(x => x.studentEmail == app.studentEmail);
+
                                 block.Participants.Add(new Part_ItemViewModel
                                 {
                                     ParticipantId = app.id,
-                                    StudentId = app.studentId ?? 0,
+                                    StudentId = matchedUser?.id ?? app.studentId ?? 0,
                                     FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
                                     StudentEmail = string.IsNullOrWhiteSpace(app.studentEmail) ? "Почта не указана" : app.studentEmail,
                                     Type = "Role",
-                                    IsReserve = app.isReserve,
-                                    Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
+                                    IsReserve = app.isReserve ?? false,
+                                    Avatar = GetImageFromBase64(matchedUser?.photo ?? app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png"))
                                 });
                             }
                             blocks.Add(block);
@@ -182,34 +208,25 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
-
         private async Task PopulateAddUserComboBox(JsonSerializerOptions options)
         {
-            HttpResponseMessage usersResp = await _httpClient.GetAsync("/api/users/all?page=0&size=1000&sortBy=id&sortDirection=ASC");
-            if (usersResp.IsSuccessStatusCode)
-            {
-                var pageData = JsonSerializer.Deserialize<Part_UserPageResponse>(await usersResp.Content.ReadAsStringAsync(), options);
-                if (pageData?.content != null)
-                {
-                    var validUsers = pageData.content
-                        .Where(u => string.IsNullOrEmpty(u.role) || (!u.role.ToLower().Contains("curator") && !u.role.ToLower().Contains("admin")))
-                        .ToList();
+            var validUsers = _allUsersCache
+                .Where(u => string.IsNullOrEmpty(u.role) || (!u.role.ToLower().Contains("curator") && !u.role.ToLower().Contains("admin")))
+                .ToList();
 
-                    Application.Current.Dispatcher.Invoke(() =>
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                CbAddUser.Items.Clear();
+                foreach (var user in validUsers)
+                {
+                    CbAddUser.Items.Add(new ComboBoxItem
                     {
-                        CbAddUser.Items.Clear();
-                        foreach (var user in validUsers)
-                        {
-                            CbAddUser.Items.Add(new ComboBoxItem
-                            {
-                                Content = user.DisplayName,
-                                Tag = user,
-                                Foreground = Brushes.White
-                            });
-                        }
+                        Content = user.DisplayName,
+                        Tag = user,
+                        Foreground = Brushes.White
                     });
                 }
-            }
+            });
         }
 
         private async Task PopulateAddRoleComboBox(JsonSerializerOptions options)
@@ -336,8 +353,6 @@ namespace Diplom_Stud.Pages.Coordinator
             }
         }
 
-
-
         private void ParticipantCard_Click(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement element && element.Tag is int studentId && studentId != 0)
@@ -358,21 +373,11 @@ namespace Diplom_Stud.Pages.Coordinator
                     try
                     {
                         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-
                         HttpResponseMessage response = null;
 
-                        if (p.Type == "Participant")
-                        {
-                            response = await _httpClient.DeleteAsync($"/api/events/participants/{p.ParticipantId}/soft");
-                        }
-                        else if (p.Type == "Organizer")
-                        {
-                            response = await _httpClient.DeleteAsync($"/api/events/organizers/{p.ParticipantId}/soft");
-                        }
-                        else if (p.Type == "Role")
-                        {
-                            response = await _httpClient.DeleteAsync($"/api/events/participants/participation-records/{p.ParticipantId}");
-                        }
+                        if (p.Type == "Participant") response = await _httpClient.DeleteAsync($"/api/events/participants/{p.ParticipantId}/soft");
+                        else if (p.Type == "Organizer") response = await _httpClient.DeleteAsync($"/api/events/organizers/{p.ParticipantId}/soft");
+                        else if (p.Type == "Role") response = await _httpClient.DeleteAsync($"/api/events/participants/participation-records/{p.ParticipantId}");
 
                         if (response != null && response.IsSuccessStatusCode)
                         {
@@ -442,10 +447,7 @@ namespace Diplom_Stud.Pages.Coordinator
         }
     }
 
-    public class Part_UserPageResponse
-    {
-        public List<Part_UserDto> content { get; set; }
-    }
+    public class Part_UserPageResponse { public List<Part_UserDto> content { get; set; } }
 
     public class Part_UserDto
     {
@@ -454,6 +456,8 @@ namespace Diplom_Stud.Pages.Coordinator
         public string surname { get; set; }
         public string patronymic { get; set; }
         public string role { get; set; }
+        public string studentEmail { get; set; }
+        public string photo { get; set; }
         public string DisplayName => $"{surname} {name} {patronymic}".Trim();
     }
 
@@ -463,10 +467,7 @@ namespace Diplom_Stud.Pages.Coordinator
         public string DisplayTitle { get; set; }
         public bool IsRegularParticipant { get; set; }
 
-        public override string ToString()
-        {
-            return DisplayTitle;
-        }
+        public override string ToString() { return DisplayTitle; }
     }
 
     public class Part_EventRoleDto
@@ -490,8 +491,8 @@ namespace Diplom_Stud.Pages.Coordinator
         public int id { get; set; }
         public string role { get; set; }
         public string fullName { get; set; }
-        public int totalPoints { get; set; }
-        public bool wasPresent { get; set; }
+        public int? totalPoints { get; set; }
+        public bool? wasPresent { get; set; }
         public string entityType { get; set; }
     }
 
@@ -511,7 +512,7 @@ namespace Diplom_Stud.Pages.Coordinator
         public string studentEmail { get; set; }
         public string studentPhoto { get; set; }
         public string eventRoleName { get; set; }
-        public bool isReserve { get; set; }
+        public bool? isReserve { get; set; }
     }
 
     public class Part_RoleGroupViewModel : INotifyPropertyChanged

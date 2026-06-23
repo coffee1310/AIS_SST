@@ -71,6 +71,21 @@ namespace Diplom_Stud.Pages.Coordinator
             return new List<T>();
         }
 
+        private async Task<List<Req_GlobalUserDto>> FetchAllUsersAsync(JsonSerializerOptions options)
+        {
+            try
+            {
+                var res = await _httpClient.GetAsync("/api/users/all?page=0&size=1000&sortBy=id&sortDirection=ASC");
+                if (res.IsSuccessStatusCode)
+                {
+                    var page = JsonSerializer.Deserialize<Req_GlobalUserPage>(await res.Content.ReadAsStringAsync(), options);
+                    return page?.content ?? new List<Req_GlobalUserDto>();
+                }
+            }
+            catch { }
+            return new List<Req_GlobalUserDto>();
+        }
+
         private async Task LoadRequestsAsync()
         {
             LoadingOverlay.Visibility = Visibility.Visible;
@@ -83,6 +98,8 @@ namespace Diplom_Stud.Pages.Coordinator
 
                 var blocks = new List<Req_RoleBlockViewModel>();
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                var allUsers = await FetchAllUsersAsync(options);
 
                 HttpResponseMessage resRoles = await _httpClient.GetAsync($"/api/role-applications?status=НА_РАССМОТРЕНИИ&eventId={_eventId}");
                 if (resRoles.IsSuccessStatusCode)
@@ -98,14 +115,16 @@ namespace Diplom_Stud.Pages.Coordinator
                             var block = new Req_RoleBlockViewModel { RoleTitle = g.Key, Applications = new List<Req_AppViewModel>() };
                             foreach (var app in g)
                             {
+                                var matchedUser = allUsers.FirstOrDefault(u => u.studentEmail == app.studentEmail);
+
                                 block.Applications.Add(new Req_AppViewModel
                                 {
                                     ApplicationId = app.id,
-                                    StudentId = app.studentId ?? 0,
+                                    StudentId = matchedUser?.id ?? app.studentId ?? 0,
                                     FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
                                     StudentEmail = string.IsNullOrWhiteSpace(app.studentEmail) ? "Почта не указана" : app.studentEmail,
                                     Comment = string.IsNullOrWhiteSpace(app.description) ? "Комментарий не оставлен" : app.description,
-                                    Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
+                                    Avatar = GetImageFromBase64(matchedUser?.photo ?? app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
                                     IsOrganizer = false
                                 });
                             }
@@ -125,14 +144,16 @@ namespace Diplom_Stud.Pages.Coordinator
                         var block = new Req_RoleBlockViewModel { RoleTitle = "Организатор", Applications = new List<Req_AppViewModel>() };
                         foreach (var app in list)
                         {
+                            var matchedUser = allUsers.FirstOrDefault(u => u.studentEmail == app.studentEmail);
+
                             block.Applications.Add(new Req_AppViewModel
                             {
                                 ApplicationId = app.id,
-                                StudentId = app.studentId ?? 0,
+                                StudentId = matchedUser?.id ?? app.studentId ?? 0,
                                 FullName = $"{app.studentSurname} {app.studentName} {app.studentPatronymic}".Trim(),
                                 StudentEmail = string.IsNullOrWhiteSpace(app.studentEmail) ? "Почта не указана" : app.studentEmail,
                                 Comment = string.IsNullOrWhiteSpace(app.description) ? "Комментарий не оставлен" : app.description,
-                                Avatar = GetImageFromBase64(app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
+                                Avatar = GetImageFromBase64(matchedUser?.photo ?? app.studentPhoto) ?? new BitmapImage(new Uri("pack://application:,,,/Resources/prof.png")),
                                 IsOrganizer = true
                             });
                         }
@@ -302,6 +323,21 @@ namespace Diplom_Stud.Pages.Coordinator
         }
     }
 
+    public class Req_GlobalUserDto
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public string surname { get; set; }
+        public string patronymic { get; set; }
+        public string studentEmail { get; set; }
+        public string photo { get; set; }
+    }
+
+    public class Req_GlobalUserPage
+    {
+        public List<Req_GlobalUserDto> content { get; set; }
+    }
+
     public class Req_RoleAppDto
     {
         public int id { get; set; }
@@ -313,6 +349,7 @@ namespace Diplom_Stud.Pages.Coordinator
         public string studentPhoto { get; set; }
         public string description { get; set; }
         public string eventRoleName { get; set; }
+        public bool? isReserve { get; set; }
     }
 
     public class Req_RoleBlockViewModel : INotifyPropertyChanged

@@ -85,16 +85,24 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
 
-                                                            <Ellipse Grid.Column="0" Width="46" Height="46" Margin="0,0,15,0">
-                                                                <Ellipse.Fill>
-                                                                    <ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill"/>
-                                                                </Ellipse.Fill>
-                                                            </Ellipse>
+                                                            <!-- Зона клика для перехода в профиль -->
+                                                            <Grid Grid.Column="0" Grid.ColumnSpan="2" Background="Transparent" Cursor="Hand" MouseLeftButtonUp="ParticipantCard_Click" Tag="{Binding StudentId}">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
 
-                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding FullName}" Foreground="White" FontFamily="Montserrat" FontSize="16" FontWeight="Medium" Margin="0,0,0,2"/>
-                                                                <TextBlock Text="{Binding TypeDisplay}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12"/>
-                                                            </StackPanel>
+                                                                <Ellipse Grid.Column="0" Width="46" Height="46" Margin="0,0,15,0">
+                                                                    <Ellipse.Fill>
+                                                                        <ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill"/>
+                                                                    </Ellipse.Fill>
+                                                                </Ellipse>
+
+                                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding FullName}" Foreground="White" FontFamily="Montserrat" FontSize="16" FontWeight="Medium" Margin="0,0,0,2"/>
+                                                                    <TextBlock Text="{Binding TypeDisplay}" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="12"/>
+                                                                </StackPanel>
+                                                            </Grid>
 
                                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                                                 <TextBlock Text="Баллы:" Foreground="#7A7886" FontFamily="Montserrat" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
