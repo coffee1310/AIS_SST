@@ -45,4 +45,14 @@ public interface TaskUserRepository extends JpaRepository<TaskUser, Long> {
     // Метод для поиска всех невыполненных назначений по задаче
     @Query("SELECT tu FROM TaskUser tu WHERE tu.task.id = :taskId AND tu.isCompleted = false AND tu.isDeleted = false")
     List<TaskUser> findActiveIncompleteByTaskId(@Param("taskId") Long taskId);
+
+    @Query("""
+    SELECT tu FROM TaskUser tu
+    WHERE tu.user.id = :userId
+    AND tu.isCompleted = true
+    AND tu.isDeleted = false
+    AND tu.task.isCompleted = true
+    AND tu.task.isDeleted = false
+""")
+    List<TaskUser> findByUserIdAndIsCompletedTrueAndIsDeletedFalseAndTaskIsCompletedTrue(@Param("userId") Long userId);
 }

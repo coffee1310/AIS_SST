@@ -89,4 +89,14 @@ public interface EventOrganizerRepository extends JpaRepository<EventOrganizer, 
     boolean existsByUser_IdAndEvent_IdAndIsDeleted(Long userId, Long eventId, Boolean isDeleted);
 
     Optional<EventOrganizer> findByEventIdAndUserIdAndIsDeleted(Long eventId, Long userId, Boolean isDeleted);
+
+    @Query("""
+    SELECT eo FROM EventOrganizer eo
+    WHERE eo.user.id = :userId
+    AND eo.wasPresent = true
+    AND eo.isDeleted = false
+    AND eo.event.isCompleted = true
+    AND eo.event.isDeleted = false
+""")
+    List<EventOrganizer> findByUserIdAndWasPresentTrueAndIsDeletedFalseAndEventIsCompletedTrue(@Param("userId") Long userId);
 }

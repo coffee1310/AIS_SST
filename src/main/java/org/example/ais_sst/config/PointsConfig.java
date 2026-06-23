@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 public class PointsConfig {
 
-    @Value("${app.points.organizer.default:5}")
+    @Value("${app.points.organizer.default:10}")
     private int defaultOrganizerPoints;
 
     @Value("${app.points.participant.default:2}")

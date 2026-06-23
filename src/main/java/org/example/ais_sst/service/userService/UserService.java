@@ -5,21 +5,13 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.ais_sst.dto.user.UserFilterDTO;
-import org.example.ais_sst.dto.user.UserProfileInfoDTO;
-import org.example.ais_sst.dto.user.UserRatingDTO;
-import org.example.ais_sst.dto.user.UserResponseDTO;
-import org.example.ais_sst.entity.EventParticipationRecord;
-import org.example.ais_sst.entity.SectorParticipant;
-import org.example.ais_sst.entity.User;
+import org.example.ais_sst.dto.user.*;
+import org.example.ais_sst.entity.*;
 import org.example.ais_sst.entity.enums.Gender;
 import org.example.ais_sst.entity.enums.SectorParticipantStatuses;
 import org.example.ais_sst.exception.UserDoesNotExistException;
 import org.example.ais_sst.mapper.UserMapper;
-import org.example.ais_sst.repository.EventParticipationRecordRepository;
-import org.example.ais_sst.repository.SectorParticipantRepository;
-import org.example.ais_sst.repository.SocialStatusStudentsRepository;
-import org.example.ais_sst.repository.UserRepository;
+import org.example.ais_sst.repository.*;
 import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,6 +34,10 @@ public class UserService implements UserServiceImpl {
     private final SectorParticipantRepository sectorParticipantRepository;
     private final UserPhotoService userPhotoService; // Добавлено
     private final EventParticipationRecordRepository eventParticipationRecordRepository;
+
+    private final EventOrganizerRepository eventOrganizerRepository;
+    private final EventParticipantsRepository eventParticipantRepository;
+    private final TaskUserRepository taskUserRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -136,7 +132,8 @@ public class UserService implements UserServiceImpl {
 
         log.info("User {} - unique events: {}, total points: {}", user.getId(), eventsCount, pointsCount);
 
-        // Получение места в рейтинге
+
+        UserRating rating = calculateUserRating(user.getId());
         int ratingPosition = calculateUserRatingPosition(user.getId());
 
         return UserProfileInfoDTO.builder()
@@ -146,7 +143,6 @@ public class UserService implements UserServiceImpl {
                 .patronymic(user.getPatronymic())
                 .dateOfBirth(user.getDateOfBirth())
                 .gender(user.getGender())
-                .ratingPosition(ratingPosition)
                 .specialityTitle(user.getSpeciality() != null ? user.getSpeciality().getTitle() : null)
                 .groupTitle(user.getGroup() != null ? user.getGroup().getTitle() : null)
                 .courseNumber(user.getCourseNumber())
@@ -161,57 +157,120 @@ public class UserService implements UserServiceImpl {
                 .coordinatorSectorId(coordinatorSectorId)
                 .coordinatorSectorTitle(coordinatorSectorTitle)
                 .shortSpecialityTitle(user.getSpeciality() != null ? user.getSpeciality().getShortTitle() : null)
-                .eventsCount(eventsCount)
-                .pointsCount(pointsCount)
-                .userSectors(userSectors)
+                .eventsCount(rating.getEventsCount())
+                .pointsCount(rating.getTotalPoints())
+                .ratingPosition(ratingPosition)
                 .build();
     }
 
-    /**
-     * Расчет места пользователя в рейтинге
-     * Сортировка по убыванию баллов
-     */
     private int calculateUserRatingPosition(Long userId) {
-        // Получаем все записи об участии с группировкой по пользователям
-        List<Object[]> userPointsList = eventParticipationRecordRepository
-                .findTotalPointsByUserWithParticipation();
-
-        // Сортируем по убыванию баллов
-        userPointsList.sort((a, b) -> {
-            Long pointsA = (Long) a[1];
-            Long pointsB = (Long) b[1];
-            return pointsB.compareTo(pointsA);
-        });
-
-        // Ищем позицию пользователя
-        for (int i = 0; i < userPointsList.size(); i++) {
-            Long currentUserId = (Long) userPointsList.get(i)[0];
-            if (currentUserId.equals(userId)) {
-                return i + 1; // +1 потому что позиции начинаются с 1
-            }
-        }
-
-        return 0; // Если пользователь не найден в рейтинге
+        Integer position = eventParticipationRecordRepository.findUserRatingPosition(userId);
+        return position != null ? position : 0;
     }
 
     /**
-     * Получение топа пользователей по баллам
+     * ПОДСЧЕТ ОБЩЕГО РЕЙТИНГА ПОЛЬЗОВАТЕЛЯ
+     * Суммируются баллы из:
+     * 1. EventParticipationRecord (участие в мероприятиях через сектора)
+     * 2. EventOrganizer (организация мероприятий)
+     * 3. EventParticipant (участие в мероприятиях как участник)
+     * 4. TaskUser (выполненные задачи)
+     *
+     * Условия:
+     * - was_present = true для всех сущностей
+     * - is_deleted = false для всех сущностей
+     * - мероприятие is_completed = true (для EventParticipationRecord, EventOrganizer, EventParticipant)
+     * - задача is_completed = true (для TaskUser)
      */
-    @Transactional()
-    public List<UserRatingDTO> getTopUsersByPoints(int limit) {
-        List<Object[]> results = eventParticipationRecordRepository
-                .findTopUsersByPoints(limit);
+    private UserRating calculateUserRating(Long userId) {
+        log.info("Calculating rating for user: {}", userId);
 
-        return results.stream()
-                .map(row -> UserRatingDTO.builder()
-                        .userId((Long) row[0])
-                        .userName((String) row[1])
-                        .userSurname((String) row[2])
-                        .totalPoints((Long) row[3])
-                        .eventsCount((Long) row[4])
-                        .build())
-                .collect(Collectors.toList());
+        int totalPoints = 0;
+        int eventsCount = 0;
+        int tasksCount = 0;
+
+        // 1. Баллы из EventParticipationRecord (участие через сектора)
+        List<EventParticipationRecord> participationRecords = eventParticipationRecordRepository
+                .findActiveParticipationRecordsByUserId(userId);
+
+        int participationPoints = participationRecords.stream()
+                .mapToInt(record -> record.getTotalPoints() != null ? record.getTotalPoints() : 0)
+                .sum();
+
+        Set<Long> participationEventIds = participationRecords.stream()
+                .map(record -> record.getEventRole().getEvent().getId())
+                .collect(Collectors.toSet());
+
+        log.info("Participation records: {}, points: {}, events: {}",
+                participationRecords.size(), participationPoints, participationEventIds.size());
+
+        totalPoints += participationPoints;
+        eventsCount += participationEventIds.size();
+
+        // 2. Баллы из EventOrganizer (организация мероприятий)
+        List<EventOrganizer> organizers = eventOrganizerRepository
+                .findByUserIdAndWasPresentTrueAndIsDeletedFalseAndEventIsCompletedTrue(userId);
+
+        int organizerPoints = organizers.stream()
+                .mapToInt(org -> org.getTotalPoints() != null ? org.getTotalPoints() : 0)
+                .sum();
+
+        Set<Long> organizerEventIds = organizers.stream()
+                .map(org -> org.getEvent().getId())
+                .collect(Collectors.toSet());
+
+        log.info("Organizer records: {}, points: {}, events: {}",
+                organizers.size(), organizerPoints, organizerEventIds.size());
+
+        totalPoints += organizerPoints;
+        eventsCount += organizerEventIds.size();
+
+        // 3. Баллы из EventParticipant (участие как участник)
+        List<EventParticipant> participants = eventParticipantRepository
+                .findByUserIdAndWasPresentTrueAndIsDeletedFalseAndEventIsCompletedTrue(userId);
+
+        int participantPoints = participants.stream()
+                .mapToInt(p -> p.getTotalPoints() != null ? p.getTotalPoints() : 0)
+                .sum();
+
+        Set<Long> participantEventIds = participants.stream()
+                .map(p -> p.getEvent().getId())
+                .collect(Collectors.toSet());
+
+        log.info("Participant records: {}, points: {}, events: {}",
+                participants.size(), participantPoints, participantEventIds.size());
+
+        totalPoints += participantPoints;
+        eventsCount += participantEventIds.size();
+
+        // 4. Баллы из TaskUser (выполненные задачи)
+        List<TaskUser> tasks = taskUserRepository
+                .findByUserIdAndIsCompletedTrueAndIsDeletedFalseAndTaskIsCompletedTrue(userId);
+
+        int taskPoints = tasks.stream()
+                .mapToInt(task -> task.getTask().getCountOfPoints() != null ? task.getTask().getCountOfPoints() : 0)
+                .sum();
+
+        tasksCount = tasks.size();
+
+        log.info("Task records: {}, points: {}", tasks.size(), taskPoints);
+
+        totalPoints += taskPoints;
+
+        log.info("Total rating for user {}: {} points, {} events, {} tasks",
+                userId, totalPoints, eventsCount, tasksCount);
+
+        return UserRating.builder()
+                .totalPoints(totalPoints)
+                .eventsCount(eventsCount)
+                .tasksCount(tasksCount)
+                .participationPoints(participationPoints)
+                .organizerPoints(organizerPoints)
+                .participantPoints(participantPoints)
+                .taskPoints(taskPoints)
+                .build();
     }
+
 
     @Transactional
     public Page<UserResponseDTO> getAllUsers(int page, int size, String sortBy, String sortDirection, UserFilterDTO filter) {
@@ -415,4 +474,21 @@ public class UserService implements UserServiceImpl {
         userRepository.save(user);
         log.info("Password updated for user: {}", userId);
     }
+
+    @Transactional
+    public List<UserRatingDTO> getTopUsersByPoints(int limit) {
+        List<Object[]> results = eventParticipationRecordRepository
+                .findTopUsersByPointsNative(limit);
+
+        return results.stream()
+                .map(row -> UserRatingDTO.builder()
+                        .userId((Long) row[0])
+                        .userName((String) row[1])
+                        .userSurname((String) row[2])
+                        .totalPoints((Long) row[3])
+                        .eventsCount((Long) row[4])
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }

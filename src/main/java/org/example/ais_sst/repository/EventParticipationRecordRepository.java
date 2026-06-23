@@ -1,6 +1,7 @@
 package org.example.ais_sst.repository;
 
 import jakarta.validation.constraints.NotNull;
+import org.example.ais_sst.dto.user.UserParticipationInfoDTO;
 import org.example.ais_sst.entity.EventParticipationRecord;
 import org.example.ais_sst.entity.EventRole;
 import org.example.ais_sst.entity.SectorParticipant;
@@ -87,14 +88,6 @@ public interface EventParticipationRecordRepository extends JpaRepository<EventP
     // Количество записей по роли с присутствием
     long countByEventRoleIdAndWasPresent(Long eventRoleId, Boolean wasPresent);
 
-    /**
-     * Подсчет общего количества баллов пользователя
-     */
-    @Query("SELECT SUM(COALESCE(epr.eventRole.globalEventRole.defaultPoints, 1)) " +
-            "FROM EventParticipationRecord epr " +
-            "WHERE epr.sectorParticipant.student.id = :userId " +
-            "AND epr.wasPresent = true")
-    Long sumPointsByUserId(@Param("userId") Long userId);
 
     /**
      * Подсчет количества мероприятий, на которых пользователь присутствовал
@@ -198,4 +191,172 @@ public interface EventParticipationRecordRepository extends JpaRepository<EventP
     long countByEventRoleIdAndIsReserveFalseAndIsDeletedFalse(Long id);
 
     List<EventParticipationRecord> findByEventRoleIdInAndIsDeletedFalse(List<Long> eventRoleIds);
+
+    @Query("""
+        SELECT epr FROM EventParticipationRecord epr
+        WHERE epr.sectorParticipant.student.id = :userId
+        AND epr.wasPresent = true
+        AND epr.isDeleted = false
+        AND epr.eventRole.event.isCompleted = true
+        AND epr.eventRole.event.isDeleted = false
+    """)
+    List<EventParticipationRecord> findActiveParticipationRecordsByUserId(@Param("userId") Long userId);
+
+    /**
+     * Подсчет общего количества баллов пользователя
+     */
+    @Query("""
+        SELECT COALESCE(SUM(epr.totalPoints), 0) FROM EventParticipationRecord epr
+        WHERE epr.sectorParticipant.student.id = :userId
+        AND epr.wasPresent = true
+        AND epr.isDeleted = false
+        AND epr.eventRole.event.isCompleted = true
+        AND epr.eventRole.event.isDeleted = false
+    """)
+    Integer sumPointsByUserId(@Param("userId") Long userId);
+
+    /**
+     * Получить все записи участия пользователя с деталями для подсчета
+     */
+    @Query("""
+        SELECT new org.example.ais_sst.dto.user.UserParticipationInfoDTO(
+            epr.id,
+            epr.eventRole.event.id,
+            epr.eventRole.event.title,
+            epr.eventRole.globalEventRole.title,
+            epr.totalPoints,
+            epr.wasPresent,
+            epr.eventRole.event.isCompleted
+        )
+        FROM EventParticipationRecord epr
+        WHERE epr.sectorParticipant.student.id = :userId
+        AND epr.isDeleted = false
+        AND epr.eventRole.event.isDeleted = false
+        AND epr.eventRole.event.isCompleted = true
+    """)
+    List<UserParticipationInfoDTO> findParticipationInfoByUserId(@Param("userId") Long userId);
+
+    /**
+     * Получить топ пользователей по баллам с учетом всех условий
+     */
+    @Query(value = """
+        SELECT 
+            u.id,
+            u.name,
+            u.surname,
+            COALESCE(SUM(epr.total_points), 0) as total_points,
+            COUNT(DISTINCT epr.event_role_id) as events_count
+        FROM users u
+        INNER JOIN sector_participants sp ON sp.student_id = u.id
+        INNER JOIN event_participation_records epr ON epr.sector_participant_id = sp.id
+        INNER JOIN event_roles er ON er.id = epr.event_role_id
+        INNER JOIN events e ON e.id = er.event_id
+        WHERE epr.was_present = true
+        AND epr.is_deleted = false
+        AND e.is_completed = true
+        AND e.is_deleted = false
+        AND u.is_deleted = false
+        GROUP BY u.id, u.name, u.surname
+        ORDER BY total_points DESC
+        LIMIT :limit
+    """, nativeQuery = true)
+    List<Object[]> findTopUsersByPointsNative(@Param("limit") int limit);
+
+    /**
+     * Получить позицию пользователя в рейтинге
+     * Учитываются все источники баллов:
+     * - EventParticipationRecord (участие через сектора)
+     * - EventOrganizer (организация)
+     * - EventParticipant (участие как участник)
+     * - TaskUser (задачи)
+     *
+     * При одинаковых баллах позиция определяется по ID пользователя (меньше ID - выше позиция)
+     */
+    @Query(value = """
+    WITH user_points AS (
+        -- 1. EventParticipationRecord (участие через сектора)
+        SELECT 
+            u.id as user_id,
+            COALESCE(SUM(epr.total_points), 0) as points
+        FROM users u
+        LEFT JOIN sector_participants sp ON sp.student_id = u.id
+        LEFT JOIN event_participation_records epr ON epr.sector_participant_id = sp.id
+            AND epr.was_present = true
+            AND epr.is_deleted = false
+        LEFT JOIN event_roles er ON er.id = epr.event_role_id
+        LEFT JOIN events e ON e.id = er.event_id
+            AND e.is_completed = true
+            AND e.is_deleted = false
+        WHERE u.is_deleted = false
+        GROUP BY u.id
+        
+        UNION ALL
+        
+        -- 2. EventOrganizer (организация)
+        SELECT 
+            u.id as user_id,
+            COALESCE(SUM(eo.total_points), 0) as points
+        FROM users u
+        LEFT JOIN event_organizers eo ON eo.user_id = u.id
+            AND eo.was_present = true
+            AND eo.is_deleted = false
+        LEFT JOIN events e ON e.id = eo.event_id
+            AND e.is_completed = true
+            AND e.is_deleted = false
+        WHERE u.is_deleted = false
+        GROUP BY u.id
+        
+        UNION ALL
+        
+        -- 3. EventParticipant (участие как участник)
+        SELECT 
+            u.id as user_id,
+            COALESCE(SUM(ep.total_points), 0) as points
+        FROM users u
+        LEFT JOIN event_participants ep ON ep.user_id = u.id
+            AND ep.was_present = true
+            AND ep.is_deleted = false
+        LEFT JOIN events e ON e.id = ep.event_id
+            AND e.is_completed = true
+            AND e.is_deleted = false
+        WHERE u.is_deleted = false
+        GROUP BY u.id
+        
+        UNION ALL
+        
+        -- 4. TaskUser (задачи)
+        SELECT 
+            u.id as user_id,
+            COALESCE(SUM(t.count_of_points), 0) as points
+        FROM users u
+        LEFT JOIN tasks_users tu ON tu.user_id = u.id
+            AND tu.is_completed = true
+            AND tu.is_deleted = false
+        LEFT JOIN tasks t ON t.id = tu.task_id
+            AND t.is_completed = true
+            AND t.is_deleted = false
+        WHERE u.is_deleted = false
+        GROUP BY u.id
+    ),
+    total_points AS (
+        SELECT 
+            user_id,
+            SUM(points) as total_points
+        FROM user_points
+        GROUP BY user_id
+    ),
+    ranked_users AS (
+        SELECT 
+            user_id,
+            total_points,
+            -- ROW_NUMBER() дает уникальные позиции даже при одинаковых баллах
+            -- Сортировка: сначала по баллам DESC, затем по ID ASC (меньше ID - выше)
+            ROW_NUMBER() OVER (ORDER BY total_points DESC, user_id ASC) as position
+        FROM total_points
+    )
+    SELECT position
+    FROM ranked_users
+    WHERE user_id = :userId
+""", nativeQuery = true)
+    Integer findUserRatingPosition(@Param("userId") Long userId);
 }

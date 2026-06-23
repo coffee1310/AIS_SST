@@ -93,4 +93,13 @@ public interface EventParticipantsRepository extends JpaRepository<EventParticip
 
     Long countByEventIdAndIsDeletedFalseAndIsDeletedFalse(Long eventId);
 
+    @Query("""
+    SELECT ep FROM EventParticipant ep
+    WHERE ep.user.id = :userId
+    AND ep.wasPresent = true
+    AND ep.isDeleted = false
+    AND ep.event.isCompleted = true
+    AND ep.event.isDeleted = false
+""")
+    List<EventParticipant> findByUserIdAndWasPresentTrueAndIsDeletedFalseAndEventIsCompletedTrue(@Param("userId") Long userId);
 }
