@@ -114,7 +114,6 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\PointsHistory.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Profile.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\ProjectDetails.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Projects.g.cs
-C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Rating.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\SectorDetails.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Sectors.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Tasks.g.cs
@@ -137,7 +136,6 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\PointsHistory.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Profile.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\ProjectDetails.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Projects.baml
-C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Rating.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\SectorDetails.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Sectors.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Activist\Tasks.baml
@@ -172,3 +170,5 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorEvent
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\CoordinatorEvents.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\General\ForgotPassword.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\General\ForgotPassword.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\Rating.g.cs
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\Rating.baml

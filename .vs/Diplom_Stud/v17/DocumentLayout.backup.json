@@ -1,7 +1,12 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\danii\\source\\repos\\AIS_SST\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|c:\\users\\danii\\source\\repos\\ais_sst\\pages\\activist\\projects.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{99CFBFB0-FAE6-402E-8A88-1CBAABE10ECB}|Diplom_Stud.csproj|solutionrelative:pages\\activist\\projects.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 1,
@@ -9,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedHeight": 240,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
@@ -26,6 +31,18 @@
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Projects.xaml",
+              "DocumentMoniker": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Projects.xaml",
+              "RelativeDocumentMoniker": "Pages\\Activist\\Projects.xaml",
+              "ToolTip": "C:\\Users\\danii\\source\\repos\\AIS_SST\\Pages\\Activist\\Projects.xaml",
+              "RelativeToolTip": "Pages\\Activist\\Projects.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-06-23T22:54:13.17Z",
+              "EditorCaption": ""
             }
           ]
         },

@@ -41,11 +41,23 @@ namespace Diplom_Stud.Pages.Activist
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            DoubleAnimation fadeInAnimation = new DoubleAnimation
+            {
+                From = 0.0,
+                To = 1.0,
+                Duration = TimeSpan.FromSeconds(0.8),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            this.BeginAnimation(Page.OpacityProperty, fadeInAnimation);
+
+            BackButton.Visibility = IsViewMode ? Visibility.Visible : Visibility.Collapsed;
+
             await LoadUserProfile();
         }
 
         private async Task LoadUserProfile()
         {
+            LoadingOverlay.Visibility = Visibility.Visible;
             try
             {
                 if (string.IsNullOrEmpty(App.AuthToken))
@@ -56,28 +68,21 @@ namespace Diplom_Stud.Pages.Activist
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                HttpResponseMessage response;
+                string url = IsViewMode ? $"/api/users/all?id={_viewUserId.Value}" : "/api/users/me";
+                int targetUserId = IsViewMode ? _viewUserId.Value : (App.CurrentUserProfile?.id ?? 0);
 
-                if (IsViewMode)
-                {
-                    response = await _httpClient.GetAsync($"/api/users/all?id={_viewUserId.Value}");
-                }
-                else
-                {
-                    response = await _httpClient.GetAsync("/api/users/me");
-                }
-
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    string json = await response.Content.ReadAsStringAsync();
 
                     UserProfileData dataToDisplay = null;
 
                     if (IsViewMode)
                     {
-                        var pageData = JsonSerializer.Deserialize<UserPageResponse>(responseBody, options);
+                        var pageData = JsonSerializer.Deserialize<UserPageResponse>(json, options);
                         if (pageData?.content != null && pageData.content.Count > 0)
                         {
                             var item = pageData.content[0];
@@ -110,7 +115,7 @@ namespace Diplom_Stud.Pages.Activist
                     }
                     else
                     {
-                        dataToDisplay = JsonSerializer.Deserialize<UserProfileData>(responseBody, options);
+                        dataToDisplay = JsonSerializer.Deserialize<UserProfileData>(json, options);
                         if (dataToDisplay != null)
                         {
                             App.CurrentUserProfile = dataToDisplay;
@@ -124,6 +129,35 @@ namespace Diplom_Stud.Pages.Activist
                     if (dataToDisplay != null)
                     {
                         UpdateUIWithUserData(dataToDisplay);
+
+                        try
+                        {
+                            HttpResponseMessage ratingRes = await _httpClient.GetAsync("/api/reports/users");
+                            if (ratingRes.IsSuccessStatusCode)
+                            {
+                                string rJson = await ratingRes.Content.ReadAsStringAsync();
+                                var ratings = JsonSerializer.Deserialize<List<RatingReportDto>>(rJson, options);
+
+                                var myRating = ratings?.FirstOrDefault(r => r.userId == targetUserId);
+
+                                if (myRating != null)
+                                {
+                                    EventsCountTextBlock.Text = (myRating.eventsCount ?? 0).ToString();
+                                    PointsCountTextBlock.Text = (myRating.totalPoints ?? 0).ToString();
+                                    RankTextBlock.Text = myRating.position.ToString();
+                                }
+                                else
+                                {
+                                    EventsCountTextBlock.Text = "0";
+                                    PointsCountTextBlock.Text = "0";
+                                    RankTextBlock.Text = "-";
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Не удалось загрузить рейтинг профиля: {ex.Message}");
+                        }
                     }
                     else
                     {
@@ -145,7 +179,11 @@ namespace Diplom_Stud.Pages.Activist
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Произошла ошибка: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                CustomMessageBox.Show($"Сбой сети: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+            }
+            finally
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -345,6 +383,18 @@ namespace Diplom_Stud.Pages.Activist
             {
                 return "Куратор";
             }
+            else if (role == "Chairman")
+            {
+                return "Председатель";
+            }
+            else if (role == "Deputy_chairman")
+            {
+                return "Заместитель председателя";
+            }
+            else if (role == "Secretary")
+            {
+                return "Секретарь";
+            }
 
             return !string.IsNullOrEmpty(role) ? role : "Студент";
         }
@@ -353,6 +403,7 @@ namespace Diplom_Stud.Pages.Activist
         {
             try
             {
+                if (string.IsNullOrEmpty(base64String)) return null;
                 string cleanStr = base64String.Trim().Replace("\r", "").Replace("\n", "");
                 byte[] imageBytes = null;
 
@@ -444,19 +495,16 @@ namespace Diplom_Stud.Pages.Activist
 
         private void Archive_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            // NavigationService?.Navigate(new ArchiveEventsPage()); // Раскомментируй, когда создашь страницу архива
             CustomMessageBox.Show("Раздел 'Архив мероприятий' находится в разработке.", "Информация", CustomMessageBox.MessageType.Info);
         }
 
         private void Board_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            // NavigationService?.Navigate(new BoardPage()); // Раскомментируй, когда создашь страницу правления
             CustomMessageBox.Show("Раздел 'Правление студсовета' находится в разработке.", "Информация", CustomMessageBox.MessageType.Info);
         }
 
         private void About_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            // NavigationService?.Navigate(new AboutPage()); // Раскомментируй, когда создашь страницу "О приложении"
             CustomMessageBox.Show("Раздел 'О приложении' находится в разработке.", "Информация", CustomMessageBox.MessageType.Info);
         }
         private void BackButton_Click(object sender, RoutedEventArgs e)
@@ -524,6 +572,19 @@ namespace Diplom_Stud.Pages.Activist
         public string gender { get; set; }
         public string coordinatorSectorTitle { get; set; }
         public List<string> socialStatuses { get; set; }
-        public List<string> userSectors { get; set; } // Добавлено поле секторов
+        public List<string> userSectors { get; set; }
+    }
+
+    public class RatingReportDto
+    {
+        public int userId { get; set; }
+        public string userName { get; set; }
+        public string userSurname { get; set; }
+        public string patronymic { get; set; }
+        public string role { get; set; }
+        public string fio { get; set; }
+        public int? totalPoints { get; set; }
+        public int? eventsCount { get; set; }
+        public int position { get; set; }
     }
 }

@@ -307,5 +307,12 @@
 
             </Grid>
         </ScrollViewer>
+
+        <Grid x:Name="LoadingOverlay" Background="#E61A1A2E" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4" Foreground="#02B3BA" Background="#2A283C" BorderThickness="0" Margin="0,0,0,15"/>
+                <TextBlock Text="Загрузка профиля..." Foreground="White" FontFamily="Digital Pixel" FontSize="18" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>

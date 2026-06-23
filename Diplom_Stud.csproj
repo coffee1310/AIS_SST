@@ -141,10 +141,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Pages\Activist\Rating.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Pages\Activist\SectorDetails.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -190,6 +186,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\Coordinator\EventRequestsPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Coordinator\Rating.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -246,9 +246,6 @@
     <Compile Include="Pages\Activist\Projects.xaml.cs">
       <DependentUpon>Projects.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Pages\Activist\Rating.xaml.cs">
-      <DependentUpon>Rating.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Pages\Activist\SectorDetails.xaml.cs">
       <DependentUpon>SectorDetails.xaml</DependentUpon>
     </Compile>
@@ -284,6 +281,9 @@
     </Compile>
     <Compile Include="Pages\Coordinator\EventRequestsPage.xaml.cs">
       <DependentUpon>EventRequestsPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Coordinator\Rating.xaml.cs">
+      <DependentUpon>Rating.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Curator\RegistrationRequests.xaml.cs">
       <DependentUpon>RegistrationRequests.xaml</DependentUpon>
@@ -372,6 +372,16 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\logoStud.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\project1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\project2.png" />
+    <Resource Include="Resources\project3.png" />
+    <Resource Include="Resources\project4.png" />
+    <Resource Include="Resources\project5.png" />
+    <Resource Include="Resources\project6.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets" Condition="Exists('packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets')" />

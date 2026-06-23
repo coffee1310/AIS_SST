@@ -109,6 +109,15 @@ namespace Diplom_Stud
                 NavRegistrationRequests.Visibility = Visibility.Collapsed;
                 NavRegistrationRequestsBadge.Visibility = Visibility.Collapsed;
             }
+
+            if (App.IsActivistMode || data.roleTitle == "Activist")
+            {
+                NavRating.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                NavRating.Visibility = Visibility.Visible;
+            }
         }
 
         public async Task CheckSectorNotificationsAsync()
@@ -280,7 +289,7 @@ namespace Diplom_Stud
             {
                 NavProjects.IsChecked = true;
             }
-            else if (e.Content is Pages.Activist.Rating)
+            else if (e.Content is Pages.Coordinator.Rating) 
             {
                 NavRating.IsChecked = true;
             }
@@ -404,9 +413,9 @@ namespace Diplom_Stud
 
         private void MenuRating_Click(object sender, RoutedEventArgs e)
         {
-            if (!(MainFrame.Content is Pages.Activist.Rating))
+            if (!(MainFrame.Content is Pages.Coordinator.Rating))
             {
-                MainFrame.Navigate(new Pages.Activist.Rating());
+                MainFrame.Navigate(new Pages.Coordinator.Rating());
             }
         }
 
