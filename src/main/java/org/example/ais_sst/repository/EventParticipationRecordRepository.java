@@ -359,4 +359,135 @@ public interface EventParticipationRecordRepository extends JpaRepository<EventP
     WHERE user_id = :userId
 """, nativeQuery = true)
     Integer findUserRatingPosition(@Param("userId") Long userId);
+
+    // === ДОБАВЬТЕ ЭТОТ МЕТОД В КЛАСС EventParticipationRecordRepository.java ===
+// Вставьте перед закрывающей } класса
+
+    /**
+     * Получить ВСЕХ пользователей (не удаленных), отсортированных по полному рейтингу (все источники баллов).
+     * Используется для отчета по пользователям в ReportController.
+     * Возвращает Object[] : [position, user_id, name, surname, patronymic, role_title, total_points]
+     * Позиция рассчитывается с учетом всех баллов (как в findUserRatingPosition).
+     */
+    @Query(value = """
+WITH user_points AS (
+    -- 1. EventParticipationRecord (участие через сектора)
+    SELECT 
+        u.id as user_id,
+        u.name,
+        u.surname,
+        u.patronymic,
+        r.title as role_title,
+        COALESCE(SUM(epr.total_points), 0) as points
+    FROM users u
+    LEFT JOIN roles r ON r.id = u.role_id
+    LEFT JOIN sector_participants sp ON sp.student_id = u.id
+    LEFT JOIN event_participation_records epr ON epr.sector_participant_id = sp.id
+        AND epr.was_present = true
+        AND epr.is_deleted = false
+    LEFT JOIN event_roles er ON er.id = epr.event_role_id
+    LEFT JOIN events e ON e.id = er.event_id
+        AND e.is_completed = true
+        AND e.is_deleted = false
+    WHERE u.is_deleted = false
+    GROUP BY u.id, u.name, u.surname, u.patronymic, r.title
+    
+    UNION ALL
+    
+    -- 2. EventOrganizer (организация мероприятий)
+    SELECT 
+        u.id as user_id,
+        u.name,
+        u.surname,
+        u.patronymic,
+        r.title as role_title,
+        COALESCE(SUM(eo.total_points), 0) as points
+    FROM users u
+    LEFT JOIN roles r ON r.id = u.role_id
+    LEFT JOIN event_organizers eo ON eo.user_id = u.id
+        AND eo.was_present = true
+        AND eo.is_deleted = false
+    LEFT JOIN events e ON e.id = eo.event_id
+        AND e.is_completed = true
+        AND e.is_deleted = false
+    WHERE u.is_deleted = false
+    GROUP BY u.id, u.name, u.surname, u.patronymic, r.title
+    
+    UNION ALL
+    
+    -- 3. EventParticipant (участие как участник)
+    SELECT 
+        u.id as user_id,
+        u.name,
+        u.surname,
+        u.patronymic,
+        r.title as role_title,
+        COALESCE(SUM(ep.total_points), 0) as points
+    FROM users u
+    LEFT JOIN roles r ON r.id = u.role_id
+    LEFT JOIN event_participants ep ON ep.user_id = u.id
+        AND ep.was_present = true
+        AND ep.is_deleted = false
+    LEFT JOIN events e ON e.id = ep.event_id
+        AND e.is_completed = true
+        AND e.is_deleted = false
+    WHERE u.is_deleted = false
+    GROUP BY u.id, u.name, u.surname, u.patronymic, r.title
+    
+    UNION ALL
+    
+    -- 4. TaskUser (выполненные задачи)
+    SELECT 
+        u.id as user_id,
+        u.name,
+        u.surname,
+        u.patronymic,
+        r.title as role_title,
+        COALESCE(SUM(t.count_of_points), 0) as points
+    FROM users u
+    LEFT JOIN roles r ON r.id = u.role_id
+    LEFT JOIN tasks_users tu ON tu.user_id = u.id
+        AND tu.is_completed = true
+        AND tu.is_deleted = false
+    LEFT JOIN tasks t ON t.id = tu.task_id
+        AND t.is_completed = true
+        AND t.is_deleted = false
+    WHERE u.is_deleted = false
+    GROUP BY u.id, u.name, u.surname, u.patronymic, r.title
+),
+total_points AS (
+    SELECT 
+        user_id,
+        name,
+        surname,
+        patronymic,
+        role_title,
+        SUM(points) as total_points
+    FROM user_points
+    GROUP BY user_id, name, surname, patronymic, role_title
+),
+ranked_users AS (
+    SELECT 
+        user_id,
+        name,
+        surname,
+        patronymic,
+        role_title,
+        total_points,
+        ROW_NUMBER() OVER (ORDER BY total_points DESC, user_id ASC) as position
+    FROM total_points
+)
+SELECT 
+    position,
+    user_id,
+    name,
+    surname,
+    patronymic,
+    role_title,
+    total_points
+FROM ranked_users
+ORDER BY position ASC
+""", nativeQuery = true)
+    List<Object[]> findAllRankedUsersByPointsNative();
+
 }

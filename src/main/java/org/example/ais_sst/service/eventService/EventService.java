@@ -806,4 +806,46 @@ public class EventService extends BaseEntityService {
         log.info("Added {} organizers manually", created.size());
         return created;
     }
+
+    @Transactional(readOnly = true)
+    public List<EventReportDTO> getEventsReport() {
+        List<Object[]> results = eventRepository.findAllEventsForReport();
+
+        return results.stream()
+                .map(row -> {
+                    Long eventId = row[0] != null ? ((Number) row[0]).longValue() : null;
+                    String title = (String) row[1];
+                    Boolean isCompleted = row[2] != null ? (Boolean) row[2] : false;
+                    Boolean isPublic = row[3] != null ? (Boolean) row[3] : true;
+                    Boolean isFree = row[4] != null ? (Boolean) row[4] : true;
+                    java.time.LocalDate eventDate = row[5] != null ? ((java.sql.Date) row[5]).toLocalDate() : null;
+
+                    Integer organizersCount = row[6] != null ? ((Number) row[6]).intValue() : 0;
+                    Integer participantsCount = row[7] != null ? ((Number) row[7]).intValue() : 0;
+                    Integer performersCount = row[8] != null ? ((Number) row[8]).intValue() : 0;
+                    Integer maxParticipants = row[9] != null ? ((Number) row[9]).intValue() : 0;
+                    Integer maxOrganizers = row[10] != null ? ((Number) row[10]).intValue() : 0;
+
+                    int totalPeople = organizersCount + participantsCount + performersCount; // приблизительно (могут быть пересечения)
+
+                    return EventReportDTO.builder()
+                            .eventId(eventId)
+                            .title(title)
+                            .isCompleted(isCompleted)
+                            .completionStatus(isCompleted ? "Завершено" : "Не завершено")
+                            .isPublic(isPublic)
+                            .visibilityStatus(isPublic ? "Публичное" : "Не публичное")
+                            .isFreeEvent(isFree)
+                            .freeStatus(isFree ? "Свободное" : "Платное")
+                            .eventDate(eventDate)
+                            .organizersCount(organizersCount)
+                            .participantsCount(participantsCount)
+                            .performersCount(performersCount)
+                            .totalPeopleCount(totalPeople)
+                            .maxParticipantsCount(maxParticipants)
+                            .maxOrganizersCount(maxOrganizers)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
 }

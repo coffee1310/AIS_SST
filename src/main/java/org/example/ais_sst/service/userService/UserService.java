@@ -491,4 +491,35 @@ public class UserService implements UserServiceImpl {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public List<UserRatingDTO> getAllUsersRankedByPoints() {
+        List<Object[]> results = eventParticipationRecordRepository
+                .findAllRankedUsersByPointsNative();
+
+        return results.stream()
+                .map(row -> {
+                    Integer position = row[0] != null ? ((Number) row[0]).intValue() : 0;
+                    Long userId = row[1] != null ? ((Number) row[1]).longValue() : null;
+                    String name = (String) row[2];
+                    String surname = (String) row[3];
+                    String patronymic = (String) row[4];
+                    String roleTitle = (String) row[5];
+                    Long totalPoints = row[6] != null ? ((Number) row[6]).longValue() : 0L;
+
+                    String fio = surname + " " + name +
+                            (patronymic != null && !patronymic.isBlank() ? " " + patronymic : "");
+
+                    return UserRatingDTO.builder()
+                            .position(position)
+                            .userId(userId)
+                            .userName(name)
+                            .userSurname(surname)
+                            .patronymic(patronymic)
+                            .role(roleTitle)
+                            .fio(fio)
+                            .totalPoints(totalPoints)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
 }
