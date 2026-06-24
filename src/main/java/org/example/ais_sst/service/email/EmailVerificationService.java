@@ -130,6 +130,23 @@ public class EmailVerificationService {
 
         // Создаем заявку со статусом "НА_РАССМОТРЕНИИ"
         AccountCreatingRequest request = createAccountRequestInternal(dto);
+
+        // ⭐ СОХРАНЯЕМ ФОТО ПОСЛЕ СОЗДАНИЯ ЗАЯВКИ
+        if (dto.getPhoto() != null && !dto.getPhoto().isEmpty()) {
+            try {
+                // Сохраняем фото и устанавливаем путь к нему
+                String photoPath = accountRequestPhotoService.savePhotoFromBase64(
+                        dto.getPhoto(),
+                        request.getId() // или можно использовать email
+                );
+                request.setPathToPhoto(photoPath);
+                log.info("Photo saved for account request: {}", request.getId());
+            } catch (Exception e) {
+                log.error("Failed to save photo for account request: {}", e.getMessage());
+                // Не бросаем исключение, чтобы заявка создалась даже без фото
+            }
+        }
+
         request.setStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ);
         AccountCreatingRequest savedRequest = accountCreatingRequestsRepository.save(request);
 
@@ -201,6 +218,21 @@ public class EmailVerificationService {
         request.setSpeciality(userSpeciality);
         request.setPassword(passwordEncoder.encode(dto.getPassword()));
         request.setStatus(AccountCreatingRequestStatus.НА_РАССМОТРЕНИИ);
+
+        // ⭐ СОХРАНЯЕМ ФОТО
+        if (dto.getPhoto() != null && !dto.getPhoto().isEmpty()) {
+            try {
+                // Сохраняем фото (пока без ID, сохраним позже)
+                String photoPath = accountRequestPhotoService.savePhotoFromBase64(
+                        dto.getPhoto(),
+                        System.currentTimeMillis() // временный идентификатор
+                );
+                request.setPathToPhoto(photoPath);
+                log.info("Photo saved for account request: {}", dto.getStudentEmail());
+            } catch (Exception e) {
+                log.error("Failed to save photo for account request: {}", e.getMessage());
+            }
+        }
 
         log.info("Account request internal created for email: {}", dto.getStudentEmail());
         return request;
