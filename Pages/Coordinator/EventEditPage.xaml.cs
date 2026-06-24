@@ -784,15 +784,25 @@ namespace Diplom_Stud.Pages.Coordinator
         public string entityType { get; set; }
     }
 
+    // ИСПРАВЛЕНИЕ: ПЕРЕОПРЕДЕЛЁН МЕТОД TOSTRING ДЛЯ ПРАВИЛЬНОГО ОТОБРАЖЕНИЯ
     public class Edit_RoleDto
     {
         public int id { get; set; }
         public string title { get; set; }
         public int sectorId { get; set; }
         public int defaultPoints { get; set; }
+
+        public override string ToString() => title;
     }
 
-    public class Edit_SectorDto { public int id { get; set; } public string title { get; set; } }
+    // ИСПРАВЛЕНИЕ: ПЕРЕОПРЕДЕЛЁН МЕТОД TOSTRING ДЛЯ ПРАВИЛЬНОГО ОТОБРАЖЕНИЯ
+    public class Edit_SectorDto
+    {
+        public int id { get; set; }
+        public string title { get; set; }
+
+        public override string ToString() => title;
+    }
 
     public class Edit_UserDto { public int id { get; set; } public string name { get; set; } public string surname { get; set; } public string patronymic { get; set; } public string role { get; set; } public string DisplayName => $"{surname} {name} {patronymic}".Trim(); }
 

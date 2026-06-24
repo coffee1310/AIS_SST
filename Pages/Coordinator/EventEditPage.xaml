@@ -342,8 +342,10 @@
 
                                                 <Border x:Name="ExpandedComboBox" Style="{StaticResource RegInputBorderStyle}" Width="300" HorizontalAlignment="Left" Height="45" Visibility="Collapsed">
                                                     <Grid>
+                                                        <!-- ПРИВЯЗКА DISPLAYMEMBERPATH ДЛЯ РОЛЕЙ -->
                                                         <ComboBox ItemsSource="{Binding AvailableRoles}" 
                                                                   SelectedItem="{Binding SelectedRole, Mode=TwoWay}" 
+                                                                  DisplayMemberPath="title"
                                                                   Style="{StaticResource ModernComboBoxStyle}"/>
 
                                                         <TextBlock Text="Выберите роль..." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" VerticalAlignment="Center" Margin="15,0,0,0" IsHitTestVisible="False">
@@ -446,7 +448,11 @@
                                             <StackPanel Grid.Row="1" Grid.Column="2" VerticalAlignment="Bottom" Visibility="{Binding CustomRoleVisibility}">
                                                 <TextBlock Text="Ответственный сектор" Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="10" Margin="5,0,0,5"/>
                                                 <Border Style="{StaticResource RegInputBorderStyle}" Height="40">
-                                                    <ComboBox ItemsSource="{Binding AvailableSectors}" SelectedItem="{Binding SelectedSector, Mode=TwoWay}" Style="{StaticResource ModernComboBoxStyle}"/>
+                                                    <!-- ПРИВЯЗКА DISPLAYMEMBERPATH ДЛЯ СЕКТОРОВ -->
+                                                    <ComboBox ItemsSource="{Binding AvailableSectors}" 
+                                                              SelectedItem="{Binding SelectedSector, Mode=TwoWay}" 
+                                                              DisplayMemberPath="title"
+                                                              Style="{StaticResource ModernComboBoxStyle}"/>
                                                 </Border>
                                             </StackPanel>
                                         </Grid>

@@ -294,14 +294,12 @@ namespace Diplom_Stud.Pages.Coordinator
                 string startDateTime = $"{eventDateStr}T{StartTime}:00";
                 string endDateTime = $"{eventDateStr}T{EndTime}:00";
 
-                // ИСПРАВЛЕНИЕ: Переменная org вместо o
                 var organizerIds = SelectedOrganizers.Select(org => org.id).ToList();
 
                 var partRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Participant);
                 int pCount = partRole != null && int.TryParse(partRole.PeopleCount, out int parsedP) ? parsedP : 0;
 
                 var orgRole = Roles.FirstOrDefault(r => r.RoleType == RoleItem.RoleTypeEnum.Organizer);
-                // ИСПРАВЛЕНИЕ: Переменная parsedO вместо o
                 int oCount = orgRole != null && int.TryParse(orgRole.PeopleCount, out int parsedO) ? parsedO : 0;
 
                 var eventPayload = new Dictionary<string, object>
@@ -488,15 +486,24 @@ namespace Diplom_Stud.Pages.Coordinator
         protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    // ИСПРАВЛЕНИЕ: Добавлен префикс Create_ ко всем DTO
     public class Create_RoleDto
     {
         public int id { get; set; }
         public string title { get; set; }
         public int sectorId { get; set; }
         public int defaultPoints { get; set; }
+
+        public override string ToString() => title;
     }
-    public class Create_SectorDto { public int id { get; set; } public string title { get; set; } }
+
+    public class Create_SectorDto
+    {
+        public int id { get; set; }
+        public string title { get; set; }
+
+        public override string ToString() => title;
+    }
+
     public class Create_UserDto { public int id { get; set; } public string name { get; set; } public string surname { get; set; } public string patronymic { get; set; } public string role { get; set; } public string DisplayName => $"{surname} {name} {patronymic}".Trim(); }
 
     public class SectorSelectionItem : INotifyPropertyChanged
