@@ -38,9 +38,9 @@ public class RefreshTokenService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        // Удаляем ВСЕ старые refresh токены пользователя из БД
-        refreshTokenRepository.deleteByUserId(userId);
-        log.info("Deleted all old refresh tokens for user: {}", userId);
+//        // Удаляем ВСЕ старые refresh токены пользователя из БД
+//        refreshTokenRepository.deleteByUserId(userId);
+//        log.info("Deleted all old refresh tokens for user: {}", userId);
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)

@@ -106,23 +106,22 @@ public class AuthController extends BaseController {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Long userId = userDetails.getId();
 
-        // 1. Отзываем ВСЕ старые токены пользователя
-        refreshTokenService.revokeAllUserTokens(userId);
-        revokedTokenService.revokeAllUserTokens(userId);
+        // ========================================================
+        // ИЗМЕНЕНИЕ: УБРАЛИ отзыв всех старых токенов
+        // Теперь пользователь может иметь несколько активных сессий
+        // ========================================================
 
-        log.info("All old tokens revoked for user: {}", userId);
-
-        // 2. Генерируем новый access token
+        // Генерируем новый access token
         String newAccessToken = jwtUtils.generateJwtToken(authentication);
 
-        // 3. Получаем JTI из нового токена
+        // Получаем JTI нового токена
         String jti = jwtUtils.getJtiFromToken(newAccessToken);
 
-        // 4. Сохраняем JTI как активный
+        // Сохраняем JTI как активный (добавляем в множество)
         long accessTokenExpiration = System.currentTimeMillis() + jwtExpirationMs;
         revokedTokenService.storeActiveToken(userId, jti, accessTokenExpiration);
 
-        // 5. Создаем новый refresh token
+        // Создаём новый refresh token (старые не удаляем)
         RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(userId);
 
         List<String> roles = userDetails.getAuthorities().stream()
