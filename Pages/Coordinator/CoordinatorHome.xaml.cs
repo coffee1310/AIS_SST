@@ -30,6 +30,9 @@ namespace Diplom_Stud.Pages.Coordinator
         private int _currentEventIndex = 0;
         private List<EventViewModelLocal> _allEvents = new List<EventViewModelLocal>();
 
+        private int _currentTaskIndex = 0;
+        private List<CoordHomeTaskViewModel> _allTasks = new List<CoordHomeTaskViewModel>();
+
         public CoordinatorHome()
         {
             InitializeComponent();
@@ -54,26 +57,26 @@ namespace Diplom_Stud.Pages.Coordinator
             this.BeginAnimation(Page.OpacityProperty, fadeInAnimation);
 
             LoadUserData();
-            await LoadAllEventsAsync();
+            await LoadAllDashboardDataAsync();
         }
 
         private void LoadUserData()
         {
             var user = App.CurrentUserProfile;
-
             if (user != null)
             {
                 tbUserName.Text = $"{user.surname} {user.name} {user.patronymic}".Trim();
             }
         }
 
-        private async Task LoadAllEventsAsync()
+        private async Task LoadAllDashboardDataAsync()
         {
             LoadingOverlay.Visibility = Visibility.Visible;
 
             DraftsHeaderGrid.Visibility = Visibility.Collapsed;
             DraftsItemsControl.Visibility = Visibility.Collapsed;
             EmptyEventsText.Visibility = Visibility.Collapsed;
+            EmptyTasksText.Visibility = Visibility.Collapsed;
 
             try
             {
@@ -84,7 +87,7 @@ namespace Diplom_Stud.Pages.Coordinator
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
-
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 int userId = App.CurrentUserProfile?.id ?? 0;
 
                 var draftsDto = await FetchEventsFromApi($"/api/events?isDraft=true&creatorId={userId}&isDeleted=false&page=0&size=50");
@@ -99,28 +102,17 @@ namespace Diplom_Stud.Pages.Coordinator
 
                 foreach (var ev in orgEventsDto)
                 {
-                    if (activeEventsDict.ContainsKey(ev.id))
-                    {
-                        activeEventsDict[ev.id].OrganizerBadgeVisibility = Visibility.Visible;
-                    }
-                    else
-                    {
-                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
-                    }
+                    if (activeEventsDict.ContainsKey(ev.id)) activeEventsDict[ev.id].OrganizerBadgeVisibility = Visibility.Visible;
+                    else activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
                 }
 
                 foreach (var ev in sectorEventsDto)
                 {
-                    if (!activeEventsDict.ContainsKey(ev.id))
-                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
+                    if (!activeEventsDict.ContainsKey(ev.id)) activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
                 }
 
                 _allDrafts = draftsDto.Select(d => MapToViewModel(d, isOrganizer: false)).ToList();
-
-                _allEvents = activeEventsDict.Values
-                    .OrderByDescending(v => v.IsOverdue)
-                    .ThenBy(v => v.EventDate)
-                    .ToList();
+                _allEvents = activeEventsDict.Values.OrderByDescending(v => v.IsOverdue).ThenBy(v => v.EventDate).ToList();
 
                 _currentDraftIndex = 0;
                 _currentEventIndex = 0;
@@ -133,18 +125,25 @@ namespace Diplom_Stud.Pages.Coordinator
                     DraftsHeaderGrid.Visibility = Visibility.Visible;
                     DraftsItemsControl.Visibility = Visibility.Visible;
                 }
-                else
-                {
-                    DraftsHeaderGrid.Visibility = Visibility.Collapsed;
-                    DraftsItemsControl.Visibility = Visibility.Collapsed;
-                }
 
                 if (_allEvents.Count == 0) EmptyEventsText.Visibility = Visibility.Visible;
+
+                var tasksResponse = await _httpClient.GetAsync("/api/tasks?createdByMe=true&isCompleted=false&isDeleted=false&page=0&size=50&sortBy=deadline&sortDirection=ASC");
+                if (tasksResponse.IsSuccessStatusCode)
+                {
+                    string tasksJson = await tasksResponse.Content.ReadAsStringAsync();
+                    var tasksPage = JsonSerializer.Deserialize<CoordHomeTaskPageResponse>(tasksJson, options);
+                    _allTasks = tasksPage?.content?.Select(t => new CoordHomeTaskViewModel { Task = t }).ToList() ?? new List<CoordHomeTaskViewModel>();
+                }
+
+                _currentTaskIndex = 0;
+                UpdateTaskCarousel();
+                if (_allTasks.Count == 0) EmptyTasksText.Visibility = Visibility.Visible;
 
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Сбой сети при загрузке мероприятий: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                CustomMessageBox.Show($"Сбой сети при загрузке данных: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
             finally
             {
@@ -213,6 +212,78 @@ namespace Diplom_Stud.Pages.Coordinator
             {
                 _currentEventIndex++;
                 UpdateEventCarousel();
+            }
+        }
+
+        private void UpdateTaskCarousel()
+        {
+            if (_allTasks == null || _allTasks.Count == 0)
+            {
+                TasksItemsControl.ItemsSource = null;
+                return;
+            }
+            var displayTasks = _allTasks.Skip(_currentTaskIndex).Take(3).ToList();
+            TasksItemsControl.ItemsSource = displayTasks;
+
+            BtnPrevTask.Visibility = _currentTaskIndex > 0 ? Visibility.Visible : Visibility.Collapsed;
+            BtnNextTask.Visibility = _currentTaskIndex + 3 < _allTasks.Count ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BtnPrevTask_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentTaskIndex > 0)
+            {
+                _currentTaskIndex--;
+                UpdateTaskCarousel();
+            }
+        }
+
+        private void BtnNextTask_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentTaskIndex + 3 < _allTasks.Count)
+            {
+                _currentTaskIndex++;
+                UpdateTaskCarousel();
+            }
+        }
+
+        // ================= ДЕЙСТВИЯ =================
+        private void AllTasks_Click(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.ManageTasks());
+        }
+
+        private void ManageTask_Click(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.ManageTasks());
+        }
+
+        private void AllEvents_Click(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEvents());
+        }
+
+        private void EventCard_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border border && border.Tag is int eventId)
+            {
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
+            }
+        }
+
+        private void DraftCard_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border border && border.Tag is int eventId)
+            {
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
+            }
+        }
+
+        private void EditDraft_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is int eventId)
+            {
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
             }
         }
 
@@ -307,35 +378,6 @@ namespace Diplom_Stud.Pages.Coordinator
             NavigationService?.Navigate(new Diplom_Stud.Pages.Activist.Home());
         }
 
-        private void EventCard_Click(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is Border border && border.Tag is int eventId)
-            {
-                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
-            }
-        }
-
-        private void DraftCard_Click(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is Border border && border.Tag is int eventId)
-            {
-                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
-            }
-        }
-
-        private void EditDraft_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is int eventId)
-            {
-                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
-            }
-        }
-
-        private void AllEvents_Click(object sender, RoutedEventArgs e)
-        {
-            this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.Events());
-        }
-
         private BitmapImage GetImageFromBase64(string base64String)
         {
             try
@@ -419,4 +461,17 @@ namespace Diplom_Stud.Pages.Coordinator
         public Brush CardBorderBrush { get; set; }
         public Thickness CardBorderThickness { get; set; }
     }
+
+    public class CoordHomeTaskDto
+    {
+        public int id { get; set; }
+        public string title { get; set; }
+        public string description { get; set; }
+        public DateTime deadline { get; set; }
+        public int countOfPoints { get; set; }
+        public string DeadlineDisplay => deadline.ToString("d MMMM HH:mm");
+        public string PointsDisplay => $"+{countOfPoints} баллов";
+    }
+    public class CoordHomeTaskPageResponse { public List<CoordHomeTaskDto> content { get; set; } }
+    public class CoordHomeTaskViewModel { public CoordHomeTaskDto Task { get; set; } }
 }

@@ -71,24 +71,40 @@ namespace Diplom_Stud.Pages.Coordinator
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
+                int userId = App.CurrentUserProfile?.id ?? 0;
 
+                var myEventsDto = await FetchEventsFromApi($"/api/events?isDraft=false&creatorId={userId}&isDeleted=false&page=0&size=50");
                 var orgEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isOrganizer=true&isDeleted=false&page=0&size=50");
-                var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isMySector=true&isDeleted=false&page=0&size=50");
-                var publicEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isPublic=true&isDeleted=false&page=0&size=50");
+                var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isResponsibleSector=true&isDeleted=false&page=0&size=50");
 
                 var userApplications = await GetUserApplicationsAsync();
 
                 var activeEventsDict = new Dictionary<int, CoordEvents_ViewModel>();
 
+                foreach (var ev in myEventsDto)
+                {
+                    if (!ev.isDeleted)
+                    {
+                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
+                    }
+                }
+
                 foreach (var ev in orgEventsDto)
                 {
                     if (!ev.isDeleted)
                     {
-                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
+                        if (activeEventsDict.ContainsKey(ev.id))
+                        {
+                            activeEventsDict[ev.id].OrganizerBadgeVisibility = Visibility.Visible;
+                        }
+                        else
+                        {
+                            activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
+                        }
                     }
                 }
 
-                foreach (var ev in sectorEventsDto.Concat(publicEventsDto))
+                foreach (var ev in sectorEventsDto)
                 {
                     if (!ev.isDeleted && !activeEventsDict.ContainsKey(ev.id))
                     {
@@ -107,10 +123,9 @@ namespace Diplom_Stud.Pages.Coordinator
                 }
 
                 _allLoadedEvents = activeEventsDict.Values
-                    .Where(v => v.EventDate.Date >= DateTime.Today)
-                    .OrderBy(v => v.EventDate)
+                    .OrderByDescending(v => v.IsOverdue)
+                    .ThenBy(v => v.EventDate)
                     .ToList();
-
 
                 UpdateView();
             }
@@ -181,6 +196,8 @@ namespace Diplom_Stud.Pages.Coordinator
                 if (decodedBmp != null) bmp = decodedBmp;
             }
 
+            bool isOverdue = !ev.isCompleted && parsedDate < DateTime.Now.Date;
+
             return new CoordEvents_ViewModel
             {
                 Id = ev.id,
@@ -189,10 +206,14 @@ namespace Diplom_Stud.Pages.Coordinator
                 Venue = ev.venue ?? "Место не указано",
                 Image = bmp,
                 EventDate = parsedDate,
+                IsOverdue = isOverdue,
                 OrganizerBadgeVisibility = isOrganizer ? Visibility.Visible : Visibility.Collapsed,
                 ParticipantBadgeVisibility = Visibility.Collapsed,
-                CardBorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A283C")),
-                CardBorderThickness = new Thickness(1)
+                ImageVisibility = Visibility.Visible,
+                CardBorderBrush = isOverdue
+                    ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E81123"))
+                    : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A283C")),
+                CardBorderThickness = isOverdue ? new Thickness(2) : new Thickness(1)
             };
         }
 
@@ -286,7 +307,7 @@ namespace Diplom_Stud.Pages.Coordinator
         {
             if (sender is Border border && border.Tag is int eventId)
             {
-                this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.EventDetails(eventId));
+                this.NavigationService.Navigate(new Diplom_Stud.Pages.Coordinator.CoordinatorEventDetails(eventId));
             }
         }
 
@@ -335,7 +356,7 @@ namespace Diplom_Stud.Pages.Coordinator
 
     public class CoordEvents_PageResponse { public List<CoordEvents_EventDto> content { get; set; } }
     public class CoordEvents_EventDto { public int id { get; set; } public string title { get; set; } public string photo { get; set; } public string dateOfEvent { get; set; } public string startTime { get; set; } public string venue { get; set; } public bool isCompleted { get; set; } public bool isDeleted { get; set; } public bool isMySector { get; set; } public bool isFreeEvent { get; set; } }
-    public class CoordEvents_ViewModel { public int Id { get; set; } public string Title { get; set; } public string DateTimeDisplay { get; set; } public string Venue { get; set; } public ImageSource Image { get; set; } public Visibility OrganizerBadgeVisibility { get; set; } = Visibility.Collapsed; public Visibility ParticipantBadgeVisibility { get; set; } = Visibility.Collapsed; public Visibility ImageVisibility { get; set; } public DateTime EventDate { get; set; } public Brush CardBorderBrush { get; set; } public Thickness CardBorderThickness { get; set; } }
+    public class CoordEvents_ViewModel { public int Id { get; set; } public string Title { get; set; } public string DateTimeDisplay { get; set; } public string Venue { get; set; } public ImageSource Image { get; set; } public Visibility OrganizerBadgeVisibility { get; set; } = Visibility.Collapsed; public Visibility ParticipantBadgeVisibility { get; set; } = Visibility.Collapsed; public Visibility ImageVisibility { get; set; } public DateTime EventDate { get; set; } public bool IsOverdue { get; set; } public Brush CardBorderBrush { get; set; } public Thickness CardBorderThickness { get; set; } }
     public class CoordEvents_AppPageResponse { public List<CoordEvents_AppDto> content { get; set; } }
     public class CoordEvents_AppDto { public int id { get; set; } public int eventId { get; set; } public string status { get; set; } }
 }

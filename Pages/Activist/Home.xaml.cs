@@ -22,8 +22,12 @@ namespace Diplom_Stud.Pages.Activist
     public partial class Home : Page
     {
         private static readonly HttpClient _httpClient = new HttpClient();
+
         private List<EventViewModelLocal> _allEvents = new List<EventViewModelLocal>();
         private int _currentEventIndex = 0;
+
+        private List<HomeTaskViewModel> _allTasks = new List<HomeTaskViewModel>();
+        private int _currentTaskIndex = 0;
 
         public Home()
         {
@@ -49,7 +53,7 @@ namespace Diplom_Stud.Pages.Activist
             this.BeginAnimation(Page.OpacityProperty, fadeInAnimation);
 
             LoadUserData();
-            await LoadActivistEventsAsync();
+            await LoadDashboardDataAsync();
         }
 
         private void LoadUserData()
@@ -64,10 +68,11 @@ namespace Diplom_Stud.Pages.Activist
             }
         }
 
-        private async Task LoadActivistEventsAsync()
+        private async Task LoadDashboardDataAsync()
         {
             LoadingOverlay.Visibility = Visibility.Visible;
             EmptyEventsText.Visibility = Visibility.Collapsed;
+            EmptyTasksText.Visibility = Visibility.Collapsed;
 
             try
             {
@@ -78,41 +83,51 @@ namespace Diplom_Stud.Pages.Activist
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                try
+                {
+                    HttpResponseMessage ratingRes = await _httpClient.GetAsync("/api/reports/users");
+                    if (ratingRes.IsSuccessStatusCode)
+                    {
+                        string rJson = await ratingRes.Content.ReadAsStringAsync();
+                        var ratings = JsonSerializer.Deserialize<List<HomeRatingReportDto>>(rJson, options);
+                        int currentUserId = App.CurrentUserProfile?.id ?? 0;
+                        var myRating = ratings?.FirstOrDefault(r => r.userId == currentUserId);
+
+                        if (myRating != null)
+                        {
+                            tbEventsCount.Text = (myRating.eventsCount ?? 0).ToString();
+                            tbPointsCount.Text = (myRating.totalPoints ?? 0).ToString();
+                            tbRank.Text = myRating.position.ToString();
+                        }
+                    }
+                }
+                catch { }
 
                 var orgEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isOrganizer=true&isDeleted=false&page=0&size=50");
-
                 var sectorEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isMySector=true&isDeleted=false&page=0&size=50");
-
                 var publicEventsDto = await FetchEventsFromApi("/api/events?isDraft=false&isPublic=true&isDeleted=false&page=0&size=50");
-
                 var userApplications = await GetUserApplicationsAsync();
 
                 var activeEventsDict = new Dictionary<int, EventViewModelLocal>();
 
                 foreach (var ev in orgEventsDto)
                 {
-                    if (!ev.isDeleted)
-                    {
-                        activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
-                    }
+                    if (!ev.isDeleted) activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: true);
                 }
 
                 foreach (var ev in sectorEventsDto.Concat(publicEventsDto))
                 {
                     if (!ev.isDeleted && !activeEventsDict.ContainsKey(ev.id))
-                    {
                         activeEventsDict[ev.id] = MapToViewModel(ev, isOrganizer: false);
-                    }
                 }
 
                 foreach (var vm in activeEventsDict.Values)
                 {
                     bool isApplied = userApplications.Any(a => a.eventId == vm.Id &&
                                     (a.status == "ОДОБРЕНА" || a.status == "НА_РАССМОТРЕНИИ" || a.status == "НА РАССМОТРЕНИИ" || a.status == "ОДОБРЕНО"));
-                    if (isApplied)
-                    {
-                        vm.ParticipantBadgeVisibility = Visibility.Visible;
-                    }
+                    if (isApplied) vm.ParticipantBadgeVisibility = Visibility.Visible;
                 }
 
                 _allEvents = activeEventsDict.Values
@@ -122,13 +137,24 @@ namespace Diplom_Stud.Pages.Activist
 
                 _currentEventIndex = 0;
                 UpdateEventCarousel();
+                if (_allEvents.Count == 0) EmptyEventsText.Visibility = Visibility.Visible;
 
-                if (_allEvents.Count == 0)
-                    EmptyEventsText.Visibility = Visibility.Visible;
+                var tasksResponse = await _httpClient.GetAsync("/api/tasks?isCompleted=false&isDeleted=false&isPreassigned=false&assignedToMe=false&page=0&size=50&sortBy=deadline&sortDirection=ASC");
+                if (tasksResponse.IsSuccessStatusCode)
+                {
+                    string tasksJson = await tasksResponse.Content.ReadAsStringAsync();
+                    var tasksPage = JsonSerializer.Deserialize<HomeTaskPageResponse>(tasksJson, options);
+                    _allTasks = tasksPage?.content?.Select(t => new HomeTaskViewModel { Task = t }).ToList() ?? new List<HomeTaskViewModel>();
+                }
+
+                _currentTaskIndex = 0;
+                UpdateTaskCarousel();
+                if (_allTasks.Count == 0) EmptyTasksText.Visibility = Visibility.Visible;
+
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show($"Сбой сети при загрузке мероприятий: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+                CustomMessageBox.Show($"Сбой сети при загрузке: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
             }
             finally
             {
@@ -138,7 +164,11 @@ namespace Diplom_Stud.Pages.Activist
 
         private void UpdateEventCarousel()
         {
-            if (_allEvents == null || _allEvents.Count == 0) return;
+            if (_allEvents == null || _allEvents.Count == 0)
+            {
+                EventsItemsControl.ItemsSource = null;
+                return;
+            }
 
             var displayEvents = _allEvents.Skip(_currentEventIndex).Take(3).ToList();
             EventsItemsControl.ItemsSource = displayEvents;
@@ -162,6 +192,69 @@ namespace Diplom_Stud.Pages.Activist
             {
                 _currentEventIndex++;
                 UpdateEventCarousel();
+            }
+        }
+
+        private void UpdateTaskCarousel()
+        {
+            if (_allTasks == null || _allTasks.Count == 0)
+            {
+                TasksItemsControl.ItemsSource = null;
+                return;
+            }
+            var displayTasks = _allTasks.Skip(_currentTaskIndex).Take(3).ToList();
+            TasksItemsControl.ItemsSource = displayTasks;
+
+            BtnPrevTask.Visibility = _currentTaskIndex > 0 ? Visibility.Visible : Visibility.Collapsed;
+            BtnNextTask.Visibility = _currentTaskIndex + 3 < _allTasks.Count ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BtnPrevTask_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentTaskIndex > 0)
+            {
+                _currentTaskIndex--;
+                UpdateTaskCarousel();
+            }
+        }
+
+        private void BtnNextTask_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentTaskIndex + 3 < _allTasks.Count)
+            {
+                _currentTaskIndex++;
+                UpdateTaskCarousel();
+            }
+        }
+        private void AllTasks_Click(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Navigate(new Diplom_Stud.Pages.Activist.Tasks());
+        }
+
+        private async void TaskAction_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is HomeTaskViewModel tvm)
+            {
+                LoadingOverlay.Visibility = Visibility.Visible;
+                try
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                    var payload = new { taskId = tvm.Task.id };
+                    var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                    var response = await _httpClient.PostAsync("/api/task-requests", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        CustomMessageBox.Show("Заявка успешно подана!", "Успех", CustomMessageBox.MessageType.Success);
+                        await LoadDashboardDataAsync(); 
+                    }
+                    else
+                    {
+                        CustomMessageBox.Show("Ошибка подачи заявки (возможно, вы уже подали её).", "Ошибка", CustomMessageBox.MessageType.Error);
+                    }
+                }
+                catch (Exception ex) { CustomMessageBox.Show(ex.Message, "Ошибка", CustomMessageBox.MessageType.Error); }
+                finally { LoadingOverlay.Visibility = Visibility.Collapsed; }
             }
         }
 
@@ -294,10 +387,29 @@ namespace Diplom_Stud.Pages.Activist
     }
 
     public class EventPageResponseLocal { public List<EventDtoLocal> content { get; set; } }
-
     public class EventDtoLocal { public int id { get; set; } public string title { get; set; } public string photo { get; set; } public string dateOfEvent { get; set; } public string startTime { get; set; } public string venue { get; set; } public bool isCompleted { get; set; } public bool isDeleted { get; set; } public bool isMySector { get; set; } public bool isFreeEvent { get; set; } }
-
     public class EventViewModelLocal { public int Id { get; set; } public string Title { get; set; } public string DateTimeDisplay { get; set; } public string Venue { get; set; } public ImageSource Image { get; set; } public Visibility OrganizerBadgeVisibility { get; set; } public Visibility ParticipantBadgeVisibility { get; set; } = Visibility.Collapsed; public DateTime EventDate { get; set; } public Brush CardBorderBrush { get; set; } public Thickness CardBorderThickness { get; set; } }
     public class ApplicationPageResponse { public List<ApplicationDto> content { get; set; } }
     public class ApplicationDto { public int eventId { get; set; } public string status { get; set; } = ""; }
+
+    public class HomeRatingReportDto { public int userId { get; set; } public int? totalPoints { get; set; } public int? eventsCount { get; set; } public int position { get; set; } }
+
+    public class HomeTaskDto
+    {
+        public int id { get; set; }
+        public string title { get; set; }
+        public string description { get; set; }
+        public DateTime deadline { get; set; }
+        public int countOfPoints { get; set; }
+        public string DeadlineDisplay => deadline.ToString("d MMMM HH:mm");
+        public string PointsDisplay => $"+{countOfPoints} баллов";
+    }
+    public class HomeTaskPageResponse { public List<HomeTaskDto> content { get; set; } }
+    public class HomeTaskViewModel
+    {
+        public HomeTaskDto Task { get; set; }
+        public string ActionText => "Откликнуться";
+        public Brush ActionBackground => new SolidColorBrush(Color.FromArgb(255, 2, 179, 186));
+        public Brush ActionForeground => Brushes.White;
+    }
 }
