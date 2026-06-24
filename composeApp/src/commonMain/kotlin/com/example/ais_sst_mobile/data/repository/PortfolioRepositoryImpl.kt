@@ -24,6 +24,9 @@ class PortfolioRepositoryImpl(
         fileName: String
     ): Result<Unit> = runCatching {
 
+        // Очищаем имя файла от русских символов и спецсимволов
+        val safeFileName = sanitizeFileName(fileName)
+
         val response = httpClient.post("portfolio/upload") {
             setBody(
                 MultiPartFormDataContent(
@@ -36,7 +39,7 @@ class PortfolioRepositoryImpl(
                                 append(
                                     HttpHeaders.ContentDisposition,
                                     ContentDisposition.File
-                                        .withParameter(ContentDisposition.Parameters.FileName, fileName)
+                                        .withParameter(ContentDisposition.Parameters.FileName, safeFileName)
                                         .toString()
                                 )
                             }
@@ -50,7 +53,7 @@ class PortfolioRepositoryImpl(
             val errorBody = try {
                 response.bodyAsText()
             } catch (e: Exception) {
-                "Не удалось прочитать тело ошибки"
+                "Не удалось прочитать ответ сервера"
             }
             throw Exception("Ошибка загрузки портфолио (${response.status.value}): $errorBody")
         }
@@ -60,14 +63,21 @@ class PortfolioRepositoryImpl(
         val response = httpClient.get("portfolio/download")
 
         if (!response.status.isSuccess()) {
-            val errorBody = try {
-                response.bodyAsText()
-            } catch (e: Exception) {
-                ""
-            }
+            val errorBody = try { response.bodyAsText() } catch (e: Exception) { "" }
             throw Exception("Ошибка скачивания портфолио (${response.status.value}): $errorBody")
         }
 
         response.body<ByteArray>()
+    }
+
+    /**
+     * Очищает имя файла от недопустимых символов.
+     * Заменяет русские буквы и спецсимволы на "_".
+     */
+    private fun sanitizeFileName(name: String): String {
+        return name
+            .replace(Regex("[^a-zA-Z0-9._-]"), "_")   // оставляем только латиницу, цифры, ., _ и -
+            .replace(Regex("_{2,}"), "_")              // убираем повторяющиеся подчёркивания
+            .take(120)                                 // ограничиваем длину
     }
 }
