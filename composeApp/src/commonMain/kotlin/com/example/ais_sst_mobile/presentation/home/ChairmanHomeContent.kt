@@ -31,6 +31,7 @@ import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
+import com.example.ais_sst_mobile.presentation.home.internal_projects.InternalProjectsContent
 import com.example.ais_sst_mobile.presentation.home.tasks.QuickTasksContent
 import org.koin.compose.getKoin
 
@@ -164,9 +165,7 @@ fun ChairmanHomeContent(
             } else if (selectedTab == 1) {
                 QuickTasksContent()
             } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Контент вкладки 'Внутренние проекты'", color = MaterialTheme.colorScheme.onSurface)
-                }
+                InternalProjectsContent()
             }
         }
 

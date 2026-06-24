@@ -24,7 +24,8 @@ sealed interface FullScreenRoute {
     data object CreateEvent : FullScreenRoute
     data class EditEvent(val eventId: Int) : FullScreenRoute
     data object Rating : FullScreenRoute
-    data object Portfolio : FullScreenRoute          // ← ДОБАВЛЕНО
+    data object Portfolio : FullScreenRoute
+    data object AboutApp : FullScreenRoute          // ← ДОБАВЛЕНО
 }
 
 class LoginComponent(
@@ -364,6 +365,12 @@ class RatingComponent(
 
 // ==================== PORTFOLIO ====================
 class PortfolioComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+// ==================== ABOUT APP ====================
+class AboutAppComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

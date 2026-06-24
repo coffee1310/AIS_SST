@@ -38,6 +38,7 @@ interface RootComponent {
         class EditEvent(val component: EditEventComponent) : Child()
         class Rating(val component: RatingComponent) : Child()
         class Portfolio(val component: PortfolioComponent) : Child()   // ← ДОБАВЛЕНО
+        class AboutApp(val component: AboutAppComponent) : Child()
     }
 }
 
@@ -109,9 +110,16 @@ class DefaultRootComponent(
                             is FullScreenRoute.CreateEvent -> navigation.pushNew(Config.CreateEvent)
                             is FullScreenRoute.EditEvent -> navigation.pushNew(Config.EditEvent(route.eventId))
                             is FullScreenRoute.Rating -> navigation.pushNew(Config.Rating)
-                            is FullScreenRoute.Portfolio -> navigation.pushNew(Config.Portfolio)   // ← ДОБАВЛЕНО
+                            is FullScreenRoute.Portfolio -> navigation.pushNew(Config.Portfolio)
+                            is FullScreenRoute.AboutApp -> navigation.pushNew(Config.AboutApp)
                         }
                     }
+                )
+            )
+            is Config.AboutApp -> RootComponent.Child.AboutApp(
+                AboutAppComponent(
+                    componentContext = context,
+                    onGoBack = { navigation.pop() }
                 )
             )
             is Config.Portfolio -> RootComponent.Child.Portfolio(
@@ -198,6 +206,8 @@ class DefaultRootComponent(
         @Serializable data object CreateEvent : Config
         @Serializable data class EditEvent(val eventId: Int) : Config
         @Serializable data object Rating : Config
-        @Serializable data object Portfolio : Config          // ← ДОБАВЛЕНО
+        @Serializable data object Portfolio : Config
+
+        @Serializable data object AboutApp : Config
     }
 }

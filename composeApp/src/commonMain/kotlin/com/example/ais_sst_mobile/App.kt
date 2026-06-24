@@ -33,6 +33,7 @@ import com.example.ais_sst_mobile.presentation.events.create.CreateEventScreen
 import com.example.ais_sst_mobile.presentation.events.edit.EditEventScreen
 import com.example.ais_sst_mobile.presentation.profile.rating.RatingScreen
 import com.example.ais_sst_mobile.presentation.auth.ForgotPasswordScreen
+import com.example.ais_sst_mobile.presentation.profile.about.AboutAppScreen
 import com.example.ais_sst_mobile.presentation.profile.portfolio.PortfolioScreen
 
 @OptIn(ExperimentalDecomposeApi::class)
@@ -102,7 +103,9 @@ fun App(root: RootComponent) {
                         component = instance.component
                     )
                     is RootComponent.Child.ForgotPassword -> ForgotPasswordScreen(instance.component)
-                    is RootComponent.Child.Portfolio -> PortfolioScreen(instance.component)                }
+                    is RootComponent.Child.Portfolio -> PortfolioScreen(instance.component)
+                    is RootComponent.Child.AboutApp -> AboutAppScreen(instance.component)
+                }
             }
         }
 

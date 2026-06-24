@@ -8,6 +8,7 @@ import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentDisposition
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
@@ -46,7 +47,12 @@ class PortfolioRepositoryImpl(
         }
 
         if (!response.status.isSuccess()) {
-            throw Exception("Ошибка загрузки портфолио: ${response.status}")
+            val errorBody = try {
+                response.bodyAsText()
+            } catch (e: Exception) {
+                "Не удалось прочитать тело ошибки"
+            }
+            throw Exception("Ошибка загрузки портфолио (${response.status.value}): $errorBody")
         }
     }
 
@@ -54,10 +60,14 @@ class PortfolioRepositoryImpl(
         val response = httpClient.get("portfolio/download")
 
         if (!response.status.isSuccess()) {
-            throw Exception("Ошибка скачивания портфолио: ${response.status}")
+            val errorBody = try {
+                response.bodyAsText()
+            } catch (e: Exception) {
+                ""
+            }
+            throw Exception("Ошибка скачивания портфолио (${response.status.value}): $errorBody")
         }
 
-        // Самый надёжный способ получить байты в Ktor 2.x
         response.body<ByteArray>()
     }
 }

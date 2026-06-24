@@ -53,7 +53,10 @@ fun DeputyChairmanProfileContent(component: ProfileComponent, screenModel: Profi
                     ProfileMenuRow(icon = Icons.Outlined.PersonOutline, title = "Мои данные", onClick = {
                         component.onNavigateToFullScreen(FullScreenRoute.MyData) })
                     ProfileMenuRow(icon = Icons.Outlined.Folder, title = "Архив мероприятий", onClick = { })
-                    ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = { })
+                    ProfileMenuRow(icon = Icons.Outlined.Leaderboard, title = "Рейтинг", onClick = {
+                        component.onNavigateToFullScreen(FullScreenRoute.Rating)
+
+                    })
                     ProfileMenuRow(icon = Icons.Outlined.DocumentScanner, title = "Документы", onClick = { })
                     ProfileMenuRow(icon = Icons.Outlined.Group, title = "Правление студсовета", onClick = {
                         component.onNavigateToFullScreen(FullScreenRoute.Board)
