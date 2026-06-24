@@ -20,6 +20,9 @@ public interface SectorParticipantRepository extends JpaRepository<SectorPartici
 
     Optional<SectorParticipant> findBySectorIdAndStudentId(Long sectorId, Long studentId);
 
+    @Query("SELECT sp FROM SectorParticipant sp WHERE sp.sector.id = :sectorId AND sp.student.id = :studentId")
+    List<SectorParticipant> findAllBySectorIdAndStudentId(@Param("sectorId") Long sectorId, @Param("studentId") Long studentId);
+
     Optional<SectorParticipant> findByStudentIdAndSectorId(Long studentId, Long sectorId);
 
     List<SectorParticipant> findBySectorIdAndIsCoordinatorTrue(Long sectorId);

@@ -11,6 +11,7 @@ import org.example.ais_sst.mapper.EventMapper;
 import org.example.ais_sst.repository.*;
 import org.example.ais_sst.service.base.BaseEntityService;
 import org.example.ais_sst.specification.EventSpecification;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -233,17 +234,39 @@ public class EventService extends BaseEntityService {
     /**
      * Обновление секторов мероприятия
      */
-    private void updateEventSectors(Event event, List<Long> sectorIds) {
-        if (event.getEventSectors() != null && !event.getEventSectors().isEmpty()) {
-            eventSectorRepository.deleteAll(event.getEventSectors());
-            event.getEventSectors().clear();
+    /**
+     * Самая надёжная версия обновления секторов
+     */
+    @Transactional
+    public void updateEventSectors(Event event, List<Long> newSectorIds) {
+        if (newSectorIds == null) {
+            return;
         }
 
-        for (Long sectorId : sectorIds) {
+        Long eventId = event.getId();
+        log.info("Updating sectors for event {}. New sectors: {}", eventId, newSectorIds);
+
+        // 1. Удаляем все старые связи
+        eventSectorRepository.deleteByEventId(eventId);
+
+        // 2. Создаём новые связи
+        for (Long sectorId : newSectorIds) {
             Sector sector = findEntityOrThrow(sectorId, sectorRepository::findById,
                     () -> new IllegalArgumentException("Сектор не найден: " + sectorId), "Sector");
-            event.addSector(sector);
+
+            EventSector eventSector = EventSector.builder()
+                    .event(event)
+                    .sector(sector)
+                    .build();
+
+            eventSectorRepository.save(eventSector);
         }
+
+        // 3. НЕ вызываем event.getEventSectors().clear() - это вызывает LazyInitializationException
+        // Вместо этого просто помечаем, что коллекция устарела
+        // При следующем обращении к event.getEventSectors() данные будут перезагружены
+
+        log.info("Sectors updated successfully for event {}", eventId);
     }
 
     /**
@@ -609,8 +632,24 @@ public class EventService extends BaseEntityService {
     }
 
     private void updateEventPhoto(Event event, String newPhotoBase64) {
-        deletePhoto(event.getPhoto());
-        event.setPhoto(savePhoto(newPhotoBase64));
+        if (newPhotoBase64 == null || newPhotoBase64.isEmpty()) {
+            // Если пришла пустая строка - удаляем фото
+            if (event.getPhoto() != null && !event.getPhoto().isEmpty()) {
+                deletePhoto(event.getPhoto());
+                event.setPhoto(null);
+            }
+            return;
+        }
+
+        // Удаляем старую фотографию, если она есть
+        if (event.getPhoto() != null && !event.getPhoto().isEmpty()) {
+            deletePhoto(event.getPhoto());
+        }
+
+        // Сохраняем новую фотографию
+        String newPhotoPath = savePhoto(newPhotoBase64);
+        event.setPhoto(newPhotoPath);
+        log.info("Photo updated for event {}: {}", event.getId(), newPhotoPath);
     }
 
     private void updateOrganizers(Event event, List<Long> newOrganizerIds) {

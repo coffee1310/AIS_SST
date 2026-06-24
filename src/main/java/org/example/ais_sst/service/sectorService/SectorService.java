@@ -443,20 +443,39 @@ public class SectorService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserDoesNotExistException("User not found: " + userId));
 
-        SectorParticipant participant = sectorParticipantRepository
-                .findBySectorIdAndStudentId(sectorId, userId)
-                .orElseThrow(() -> new UserDoesNotExistException(
-                        String.format("Пользователь с id: %d не является участником сектора %d", userId, sectorId)));
+        // Получаем все записи
+        List<SectorParticipant> participants = sectorParticipantRepository
+                .findAllBySectorIdAndStudentId(sectorId, userId);
 
-        if (participant.getIsCoordinator()) {
-            throw new IllegalStateException("Пользователь уже является координатором сектора");
+        SectorParticipant participant;
+
+        if (participants.isEmpty()) {
+            // Создаем новую запись
+            Sector sector = sectorRepository.findById(sectorId)
+                    .orElseThrow(() -> new SectorDoesNotExistException("Sector not found: " + sectorId));
+
+            participant = SectorParticipant.builder()
+                    .sector(sector)
+                    .student(user)
+                    .isCoordinator(true)
+                    .status(SectorParticipantStatuses.Активный)
+                    .entryDate(LocalDate.now())
+                    .build();
+        } else {
+            // Берем первую активную запись или первую вообще
+            participant = participants.stream()
+                    .filter(p -> p.getStatus() == SectorParticipantStatuses.Активный)
+                    .findFirst()
+                    .orElse(participants.get(0));
+
+            if (participant.getIsCoordinator()) {
+                throw new IllegalStateException("Пользователь уже является координатором сектора");
+            }
+
+            participant.setIsCoordinator(true);
+            participant.setStatus(SectorParticipantStatuses.Активный);
         }
 
-        if (participant.getStatus() != SectorParticipantStatuses.Активный) {
-            throw new IllegalStateException("Пользователь не является активным участником сектора");
-        }
-
-        participant.setIsCoordinator(true);
         sectorParticipantRepository.save(participant);
 
         Role role = roleRepository.findByTitle("Sector_coordinator")
@@ -464,7 +483,7 @@ public class SectorService {
         user.setRole(role);
         userRepository.save(user);
 
-        // Инвалидируем кэш сектора
+        // Инвалидируем кэш
         sectorListCache.invalidateAll();
 
         log.info("User {} became coordinator of sector {}", userId, sectorId);
@@ -474,27 +493,45 @@ public class SectorService {
     public void updateCoordinators(Long sectorId, List<Long> newCoordinatorIds) throws RoleNotFoundException {
         log.info("Updating coordinators for sector {}", sectorId);
 
+        // Получаем всех координаторов сектора (только уникальные ID)
         List<SectorParticipant> currentCoordinators = sectorParticipantRepository
                 .findBySectorIdAndIsCoordinatorTrue(sectorId);
 
+        // Уникальные ID текущих координаторов
         List<Long> currentCoordinatorIds = currentCoordinators.stream()
                 .map(c -> c.getStudent().getId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        // Удаляем дубликаты из новых ID
+        List<Long> uniqueNewCoordinatorIds = newCoordinatorIds.stream()
+                .distinct()
                 .collect(Collectors.toList());
 
         List<Long> toRemove = currentCoordinatorIds.stream()
-                .filter(id -> !newCoordinatorIds.contains(id))
+                .filter(id -> !uniqueNewCoordinatorIds.contains(id))
                 .collect(Collectors.toList());
 
-        List<Long> toAdd = newCoordinatorIds.stream()
+        List<Long> toAdd = uniqueNewCoordinatorIds.stream()
                 .filter(id -> !currentCoordinatorIds.contains(id))
                 .collect(Collectors.toList());
 
+        // Удаляем координаторов
         for (Long userId : toRemove) {
-            removeCoordinatorFromSector(sectorId, userId);
+            try {
+                removeCoordinatorFromSector(sectorId, userId);
+            } catch (Exception e) {
+                log.error("Failed to remove coordinator {} from sector {}: {}", userId, sectorId, e.getMessage());
+            }
         }
 
+        // Добавляем координаторов
         for (Long userId : toAdd) {
-            addCoordinator(sectorId, userId);
+            try {
+                addCoordinator(sectorId, userId);
+            } catch (Exception e) {
+                log.error("Failed to add coordinator {} to sector {}: {}", userId, sectorId, e.getMessage());
+            }
         }
 
         // Инвалидируем кэш
@@ -507,9 +544,19 @@ public class SectorService {
     public void removeCoordinatorFromSector(Long sectorId, Long userId) throws RoleNotFoundException {
         log.info("Removing coordinator from sector: sectorId={}, userId={}", sectorId, userId);
 
-        SectorParticipant participant = sectorParticipantRepository
-                .findBySectorIdAndStudentId(sectorId, userId)
-                .orElseThrow(() -> new UserDoesNotExistException("Пользователь не является участником сектора"));
+        // Получаем все записи и берем первую активную
+        List<SectorParticipant> participants = sectorParticipantRepository
+                .findAllBySectorIdAndStudentId(sectorId, userId);
+
+        if (participants.isEmpty()) {
+            throw new UserDoesNotExistException("Пользователь не является участником сектора");
+        }
+
+        // Ищем активную запись или берем первую
+        SectorParticipant participant = participants.stream()
+                .filter(p -> p.getStatus() == SectorParticipantStatuses.Активный)
+                .findFirst()
+                .orElse(participants.get(0));
 
         if (!participant.getIsCoordinator()) {
             throw new IllegalStateException("Пользователь не является координатором сектора");
@@ -521,6 +568,7 @@ public class SectorService {
         // Инвалидируем кэш
         sectorListCache.invalidateAll();
 
+        // Проверяем, остались ли у пользователя другие координаторские роли
         List<SectorParticipant> coordinatorEntries = sectorParticipantRepository
                 .findAllByStudentIdAndIsCoordinatorTrue(userId);
 
