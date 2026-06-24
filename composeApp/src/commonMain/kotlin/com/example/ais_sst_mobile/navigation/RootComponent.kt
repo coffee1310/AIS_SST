@@ -22,6 +22,7 @@ interface RootComponent {
     sealed class Child {
         class Login(val component: LoginComponent) : Child()
         class Register(val component: RegisterComponent) : Child()
+        class ForgotPassword(val component: ForgotPasswordComponent) : Child()
         class Main(val component: MainComponent) : Child()
         class AccountRequests(val component: AccountRequestsComponent) : Child()
         class MyData(val component: MyDataComponent) : Child()
@@ -34,14 +35,16 @@ interface RootComponent {
         class CreateRole(val component: CreateRoleComponent) : Child()
         class EditRole(val component: EditRoleComponent) : Child()
         class CreateEvent(val component: CreateEventComponent) : Child()
-        class EditEvent(val component: EditEventComponent) : Child() // ДОБАВЛЕН CHILD ДЛЯ РЕДАКТИРОВАНИЯ
+        class EditEvent(val component: EditEventComponent) : Child()
         class Rating(val component: RatingComponent) : Child()
+        class Portfolio(val component: PortfolioComponent) : Child()   // ← ДОБАВЛЕНО
     }
 }
 
 class DefaultRootComponent(
     componentContext: ComponentContext
 ) : RootComponent, ComponentContext by componentContext, KoinComponent {
+
     private val sessionManager: SessionManager by inject()
     private val navigation = StackNavigation<Config>()
 
@@ -73,13 +76,18 @@ class DefaultRootComponent(
                 LoginComponent(
                     componentContext = context,
                     onNavigateToRegister = { navigation.pushNew(Config.Register) },
-                    onLoginSuccess = { navigation.replaceAll(Config.Main) }
+                    onLoginSuccess = { navigation.replaceAll(Config.Main) },
+                    onNavigateToForgotPassword = { navigation.pushNew(Config.ForgotPassword) }
                 )
             )
             is Config.Register -> RootComponent.Child.Register(
-                RegisterComponent(
+                RegisterComponent(componentContext = context, onGoBack = { navigation.pop() })
+            )
+            is Config.ForgotPassword -> RootComponent.Child.ForgotPassword(
+                ForgotPasswordComponent(
                     componentContext = context,
-                    onGoBack = { navigation.pop() }
+                    onGoBack = { navigation.pop() },
+                    onPasswordResetSuccess = { navigation.pop() }
                 )
             )
             is Config.Main -> RootComponent.Child.Main(
@@ -99,63 +107,47 @@ class DefaultRootComponent(
                             is FullScreenRoute.CreateRole -> navigation.pushNew(Config.CreateRole)
                             is FullScreenRoute.EditRole -> navigation.pushNew(Config.EditRole(route.roleId))
                             is FullScreenRoute.CreateEvent -> navigation.pushNew(Config.CreateEvent)
-                            is FullScreenRoute.EditEvent -> navigation.pushNew(Config.EditEvent(route.eventId)) // ДОБАВЛЕН ПЕРЕХОД
+                            is FullScreenRoute.EditEvent -> navigation.pushNew(Config.EditEvent(route.eventId))
                             is FullScreenRoute.Rating -> navigation.pushNew(Config.Rating)
-
+                            is FullScreenRoute.Portfolio -> navigation.pushNew(Config.Portfolio)   // ← ДОБАВЛЕНО
                         }
                     }
+                )
+            )
+            is Config.Portfolio -> RootComponent.Child.Portfolio(
+                PortfolioComponent(
+                    componentContext = context,
+                    onGoBack = { navigation.pop() }
                 )
             )
             is Config.AccountRequests -> RootComponent.Child.AccountRequests(
                 AccountRequestsComponent(
                     componentContext = context,
                     onGoBack = { navigation.pop() },
-                    onNavigateToRequestDetails = { id ->
-                        navigation.pushNew(Config.RequestDetails(id))
-                    }
+                    onNavigateToRequestDetails = { id -> navigation.pushNew(Config.RequestDetails(id)) }
                 )
             )
             is Config.MyData -> RootComponent.Child.MyData(
-                MyDataComponent(
-                    componentContext = context,
-                    onGoBack = { navigation.pop() }
-                )
+                MyDataComponent(componentContext = context, onGoBack = { navigation.pop() })
             )
             is Config.RequestDetails -> RootComponent.Child.RequestDetails(
-                RequestDetailsComponent(
-                    componentContext = context,
-                    requestId = config.id,
-                    onGoBack = { navigation.pop() }
-                )
+                RequestDetailsComponent(componentContext = context, requestId = config.id, onGoBack = { navigation.pop() })
             )
             is Config.ActivistProfile -> RootComponent.Child.ActivistProfile(
-                ActivistProfileComponent(
-                    componentContext = context,
-                    userId = config.userId,
-                    onGoBack = { navigation.pop() }
-                )
+                ActivistProfileComponent(componentContext = context, userId = config.userId, onGoBack = { navigation.pop() })
             )
             is Config.CreateSector -> RootComponent.Child.CreateSector(
-                CreateSectorComponent(
-                    componentContext = context,
-                    onGoBack = { navigation.pop() }
-                )
+                CreateSectorComponent(componentContext = context, onGoBack = { navigation.pop() })
             )
             is Config.Board -> RootComponent.Child.Board(
                 BoardComponent(
                     componentContext = context,
                     onGoBack = { navigation.pop() },
-                    onNavigateToActivistProfile = { userId ->
-                        navigation.pushNew(Config.ActivistProfile(userId))
-                    }
+                    onNavigateToActivistProfile = { userId -> navigation.pushNew(Config.ActivistProfile(userId)) }
                 )
             )
             is Config.EditSector -> RootComponent.Child.EditSector(
-                EditSectorComponent(
-                    componentContext = context,
-                    sectorId = config.sectorId,
-                    onGoBack = { navigation.pop() }
-                )
+                EditSectorComponent(componentContext = context, sectorId = config.sectorId, onGoBack = { navigation.pop() })
             )
             is Config.EventRoles -> RootComponent.Child.EventRoles(
                 EventRolesComponent(
@@ -179,13 +171,8 @@ class DefaultRootComponent(
             is Config.CreateEvent -> RootComponent.Child.CreateEvent(
                 CreateEventComponent(componentContext = context, onGoBack = { navigation.pop() })
             )
-            // ДОБАВЛЕН КОМПОНЕНТ ДЛЯ РЕДАКТИРОВАНИЯ МЕРОПРИЯТИЯ
             is Config.EditEvent -> RootComponent.Child.EditEvent(
-                EditEventComponent(
-                    componentContext = context,
-                    eventId = config.eventId,
-                    onGoBack = { navigation.pop() }
-                )
+                EditEventComponent(componentContext = context, eventId = config.eventId, onGoBack = { navigation.pop() })
             )
             is Config.Rating -> RootComponent.Child.Rating(
                 RatingComponent(componentContext = context, onGoBack = { navigation.pop() })
@@ -196,6 +183,7 @@ class DefaultRootComponent(
     private sealed interface Config {
         @Serializable data object Login : Config
         @Serializable data object Register : Config
+        @Serializable data object ForgotPassword : Config
         @Serializable data object Main : Config
         @Serializable data object AccountRequests : Config
         @Serializable data object MyData : Config
@@ -208,7 +196,8 @@ class DefaultRootComponent(
         @Serializable data object CreateRole : Config
         @Serializable data class EditRole(val roleId: Int) : Config
         @Serializable data object CreateEvent : Config
-        @Serializable data class EditEvent(val eventId: Int) : Config // ДОБАВЛЕН CONFIG
+        @Serializable data class EditEvent(val eventId: Int) : Config
         @Serializable data object Rating : Config
+        @Serializable data object Portfolio : Config          // ← ДОБАВЛЕНО
     }
 }

@@ -22,19 +22,27 @@ sealed interface FullScreenRoute {
     data object CreateRole : FullScreenRoute
     data class EditRole(val roleId: Int) : FullScreenRoute
     data object CreateEvent : FullScreenRoute
-    data class EditEvent(val eventId: Int) : FullScreenRoute // <-- ДОБАВИТЬ ЭТО
+    data class EditEvent(val eventId: Int) : FullScreenRoute
     data object Rating : FullScreenRoute
+    data object Portfolio : FullScreenRoute          // ← ДОБАВЛЕНО
 }
 
 class LoginComponent(
     componentContext: ComponentContext,
     val onNavigateToRegister: () -> Unit,
-    val onLoginSuccess: () -> Unit
+    val onLoginSuccess: () -> Unit,
+    val onNavigateToForgotPassword: () -> Unit
 ) : ComponentContext by componentContext
 
 class RegisterComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+class ForgotPasswordComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit,
+    val onPasswordResetSuccess: () -> Unit
 ) : ComponentContext by componentContext
 
 class TasksComponent(componentContext: ComponentContext) : ComponentContext by componentContext
@@ -261,14 +269,14 @@ class HomeComponent(
                     onGoBack = { navigation.pop() }
                 )
             )
-            is Config.CoordinatorEventDetails -> HomeComponent.Child.CoordinatorEventDetails(
+            is Config.CoordinatorEventDetails -> Child.CoordinatorEventDetails(
                 CoordinatorEventDetailsComponent(
                     componentContext = context,
                     eventId = config.eventId,
                     onGoBack = { navigation.pop() },
                     onNavigateToActivistProfile = { userId ->
                         onNavigateToFullScreen(FullScreenRoute.ActivistProfile(userId))
-                                                  },
+                    },
                     onNavigateToEditEvent = { eventId ->
                         onNavigateToFullScreen(FullScreenRoute.EditEvent(eventId))
                     }
@@ -350,6 +358,12 @@ class CoordinatorEventDetailsComponent(
 ) : ComponentContext by componentContext
 
 class RatingComponent(
+    componentContext: ComponentContext,
+    val onGoBack: () -> Unit
+) : ComponentContext by componentContext
+
+// ==================== PORTFOLIO ====================
+class PortfolioComponent(
     componentContext: ComponentContext,
     val onGoBack: () -> Unit
 ) : ComponentContext by componentContext

@@ -30,6 +30,12 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import com.example.ais_sst_mobile.data.network.dto.ParticipantSlotsDto
+import com.example.ais_sst_mobile.data.network.dto.OrganizerApplicationDto
+import com.example.ais_sst_mobile.data.network.dto.RoleApplicationRequestDto
+import com.example.ais_sst_mobile.data.network.dto.RoleApplicationDto
+import com.example.ais_sst_mobile.data.network.dto.MyEventParticipantDto
+import com.example.ais_sst_mobile.data.network.dto.PagedRoleApplicationsResponse
 
 class EventsRepositoryImpl(
     private val httpClient: HttpClient
@@ -57,7 +63,7 @@ class EventsRepositoryImpl(
             httpClient.get("events") {
                 parameter("dateFrom", dateFrom)
                 parameter("dateTo", dateTo)
-                parameter("size", 150)
+                parameter("size", 60)
                 parameter("isDraft", false)
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "ASC")
@@ -95,77 +101,56 @@ class EventsRepositoryImpl(
     }
 
     override suspend fun getAvailableEvents(): Result<List<Event>> = runCatching {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+
+        // 1. Публичные мероприятия
         val publicEvents = runCatching {
             httpClient.get("events") {
                 parameter("isPublic", true)
                 parameter("isDraft", false)
-                parameter("size", 150)
+                parameter("size", 100)
                 headers { append(HttpHeaders.Connection, "close") }
             }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList())
 
-        delay(500)
+        delay(250)
 
+        // 2. Мероприятия моего сектора (free events)
         val mySectorEvents = runCatching {
             httpClient.get("events") {
                 parameter("isMySector", true)
                 parameter("isDraft", false)
-                parameter("size", 150)
+                parameter("size", 100)
                 headers { append(HttpHeaders.Connection, "close") }
             }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList())
 
-        delay(500)
+        delay(250)
 
-        val allEvents = runCatching {
+        // 3. Мероприятия, где у меня есть роль из моего сектора (новый параметр)
+        val mySectorRoleEvents = runCatching {
             httpClient.get("events") {
+                parameter("isMySectorEventRole", true)
                 parameter("isDraft", false)
-                parameter("size", 150)
+                parameter("size", 100)
                 headers { append(HttpHeaders.Connection, "close") }
             }.safeBody<PagedEventResponse>().content
         }.getOrDefault(emptyList())
 
-        delay(500)
-
-        val myRoles = runCatching {
-            httpClient.get("event-roles") {
-                parameter("isMySector", true)
-                parameter("isDeleted", false)
-                parameter("page", 0)
-                parameter("size", 1000)
-                headers { append(HttpHeaders.Connection, "close") }
-            }.safeBody<PagedEventRoleResponse>().content
-        }.getOrDefault(emptyList())
-
-        val roleEventIds = myRoles.map { it.eventId }.toSet()
-        val combinedEvents = (publicEvents + mySectorEvents + allEvents).distinctBy { it.id }.toMutableList()
-        val knownEventIds = combinedEvents.map { it.id }.toSet()
-        val missingEventIds = roleEventIds - knownEventIds
-
-        for (id in missingEventIds) {
-            delay(300)
-            val event = runCatching {
-                httpClient.get("events/$id") {
-                    headers { append(HttpHeaders.Connection, "close") }
-                }.safeBody<EventDto>()
-            }.getOrNull()
-            if (event != null) {
-                combinedEvents.add(event)
-            }
-        }
-
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault()).toString()
+        // Объединяем все мероприятия
+        val combinedEvents = (publicEvents + mySectorEvents + mySectorRoleEvents)
+            .distinctBy { it.id }
+            .toMutableList()
 
         withContext(Dispatchers.Default) {
-            combinedEvents.filter { dto ->
-                val isPub = dto.isPublic
-                val isLookingForOrg = (dto.maxOrganizersCount ?: 0) > (dto.currentOrganizersCount ?: 0)
-                val isFreeMySector = dto.isFreeEvent == true && dto.isMySector == true
-                val hasRoleForMe = roleEventIds.contains(dto.id)
-                val isVisible = isPub || isLookingForOrg || isFreeMySector || hasRoleForMe
-
-                dto.isDeleted != true && !dto.isDraft && dto.dateOfEvent >= today && isVisible
-            }.map { mapToEvent(it, today) }.sortedBy { it.rawDate }
+            combinedEvents
+                .filter { dto ->
+                    dto.isDeleted != true &&
+                            !dto.isDraft &&
+                            dto.dateOfEvent >= today
+                }
+                .map { mapToEvent(it, today) }
+                .sortedBy { it.rawDate }
         }
     }
 
@@ -173,7 +158,7 @@ class EventsRepositoryImpl(
         val created = runCatching {
             httpClient.get("events") {
                 parameter("creatorId", userId)
-                parameter("size", 150)
+                parameter("size", 60)
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
                 headers { append(HttpHeaders.Connection, "close") }
@@ -185,7 +170,7 @@ class EventsRepositoryImpl(
         val organized = runCatching {
             httpClient.get("events") {
                 parameter("isOrganizer", true)
-                parameter("size", 150)
+                parameter("size", 60)
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
                 headers { append(HttpHeaders.Connection, "close") }
@@ -197,7 +182,7 @@ class EventsRepositoryImpl(
         val sector = runCatching {
             httpClient.get("events") {
                 parameter("isMySector", true)
-                parameter("size", 150)
+                parameter("size", 60)
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
                 headers { append(HttpHeaders.Connection, "close") }
@@ -225,7 +210,7 @@ class EventsRepositoryImpl(
     override suspend fun getChairmanDashboardEvents(userId: Int): Result<List<Event>> = runCatching {
         val response = withContext(Dispatchers.IO) {
             httpClient.get("events") {
-                parameter("size", 150)
+                parameter("size", 60)
                 parameter("sortBy", "dateOfEvent")
                 parameter("sortDirection", "DESC")
                 headers { append(HttpHeaders.Connection, "close") }
@@ -322,6 +307,76 @@ class EventsRepositoryImpl(
         if (!response.status.isSuccess()) throw Exception("Ошибка удаления роли")
     }
 
+    override suspend fun applyForEventRole(roleId: Int, description: String): Result<Unit> = runCatching {
+        val request = RoleApplicationRequestDto(description = description)
+        val response = httpClient.post("role-applications/$roleId") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+            headers { append(HttpHeaders.Connection, "close") }
+        }
+        if (!response.status.isSuccess()) {
+            throw Exception("Ошибка сервера (${response.status.value}). Не удалось подать заявку.")
+        }
+    }
+
+    override suspend fun joinEventAsParticipant(eventId: Int): Result<Unit> = runCatching {
+        val response = httpClient.post("events/participants/$eventId/join") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }
+        if (!response.status.isSuccess()) {
+            throw Exception("Ошибка сервера (${response.status.value}). Не удалось зарегистрироваться.")
+        }
+    }
+
+    override suspend fun getEventSlots(eventId: Int): Result<ParticipantSlotsDto> = runCatching {
+        httpClient.get("events/participants/$eventId/slots") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }.safeBody<ParticipantSlotsDto>()
+    }
+
+    override suspend fun getFilteredRoleApplications(
+        userId: Int,
+        status: String?
+    ): Result<List<RoleApplicationDto>> = runCatching {
+        httpClient.get("role-applications/filter") {
+            parameter("userId", userId)
+            status?.let { parameter("status", it) }
+            parameter("page", 0)
+            parameter("size", 100)
+            parameter("sort", "createdAt,desc")
+            headers { append(HttpHeaders.Connection, "close") }
+        }.safeBody<PagedRoleApplicationsResponse>().content
+    }
+
+    override suspend fun getMyParticipantEvents(): Result<List<MyEventParticipantDto>> = runCatching {
+        httpClient.get("events/participants/my-events") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }.safeBody<List<MyEventParticipantDto>>()
+    }
+
+    override suspend fun leaveEventParticipant(participantId: Int): Result<Unit> = runCatching {
+        val response = httpClient.delete("events/participants/$participantId/soft") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }
+
+        if (!response.status.isSuccess()) {
+            // Пробуем прочитать сообщение об ошибке от сервера
+            val errorBody = try {
+                response.body<String>()
+            } catch (e: Exception) {
+                null
+            }
+            throw Exception("Не удалось отказаться от участия: $errorBody")
+        }
+    }
+
+    override suspend fun getMyRoleApplications(): Result<List<RoleApplicationDto>> = runCatching {
+        httpClient.get("role-applications") {
+            // Запрашиваем без фильтра статуса, чтобы получить все заявки одним запросом (для оптимизации)
+            parameter("size", 100)
+            headers { append(HttpHeaders.Connection, "close") }
+        }.safeBody<PagedRoleApplicationsResponse>().content
+    }
     // -----------------------------------------------------------
 
     override suspend fun createOrganizerApplication(eventId: Int): Result<Unit> = runCatching {
@@ -346,6 +401,12 @@ class EventsRepositoryImpl(
         } else {
             throw Exception("Ошибка сервера (${response.status.value}). Не удалось удалить мероприятие.")
         }
+    }
+
+    override suspend fun getMyOrganizerApplications(): Result<List<OrganizerApplicationDto>> = runCatching {
+        httpClient.get("role-applications/organizer/my") {
+            headers { append(HttpHeaders.Connection, "close") }
+        }.safeBody<List<OrganizerApplicationDto>>()
     }
 
     // --- Вспомогательные методы ---

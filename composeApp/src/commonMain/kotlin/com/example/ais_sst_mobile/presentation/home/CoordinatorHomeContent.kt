@@ -29,6 +29,7 @@ import com.example.ais_sst_mobile.presentation.components.CustomSnackbar
 import com.example.ais_sst_mobile.presentation.components.CustomTextField
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnScroll
 import com.example.ais_sst_mobile.presentation.components.clearFocusOnTap
+import com.example.ais_sst_mobile.presentation.home.tasks.QuickTasksContent
 import org.koin.compose.getKoin
 
 @Composable
@@ -154,9 +155,7 @@ fun CoordinatorHomeContent(onNavigateToCreateEvent: () -> Unit,
                     }
                 }
             } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Контент вкладки 'Быстрые задачи'", color = MaterialTheme.colorScheme.onSurface)
-                }
+                QuickTasksContent()
             }
         }
 

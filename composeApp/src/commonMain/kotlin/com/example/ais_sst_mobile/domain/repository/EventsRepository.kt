@@ -4,8 +4,10 @@ import com.example.ais_sst_mobile.data.network.dto.CreateEventRequestDto
 import com.example.ais_sst_mobile.data.network.dto.CreateEventRoleRequestDto
 import com.example.ais_sst_mobile.data.network.dto.EventDto
 import com.example.ais_sst_mobile.data.network.dto.EventRoleDto
+import com.example.ais_sst_mobile.data.network.dto.ParticipantSlotsDto
 import com.example.ais_sst_mobile.data.network.dto.RoleDto
 import com.example.ais_sst_mobile.domain.model.Event
+import com.example.ais_sst_mobile.data.network.dto.OrganizerApplicationDto
 
 interface EventsRepository {
     fun getAndClearDeletedEventSignal(): Boolean
@@ -28,4 +30,12 @@ interface EventsRepository {
     suspend fun createEventRole(request: CreateEventRoleRequestDto): Result<Unit>
     suspend fun updateEventRole(roleId: Int, request: CreateEventRoleRequestDto): Result<Unit>
     suspend fun deleteEventRole(roleId: Int): Result<Unit>
-}
+
+    suspend fun applyForEventRole(roleId: Int, description: String): Result<Unit>
+    suspend fun joinEventAsParticipant(eventId: Int): Result<Unit>
+    suspend fun getEventSlots(eventId: Int): Result<ParticipantSlotsDto>
+    suspend fun getMyRoleApplications(): Result<List<com.example.ais_sst_mobile.data.network.dto.RoleApplicationDto>>
+    suspend fun getFilteredRoleApplications(userId: Int, status: String? = null): Result<List<com.example.ais_sst_mobile.data.network.dto.RoleApplicationDto>>
+    suspend fun getMyParticipantEvents(): Result<List<com.example.ais_sst_mobile.data.network.dto.MyEventParticipantDto>>
+    suspend fun leaveEventParticipant(participantId: Int): Result<Unit>
+    suspend fun getMyOrganizerApplications(): Result<List<OrganizerApplicationDto>>}

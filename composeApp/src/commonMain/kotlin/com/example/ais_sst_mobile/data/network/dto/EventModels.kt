@@ -105,6 +105,7 @@ data class EventRoleDto(
     val totalOccupiedSlots: Int? = 0,
     val totalAvailableSlots: Int? = 0,
     val isMySector: Boolean? = false, // <-- Добавляем флаг от сервера
+
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
@@ -112,4 +113,16 @@ data class EventRoleDto(
 @Serializable
 data class PagedEventRoleResponse(
     val content: List<EventRoleDto>
+)
+
+@Serializable
+data class ParticipantSlotsDto(
+    val currentParticipants: Int,
+    val availableSlots: Int,
+    val info: String
+)
+
+@Serializable
+data class RoleApplicationRequestDto(
+    val description: String
 )

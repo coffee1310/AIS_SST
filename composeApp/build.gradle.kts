@@ -25,12 +25,12 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.ktor.client.okhttp)
+            implementation(libs.ktor.client.okhttp)                    // ← Только здесь
             implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
             implementation("io.insert-koin:koin-android:3.5.3")
             implementation("androidx.camera:camera-core:1.4.0")
@@ -38,6 +38,7 @@ kotlin {
             implementation("androidx.camera:camera-lifecycle:1.4.0")
             implementation("androidx.camera:camera-view:1.4.0")
         }
+
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -48,24 +49,23 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
-            // Coroutines
-            implementation(libs.kotlinx.coroutines.core)
-
-            // Ktor
+            // Ktor (общие модули)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
-            implementation("io.ktor:ktor-client-auth:2.3.11")
+            implementation("io.ktor:ktor-client-auth:2.3.12")
+            implementation("io.ktor:ktor-client-websockets:2.3.12")
 
             // Koin
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
 
-            // DECOMPOSE & CUPERTINO (навигация и UI)
+            // Decompose
             implementation("com.arkivanov.decompose:decompose:3.1.0")
             implementation("com.arkivanov.decompose:extensions-compose:3.1.0")
 
+            // Cupertino
             implementation("io.github.robinpcrd:cupertino:3.3.1")
             implementation("io.github.robinpcrd:cupertino-adaptive:3.3.1")
             implementation("io.github.robinpcrd:cupertino-decompose:3.3.1")
@@ -78,24 +78,17 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
-            // Библиотека для выбора фото
+            // Peekaboo (фото)
             implementation("io.github.onseok:peekaboo-ui:0.5.2")
             implementation("io.github.onseok:peekaboo-image-picker:0.5.2")
-
-            implementation("com.russhwolf:multiplatform-settings:1.1.1")
-            implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
-
-            implementation("org.hildan.krossbow:krossbow-stomp-core:7.0.0")
-            implementation("org.hildan.krossbow:krossbow-websocket-ktor:7.0.0")
-            // Внутри sourceSets { commonMain.dependencies { ... } }
-            implementation("io.ktor:ktor-client-websockets:2.3.11")
         }
+
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)           // ← Только здесь
+        }
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-        }
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-            implementation("io.ktor:ktor-client-darwin:2.3.11")
         }
     }
 }

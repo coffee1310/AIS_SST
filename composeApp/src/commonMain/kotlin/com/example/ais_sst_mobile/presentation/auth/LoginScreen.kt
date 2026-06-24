@@ -198,7 +198,7 @@ fun LoginScreen(component: LoginComponent) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     modifier = Modifier
                         .padding(top = 12.dp, start = 15.dp)
-                        .clickable { /* TODO: Страница восстановления */ }
+                        .clickable { component.onNavigateToForgotPassword() }
                 )
             }
 
