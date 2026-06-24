@@ -189,6 +189,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Pages\Coordinator\ManageTasks.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Pages\Coordinator\Rating.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -281,6 +285,9 @@
     </Compile>
     <Compile Include="Pages\Coordinator\EventRequestsPage.xaml.cs">
       <DependentUpon>EventRequestsPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Coordinator\ManageTasks.xaml.cs">
+      <DependentUpon>ManageTasks.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Coordinator\Rating.xaml.cs">
       <DependentUpon>Rating.xaml</DependentUpon>

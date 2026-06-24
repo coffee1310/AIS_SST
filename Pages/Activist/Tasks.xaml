@@ -1,11 +1,6 @@
 ﻿<Page x:Class="Diplom_Stud.Pages.Activist.Tasks"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:Diplom_Stud.Pages.Activist"
-      mc:Ignorable="d" 
-      d:DesignHeight="950" d:DesignWidth="1111"
       Title="Tasks"
       Loaded="Page_Loaded">
 
@@ -13,27 +8,23 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center" MaxWidth="1000" Margin="40,50,40,50">
 
-                <TextBlock Text="Текущие задачи" FontSize="48" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,50"/>
+                <TextBlock Text="Задачи" FontSize="48" FontFamily="Digital Pixel" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,30"/>
 
-                <Grid Margin="0,0,0,50" MaxWidth="700">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="15"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,30">
+                    <RadioButton x:Name="TabAvailable" Content="Доступные задачи" IsChecked="True" Style="{StaticResource MenuRadioButtonStyle}" Checked="Tab_Checked" Margin="0,0,20,0"/>
+                    <RadioButton x:Name="TabMine" Content="Мои задачи" Style="{StaticResource MenuRadioButtonStyle}" Checked="Tab_Checked"/>
+                </StackPanel>
 
-                    <Border Grid.Column="0" Background="#12101C" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="8" Height="50">
+                <Grid Margin="0,0,0,40" MaxWidth="700">
+                    <Border Background="#12101C" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="8" Height="50">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="50"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
                             <Path Grid.Column="0" Data="M10,3 A7,7 0 1,0 17,10 A7,7 0 0,0 10,3 Z M15,15 L20,20" Stroke="#7A7886" StrokeThickness="1.5" Stretch="Uniform" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" Fill="Transparent"/>
-
-                            <TextBox x:Name="tbSearch" Grid.Column="1" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="14" VerticalContentAlignment="Center" FontFamily="Montserrat Thin"/>
-
-                            <TextBlock Grid.Column="1" Text="Название задачи" Foreground="#7A7886" FontSize="14" VerticalAlignment="Center" IsHitTestVisible="False" FontFamily="Montserrat Thin">
+                            <TextBox x:Name="tbSearch" Grid.Column="1" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="14" VerticalContentAlignment="Center" FontFamily="Montserrat Thin" TextChanged="TbSearch_TextChanged"/>
+                            <TextBlock Grid.Column="1" Text="Поиск задачи..." Foreground="#7A7886" FontSize="14" VerticalAlignment="Center" IsHitTestVisible="False" FontFamily="Montserrat Thin">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -51,139 +42,71 @@
                             </TextBlock>
                         </Grid>
                     </Border>
-
-                    <Button Grid.Column="2" Style="{StaticResource FilterButtonStyle}" Width="50" Height="50">
-                        <Canvas Width="16" Height="16" VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <Rectangle Canvas.Left="1" Canvas.Top="3" Width="14" Height="12" RadiusX="2" RadiusY="2" Stroke="White" StrokeThickness="1.5" Fill="Transparent"/>
-                            <Line X1="1" Y1="7" X2="15" Y2="7" Stroke="White" StrokeThickness="1.5"/>
-                            <Line X1="4" Y1="1" X2="4" Y2="4" Stroke="White" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            <Line X1="12" Y1="1" X2="12" Y2="4" Stroke="White" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            <Rectangle Canvas.Left="4" Canvas.Top="10" Width="2" Height="2" Fill="White" RadiusX="0.5" RadiusY="0.5"/>
-                            <Rectangle Canvas.Left="7" Canvas.Top="10" Width="2" Height="2" Fill="White" RadiusX="0.5" RadiusY="0.5"/>
-                            <Rectangle Canvas.Left="10" Canvas.Top="10" Width="2" Height="2" Fill="White" RadiusX="0.5" RadiusY="0.5"/>
-                        </Canvas>
-                    </Button>
                 </Grid>
 
-                <UniformGrid Columns="3" Margin="-10,0,-10,40">
+                <ItemsControl x:Name="TasksList">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" Margin="-10,0,-10,40"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#1C1B29" BorderBrush="#2A283C" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10" Height="220">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                    <Border Style="{StaticResource TaskCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Помощь в организации мероприятия" Foreground="White" FontSize="14" FontFamily="Digital Pixel" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <TextBlock Grid.Row="1" Text="Требуется помощь в расстановке стульев и оборудования перед началом мероприятия в актовом зале." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,20"/>
-                            <DockPanel Grid.Row="2" VerticalAlignment="Bottom">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="3 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
-                            </DockPanel>
-                        </Grid>
-                    </Border>
+                                    <TextBlock Grid.Row="0" Text="{Binding Task.title}" Foreground="White" FontSize="16" FontFamily="Digital Pixel" TextWrapping="Wrap" Margin="0,0,0,10"/>
 
-                    <Border Style="{StaticResource TaskCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Разработка афиши" Foreground="White" FontSize="14" FontFamily="Digital Pixel" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <TextBlock Grid.Row="1" Text="Нужен дизайнер для создания яркой и привлекательной афиши для предстоящего концерта. Примеры работ приветствуются." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,20"/>
-                            <DockPanel Grid.Row="2" VerticalAlignment="Bottom">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="10 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
-                            </DockPanel>
-                        </Grid>
-                    </Border>
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15">
+                                        <TextBlock Text="{Binding Task.description}" Foreground="#7A7886" FontSize="12" FontFamily="Montserrat Thin" TextWrapping="Wrap"/>
+                                    </ScrollViewer>
 
-                    <Border Style="{StaticResource TaskCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Фотосъемка Дня открытых дверей" Foreground="White" FontSize="14" FontFamily="Digital Pixel" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <TextBlock Grid.Row="1" Text="Ищем фотографа для съемки мероприятия. Важно запечатлеть ключевые моменты и атмосферу. Наличие своей техники обязательно." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,20"/>
-                            <DockPanel Grid.Row="2" VerticalAlignment="Bottom">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="18 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
-                            </DockPanel>
-                        </Grid>
-                    </Border>
+                                    <DockPanel Grid.Row="2" VerticalAlignment="Bottom">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Task.DeadlineDisplay}" Foreground="#02B3BA" FontSize="11" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Task.PointsDisplay}" Foreground="#FFA500" FontSize="11" FontFamily="Montserrat" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
 
-                    <Border Style="{StaticResource TaskCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Кофе-брейк" Foreground="White" FontSize="14" FontFamily="Digital Pixel" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <TextBlock Grid.Row="1" Text="Требуется помощник для сервировки столов и поддержания чистоты. Приветствуется активность и опрятный вид." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,20"/>
-                            <DockPanel Grid.Row="2" VerticalAlignment="Bottom">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="18 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
-                            </DockPanel>
-                        </Grid>
-                    </Border>
+                                        <Button Content="{Binding ActionText}" 
+                                                Background="{Binding ActionBackground}"
+                                                Foreground="{Binding ActionForeground}"
+                                                BorderThickness="0"
+                                                Padding="12,6"
+                                                FontFamily="Montserrat"
+                                                FontSize="10"
+                                                FontWeight="Bold"
+                                                Cursor="Hand"
+                                                DockPanel.Dock="Right" 
+                                                HorizontalAlignment="Right" 
+                                                Tag="{Binding}" 
+                                                Click="TaskAction_Click">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DockPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                    <Border Style="{StaticResource TaskCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Помощь в гардеробе" Foreground="White" FontSize="14" FontFamily="Digital Pixel" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <TextBlock Grid.Row="1" Text="Ищем ответственного помощника. Нужно принимать и выдавать верхнюю одежду гостей, следить за порядком." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,20"/>
-                            <DockPanel Grid.Row="2" VerticalAlignment="Bottom">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="19 июня" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
-                            </DockPanel>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource TaskCardStyle}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Встреча гостей" Foreground="White" FontSize="14" FontFamily="Digital Pixel" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <TextBlock Grid.Row="1" Text="Приглашаем волонтера для встречи и навигации зрителей перед началом спектакля. Необходимо быть приветливым." Foreground="#7A7886" FontSize="11" FontFamily="Montserrat Thin" TextWrapping="Wrap" Margin="0,0,0,20"/>
-                            <DockPanel Grid.Row="2" VerticalAlignment="Bottom">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="M8,1 A7,7 0 1,0 8,15 A7,7 0 0,0 8,1 Z M8,4 L8,8 L11,10" Stroke="#02B3BA" StrokeThickness="1" Fill="Transparent" Stretch="Uniform" Width="10" Height="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="1 сентября" Foreground="#02B3BA" FontSize="10" FontFamily="Montserrat Thin" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <Button Content="Откликнуться" Style="{StaticResource ActionButtonStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="8"/>
-                            </DockPanel>
-                        </Grid>
-                    </Border>
-
-                </UniformGrid>
+                <TextBlock x:Name="EmptyText" Text="Задач пока нет." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,20,0,0" Visibility="Collapsed"/>
 
             </StackPanel>
         </ScrollViewer>
+
+        <Grid x:Name="LoadingOverlay" Background="#E61A1A2E" Visibility="Collapsed">
+            <ProgressBar IsIndeterminate="True" Width="150" Height="4" Foreground="#02B3BA" Background="#2A283C" BorderThickness="0"/>
+        </Grid>
     </Grid>
 </Page>

@@ -172,3 +172,5 @@ C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\General\ForgotPassword.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\General\ForgotPassword.baml
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\Rating.g.cs
 C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\Rating.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\ManageTasks.baml
+C:\Users\danii\Source\Repos\AIS_SST\obj\Debug\Pages\Coordinator\ManageTasks.g.cs

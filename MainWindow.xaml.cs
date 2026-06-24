@@ -397,9 +397,13 @@ namespace Diplom_Stud
 
         private void MenuTasks_Click(object sender, RoutedEventArgs e)
         {
-            if (!(MainFrame.Content is Pages.Activist.Tasks))
+            if (App.IsActivistMode)
             {
                 MainFrame.Navigate(new Pages.Activist.Tasks());
+            }
+            else
+            {
+                MainFrame.Navigate(new Pages.Coordinator.ManageTasks());
             }
         }
 
@@ -480,5 +484,6 @@ namespace Diplom_Stud
         {
             Application.Current.Shutdown();
         }
+
     }
 }
