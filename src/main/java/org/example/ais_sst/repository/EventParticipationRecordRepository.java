@@ -490,4 +490,12 @@ ORDER BY position ASC
 """, nativeQuery = true)
     List<Object[]> findAllRankedUsersByPointsNative();
 
+    long countByEventRole_IdAndWasPresentTrueAndIsReserveFalseAndIsDeletedFalse(Long eventRoleId);
+
+    // Резерв
+    long countByEventRole_IdAndWasPresentTrueAndIsReserveTrueAndIsDeletedFalse(Long eventRoleId);
+
+    // Fallback (все активные)
+    long countByEventRole_IdAndWasPresentTrueAndIsDeletedFalse(Long eventRoleId);
+
 }

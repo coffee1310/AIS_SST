@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +42,7 @@ public class EventService extends BaseEntityService {
     private final EventRoleRepository eventRoleRepository;
     private final SectorParticipantRepository sectorParticipantRepository;
     private final EventSectorRepository eventSectorRepository;
+    private final EventParticipationRecordRepository eventParticipationRecordRepository;
 
     private final PointsConfig pointsConfig;
 
@@ -847,5 +850,171 @@ public class EventService extends BaseEntityService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public EventDetailedReportDTO getEventDetailedReport(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventDoesNotExistException("Мероприятие не найдено"));
+
+        // === Основная информация ===
+        EventDetailedReportDTO.EventDetailedReportDTOBuilder builder = EventDetailedReportDTO.builder()
+                .eventId(event.getId())
+                .title(event.getTitle())
+                .dateOfEvent(event.getDateOfEvent())
+                .isCompleted(event.getIsCompleted())
+                .isPublic(event.getIsPublic())
+                .isFreeEvent(event.getIsFreeEvent());
+
+        // === Участники ===
+        List<EventParticipantReportDTO> participants = eventParticipantsRepository
+                .findByEventIdAndIsDeletedFalse(eventId).stream()
+                .map(this::mapToParticipantReport)
+                .collect(Collectors.toList());
+
+        // === Организаторы ===
+        List<EventOrganizerReportDTO> organizers = eventOrganizerRepository
+                .findByEventIdAndIsDeletedFalse(eventId).stream()
+                .map(this::mapToOrganizerReport)
+                .collect(Collectors.toList());
+
+        // === Исполнители (через EventParticipationRecord) ===
+        List<EventPerformerReportDTO> performers = eventParticipationRecordRepository
+                .findByEventId(eventId).stream()
+                .map(this::mapToPerformerReport)
+                .collect(Collectors.toList());
+
+        // === Роли ===
+        List<EventRoleSummaryDTO> roles = eventRoleRepository
+                .findByEventId(eventId).stream()
+                .map(this::mapToRoleSummary)
+                .collect(Collectors.toList());
+
+        // === Итоги ===
+        builder
+                .participants(participants)
+                .organizers(organizers)
+                .performers(performers)
+                .roles(roles)
+                .totalParticipantsCount(participants.size())
+                .totalOrganizersCount(organizers.size())
+                .totalPerformersCount(performers.size())
+                .totalPeopleCount(participants.size() + organizers.size() + performers.size());
+
+        return builder.build();
+    }
+
+    private EventRoleSummaryDTO mapToRoleSummary(EventRole role) {
+
+        // Название роли
+        String roleName = (role.getGlobalEventRole() != null && role.getGlobalEventRole().getTitle() != null)
+                ? role.getGlobalEventRole().getTitle()
+                : "Неизвестная роль";
+
+        // Название ответственного сектора
+        String sectorName = null;
+        if (role.getGlobalEventRole() != null && role.getGlobalEventRole().getSector() != null) {
+            sectorName = role.getGlobalEventRole().getSector().getTitle();
+        }
+
+        long mainCount = 0;
+        long reserveCount = 0;
+
+        try {
+            // === Вариант 1: Если в EventParticipationRecord есть поле isReserve ===
+            mainCount = eventParticipationRecordRepository
+                    .countByEventRole_IdAndWasPresentTrueAndIsReserveFalseAndIsDeletedFalse(role.getId());
+
+            reserveCount = eventParticipationRecordRepository
+                    .countByEventRole_IdAndWasPresentTrueAndIsReserveTrueAndIsDeletedFalse(role.getId());
+
+        } catch (Exception ignored) {
+            // === Вариант 2 (Fallback): если поля isReserve нет ===
+            // Считаем всех активных участников по роли
+            long totalActive = eventParticipationRecordRepository
+                    .countByEventRole_IdAndWasPresentTrueAndIsDeletedFalse(role.getId());
+
+            int capacity = role.getCapacity() != null ? role.getCapacity() : 0;
+
+            mainCount = Math.min(totalActive, capacity);
+            reserveCount = Math.max(0, totalActive - capacity);
+        }
+
+        return EventRoleSummaryDTO.builder()
+                .roleId(role.getId())
+                .roleName(roleName)
+                .responsibleSectorName(sectorName)
+                .mainCount((int) mainCount)
+                .reserveCount((int) reserveCount)
+                .build();
+    }
+
+    private EventParticipantReportDTO mapToParticipantReport(EventParticipant ep) {
+        User user = ep.getUser();
+        if (user == null) return null;
+
+        return EventParticipantReportDTO.builder()
+                .userId(user.getId())
+                .fio(buildFio(user))
+                .groupName(user.getGroup() != null ? user.getGroup().getTitle() : null)
+                .courseNumber(user.getCourseNumber())
+                .age(calculateAge(user.getDateOfBirth()))
+                .wasPresent(ep.getWasPresent())
+                .pointsReceived(ep.getTotalPoints() != null ? ep.getTotalPoints() : 0)
+                .build();
+    }
+
+    private EventOrganizerReportDTO mapToOrganizerReport(EventOrganizer organizer) {
+        User user = organizer.getUser();
+        if (user == null) return null;
+
+        return EventOrganizerReportDTO.builder()
+                .userId(user.getId())
+                .fio(buildFio(user))
+                .groupName(user.getGroup() != null ? user.getGroup().getTitle() : null)
+                .courseNumber(user.getCourseNumber())
+                .age(calculateAge(user.getDateOfBirth()))
+                .wasPresent(organizer.getWasPresent())
+                .pointsReceived(organizer.getTotalPoints() != null ? organizer.getTotalPoints() : 0)
+                .build();
+    }
+
+    private EventPerformerReportDTO mapToPerformerReport(EventParticipationRecord record) {
+        User user = null;
+        if (record.getSectorParticipant() != null) {
+            user = record.getSectorParticipant().getStudent();
+        }
+        if (user == null) return null;
+
+        Boolean isReserve = false;
+        try {
+            isReserve = record.getIsReserve(); // если поля нет — будет исключение
+        } catch (Exception ignored) {}
+
+        return EventPerformerReportDTO.builder()
+                .userId(user.getId())
+                .fio(buildFio(user))
+                .groupName(user.getGroup() != null ? user.getGroup().getTitle() : null)
+                .courseNumber(user.getCourseNumber())
+                .age(calculateAge(user.getDateOfBirth()))
+                .wasPresent(record.getWasPresent())
+                .pointsReceived(record.getTotalPoints() != null ? record.getTotalPoints() : 0)
+                .isReserve(isReserve != null ? isReserve : false)
+                .build();
+    }
+
+    private String buildFio(User user) {
+        StringBuilder sb = new StringBuilder();
+        if (user.getSurname() != null) sb.append(user.getSurname()).append(" ");
+        if (user.getName() != null) sb.append(user.getName());
+        if (user.getPatronymic() != null && !user.getPatronymic().isBlank()) {
+            sb.append(" ").append(user.getPatronymic());
+        }
+        return sb.toString().trim();
+    }
+
+    private Integer calculateAge(LocalDate dateOfBirth) {
+        if (dateOfBirth == null) return null;
+        return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
 }

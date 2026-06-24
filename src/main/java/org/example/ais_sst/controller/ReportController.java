@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.ais_sst.controller.base.BaseController;
+import org.example.ais_sst.dto.events.EventDetailedReportDTO;
 import org.example.ais_sst.dto.events.EventReportDTO;
 import org.example.ais_sst.dto.user.UserRatingDTO;
 import org.example.ais_sst.service.eventService.EventService;
@@ -132,5 +133,13 @@ public class ReportController extends BaseController {
         logInfo("GET /api/reports/sectors", "Запрос отчета по секторам");
         return ResponseEntity.ok("Отчет по секторам пока в разработке. " +
                 "Будет включать статистику по секторам, участникам, мероприятиям и т.д.");
+    }
+
+    @GetMapping("/events/{eventId}")
+    @Operation(summary = "Детальный отчет по конкретному мероприятию")
+    public ResponseEntity<EventDetailedReportDTO> getEventDetailedReport(@PathVariable Long eventId) {
+        logInfo("GET /api/reports/events/" + eventId, "Генерация детального отчета");
+        EventDetailedReportDTO report = eventService.getEventDetailedReport(eventId);
+        return ResponseEntity.ok(report);
     }
 }
