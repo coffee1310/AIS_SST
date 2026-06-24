@@ -96,6 +96,7 @@ public class EventController extends BaseController {
             @RequestParam(required = false) Boolean isDeleted,
 
             @RequestParam(required = false) Boolean isMySector,
+            @RequestParam(required = false) Boolean isMySectorEventRole,
 
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -124,6 +125,7 @@ public class EventController extends BaseController {
                 .isDeleted(isDeleted)
                 .isFreeEvent(isFreeEvent)
                 .isMySector(isMySector)
+                .isMySectorEventRole(isMySectorEventRole)
                 .build();
 
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);

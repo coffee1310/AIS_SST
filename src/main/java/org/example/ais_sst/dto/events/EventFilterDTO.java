@@ -52,4 +52,6 @@ public class EventFilterDTO {
     private Boolean isDeleted;
 
     private Boolean isMySector;
+
+    private Boolean isMySectorEventRole;
 }

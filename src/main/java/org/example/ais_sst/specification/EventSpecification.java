@@ -110,6 +110,27 @@ public class EventSpecification {
                 query.distinct(true);
             }
 
+            if (filter.getIsMySectorEventRole() != null
+                    && filter.getIsMySectorEventRole()
+                    && filter.getCurrentUserId() != null) {
+
+                // Подзапрос: получаем ID секторов, где состоит пользователь
+                Subquery<Long> userSectorIds = query.subquery(Long.class);
+                Root<SectorParticipant> spRoot = userSectorIds.from(SectorParticipant.class);
+                userSectorIds.select(spRoot.get("sector").get("id"));
+                userSectorIds.where(cb.equal(spRoot.get("student").get("id"), filter.getCurrentUserId()));
+
+                // JOIN: Event -> EventRole -> GlobalEventRole -> Sector
+                Join<Event, EventRole> eventRoleJoin = root.join("eventRoles", JoinType.INNER);
+                Join<EventRole, GlobalEventRole> globalRoleJoin = eventRoleJoin.join("globalEventRole", JoinType.INNER);
+                Join<GlobalEventRole, Sector> sectorJoin = globalRoleJoin.join("sector", JoinType.INNER);
+
+                // Условие: сектор EventRole входит в секторы пользователя
+                predicates.add(sectorJoin.get("id").in(userSectorIds));
+
+                query.distinct(true);
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
