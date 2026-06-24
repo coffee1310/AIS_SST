@@ -14,6 +14,24 @@
           "build/_._": {}
         }
       },
+      "Microsoft.Office.Interop.Excel/16.0.18925.20022": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        }
+      },
+      "Microsoft.Office.Interop.Word/15.0.4797.1004": {
+        "type": "package",
+        "compile": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
+        },
+        "runtime": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
+        }
+      },
       "Microsoft.Toolkit.Uwp.Notifications/7.1.3": {
         "type": "package",
         "dependencies": {
@@ -183,6 +201,24 @@
         "type": "package",
         "build": {
           "build/_._": {}
+        }
+      },
+      "Microsoft.Office.Interop.Excel/16.0.18925.20022": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        }
+      },
+      "Microsoft.Office.Interop.Word/15.0.4797.1004": {
+        "type": "package",
+        "compile": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
+        },
+        "runtime": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
         }
       },
       "Microsoft.Toolkit.Uwp.Notifications/7.1.3": {
@@ -356,6 +392,24 @@
           "build/_._": {}
         }
       },
+      "Microsoft.Office.Interop.Excel/16.0.18925.20022": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        }
+      },
+      "Microsoft.Office.Interop.Word/15.0.4797.1004": {
+        "type": "package",
+        "compile": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
+        },
+        "runtime": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
+        }
+      },
       "Microsoft.Toolkit.Uwp.Notifications/7.1.3": {
         "type": "package",
         "dependencies": {
@@ -527,6 +581,24 @@
           "build/_._": {}
         }
       },
+      "Microsoft.Office.Interop.Excel/16.0.18925.20022": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        }
+      },
+      "Microsoft.Office.Interop.Word/15.0.4797.1004": {
+        "type": "package",
+        "compile": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
+        },
+        "runtime": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
+        }
+      },
       "Microsoft.Toolkit.Uwp.Notifications/7.1.3": {
         "type": "package",
         "dependencies": {
@@ -696,6 +768,24 @@
         "type": "package",
         "build": {
           "build/_._": {}
+        }
+      },
+      "Microsoft.Office.Interop.Excel/16.0.18925.20022": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Microsoft.Office.Interop.Excel.dll": {}
+        }
+      },
+      "Microsoft.Office.Interop.Word/15.0.4797.1004": {
+        "type": "package",
+        "compile": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
+        },
+        "runtime": {
+          "lib/net20/Microsoft.Office.Interop.Word.dll": {}
         }
       },
       "Microsoft.Toolkit.Uwp.Notifications/7.1.3": {
@@ -1249,6 +1339,35 @@
         "microsoft.netframework.referenceassemblies.net48.nuspec"
       ]
     },
+    "Microsoft.Office.Interop.Excel/16.0.18925.20022": {
+      "sha512": "Wlhtqu3QfLnDRHc77bJewv5k27VASgcINA3eDAljfZQX9iTuM+12Mt7EJYZpxn+2gBw9dlK7q6riUxuXd4cviw==",
+      "type": "package",
+      "path": "microsoft.office.interop.excel/16.0.18925.20022",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "docs/readme.md",
+        "lib/net40/Microsoft.Office.Interop.Excel.dll",
+        "lib/net5.0/Microsoft.Office.Interop.Excel.dll",
+        "lib/netstandard2.0/Microsoft.Office.Interop.Excel.dll",
+        "microsoft.office.interop.excel.16.0.18925.20022.nupkg.sha512",
+        "microsoft.office.interop.excel.nuspec",
+        "nuget.exe"
+      ]
+    },
+    "Microsoft.Office.Interop.Word/15.0.4797.1004": {
+      "sha512": "lavTOrMGK/o/t3+gGr7JuVrL8XDdnS0DwPLcYv/StOiysXO4L0C36IXTVtEJo1Mh9Aoxo9a8dgGcPi+faTlv0g==",
+      "type": "package",
+      "path": "microsoft.office.interop.word/15.0.4797.1004",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net20/Microsoft.Office.Interop.Word.dll",
+        "lib/netstandard2.0/Microsoft.Office.Interop.Word.dll",
+        "microsoft.office.interop.word.15.0.4797.1004.nupkg.sha512",
+        "microsoft.office.interop.word.nuspec"
+      ]
+    },
     "Microsoft.Toolkit.Uwp.Notifications/7.1.3": {
       "sha512": "A1dglAzb24gjehmb7DwGd07mfyZ1gacAK7ObE0KwDlRc3mayH2QW7cSOy3TkkyELjLg19OQBuhPOj4SpXET9lg==",
       "type": "package",
@@ -1663,6 +1782,8 @@
   },
   "projectFileDependencyGroups": {
     ".NETFramework,Version=v4.8.1": [
+      "Microsoft.Office.Interop.Excel >= 16.0.18925.20022",
+      "Microsoft.Office.Interop.Word >= 15.0.4797.1004",
       "Microsoft.Toolkit.Uwp.Notifications >= 7.1.3"
     ]
   },
@@ -1710,6 +1831,14 @@
     "frameworks": {
       "net481": {
         "dependencies": {
+          "Microsoft.Office.Interop.Excel": {
+            "target": "Package",
+            "version": "[16.0.18925.20022, )"
+          },
+          "Microsoft.Office.Interop.Word": {
+            "target": "Package",
+            "version": "[15.0.4797.1004, )"
+          },
           "Microsoft.Toolkit.Uwp.Notifications": {
             "target": "Package",
             "version": "[7.1.3, )"

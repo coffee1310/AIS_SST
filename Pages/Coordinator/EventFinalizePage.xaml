@@ -85,7 +85,6 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
 
-                                                            <!-- Зона клика для перехода в профиль -->
                                                             <Grid Grid.Column="0" Grid.ColumnSpan="2" Background="Transparent" Cursor="Hand" MouseLeftButtonUp="ParticipantCard_Click" Tag="{Binding StudentId}">
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto"/>
@@ -131,7 +130,12 @@
 
                 <TextBlock x:Name="EmptyParticipantsText" Text="Участников нет. Завершать некого." Foreground="#7A7886" FontFamily="Montserrat Thin" FontSize="14" HorizontalAlignment="Center" Margin="0,20,0,0" Visibility="Collapsed"/>
 
-                <Button x:Name="btnFinalize" Content="Завершить мероприятие" Style="{StaticResource PillButtonStyle}" HorizontalAlignment="Center" Padding="40,15" FontSize="14" Margin="0,40,0,0" Click="FinalizeEvent_Click"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,40,0,0">
+                    <Button x:Name="btnExportWord" Content="Отчет в Word" Style="{StaticResource OutlineButtonStyle}" Foreground="#2B579A" BorderBrush="#2B579A" Padding="20,15" Margin="0,0,15,0" Click="ExportWord_Click"/>
+                    <Button x:Name="btnExportExcel" Content="Отчет в Excel" Style="{StaticResource OutlineButtonStyle}" Foreground="#217346" BorderBrush="#217346" Padding="20,15" Margin="0,0,15,0" Click="ExportExcel_Click"/>
+                    <Button x:Name="btnFinalize" Content="Завершить мероприятие" Style="{StaticResource PillButtonStyle}" Padding="40,15" FontSize="14" Click="FinalizeEvent_Click"/>
+                </StackPanel>
+
             </StackPanel>
         </ScrollViewer>
 

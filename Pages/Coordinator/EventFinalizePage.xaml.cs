@@ -1,4 +1,5 @@
 ﻿using Diplom_Stud.Components;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,6 +16,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Excel = Microsoft.Office.Interop.Excel;
+using Word = Microsoft.Office.Interop.Word;
 
 namespace Diplom_Stud.Pages.Coordinator
 {
@@ -360,6 +363,222 @@ namespace Diplom_Stud.Pages.Coordinator
             catch { }
             return null;
         }
+
+        #region Экспорт отчетов (Word / Excel)
+
+        private async Task<EventReportDto> FetchReportAsync()
+        {
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+                var response = await _httpClient.GetAsync($"/api/reports/events/{_eventId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    string json = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<EventReportDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show($"Ошибка загрузки отчета: {ex.Message}", "Ошибка", CustomMessageBox.MessageType.Error);
+            }
+            return null;
+        }
+
+        private async void ExportWord_Click(object sender, RoutedEventArgs e)
+        {
+            LoadingOverlay.Visibility = Visibility.Visible;
+            var report = await FetchReportAsync();
+            LoadingOverlay.Visibility = Visibility.Collapsed;
+
+            if (report == null) return;
+
+            SaveFileDialog sfd = new SaveFileDialog
+            {
+                Filter = "Документ Word (*.docx)|*.docx",
+                FileName = $"Отчет_{report.title}.docx"
+            };
+
+            if (sfd.ShowDialog() == true)
+            {
+                LoadingOverlay.Visibility = Visibility.Visible;
+                await Task.Run(() => GenerateWordReport(report, sfd.FileName));
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+                CustomMessageBox.Show("Отчет Word успешно сохранен!", "Успех", CustomMessageBox.MessageType.Success);
+            }
+        }
+
+        private void GenerateWordReport(EventReportDto report, string filePath)
+        {
+            Word.Application wordApp = new Word.Application();
+            try
+            {
+                Word.Document doc = wordApp.Documents.Add();
+
+                Word.Paragraph titlePar = doc.Content.Paragraphs.Add();
+                titlePar.Range.Text = $"Отчет по мероприятию: {report.title}";
+                titlePar.Range.Font.Size = 16;
+                titlePar.Range.Font.Bold = 1;
+                titlePar.Format.Alignment = Word.WdParagraphAlignment.wdAlignParagraphCenter;
+                titlePar.Range.InsertParagraphAfter();
+
+                Word.Paragraph infoPar = doc.Content.Paragraphs.Add();
+                infoPar.Range.Text = $"Дата проведения: {report.dateOfEvent}\n" +
+                                     $"Статус: {(report.isCompleted ? "Завершено" : "В процессе")}\n" +
+                                     $"Всего человек: {report.totalPeopleCount}\n" +
+                                     $"- Организаторов: {report.totalOrganizersCount}\n" +
+                                     $"- Исполнителей (Роли): {report.totalPerformersCount}\n" +
+                                     $"- Участников: {report.totalParticipantsCount}\n";
+                infoPar.Range.Font.Size = 12;
+                infoPar.Range.Font.Bold = 0;
+                infoPar.Format.Alignment = Word.WdParagraphAlignment.wdAlignParagraphLeft;
+                infoPar.Range.InsertParagraphAfter();
+
+                void AddTableToWord(string title, List<ReportUserDto> users)
+                {
+                    if (users == null || users.Count == 0) return;
+
+                    Word.Paragraph blockTitle = doc.Content.Paragraphs.Add();
+                    blockTitle.Range.Text = title;
+                    blockTitle.Range.Font.Bold = 1;
+                    blockTitle.Range.Font.Size = 14;
+                    blockTitle.Range.InsertParagraphAfter();
+
+                    Word.Table table = doc.Tables.Add(blockTitle.Range, users.Count + 1, 5);
+                    table.Borders.Enable = 1;
+                    table.Cell(1, 1).Range.Text = "ФИО";
+                    table.Cell(1, 2).Range.Text = "Группа";
+                    table.Cell(1, 3).Range.Text = "Курс";
+                    table.Cell(1, 4).Range.Text = "Присутствие";
+                    table.Cell(1, 5).Range.Text = "Баллы";
+                    table.Rows[1].Range.Font.Bold = 1;
+
+                    for (int i = 0; i < users.Count; i++)
+                    {
+                        var u = users[i];
+                        table.Cell(i + 2, 1).Range.Text = u.fio;
+                        table.Cell(i + 2, 2).Range.Text = u.groupName;
+                        table.Cell(i + 2, 3).Range.Text = u.courseNumber.ToString();
+                        table.Cell(i + 2, 4).Range.Text = u.wasPresent ? "Да" : "Нет";
+                        table.Cell(i + 2, 5).Range.Text = u.pointsReceived.ToString();
+                    }
+                    doc.Content.Paragraphs.Add().Range.InsertParagraphAfter();
+                }
+
+                AddTableToWord("Организаторы:", report.organizers);
+                AddTableToWord("Исполнители (Роли):", report.performers);
+                AddTableToWord("Участники:", report.participants);
+
+                doc.SaveAs2(filePath);
+                doc.Close();
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() => CustomMessageBox.Show(ex.Message, "Ошибка Word", CustomMessageBox.MessageType.Error));
+            }
+            finally
+            {
+                wordApp.Quit();
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(wordApp);
+            }
+        }
+
+        private async void ExportExcel_Click(object sender, RoutedEventArgs e)
+        {
+            LoadingOverlay.Visibility = Visibility.Visible;
+            var report = await FetchReportAsync();
+            LoadingOverlay.Visibility = Visibility.Collapsed;
+
+            if (report == null) return;
+
+            SaveFileDialog sfd = new SaveFileDialog
+            {
+                Filter = "Таблица Excel (*.xlsx)|*.xlsx",
+                FileName = $"Отчет_{report.title}.xlsx"
+            };
+
+            if (sfd.ShowDialog() == true)
+            {
+                LoadingOverlay.Visibility = Visibility.Visible;
+                await Task.Run(() => GenerateExcelReport(report, sfd.FileName));
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+                CustomMessageBox.Show("Отчет Excel успешно сохранен!", "Успех", CustomMessageBox.MessageType.Success);
+            }
+        }
+
+        private void GenerateExcelReport(EventReportDto report, string filePath)
+        {
+            Excel.Application excelApp = new Excel.Application();
+            try
+            {
+                Excel.Workbook wb = excelApp.Workbooks.Add();
+                Excel.Worksheet ws = (Excel.Worksheet)wb.Worksheets[1];
+                ws.Name = "Отчет";
+
+                ws.Cells[1, 1] = "Отчет по мероприятию:";
+                ws.Cells[1, 2] = report.title;
+                ws.Cells[2, 1] = "Дата проведения:";
+                ws.Cells[2, 2] = report.dateOfEvent;
+                ws.Cells[3, 1] = "Всего человек:";
+                ws.Cells[3, 2] = report.totalPeopleCount;
+
+                ws.Range[ws.Cells[1, 1], ws.Cells[3, 1]].Font.Bold = true;
+
+                int row = 5;
+
+                void WriteTableToExcel(string title, List<ReportUserDto> users)
+                {
+                    if (users == null || users.Count == 0) return;
+
+                    ws.Cells[row, 1] = title;
+
+                    Excel.Range headerTitleRange = (Excel.Range)ws.Cells[row, 1];
+                    headerTitleRange.Font.Bold = true;
+                    headerTitleRange.Font.Size = 14;
+                    row++;
+
+                    ws.Cells[row, 1] = "ФИО";
+                    ws.Cells[row, 2] = "Группа";
+                    ws.Cells[row, 3] = "Курс";
+                    ws.Cells[row, 4] = "Возраст";
+                    ws.Cells[row, 5] = "Присутствие";
+                    ws.Cells[row, 6] = "Баллы";
+
+                    ws.Range[ws.Cells[row, 1], ws.Cells[row, 6]].Font.Bold = true;
+                    row++;
+
+                    foreach (var u in users)
+                    {
+                        ws.Cells[row, 1] = u.fio;
+                        ws.Cells[row, 2] = u.groupName;
+                        ws.Cells[row, 3] = u.courseNumber;
+                        ws.Cells[row, 4] = u.age;
+                        ws.Cells[row, 5] = u.wasPresent ? "Да" : "Нет";
+                        ws.Cells[row, 6] = u.pointsReceived;
+                        row++;
+                    }
+                    row++;
+                }
+
+                WriteTableToExcel("Организаторы", report.organizers);
+                WriteTableToExcel("Исполнители (Роли)", report.performers);
+                WriteTableToExcel("Участники", report.participants);
+
+                ws.Columns.AutoFit();
+                wb.SaveAs(filePath);
+                wb.Close();
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() => CustomMessageBox.Show(ex.Message, "Ошибка Excel", CustomMessageBox.MessageType.Error));
+            }
+            finally
+            {
+                excelApp.Quit();
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(excelApp);
+            }
+        }
+        #endregion
     }
 
     public class Fin_GlobalUserDto
@@ -413,7 +632,7 @@ namespace Diplom_Stud.Pages.Coordinator
         public string studentPhoto { get; set; }
         public string studentEmail { get; set; }
         public string eventRoleName { get; set; }
-        public bool? isReserve { get; set; } 
+        public bool? isReserve { get; set; }
     }
 
     public class Fin_RoleGroupViewModel : INotifyPropertyChanged
@@ -475,5 +694,45 @@ namespace Diplom_Stud.Pages.Coordinator
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public class ReportUserDto
+    {
+        public int userId { get; set; }
+        public string fio { get; set; }
+        public string groupName { get; set; }
+        public int courseNumber { get; set; }
+        public int age { get; set; }
+        public bool wasPresent { get; set; }
+        public int pointsReceived { get; set; }
+        public bool? isReserve { get; set; }
+    }
+
+    public class ReportRoleDto
+    {
+        public int roleId { get; set; }
+        public string roleName { get; set; }
+        public string responsibleSectorName { get; set; }
+        public int mainCount { get; set; }
+        public int reserveCount { get; set; }
+    }
+
+    public class EventReportDto
+    {
+        public int eventId { get; set; }
+        public string title { get; set; }
+        public string dateOfEvent { get; set; }
+        public bool isCompleted { get; set; }
+        public bool isPublic { get; set; }
+        public bool isFreeEvent { get; set; }
+        public int totalPeopleCount { get; set; }
+        public int totalOrganizersCount { get; set; }
+        public int totalParticipantsCount { get; set; }
+        public int totalPerformersCount { get; set; }
+
+        public List<ReportUserDto> participants { get; set; }
+        public List<ReportUserDto> organizers { get; set; }
+        public List<ReportUserDto> performers { get; set; }
+        public List<ReportRoleDto> roles { get; set; }
     }
 }
